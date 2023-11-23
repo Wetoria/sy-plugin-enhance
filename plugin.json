@@ -5,21 +5,18 @@
   "version": "0.2.8",
   "minAppVersion": "2.10.14",
   "backends": [
-    "windows",
-    "linux",
-    "darwin"
+    "all"
   ],
   "frontends": [
-    "desktop",
-    "desktop-window"
+    "all"
   ],
   "displayName": {
-    "en_US": "Plugin sample with vite",
-    "zh_CN": "插件样例 vite 版"
+    "en_US": "Wetoria's private plugin",
+    "zh_CN": "Wetoria的私人插件"
   },
   "description": {
-    "en_US": "SiYuan plugin sample with vite",
-    "zh_CN": "使用 vite 开发的思源插件样例"
+    "en_US": "Wetoria's private plugin",
+    "zh_CN": "Wetoria的私人插件"
   },
   "readme": {
     "en_US": "README.md",
@@ -30,7 +27,5 @@
       "https://afdian.net/a/Wetoria"
     ]
   },
-  "keywords": [
-    "plugin", "sample", "插件样例"
-  ]
+  "keywords": []
 }
