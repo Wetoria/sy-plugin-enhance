@@ -1,7 +1,7 @@
 {
-  "name": "plugin-sample-vite",
+  "name": "sy-plugin-wetoria",
   "author": "frostime",
-  "url": "https://github.com/frostime/plugin-sample-vite",
+  "url": "https://github.com/Wetoria/sy-plugin-wetoria",
   "version": "0.2.8",
   "minAppVersion": "2.10.14",
   "backends": [
@@ -27,7 +27,7 @@
   },
   "funding": {
     "custom": [
-      "https://afdian.net/a/frostime"
+      "https://afdian.net/a/Wetoria"
     ]
   },
   "keywords": [

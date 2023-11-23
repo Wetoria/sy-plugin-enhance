@@ -1,5 +1,5 @@
 {
-  "name": "plugin-sample-vite-svelte",
+  "name": "sy-plugin-wetoria",
   "version": "0.2.6",
   "type": "module",
   "description": "This is a sample plugin based on vite and svelte for Siyuan (https://b3log.org/siyuan)",
