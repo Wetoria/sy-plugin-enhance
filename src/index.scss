@@ -1,3 +1,5 @@
+@import './styles/theme.scss';
+
 #helloPanel {
   border: 1px rgb(189, 119, 119) dashed;
 }
@@ -24,59 +26,3 @@
     padding: 2px 8px;
   }
 }
-
-// hack 思源笔记默认主题颜色
-:root {
-  --b3-protyle-inline-blockref-color: #00bfff;
-}
-
-// 反链列表项的提示效果
-.protyle-wysiwyg [data-node-id].li[fold="1"] > .protyle-action:after {
-  background-color: var(--b3-list-hover, #363636);
-}
-
-// #region 反链面板文档名称sticky
-.protyle-wysiwyg [data-node-id] span[data-type="block-ref"] {
-  font-weight: inherit;
-  background-color: transparent !important;
-  border-bottom: none !important;
-}
-
-/* 为引用块后面增加引用图标 */
-.protyle-wysiwyg [data-node-id] span[data-type="block-ref"]::before {
-  color: var(--b3-theme-on-surface) !important;
-  content: "[[";
-}
-
-.protyle-wysiwyg [data-node-id] span[data-type="block-ref"]::after {
-  color: var(--b3-theme-on-surface) !important;
-  content: "]]";
-}
-
-.protyle-wysiwyg [data-node-id] span[data-type="block-ref"]:hover {
-  background-color: var(--b3-theme-primary-lightest) !important;
-}
-// #endregion 反链面板文档名称sticky
-
-// #region 文档反链增加 [[]]
-.protyle-wysiwyg [data-node-id] span[data-type="block-ref"] {
-  font-weight: inherit;
-  background-color: transparent !important;
-  border-bottom: none !important;
-}
-
-/* 为引用块后面增加引用图标 */
-.protyle-wysiwyg [data-node-id] span[data-type="block-ref"]::before {
-  color: var(--b3-theme-on-surface) !important;
-  content: "[[";
-}
-
-.protyle-wysiwyg [data-node-id] span[data-type="block-ref"]::after {
-  color: var(--b3-theme-on-surface) !important;
-  content: "]]";
-}
-
-.protyle-wysiwyg [data-node-id] span[data-type="block-ref"]:hover {
-  background-color: var(--b3-theme-primary-lightest) !important;
-}
-// #endregion 文档反链增加 [[]]
