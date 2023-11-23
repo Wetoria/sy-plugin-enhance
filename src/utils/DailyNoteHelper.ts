@@ -9,14 +9,14 @@ async function request(url: string, options: object) {
 
 async function getCurrentDocInfoById(currentDocId: string) {
   const data = {
-    "stmt": `SELECT * FROM blocks WHERE id = "${currentDocId}" and type="d"`
+    stmt: `SELECT * FROM blocks WHERE id = "${currentDocId}" and type="d"`,
   };
   const url = "/api/query/sql";
   return request(url, {
-      body: JSON.stringify(data),
-      method: "POST"
+    body: JSON.stringify(data),
+    method: "POST",
   }).then(function (resp) {
-    const {data} = resp;
+    const { data } = resp;
     if (data && data.length === 1) {
       return data[0];
     }
@@ -26,13 +26,13 @@ async function getCurrentDocInfoById(currentDocId: string) {
 
 async function getSlideDailyNote(next = true, newDate: string) {
   const data = {
-    "stmt": `SELECT
+    stmt: `SELECT
       *
     FROM
-      blocks 
+      blocks
     WHERE
-      1=1 
-      and type='d' 
+      1=1
+      and type='d'
       and hpath REGEXP '/daily note.*/[0-9]{4}-[0-9]{2}-[0-9]{2}$'
       and fcontent ${next ? ">=" : "<="} '${newDate}'
       order by
@@ -42,10 +42,10 @@ async function getSlideDailyNote(next = true, newDate: string) {
   };
   const url = "/api/query/sql";
   return request(url, {
-      body: JSON.stringify(data),
-      method: "POST"
+    body: JSON.stringify(data),
+    method: "POST",
   }).then(function (resp) {
-    const {data} = resp;
+    const { data } = resp;
     if (data && data.length === 1) {
       return data[0];
     }
@@ -62,7 +62,9 @@ export async function jumpToNextDailyNote() {
 }
 
 async function jumpTo(next = true) {
-  const currentDocTitleDom: HTMLDivElement = document.querySelector(".protyle:not(.fn__none) .protyle-title");
+  const currentDocTitleDom: HTMLDivElement = document.querySelector(
+    ".protyle:not(.fn__none) .protyle-title"
+  );
   if (!currentDocTitleDom) {
     showMessage("请先当开一篇文档");
     return;
@@ -85,7 +87,7 @@ async function jumpTo(next = true) {
     showMessage("请打开一篇日记");
     return;
   }
-  
+
   let newDate = "";
   hpath.replace(/\d{4}-\d{2}-\d{2}/, (match: string) => {
     const cDate = dayjs(match);
