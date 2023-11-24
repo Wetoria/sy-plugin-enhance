@@ -5,6 +5,7 @@ import { viteStaticCopy } from "vite-plugin-static-copy"
 import livereload from "rollup-plugin-livereload"
 import zipPack from "vite-plugin-zip-pack";
 import fg from 'fast-glob';
+import vue from '@vitejs/plugin-vue'
 
 const args = minimist(process.argv.slice(2))
 const isWatch = args.watch || args.w || false
@@ -22,7 +23,7 @@ export default defineConfig({
     },
 
     plugins: [
-
+      vue(),
         viteStaticCopy({
             targets: [
                 {
