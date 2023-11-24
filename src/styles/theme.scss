@@ -3,6 +3,9 @@
   --b3-protyle-inline-blockref-color: #00bfff;
 }
 
+.protyle-wysiwyg [data-node-id] span[data-type~=block-ref] {
+  color: #00bfff;
+}
 
 // 反链列表项的提示效果
 .protyle-wysiwyg [data-node-id].li[fold="1"] > .protyle-action:after {
