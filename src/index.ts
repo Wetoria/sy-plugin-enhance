@@ -331,9 +331,6 @@ export default class PluginSample extends Plugin {
             icon: "iconOpenWindow",
             label: "Open Doc Window(open help first)",
             click: () => {
-                openWindow({
-                    doc: {id: "20200812220555-lj3enxa"}
-                });
             }
           });
           // if (!this.isMobile) {
