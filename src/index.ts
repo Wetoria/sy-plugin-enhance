@@ -21,7 +21,7 @@ import {
   jumpToNextDailyNote,
   jumpToPrevDailyNote,
 } from "./utils/DailyNoteHelper";
-import { newDailyNoteQuicker } from './utils/FixedTools';
+import { newDailyNoteQuicker } from './components/FixedTools';
 const STORAGE_NAME = "menu-config";
 const TAB_TYPE = "custom_tab";
 const DOCK_TYPE = "dock_tab";
