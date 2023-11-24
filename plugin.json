@@ -2,7 +2,7 @@
   "name": "sy-plugin-wetoria",
   "author": "wetoria",
   "url": "https://github.com/Wetoria/sy-plugin-wetoria",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "minAppVersion": "2.10.14",
   "backends": [
     "all"
@@ -11,14 +11,17 @@
     "all"
   ],
   "displayName": {
+    "default": "zh_CN",
     "en_US": "Wetoria's private plugin",
     "zh_CN": "Wetoria的私人插件"
   },
   "description": {
+    "default": "zh_CN",
     "en_US": "Wetoria's private plugin",
     "zh_CN": "Wetoria的私人插件"
   },
   "readme": {
+    "default": "zh_CN",
     "en_US": "README.md",
     "zh_CN": "README_zh_CN.md"
   },
