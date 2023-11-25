@@ -11,31 +11,51 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { usePlugin } from '@/utils';
+import { computed, ref, watchEffect } from 'vue';
+import { Plugin, getFrontend } from 'siyuan';
 
-const startPos = ref({
+const storageKey = `vFixedToolPos-${getFrontend()}`;
+
+const position = ref({
   x: 0,
   y: 0,
 });
-const topCssValue = computed(() => `${startPos.value.y}px`)
-const leftCssValue = computed(() => `${startPos.value.x}px`)
+const topCssValue = computed(() => `${position.value.y}px`)
+const leftCssValue = computed(() => `${position.value.x}px`)
+
+const plugin: Plugin = usePlugin();
+
+watchEffect(() => {
+  if (!plugin) return
+
+  plugin.loadData(storageKey).then((pos) => {
+    if (pos) {
+      position.value = pos;
+    }
+  })
+})
 
 const setPos = (event) => {
-  startPos.value = {
+  position.value = {
     x: (event.touches ? event.touches[0].clientX : event.clientX) - 25,
     y: (event.touches ? event.touches[0].clientY : event.clientY) - 25,
   }
-  if (startPos.value.x < 0) {
-    startPos.value.x = 0;
+  if (position.value.x < 0) {
+    position.value.x = 0;
   }
-  if (startPos.value.y < 0) {
-    startPos.value.y = 0;
+  if (position.value.y < 0) {
+    position.value.y = 0;
   }
-  if (startPos.value.x > document.body.clientWidth - 25) {
-    startPos.value.x = document.body.clientWidth - 25;
+  if (position.value.x > document.body.clientWidth - 25) {
+    position.value.x = document.body.clientWidth - 25;
   }
-  if (startPos.value.y > document.body.clientHeight - 25) {
-    startPos.value.y = document.body.clientHeight - 25;
+  if (position.value.y > document.body.clientHeight - 25) {
+    position.value.y = document.body.clientHeight - 25;
+  }
+  if (plugin) {
+    const posInfo = JSON.stringify(position.value);
+    plugin.saveData(storageKey, posInfo)
   }
 }
 
@@ -44,7 +64,6 @@ const onMove = (event) => {
 }
 
 const unregister = () => {
-  console.log('unregister')
   document.body.removeEventListener('mousemove', onMove)
   document.body.removeEventListener('touchmove', onMove)
   document.body.removeEventListener('mouseup', unregister)
