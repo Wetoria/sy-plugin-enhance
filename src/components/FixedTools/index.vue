@@ -11,9 +11,9 @@
 </template>
 
 <script setup lang="ts">
-import { usePlugin } from '@/utils';
 import { computed, ref, watchEffect } from 'vue';
 import { Plugin, getFrontend } from 'siyuan';
+import { usePlugin } from '@/main'
 
 const storageKey = `vFixedToolPos-${getFrontend()}`;
 
