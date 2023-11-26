@@ -6,3 +6,10 @@ export function loadComponent(component) {
   document.body.appendChild(div);
   app.mount(div);
 }
+
+export function getDomByVueComponent(component) {
+  const div = document.createElement('div');
+  const app = createApp(component);
+  app.mount(div);
+  return div;
+}

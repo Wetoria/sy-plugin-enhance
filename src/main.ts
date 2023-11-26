@@ -16,7 +16,8 @@ export function usePlugin(pluginProps?) {
 }
 
 
-const addCommand = (plugin) => {
+const addCommand = () => {
+  const plugin = usePlugin()
   plugin.addCommand({
     langKey: "goPrevDailyNote",
     hotkey: "⌥⌘↓",
@@ -37,5 +38,5 @@ const addCommand = (plugin) => {
 export function init(plugin) {
   usePlugin(plugin);
   registerAllComponents();
-  addCommand(plugin);
+  addCommand();
 }
