@@ -72,6 +72,7 @@ const setPos = (pos) => {
   }
   if (position.value.y <= 0) {
     position.value.y = 0;
+    edgeFixedPos.value[1] = Direction.TOP
   }
   if (position.value.x >= document.body.clientWidth - 50) {
     position.value.x = document.body.clientWidth - 50;
@@ -79,6 +80,7 @@ const setPos = (pos) => {
   }
   if (position.value.y >= document.body.clientHeight - 50) {
     position.value.y = document.body.clientHeight - 50;
+    edgeFixedPos.value[1] = Direction.BOTTOM
   }
   if (plugin) {
     const posInfo = JSON.stringify(position.value);
@@ -115,6 +117,11 @@ const listenResize = () => {
     newPosition.x = 0
   } else if (Direction.RIGHT === edgeFixedPos.value[0]) {
     newPosition.x = document.body.clientWidth - 50
+  }
+  if (Direction.TOP === edgeFixedPos.value[1]) {
+    newPosition.y = 0
+  } else if (Direction.BOTTOM === edgeFixedPos.value[1]) {
+    newPosition.y = document.body.clientHeight - 50
   }
   setPos(newPosition);
 }
