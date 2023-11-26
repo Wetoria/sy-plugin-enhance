@@ -11,12 +11,31 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watchEffect } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watchEffect } from 'vue';
 import { Plugin, getFrontend } from 'siyuan';
 import { usePlugin } from '@/main'
 
 const storageKey = `vFixedToolPos-${getFrontend()}`;
 
+enum Direction {
+  TOP = 'top',
+  TOP_LEFT = 'top-left',
+  TOP_RIGHT = 'top-right',
+  RIGHT = 'right',
+  RIGHT_TOP = 'right-top',
+  RIGHT_BOTTOM = 'right-bottom',
+  LEFT = 'left',
+  LEFT_TOP = 'left-top',
+  LEFT_BOTTOM = 'left-bottom',
+  BOTTOM = 'bottom',
+  BOTTOM_LEFT = 'bottom-left',
+  BOTTOM_RIGHT = 'bottom-right',
+  RADIUS = 'radius',
+  CIRCLE = 'circle',
+  NONE = 'none'
+}
+
+const edgeFixedPos = ref(['', ''])
 const position = ref({
   x: 0,
   y: 0,
@@ -31,27 +50,35 @@ watchEffect(() => {
 
   plugin.loadData(storageKey).then((pos) => {
     if (pos) {
-      position.value = pos;
+      setPos(pos)
     }
   })
 })
 
-const setPos = (event) => {
-  position.value = {
+const setPosByEvent = (event) => {
+  const posInfo = {
     x: (event.touches ? event.touches[0].clientX : event.clientX) - 25,
     y: (event.touches ? event.touches[0].clientY : event.clientY) - 25,
   }
-  if (position.value.x < 0) {
+  setPos(posInfo)
+}
+
+const setPos = (pos) => {
+  position.value = pos;
+  edgeFixedPos.value = ['', ''];
+  if (position.value.x <= 0) {
     position.value.x = 0;
+    edgeFixedPos.value[0] = Direction.LEFT
   }
-  if (position.value.y < 0) {
+  if (position.value.y <= 0) {
     position.value.y = 0;
   }
-  if (position.value.x > document.body.clientWidth - 25) {
-    position.value.x = document.body.clientWidth - 25;
+  if (position.value.x >= document.body.clientWidth - 50) {
+    position.value.x = document.body.clientWidth - 50;
+    edgeFixedPos.value[0] = Direction.RIGHT
   }
-  if (position.value.y > document.body.clientHeight - 25) {
-    position.value.y = document.body.clientHeight - 25;
+  if (position.value.y >= document.body.clientHeight - 50) {
+    position.value.y = document.body.clientHeight - 50;
   }
   if (plugin) {
     const posInfo = JSON.stringify(position.value);
@@ -60,7 +87,7 @@ const setPos = (event) => {
 }
 
 const onMove = (event) => {
-  setPos(event)
+  setPosByEvent(event)
 }
 
 const unregister = () => {
@@ -72,14 +99,31 @@ const unregister = () => {
 }
 
 const onMouseDown = (event) => {
-  setPos(event)
+  setPosByEvent(event)
 
   document.body.addEventListener('mousemove', onMove)
   document.body.addEventListener('touchmove', onMove)
-  document.body.addEventListener('mouseleave', unregister)
-  document.body.addEventListener('touchend', unregister)
   document.body.addEventListener('mouseup', unregister)
+  document.body.addEventListener('touchend', unregister)
+  document.body.addEventListener('mouseleave', unregister)
 }
+
+const listenResize = () => {
+  const newPosition = position.value;
+
+  if (Direction.LEFT === edgeFixedPos.value[0]) {
+    newPosition.x = 0
+  } else if (Direction.RIGHT === edgeFixedPos.value[0]) {
+    newPosition.x = document.body.clientWidth - 50
+  }
+  setPos(newPosition);
+}
+onMounted(() => {
+  window.addEventListener('resize', listenResize)
+})
+onUnmounted(() => {
+  window.removeEventListener('resize', listenResize)
+})
 </script>
 
 
