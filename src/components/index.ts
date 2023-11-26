@@ -1,6 +1,6 @@
 import { loadComponent } from '@/utils';
 
-import FixedTools from './FixedTools/index.vue';
+import FixedTools from './FixedTools.vue';
 
 export function registerAllComponents() {
   const components = [
