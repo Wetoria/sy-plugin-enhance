@@ -1,29 +1,17 @@
 import {
   ISearchOption,
   showMessage,
-  openWindow,
 } from "siyuan";
 import dayjs from "dayjs";
-import { getNotebookConf, lsNotebooks } from '@/api';
-import { usePlugin } from '@/main';
+import { lsNotebooks, request } from '@/api';
 import { createDailyNote, getDailyNote, openDoc } from './Note';
-
-export async function request(url: string, options: object) {
-  return fetch(url, options).then((res) => {
-    return res.json();
-  });
-}
 
 async function getCurrentDocInfoById(currentDocId: string) {
   const data = {
     stmt: `SELECT * FROM blocks WHERE id = "${currentDocId}" and type="d"`,
   };
   const url = "/api/query/sql";
-  return request(url, {
-    body: JSON.stringify(data),
-    method: "POST",
-  }).then(function (resp) {
-    const { data } = resp;
+  return request(url, data).then(function (data) {
     if (data && data.length === 1) {
       return data[0];
     }
@@ -48,11 +36,7 @@ async function getSlideDailyNote(next = true, newDate: string) {
     `,
   };
   const url = "/api/query/sql";
-  return request(url, {
-    body: JSON.stringify(data),
-    method: "POST",
-  }).then(function (resp) {
-    const { data } = resp;
+  return request(url, data).then(function (data) {
     if (data && data.length === 1) {
       return data[0];
     }
