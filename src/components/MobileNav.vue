@@ -11,7 +11,7 @@
         }"
       >
         <div class="NavItemIcon">
-          <Icon :name="item.icon" size="18" />
+          <SyIcon :name="item.icon" size="18" />
         </div>
         <div class="NavItemLabel" v-if="showLabel">
           {{ item.label }}
@@ -23,7 +23,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import Icon from '@/components/SiyuanTheme/Icon.vue'
+import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import { computed } from 'vue';
 import { createTodayDailyNote } from '@/utils/DailyNoteHelper'
 
@@ -76,6 +76,8 @@ const navList = ref<Array<{
 <style lang="scss" scoped>
 .MobileNavContainer {
   padding-bottom: 30px;
+  display: flex;
+  flex-direction: column;
 
   .NavList {
     height: v-bind(containerHeightCss);
