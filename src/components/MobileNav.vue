@@ -1,6 +1,15 @@
 <template>
-  <div class="MobileNavContainer">
-    <div class="NavList" ref="navListRef">
+  <div
+    class="MobileNavContainer"
+    :style="{
+      height: keyboardShown ? 0 : 'fit-content',
+      padding: keyboardShown ? 'unset' : undefined,
+    }"
+  >
+    <div
+      class="NavList"
+      ref="navListRef"
+    >
       <div
         v-for="item of navList"
         class="NavItem"
@@ -29,6 +38,9 @@ import { createTodayDailyNote } from '@/utils/DailyNoteHelper'
 import {useMobileKeyBoardShown} from '@/utils'
 
 const showLabel = ref(false)
+const containerPaddingBottomHeight = 30;
+const containerPaddingBottomHeightCss = computed(() => `${containerPaddingBottomHeight}px`)
+
 const containerHeight = computed(() => {
   if (showLabel) {
     return 50
@@ -73,9 +85,8 @@ const keyboardShown = useMobileKeyBoardShown();
 watchEffect(() => {
   if (navListRef.value) {
     if (keyboardShown.value) {
-      navListRef.value.style.transform = 'translateY(80px)'
+      navListRef.value.style.transform = `translateY(${containerHeight.value + containerPaddingBottomHeight}px)`
       navListRef.value.style.transition = 'unset'
-
     } else {
       navListRef.value.style.transform = 'translateY(0px)'
       navListRef.value.style.transition = 'all 0.5s linear'
@@ -86,9 +97,12 @@ watchEffect(() => {
 
 <style lang="scss" scoped>
 .MobileNavContainer {
-  padding-bottom: 30px;
+  padding-bottom: v-bind(containerPaddingBottomHeightCss);
   display: flex;
+  height: fit-content;
   flex-direction: column;
+  overflow: hidden;
+  // border: 1px solid red;
 
   .NavList {
     height: v-bind(containerHeightCss);
