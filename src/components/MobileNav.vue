@@ -4,6 +4,11 @@
       <div
         v-for="item of navList"
         class="NavItem"
+        @click="() => {
+          if (item.onClick) {
+            item.onClick()
+          }
+        }"
       >
         <div class="NavItemIcon">
           <Icon :name="item.icon" size="18" />
@@ -30,7 +35,11 @@ const containerHeight = computed(() => {
 })
 const containerHeightCss = computed(() => `${containerHeight}px`)
 
-const navList = ref([
+const navList = ref<Array<{
+  icon: string;
+  label: string;
+  onClick?: () => void;
+}>>([
   {
     icon: 'iconBack',
     label: 'Test',
@@ -50,6 +59,12 @@ const navList = ref([
   {
     icon: 'iconSettings',
     label: '设置',
+    onClick: () => {
+      const toolbarMore = document.body.querySelector('#toolbarMore')
+      if (toolbarMore) {
+        toolbarMore.dispatchEvent(new MouseEvent('click'))
+      }
+    }
   },
 ])
 </script>
