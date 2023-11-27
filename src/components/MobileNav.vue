@@ -25,6 +25,7 @@
 import { ref } from 'vue';
 import Icon from '@/components/SiyuanTheme/Icon.vue'
 import { computed } from 'vue';
+import { createTodayDailyNote } from '@/utils/DailyNoteHelper'
 
 const showLabel = ref(false)
 const containerHeight = computed(() => {
@@ -51,6 +52,9 @@ const navList = ref<Array<{
   {
     icon: 'iconAdd',
     label: '日记',
+    onClick: () => {
+      createTodayDailyNote()
+    }
   },
   {
     icon: 'iconHistory',

@@ -1,7 +1,14 @@
-import { ISearchOption, showMessage } from "siyuan";
+import {
+  ISearchOption,
+  showMessage,
+  openWindow,
+} from "siyuan";
 import dayjs from "dayjs";
+import { getNotebookConf, lsNotebooks } from '@/api';
+import { usePlugin } from '@/main';
+import { createDailyNote, getDailyNote, openDoc } from './Note';
 
-async function request(url: string, options: object) {
+export async function request(url: string, options: object) {
   return fetch(url, options).then((res) => {
     return res.json();
   });
@@ -103,4 +110,40 @@ async function jumpTo(next = true) {
   }
 
   window.open(`siyuan://blocks/${prevDailyNoteInfo.id}`);
+}
+
+export function createTodayDailyNote() {
+  lsNotebooks().then(async (res) => {
+    const {
+      notebooks = [],
+    } = res
+    if (!notebooks.length) {
+      // TODO 增加提示
+      return
+    }
+
+    const openedNotebookList = notebooks.filter(i => !i.closed)
+
+    if (!openedNotebookList.length || openedNotebookList.length !== 1) {
+      // TODO 增加提示
+      return
+    }
+
+    const currentNoteBook = openedNotebookList[0];
+    const {
+      id: notebookId,
+    } = currentNoteBook;
+
+    const dailyNote = await getDailyNote(notebookId)
+    if (!dailyNote || dailyNote.length === 0) {
+      createDailyNote(notebookId)
+      return
+    }
+
+    if (dailyNote.length !== 1) {
+      return
+    }
+    const todayNote = dailyNote[0]
+    openDoc(todayNote)
+  })
 }

@@ -3,6 +3,7 @@
     class="v-fixedTools"
     @mousedown="onMouseDown"
     @touchstart="onMouseDown"
+    @click="onClick"
   >
     <svg class="v-fixedToolsIcon">
       <use xlink:href="#iconAdd"></use>
@@ -14,6 +15,7 @@
 import { computed, onMounted, onUnmounted, ref, watchEffect } from 'vue';
 import { Plugin, getFrontend } from 'siyuan';
 import { usePlugin } from '@/main'
+import { createTodayDailyNote } from '@/utils/DailyNoteHelper';
 
 const storageKey = `vFixedToolPos-${getFrontend()}`;
 
@@ -131,6 +133,10 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('resize', listenResize)
 })
+
+const onClick = () => {
+  createTodayDailyNote();
+}
 </script>
 
 
