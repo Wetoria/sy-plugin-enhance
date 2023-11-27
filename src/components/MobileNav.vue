@@ -36,6 +36,7 @@ import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import { computed } from 'vue';
 import { createTodayDailyNote } from '@/utils/DailyNoteHelper'
 import {useMobileKeyBoardShown} from '@/utils'
+import { useDocHistory } from '@/utils/History'
 
 const showLabel = ref(false)
 const containerPaddingBottomHeight = 30;
@@ -49,6 +50,11 @@ const containerHeight = computed(() => {
 })
 const containerHeightCss = computed(() => `${containerHeight}px`)
 
+const {
+  goBack,
+  goForward,
+} = useDocHistory()
+
 const navListRef = ref(null)
 const navList = ref<Array<{
   icon: string;
@@ -58,10 +64,16 @@ const navList = ref<Array<{
   {
     icon: 'iconBack',
     label: 'Test',
+    onClick: () => {
+      goBack()
+    }
   },
   {
     icon: 'iconForward',
     label: 'Test',
+    onClick: () => {
+      goForward()
+    }
   },
   {
     icon: 'iconAdd',
