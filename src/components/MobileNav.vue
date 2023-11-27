@@ -20,7 +20,11 @@
         }"
       >
         <div class="NavItemIcon">
-          <SyIcon :name="item.icon" size="18" />
+          <SyIcon
+            :name="item.icon"
+            :disabled="item.disabled"
+            size="18"
+          />
         </div>
         <div class="NavItemLabel" v-if="showLabel">
           {{ item.label }}
@@ -53,17 +57,21 @@ const containerHeightCss = computed(() => `${containerHeight}px`)
 const {
   goBack,
   goForward,
+  isNewset,
+  isOldest,
 } = useDocHistory()
 
 const navListRef = ref(null)
 const navList = ref<Array<{
   icon: string;
   label: string;
+  disabled?: boolean;
   onClick?: () => void;
 }>>([
   {
     icon: 'iconBack',
     label: 'Test',
+    disabled: isOldest.value,
     onClick: () => {
       goBack()
     }
@@ -71,6 +79,7 @@ const navList = ref<Array<{
   {
     icon: 'iconForward',
     label: 'Test',
+    disabled: isNewset.value,
     onClick: () => {
       goForward()
     }
@@ -93,6 +102,14 @@ const navList = ref<Array<{
     }
   },
 ])
+
+
+watchEffect(() => {
+  console.log('is ', isNewset.value, isOldest.value)
+  navList.value[0].disabled = isOldest.value
+  navList.value[1].disabled = isNewset.value
+})
+
 const keyboardShown = useMobileKeyBoardShown();
 watchEffect(() => {
   if (navListRef.value) {

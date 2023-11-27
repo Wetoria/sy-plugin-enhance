@@ -4,6 +4,7 @@
       fontSize: size,
       width: size,
       height: size,
+      color: disabled ? 'var(--b3-empty-color)' : undefined
     }"
   >
     <use :xlink:href="`#${name}`"></use>
@@ -17,5 +18,6 @@ defineProps({
     type: [Number, String],
     default: 12
   },
+  disabled: Boolean,
 })
 </script>

@@ -1,16 +1,24 @@
-import { onMounted, ref, watchEffect } from 'vue';
+import { computed, onMounted, ref, watchEffect } from 'vue';
 import { openDocById } from './Note';
+import { showMessage } from 'siyuan';
 
 let lastEditShownStatus
 let lastDocId
 export function useDocHistory() {
   const docHistory = ref([])
   const currentDocIndex = ref(-1);
+  const isNewset = computed(() => !docHistory.value.length || currentDocIndex.value === docHistory.value.length - 1)
+  const isOldest = computed(() => !docHistory.value.length || currentDocIndex.value === 0)
   watchEffect(() => {
     console.log('doc his is ', docHistory.value)
+    console.log('doc his is ', currentDocIndex.value)
   })
   let byInner = false
   const goBack = () => {
+    if (isOldest.value) {
+      showMessage('已经最老一条')
+      return
+    }
     currentDocIndex.value -= 1
     if (currentDocIndex.value < 0) {
       currentDocIndex.value = 0
@@ -20,6 +28,10 @@ export function useDocHistory() {
     openDocById(docHistory.value[currentDocIndex.value])
   }
   const goForward = () => {
+    if (isNewset.value) {
+      showMessage('已经最新一条')
+      return
+    }
     currentDocIndex.value += 1
     if (currentDocIndex.value > docHistory.value.length - 1) {
       currentDocIndex.value = docHistory.value.length - 1
@@ -76,5 +88,7 @@ export function useDocHistory() {
   return {
     goBack,
     goForward,
+    isNewset,
+    isOldest,
   }
 }
