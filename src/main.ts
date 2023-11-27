@@ -19,6 +19,10 @@ export function usePlugin(pluginProps?) {
 }
 
 function loadMobileNav() {
+  const plugin = usePlugin()
+  if (!plugin.isMobile) {
+    return
+  }
   const dom = getDomByVueComponent(MobileNavVue)
   const editor = document.querySelector('#editor')
   const observer = new MutationObserver(() => {
