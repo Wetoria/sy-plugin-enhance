@@ -1,4 +1,4 @@
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, watchEffect } from 'vue';
 import { openDocById } from './Note';
 
 let lastEditShownStatus
@@ -6,11 +6,15 @@ let lastDocId
 export function useDocHistory() {
   const docHistory = ref([])
   const currentDocIndex = ref(-1);
+  watchEffect(() => {
+    console.log('doc his is ', docHistory.value)
+  })
   let byInner = false
   const goBack = () => {
     currentDocIndex.value -= 1
     if (currentDocIndex.value < 0) {
       currentDocIndex.value = 0
+      return
     }
     byInner = true
     openDocById(docHistory.value[currentDocIndex.value])
@@ -19,6 +23,7 @@ export function useDocHistory() {
     currentDocIndex.value += 1
     if (currentDocIndex.value > docHistory.value.length - 1) {
       currentDocIndex.value = docHistory.value.length - 1
+      return
     }
     byInner = true
     openDocById(docHistory.value[currentDocIndex.value])
