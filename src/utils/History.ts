@@ -47,7 +47,7 @@ export function useDocHistory() {
       if (flag) {
         clearTimeout(flag)
       }
-      setTimeout(() => {
+      flag = setTimeout(() => {
         const dom = document.querySelector('#editor')
         if (dom) {
           const editorIsHidden = dom.classList.contains('fn__none')
@@ -77,7 +77,7 @@ export function useDocHistory() {
         } else {
           console.log('oops')
         }
-      }, 500)
+      }, 100)
     })
     ob.observe(document.body, {
       childList: true, // 观察目标子节点的变化，是否有添加或者删除
