@@ -97,19 +97,25 @@ async function jumpTo(next = true) {
 }
 
 export function createTodayDailyNote() {
+  // TODO 笔记本完整打开了以后才显示，否则容易出现重复创建日记的可能
   lsNotebooks().then(async (res) => {
     const {
       notebooks = [],
     } = res
     if (!notebooks.length) {
-      // TODO 增加提示
       return
     }
 
     const openedNotebookList = notebooks.filter(i => !i.closed)
 
-    if (!openedNotebookList.length || openedNotebookList.length !== 1) {
-      // TODO 增加提示
+    if (!openedNotebookList.length) {
+      showMessage('请先打开笔记本')
+      return
+    }
+
+    if (openedNotebookList.length !== 1) {
+      // IMP 让选择笔记本
+      showMessage('打开了多个笔记本')
       return
     }
 
