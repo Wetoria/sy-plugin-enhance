@@ -1,6 +1,6 @@
 <template>
   <div class="MobileNavContainer">
-    <div class="NavList">
+    <div class="NavList" ref="navListRef">
       <div
         v-for="item of navList"
         class="NavItem"
@@ -22,10 +22,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watchEffect } from 'vue';
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import { computed } from 'vue';
 import { createTodayDailyNote } from '@/utils/DailyNoteHelper'
+import {useMobileKeyBoardShown} from '@/utils'
 
 const showLabel = ref(false)
 const containerHeight = computed(() => {
@@ -36,6 +37,7 @@ const containerHeight = computed(() => {
 })
 const containerHeightCss = computed(() => `${containerHeight}px`)
 
+const navListRef = ref(null)
 const navList = ref<Array<{
   icon: string;
   label: string;
@@ -57,10 +59,6 @@ const navList = ref<Array<{
     }
   },
   {
-    icon: 'iconHistory',
-    label: '历史',
-  },
-  {
     icon: 'iconSettings',
     label: '设置',
     onClick: () => {
@@ -71,6 +69,19 @@ const navList = ref<Array<{
     }
   },
 ])
+const keyboardShown = useMobileKeyBoardShown();
+watchEffect(() => {
+  if (navListRef.value) {
+    if (keyboardShown.value) {
+      navListRef.value.style.transform = 'translateY(80px)'
+      navListRef.value.style.transition = 'unset'
+
+    } else {
+      navListRef.value.style.transform = 'translateY(0px)'
+      navListRef.value.style.transition = 'all 0.5s linear'
+    }
+  }
+})
 </script>
 
 <style lang="scss" scoped>
