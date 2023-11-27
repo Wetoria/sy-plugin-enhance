@@ -9,7 +9,7 @@ export function loadComponent(component) {
   app.mount(div);
 }
 
-export function getDomByVueComponent(component, useArco) {
+export function getDomByVueComponent(component, useArco?: boolean) {
   const div = document.createElement('div');
   const app = createApp(component);
   if (useArco) {
