@@ -1,19 +1,17 @@
 import { computed, onMounted, ref, watchEffect } from 'vue';
 import { openDocById } from './Note';
 import { showMessage } from 'siyuan';
+import { usePlugin } from '@/main';
 
 let lastEditShownStatus
-let lastDocId
 export function useDocHistory() {
   const docHistory = ref([])
   const currentDocIndex = ref(-1);
   const isNewset = computed(() => !docHistory.value.length || currentDocIndex.value === docHistory.value.length - 1)
   const isOldest = computed(() => !docHistory.value.length || currentDocIndex.value === 0)
-  watchEffect(() => {
-    console.log('doc his is ', docHistory.value)
-    console.log('doc his is ', currentDocIndex.value)
-  })
-  let byInner = false
+
+  const plugin = usePlugin()
+
   const goBack = () => {
     if (isOldest.value) {
       showMessage('已经最老一条')
@@ -24,7 +22,6 @@ export function useDocHistory() {
       currentDocIndex.value = 0
       return
     }
-    byInner = true
     openDocById(docHistory.value[currentDocIndex.value])
   }
   const goForward = () => {
@@ -37,11 +34,21 @@ export function useDocHistory() {
       currentDocIndex.value = docHistory.value.length - 1
       return
     }
-    byInner = true
     openDocById(docHistory.value[currentDocIndex.value])
   }
 
   onMounted(() => {
+    plugin.eventBus.on('loaded-protyle-static', ({ detail }) => {
+      const currentDocId = detail?.protyle?.block?.id;
+
+      const lastDocId = docHistory.value[currentDocIndex.value]
+      if (lastDocId !== currentDocId) {
+        docHistory.value.splice(currentDocIndex.value + 1)
+        docHistory.value = [...docHistory.value, currentDocId]
+        currentDocIndex.value = docHistory.value.length - 1
+      }
+    })
+
     let flag
     const ob = new MutationObserver(() => {
       if (flag) {
@@ -59,23 +66,6 @@ export function useDocHistory() {
             }
           }
           lastEditShownStatus = editorIsHidden;
-
-          const d = dom.querySelector('.protyle-background')
-          if (d && d.dataset.nodeId) {
-            const currentDocId = d.dataset.nodeId;
-            if (lastDocId !== currentDocId) {
-              if (byInner) {
-                byInner = false
-              } else {
-                docHistory.value.splice(currentDocIndex.value + 1)
-                docHistory.value = [...docHistory.value, currentDocId]
-                currentDocIndex.value = docHistory.value.length - 1
-              }
-            }
-            lastDocId = currentDocId;
-          }
-        } else {
-          console.log('oops')
         }
       }, 100)
     })
