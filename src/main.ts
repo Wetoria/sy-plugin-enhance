@@ -4,6 +4,8 @@ import {
   jumpToPrevDailyNote,
 } from "./utils/DailyNoteHelper";
 import VPlugin from '.';
+import 'vconsole/dist/vconsole.min.js';
+import vConsole from 'vconsole'
 
 import MobileNavVue from './components/MobileNav.vue';
 import { getDomByVueComponent } from './utils';
@@ -70,4 +72,7 @@ export function init(plugin) {
   registerAllComponents();
   addCommand();
   loadMobileNav();
+  if (plugin.isMobile) {
+    new vConsole()
+  }
 }
