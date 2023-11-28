@@ -7,8 +7,8 @@ import "@/index.scss";
 
 import { init } from './main';
 
-export default class PluginSample extends Plugin {
-  private isMobile: boolean;
+export default class VPlugin extends Plugin {
+  public isMobile: boolean;
 
   async onload() {
     const frontEnd = getFrontend();

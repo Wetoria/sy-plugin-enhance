@@ -3,11 +3,12 @@ import {
   jumpToNextDailyNote,
   jumpToPrevDailyNote,
 } from "./utils/DailyNoteHelper";
+import VPlugin from '.';
 
 import MobileNavVue from './components/MobileNav.vue';
 import { getDomByVueComponent } from './utils';
 
-let plugin = null
+let plugin: VPlugin = null
 export function usePlugin(pluginProps?) {
   if (pluginProps) {
     plugin = pluginProps
