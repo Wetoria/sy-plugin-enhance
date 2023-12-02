@@ -2,8 +2,6 @@ import { request } from '@/api';
 import { usePlugin } from '@/main';
 
 let added = false
-const indicator = document.createElement('div')
-indicator.className = 'indicator'
 const dom = document.createElement('div')
 dom.className = 'vBacklinkContainer'
 dom.style.width = '100%';
@@ -12,6 +10,10 @@ dom.style.padding = '10px 20px'
 dom.style.display = 'flex'
 dom.style.boxSizing = 'border-box'
 dom.style.flexDirection = 'column'
+
+const indicator = document.createElement('div')
+indicator.className = 'indicator'
+dom.appendChild(indicator)
 
 
 const t = document.createElement('h2')
@@ -37,7 +39,6 @@ export function renderDocBacklinks() {
     }
 
     if (!added) {
-      contentArea.appendChild(indicator)
       contentArea.appendChild(dom)
       added = true
     }

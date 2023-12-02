@@ -1,6 +1,6 @@
 import { createApp, onMounted, ref } from 'vue';
-import ArcoVue from '@arco-design/web-vue';
-import '@arco-design/web-vue/dist/arco.css';
+// import ArcoVue from '@arco-design/web-vue';
+// import '@arco-design/web-vue/dist/arco.css';
 
 export function loadComponent(component) {
   const div = document.createElement('div');
@@ -12,9 +12,9 @@ export function loadComponent(component) {
 export function getDomByVueComponent(component, useArco?: boolean) {
   const div = document.createElement('div');
   const app = createApp(component);
-  if (useArco) {
-    app.use(ArcoVue);
-  }
+  // if (useArco) {
+  //   app.use(ArcoVue);
+  // }
   app.mount(div);
   return div;
 }
