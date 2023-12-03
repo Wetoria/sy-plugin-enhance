@@ -6,11 +6,11 @@ import livereload from "rollup-plugin-livereload";
 import zipPack from "vite-plugin-zip-pack";
 import fg from "fast-glob";
 import vue from "@vitejs/plugin-vue";
-import { vitePluginForArco } from "@arco-plugins/vite-vue";
+// import { vitePluginForArco } from "@arco-plugins/vite-vue";
 
 const args = minimist(process.argv.slice(2));
 const isWatch = args.watch || args.w || false;
-const devDistDir = "./dev";
+const devDistDir = "./dev"
 const distDir = isWatch ? devDistDir : "./dist";
 
 console.log("isWatch=>", isWatch);
@@ -25,9 +25,9 @@ export default defineConfig({
 
   plugins: [
     vue(),
-    vitePluginForArco({
-      style: "css",
-    }),
+    // vitePluginForArco({
+    //   style: "css",
+    // }),
     viteStaticCopy({
       targets: [
         {
@@ -108,7 +108,7 @@ export default defineConfig({
               zipPack({
                 inDir: "./dist",
                 outDir: "./",
-                outFileName: "package.zip",
+                outFileName: "sy-plugin-wetoria.zip",
               }),
             ]),
       ],

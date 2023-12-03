@@ -48,7 +48,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      # Build for production, 这一步会生成一个 package.zip
+      # Build for production, 这一步会生成一个 sy-plugin-wetoria.zip
       - name: Build for production
         run: pnpm build
 
@@ -57,6 +57,6 @@ jobs:
         with:
           allowUpdates: true
           artifactErrorsFailBuild: true
-          artifacts: "package.zip"
+          artifacts: "sy-plugin-wetoria.zip"
           token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: false
