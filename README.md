@@ -1,30 +1,7 @@
 # SY-Plugin-Wetoria
 
-我自己的思源插件。
+This is my own plugin of [siyuan](https://b3log.org/siyuan/?utm_source=ld246.com).
 
-不上架，仅我个人使用，有需要的请自行 fork 并构建。
+## 📌 Instructions 
 
-## 已完成的功能
-
-- 双端
-  - 双链增加 `[[]]` 效果。
-  - 修改双链颜色。
-  - 快捷创建日记功能
-- 桌面端
-  - 反链面板中，文档名称 Sticky。
-  - 使用快捷键查看 上/下一篇 日记。
-  - 反链面板中，折叠列表的提示效果。
-- 移动端
-  - 增加底部工具栏
-    - 增加前进、后退按钮
-
-## Todo
-
-- 双端
-  - 设置页面
-  - 当前文档底部增加反链内容
-- 桌面端
-  - 同步文档到飞书文档。
-- 移动端
-  - 常用页面固定区域
-  - 一键跳转至当前文档底部
+There is no English version of README. You can see the Chinese version in [here](./README_zh_CN.md)
