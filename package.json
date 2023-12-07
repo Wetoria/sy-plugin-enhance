@@ -10,6 +10,7 @@
   "scripts": {
     "make-link": "node  --no-warnings ./scripts/make_dev_link.js",
     "dev": "vite build --watch",
+    "tag": "node ./autoTag.js",
     "build": "vite build"
   },
   "devDependencies": {
