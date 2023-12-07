@@ -3,7 +3,6 @@ import {
   Menu,
   getFrontend,
 } from "siyuan";
-import "@/index.scss";
 
 import { init } from './main';
 
