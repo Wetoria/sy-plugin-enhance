@@ -9,7 +9,7 @@ import vConsole from 'vconsole'
 
 import MobileNavVue from './components/MobileNav.vue';
 import { getDomByVueComponent } from './utils';
-import { renderDocBacklinks } from './utils/Backlink';
+import { registerProtyleBottomArea } from './utils/DOM';
 
 let plugin: VPlugin = null
 export function usePlugin(pluginProps?) {
@@ -68,13 +68,13 @@ const addCommand = () => {
 }
 
 
-export function init(plugin) {
+export function init(plugin: VPlugin) {
   usePlugin(plugin);
   registerAllComponents();
   addCommand();
   loadMobileNav();
+  registerProtyleBottomArea()
   if (plugin.isMobile) {
     // new vConsole()
-    renderDocBacklinks()
   }
 }

@@ -9,9 +9,15 @@ export function loadComponent(component) {
   app.mount(div);
 }
 
-export function getDomByVueComponent(component, useArco?: boolean) {
+export function getDomByVueComponent(component, options = {
+  props: {}
+}) {
   const div = document.createElement('div');
-  const app = createApp(component);
+  const {
+    // useArco
+    props = {}
+  } = options
+  const app = createApp(component, props);
   // if (useArco) {
   //   app.use(ArcoVue);
   // }
