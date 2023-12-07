@@ -1,8 +1,8 @@
 {
-  "name": "sy-plugin-wetoria",
+  "name": "sy-plugin-enhance",
   "version": "0.2.6",
   "type": "module",
-  "description": "This is a sample plugin based on vite and svelte for Siyuan (https://b3log.org/siyuan)",
+  "description": "This is a plugin based on vite and vue for Siyuan (https://b3log.org/siyuan)",
   "repository": "",
   "homepage": "",
   "author": "",

@@ -108,7 +108,7 @@ export default defineConfig({
               zipPack({
                 inDir: "./dist",
                 outDir: "./",
-                outFileName: "sy-plugin-wetoria.zip",
+                outFileName: "package.zip",
               }),
             ]),
       ],

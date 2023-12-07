@@ -1,7 +1,7 @@
 {
-  "name": "sy-plugin-wetoria",
+  "name": "sy-plugin-enhance",
   "author": "wetoria",
-  "url": "https://github.com/Wetoria/sy-plugin-wetoria",
+  "url": "https://github.com/Wetoria/sy-plugin-enhance",
   "version": "0.2.9",
   "minAppVersion": "2.10.14",
   "backends": [
@@ -12,13 +12,13 @@
   ],
   "displayName": {
     "default": "zh_CN",
-    "en_US": "Wetoria's private plugin",
-    "zh_CN": "Wetoria的私人插件"
+    "en_US": "sy-plugin-enhance",
+    "zh_CN": "思源笔记增强"
   },
   "description": {
     "default": "zh_CN",
-    "en_US": "Wetoria's private plugin",
-    "zh_CN": "Wetoria的私人插件"
+    "en_US": "sy-plugin-enhance",
+    "zh_CN": "思源笔记增强"
   },
   "readme": {
     "default": "zh_CN",
@@ -27,7 +27,7 @@
   },
   "funding": {
     "custom": [
-      "https://afdian.net/item/7b52976c917f11eea2875254001e7c00"
+      "https://afdian.net/a/Wetoria"
     ]
   },
   "keywords": []

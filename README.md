@@ -1,6 +1,6 @@
-# SY-Plugin-Wetoria
+# SY-Plugin-Enhance
 
-This is my own plugin of [siyuan](https://b3log.org/siyuan/?utm_source=ld246.com).
+This is a enhance plugin of [siyuan](https://b3log.org/siyuan/?utm_source=ld246.com).
 
 ## 📌 Instructions 
 

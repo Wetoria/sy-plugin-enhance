@@ -2,7 +2,7 @@
 .vscode
 .DS_Store
 pnpm-lock.yaml
-sy-plugin-wetoria.zip
+package.zip
 node_modules
 dev
 dist
