@@ -1,6 +1,6 @@
 {
   "name": "sy-plugin-enhance",
-  "author": "wetoria",
+  "author": "Wetoria",
   "url": "https://github.com/Wetoria/sy-plugin-enhance",
   "version": "0.2.9",
   "minAppVersion": "2.10.14",
@@ -13,12 +13,12 @@
   "displayName": {
     "default": "zh_CN",
     "en_US": "sy-plugin-enhance",
-    "zh_CN": "思源笔记增强"
+    "zh_CN": "增强思源笔记"
   },
   "description": {
     "default": "zh_CN",
     "en_US": "sy-plugin-enhance",
-    "zh_CN": "思源笔记增强"
+    "zh_CN": "增强思源笔记"
   },
   "readme": {
     "default": "zh_CN",

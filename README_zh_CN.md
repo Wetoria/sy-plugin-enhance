@@ -1,60 +1,25 @@
 
-# Wetoria 的笔记增强插件
+# 笔记增强插件
 
-这是我自己的[思源笔记](https://b3log.org/siyuan/?utm_source=ld246.com)插件。
-
-详细功能，请参考本文末尾。
+一个用来增强[思源笔记](https://b3log.org/siyuan/?utm_source=ld246.com)的插件。
 
 ## 介绍
 
-这个插件还在开发中，并且主要是为了方便我自己使用。
+你可以把这个插件当作一个试验田，由本人 [𝓦𝓮𝓽𝓸𝓻𝓲𝓪](https://simplest-frontend.feishu.cn/docx/R1UxdUYPtoWVi2xapQXclJd2nUh#H5N9dK061o6R4sxUWTiccgvYnAc) 开发和维护。
 
-但是为了方便社区用户更好的使用，我在里面实现了一些社区的需求。
+**由于 Markdown 截图太麻烦，并且作者很懒**，如果你想看带图片效果的，或者最新说明，请移步 [思源笔记插件 - sy-plugin-enhance](https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse)  
+ 
+等什么时候插件稳定了，我再来统一更新。
 
-📌 所以，如果你要用的话，咱们约法三章：
-
-1. 因为个人精力问题，并不能测试所有平台，我目前使用和测试的平台为 `MacOS 桌面端` 以及 `iOS 移动端`。如果遇到问题或有需求，你可以到仓库的 [Issues](https://github.com/Wetoria/sy-plugin-enhance/issues) 中进行反馈。
-2. 插件主要目的是给我自己使用，**我已经尽量保证不影响思源笔记主体的功能了**，但如果出现问题，请自行承担。
-3. 目前没有上架集市，**有需要请自行下载并安装。** 并且目前没时间开发设置页面，只支持有什么用什么。请见谅。
-
-
-## 如何安装
-
-在 [releases](https://github.com/Wetoria/sy-plugin-enhance/releases) 页面，你能看到最新的插件包，下载最新版本的 `sy-plugin-wetoria.zip` 然后解压到你的 `{思源笔记工作空间}/data/plugins/` 文件夹下即可。
-
-## 其他
-
-打赏、鼓励、催更请移步：[Wetoria](https://afdian.net/item/7b52976c917f11eea2875254001e7c00)
 
 ## 功能列表
 
-### 目前支持的功能
+**如果你不了解这个插件的功能，证明你不需要它。**
 
-> Markdown 截图真麻烦，如果你想看带图片效果的，移步 [思源笔记插件 - sy-plugin-enhance](https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse)
 
-- 双链增加 `[[]]` 效果，以及修改了双链的颜色。
-  - 效果图：![LinkEffect](./asset/linkEffect.png)
-  - 如果你不喜欢这个效果的话，请自行使用 `css 片段` 功能进行调整，下个版本可能会考虑增加开关。
-- 快速新建日记的悬浮按钮。
-  - 支持拖拽调整悬浮窗位置。
-  - 会自动记录不同平台按钮的所在位置。
-  - 桌面端效果：
-  - 移动端效果：
-- 桌面端
-  - 反链面板样式修改。
-    - 文档名吸附效果
-      - 大概就是让你在滚动的时候，知道内容属于那篇文档。
-      - 效果图：
-    - 折叠列表的提示效果。
-      - 大概就是修改了一下列表项小圆点的背景色，效果图：
-  -  支持使用快捷键翻日记。
-      - 快捷键可以在思源笔记的 `设置 - 快捷键` 中进行配置。
-      - 目前只支持 `/daily note/` 文件夹下的，文档名称为 `yyyy-MM-dd` 格式的日记。
-- 移动端
-  - 底部增加导航栏
-    - 效果图：
-    - 支持记录打开过的文档，并能够 `前进` 和 `返回`
-    - 支持新建日记按钮。
-    - 加了一个不是特别必要的进入设置页面的按钮。
-  - 文档底部增加了反链的展示。
-    - 目前只支持反链的展示，并没有交互效果。
+## 其他
+
+打赏、鼓励、催更：[Wetoria](https://afdian.net/item/7b52976c917f11eea2875254001e7c00)
+
+联系作者：[𝓦𝓮𝓽𝓸𝓻𝓲𝓪](https://simplest-frontend.feishu.cn/docx/R1UxdUYPtoWVi2xapQXclJd2nUh#H5N9dK061o6R4sxUWTiccgvYnAc)
+
