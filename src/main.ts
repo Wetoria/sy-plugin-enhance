@@ -53,14 +53,14 @@ const addCommand = () => {
   const plugin = usePlugin()
   plugin.addCommand({
     langKey: "goPrevDailyNote",
-    hotkey: "⌥⌘↓",
+    hotkey: "⌥⌘↑",
     callback: () => {
       jumpToPrevDailyNote();
     },
   });
   plugin.addCommand({
     langKey: "goNextDailyNote",
-    hotkey: "⌥⌘↑",
+    hotkey: "⌥⌘↓",
     callback: () => {
       jumpToNextDailyNote();
     },

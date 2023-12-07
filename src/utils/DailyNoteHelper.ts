@@ -1,38 +1,39 @@
 import {
-  ISearchOption,
   showMessage,
 } from "siyuan";
-import dayjs from "dayjs";
 import { lsNotebooks, request } from '@/api';
 import { createDailyNote, getDailyNote, openDoc } from './Note';
 
-async function getCurrentDocInfoById(currentDocId: string) {
+async function getCurrentDocAttr(currentDocId) {
   const data = {
-    stmt: `SELECT * FROM blocks WHERE id = "${currentDocId}" and type="d"`,
+    stmt: `
+      select
+        *
+      FROM	attributes
+      WHERE
+        block_id = '${currentDocId}'
+        and name like 'custom-dailynote-%'
+      ORDER BY
+        value desc
+    `
   };
   const url = "/api/query/sql";
   return request(url, data).then(function (data) {
-    if (data && data.length === 1) {
-      return data[0];
-    }
-    return null;
+    return data
   });
+
 }
 
 async function getSlideDailyNote(next = true, newDate: string) {
   const data = {
-    stmt: `SELECT
-      *
-    FROM
-      blocks
-    WHERE
-      1=1
-      and type='d'
-      and hpath REGEXP '/daily note.*/[0-9]{4}-[0-9]{2}-[0-9]{2}$'
-      and fcontent ${next ? ">=" : "<="} '${newDate}'
-      order by
-        fcontent ${next ? "asc" : "desc"}
-      limit 1
+    stmt: `
+    select distinct B.* from blocks as B join attributes as A
+    on B.id = A.block_id
+    where A.name like 'custom-dailynote-%'
+    and A.value ${next ? ">" : "<"} '${newDate}'
+    order by
+      A.value ${next ? "asc" : "desc"}
+    limit 1
     `,
   };
   const url = "/api/query/sql";
@@ -64,29 +65,14 @@ async function jumpTo(next = true) {
   if (!currentDocId) {
     return;
   }
-  const dataInfo: ISearchOption = await getCurrentDocInfoById(currentDocId);
+  const docAttr = await getCurrentDocAttr(currentDocId)
 
-  if (!dataInfo) {
-    return;
-  }
-
-  const { hpath } = dataInfo;
-  const dailyNotePathReg = /\/daily note.*\/\d{4}-\d{2}-\d{2}$/;
-  const isDailyNote = dailyNotePathReg.test(hpath);
-
-  if (!isDailyNote) {
+  if (!docAttr.length) {
     showMessage("请打开一篇日记");
     return;
   }
 
-  let newDate = "";
-  hpath.replace(/\d{4}-\d{2}-\d{2}/, (match: string) => {
-    const cDate = dayjs(match);
-    const nDate = cDate[next ? "add" : "subtract"](1, "day");
-    newDate = nDate.format("YYYY-MM-DD");
-    return newDate;
-  });
-  const prevDailyNoteInfo = await getSlideDailyNote(next, newDate);
+  const prevDailyNoteInfo = await getSlideDailyNote(next, next ? docAttr[0].value : docAttr[docAttr.length - 1].value);
 
   if (!prevDailyNoteInfo) {
     showMessage(`未找到${next ? "下" : "上"}一篇日记`);
