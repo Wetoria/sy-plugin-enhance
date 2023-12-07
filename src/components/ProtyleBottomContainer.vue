@@ -31,7 +31,7 @@
 import { request } from '@/api';
 import { usePlugin } from '@/main';
 import { IProtyle, Protyle } from 'siyuan';
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watchEffect } from 'vue';
 
 const props = defineProps({
   detail: Object
@@ -90,9 +90,11 @@ const getData = () => {
     })
   })
 }
-
-watch(() => protyle.value?.block?.id, () => {
-  console.log('test ', protyle.value?.block?.id)
+watchEffect(() => {
+  const currentDocId = protyle.value?.block?.id;
+  if (!currentDocId) {
+    return
+  }
   getData()
 })
 
