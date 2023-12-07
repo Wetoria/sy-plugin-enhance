@@ -45,7 +45,6 @@ export default class VPlugin extends Plugin {
 
   private addMenu(rect?: DOMRect) {
     const menu = new Menu("topBarSample", () => {
-      console.log(this.i18n.byeMenu);
     });
     menu.addItem({
       label: "Open Doc Window(open help first)",
