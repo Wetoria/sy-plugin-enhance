@@ -5,7 +5,6 @@ import {
 } from "./utils/DailyNoteHelper";
 import VPlugin from '.';
 import 'vconsole/dist/vconsole.min.js';
-import vConsole from 'vconsole'
 
 import MobileNavVue from './components/MobileNav.vue';
 import { getDomByVueComponent } from './utils';
@@ -74,7 +73,4 @@ export function init(plugin: VPlugin) {
   addCommand();
   loadMobileNav();
   registerProtyleBottomArea()
-  if (plugin.isMobile) {
-    // new vConsole()
-  }
 }
