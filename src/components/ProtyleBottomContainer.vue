@@ -2,35 +2,61 @@
   <div class="ProtyleBottomContainer">
     <div class="enhanceToBottomIndicator" :data-node-id="protyle.block.id"></div>
     <div class="backlinkArea">
-      <div class="bacllinkAreaTitleLine">
-        <h2 class="backlinkTitle">反链</h2>
-      </div>
-      <div v-if="!docBacklinks.length">
-        未找到相关内容
-      </div>
-      <template v-else>
-        <div class="vBacklinkContainer backlinkList">
-          <ul class="b3-list b3-list--background">
-            <div
-              v-for="docBacklink of docBacklinks"
-              :key="docBacklink.id"
-              class="backlinkDocBlock"
-            >
-              <div class="backlinkDocBlockTitleLine">
-                <li
-                  class="b3-list-item b3-list-item--hide-action"
-                >
-                  <span class="b3-list-item__text">{{ docBacklink.name }}</span>
-                </li>
-              </div>
-              <div
-                ref="renderRef"
-                @mouseleave="onMouseLeave"
-              ></div>
-            </div>
-          </ul>
+      <div
+        class="backlinkAreaTitleLine"
+        @click="switchBacklinkAreaFoldStatus"
+        :style="{
+          borderBottom: backlinkAreaFolded ? 'unset' : undefined,
+        }"
+      >
+        <div
+          class="backlinkAreaFolder"
+          :style="{
+            transform: `rotateZ(${backlinkAreaFolded ? '0' : '90'}deg)`,
+          }"
+        >
+          <SyIcon
+            name="iconPlay"
+            size="10"
+          />
         </div>
-      </template>
+        <h2 class="backlinkTitle">
+          反链
+        </h2>
+      </div>
+      <div
+        :style="{
+          height: backlinkAreaFolded ? '0px' : 'max-content',
+          overflow: 'hidden',
+        }"
+      >
+        <div v-if="!docBacklinks.length">
+          未找到相关内容
+        </div>
+        <template v-else>
+          <div class="vBacklinkContainer backlinkList">
+            <ul class="b3-list b3-list--background">
+              <div
+                v-for="docBacklink of docBacklinks"
+                :key="docBacklink.id"
+                class="backlinkDocBlock"
+              >
+                <div class="backlinkDocBlockTitleLine">
+                  <li
+                    class="b3-list-item b3-list-item--hide-action"
+                  >
+                    <span class="b3-list-item__text">{{ docBacklink.name }}</span>
+                  </li>
+                </div>
+                <div
+                  ref="renderRef"
+                  @mouseleave="onMouseLeave"
+                ></div>
+              </div>
+            </ul>
+          </div>
+        </template>
+      </div>
     </div>
   </div>
 </template>
@@ -41,6 +67,7 @@ import { usePlugin } from '@/main';
 import { hideGutterOnTarget } from '@/utils/DOM';
 import { IProtyle, Protyle } from 'siyuan';
 import { computed, ref, watchEffect } from 'vue';
+import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 
 const props = defineProps({
   detail: Object,
@@ -126,6 +153,11 @@ watchEffect(() => {
   getData()
 })
 
+const backlinkAreaFolded = ref(false);
+const switchBacklinkAreaFoldStatus = () => {
+  backlinkAreaFolded.value = !backlinkAreaFolded.value;
+}
+
 </script>
 
 <style>
@@ -157,16 +189,34 @@ watchEffect(() => {
   .backlinkArea {
     padding-bottom: 20px;
 
-    .bacllinkAreaTitleLine {
+    .backlinkAreaTitleLine {
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      padding: 8px 0px;
+      margin-bottom: 8px;
+      border-bottom: 1px solid var(--v-border-color);
+      position: relative;
 
-      &:hover {
+      .backlinkAreaFolder {
+
+        width: 20px;
+        height: 20px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        position: absolute;
+        margin-left: -20px;
+        z-index: 1;
+        transition: all 0.1s linear;
+      }
+
+      &:hover .backlinkAreaFolder,
+      .backlinkAreaFolder:hover {
+        display: flex;
       }
 
       .backlinkTitle {
-        padding: 8px 0px;
-        margin-bottom: 8px;
-        border-bottom: 1px solid var(--v-border-color);
       }
     }
 
