@@ -157,10 +157,17 @@ watchEffect(() => {
   .backlinkArea {
     padding-bottom: 20px;
 
-    .backlinkTitle {
-      padding: 8px 0px;
-      margin-bottom: 8px;
-      border-bottom: 1px solid var(--v-border-color);
+    .bacllinkAreaTitleLine {
+      cursor: pointer;
+
+      &:hover {
+      }
+
+      .backlinkTitle {
+        padding: 8px 0px;
+        margin-bottom: 8px;
+        border-bottom: 1px solid var(--v-border-color);
+      }
     }
 
     .backlinkList {
@@ -169,19 +176,19 @@ watchEffect(() => {
       border-radius: var(--v-backlink-area-border-radius);
 
       .backlinkDocBlock {
-        background: var(--v-block-card-background);
-        border-radius: var(--v-backlink-area-border-radius);
-        border: 1px solid var(--v-border-color);
-        margin-bottom: 6px;
-        box-shadow: 2px 2px 4px var(--v-shadow-color);
+        // background: var(--v-block-card-background);
+        // border-radius: var(--v-backlink-area-border-radius);
+        // border: 1px solid var(--v-border-color);
+        // margin-bottom: 6px;
+        // box-shadow: 2px 2px 4px var(--v-shadow-color);
 
         .backlinkDocBlockTitleLine {
           background: var(--v-backlink-area-bg-color);
           position: sticky;
           top: 0;
           z-index: 2;
-          border-top-right-radius: var(--v-backlink-area-border-radius);
-          border-top-left-radius: var(--v-backlink-area-border-radius);
+          // border-top-right-radius: var(--v-backlink-area-border-radius);
+          // border-top-left-radius: var(--v-backlink-area-border-radius);
           overflow: hidden;
           padding: 2px 0px;
         }
@@ -189,6 +196,29 @@ watchEffect(() => {
         .protyle {
           background: unset;
           min-height: unset;
+
+          :deep(.protyle-wysiwyg) {
+            padding: 0px 24px;
+
+            .protyle-breadcrumb__bar {
+              min-height: unset;
+              margin-bottom: unset !important;
+              flex-wrap: wrap;
+
+              .protyle-breadcrumb__item.protyle-breadcrumb__item--active {
+                // display: none;
+
+                .protyle-breadcrumb__text {
+                  display: none;
+                }
+
+                & ~ .protyle-breadcrumb__item .protyle-breadcrumb__text{
+                  display: none;
+                }
+              }
+            }
+
+          }
         }
 
         & .b3-list-item {
