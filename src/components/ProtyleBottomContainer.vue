@@ -2,27 +2,32 @@
   <div class="ProtyleBottomContainer">
     <div class="enhanceToBottomIndicator" :data-node-id="protyle.block.id"></div>
     <div class="backlinkArea">
-      <h2 class="backlinkTitle">反链</h2>
+      <div class="bacllinkAreaTitleLine">
+        <h2 class="backlinkTitle">反链</h2>
+      </div>
       <div v-if="!docBacklinks.length">
         未找到相关内容
       </div>
       <template v-else>
-        <div className="vBacklinkContainer backlinkList">
+        <div class="vBacklinkContainer backlinkList">
           <ul class="b3-list b3-list--background">
-            <template
+            <div
               v-for="docBacklink of docBacklinks"
               :key="docBacklink.id"
+              class="backlinkDocBlock"
             >
-              <li
-                class="b3-list-item b3-list-item--hide-action"
-              >
-                <span class="b3-list-item__text">{{ docBacklink.name }}</span>
-              </li>
+              <div class="backlinkDocBlockTitleLine">
+                <li
+                  class="b3-list-item b3-list-item--hide-action"
+                >
+                  <span class="b3-list-item__text">{{ docBacklink.name }}</span>
+                </li>
+              </div>
               <div
                 ref="renderRef"
                 @mouseleave="onMouseLeave"
               ></div>
-            </template>
+            </div>
           </ul>
         </div>
       </template>
@@ -123,28 +128,76 @@ watchEffect(() => {
 
 </script>
 
+<style>
+:root {
+  --v-backlink-area-bg-color: var(--b3-theme-surface);
+  --v-backlink-area-border-radius: var(--b3-border-radius);
+  --v-border-color: var(--b3-list-hover, #363636);
+  --v-shadow-color: var(--b3-theme-background);
+  --v-block-card-background: var(--b3-theme-background);
+}
+
+.enhanceProtyleBottomContainer {
+  display: flex;
+  flex-direction: column;
+}
+</style>
+
 <style scoped lang="scss">
 .ProtyleBottomContainer {
-  height: 100px;
   // background-color: red;
   display: flex;
   flex-direction: column;
+
   .enhanceToBottomIndicator {
     height: 2px;
     // background-color: blue;
   }
 
-  .backlinkTitle {
-    padding: 8px 0px;
-    margin-bottom: 8px;
-    border-bottom: 1px solid var(--b3-list-hover, #363636);
-  }
-}
-</style>
+  .backlinkArea {
+    padding-bottom: 20px;
 
-<style>
-.enhanceProtyleBottomContainer {
-  display: flex;
-  flex-direction: column;
+    .backlinkTitle {
+      padding: 8px 0px;
+      margin-bottom: 8px;
+      border-bottom: 1px solid var(--v-border-color);
+    }
+
+    .backlinkList {
+      background: var(--v-backlink-area-bg-color);
+      padding: 6px 10px;
+      border-radius: var(--v-backlink-area-border-radius);
+
+      .backlinkDocBlock {
+        background: var(--v-block-card-background);
+        border-radius: var(--v-backlink-area-border-radius);
+        border: 1px solid var(--v-border-color);
+        margin-bottom: 6px;
+        box-shadow: 2px 2px 4px var(--v-shadow-color);
+
+        .backlinkDocBlockTitleLine {
+          background: var(--v-backlink-area-bg-color);
+          position: sticky;
+          top: 0;
+          z-index: 2;
+          border-top-right-radius: var(--v-backlink-area-border-radius);
+          border-top-left-radius: var(--v-backlink-area-border-radius);
+          overflow: hidden;
+          padding: 2px 0px;
+        }
+
+        .protyle {
+          background: unset;
+          min-height: unset;
+        }
+
+        & .b3-list-item {
+          background: unset;
+          margin-top: unset;
+        }
+      }
+    }
+  }
+
 }
 </style>
