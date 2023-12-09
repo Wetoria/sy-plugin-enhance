@@ -88,6 +88,8 @@ export function registerProtyleBottomArea() {
       const bindPadding = () => {
         div.style.paddingLeft = wysiwyg.style.paddingLeft
         div.style.paddingRight = wysiwyg.style.paddingRight
+        // IMP 改成可以配置的
+        wysiwyg.style.paddingBottom = '68px'
       }
       bindPadding()
       let flag = null
@@ -97,7 +99,7 @@ export function registerProtyleBottomArea() {
         }
         flag = setTimeout(() => {
           bindPadding()
-        }, 100)
+        }, 0)
       })
       ob.observe(wysiwyg, {
         childList: true, // 观察目标子节点的变化，是否有添加或者删除
