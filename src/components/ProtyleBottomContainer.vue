@@ -198,13 +198,16 @@ watchEffect(() => {
           min-height: unset;
 
           :deep(.protyle-wysiwyg) {
-            padding: 0px 24px;
+            padding: 0px 36px;
 
             .protyle-breadcrumb__bar {
               min-height: unset;
               margin-bottom: unset !important;
               flex-wrap: wrap;
 
+              .protyle-breadcrumb__item:only-child {
+                display: none;
+              }
               .protyle-breadcrumb__item.protyle-breadcrumb__item--active {
                 // display: none;
 
@@ -216,6 +219,10 @@ watchEffect(() => {
                   display: none;
                 }
               }
+            }
+
+            .protyle-breadcrumb__bar:not(:first-child) {
+              border-top: 1px solid var(--v-border-color);
             }
 
           }
