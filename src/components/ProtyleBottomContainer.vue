@@ -41,16 +41,36 @@
                 :key="docBacklink.id"
                 class="backlinkDocBlock"
               >
-                <div class="backlinkDocBlockTitleLine">
-                  <li
-                    class="b3-list-item b3-list-item--hide-action"
+                <div class="backlinkDocBlockTitleLineSticky">
+                  <div
+                    class="backlinkDocBlockTitleLine"
+                    @click="switchBacklinkDocBlockFoldStatus(docBacklink)"
                   >
-                    <span class="b3-list-item__text">{{ docBacklink.name }}</span>
-                  </li>
+                    <div
+                      class="backlinkDocBlockFolder"
+                      :style="{
+                        transform: `rotateZ(${docBacklinkFoldStatusMap[docBacklink.id] ? '0' : '90'}deg)`,
+                      }"
+                    >
+                      <SyIcon
+                        name="iconPlay"
+                        size="10"
+                      />
+                    </div>
+                    <li
+                      class="b3-list-item b3-list-item--hide-action"
+                    >
+                      <span class="b3-list-item__text">{{ docBacklink.name }}</span>
+                    </li>
+                  </div>
                 </div>
                 <div
                   ref="renderRef"
                   @mouseleave="onMouseLeave"
+                  :style="{
+                    height: docBacklinkFoldStatusMap[docBacklink.id] ? '0px' : 'max-content',
+                    overflow: 'hidden',
+                  }"
                 ></div>
               </div>
             </ul>
@@ -75,6 +95,11 @@ const props = defineProps({
 })
 const protyle = computed(() => props.detail.value.protyle as IProtyle)
 const docBacklinks = ref([])
+const docBacklinkFoldStatusMap = ref({})
+const switchBacklinkDocBlockFoldStatus = (docBacklink) => {
+  docBacklinkFoldStatusMap.value[docBacklink.id] = !docBacklinkFoldStatusMap.value[docBacklink.id]
+}
+
 const blockBackLinks = ref({})
 const renderRef = ref([])
 watchEffect(() => {
@@ -190,12 +215,12 @@ const switchBacklinkAreaFoldStatus = () => {
     padding-bottom: 20px;
 
     .backlinkAreaTitleLine {
-      cursor: pointer;
       display: flex;
       align-items: center;
       padding: 8px 0px;
       margin-bottom: 8px;
       border-bottom: 1px solid var(--v-border-color);
+      cursor: pointer;
       position: relative;
 
       .backlinkAreaFolder {
@@ -206,6 +231,7 @@ const switchBacklinkAreaFoldStatus = () => {
         align-items: center;
         justify-content: center;
         position: absolute;
+        color: var(--b3-theme-on-surface-light);
         margin-left: -20px;
         z-index: 1;
         transition: all 0.1s linear;
@@ -232,15 +258,38 @@ const switchBacklinkAreaFoldStatus = () => {
         // margin-bottom: 6px;
         // box-shadow: 2px 2px 4px var(--v-shadow-color);
 
-        .backlinkDocBlockTitleLine {
-          background: var(--v-backlink-area-bg-color);
+        .backlinkDocBlockTitleLineSticky {
           position: sticky;
           top: 0;
           z-index: 2;
+          display: flex;
+        }
+        .backlinkDocBlockTitleLine {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          cursor: pointer;
+          position: relative;
+          background: var(--v-backlink-area-bg-color);
           // border-top-right-radius: var(--v-backlink-area-border-radius);
           // border-top-left-radius: var(--v-backlink-area-border-radius);
-          overflow: hidden;
           padding: 2px 0px;
+
+          .backlinkDocBlockFolder {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--b3-theme-on-surface-light);
+            z-index: 1;
+            transition: all 0.1s linear;
+            visibility: hidden;
+          }
+          &:hover .backlinkDocBlockFolder,
+          .backlinkDocBlockFolder:hover {
+            visibility: visible;
+          }
         }
 
         .protyle {
@@ -281,6 +330,8 @@ const switchBacklinkAreaFoldStatus = () => {
         & .b3-list-item {
           background: unset;
           margin-top: unset;
+          margin-left: unset;
+          padding-left: unset;
         }
       }
     }
