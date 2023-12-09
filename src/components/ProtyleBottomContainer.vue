@@ -18,7 +18,10 @@
               >
                 <span class="b3-list-item__text">{{ docBacklink.name }}</span>
               </li>
-              <div ref="renderRef"></div>
+              <div
+                ref="renderRef"
+                @mouseleave="onMouseLeave"
+              ></div>
             </template>
           </ul>
         </div>
@@ -30,16 +33,36 @@
 <script setup lang="ts">
 import { request } from '@/api';
 import { usePlugin } from '@/main';
+import { hideGutterOnTarget } from '@/utils/DOM';
 import { IProtyle, Protyle } from 'siyuan';
 import { computed, ref, watchEffect } from 'vue';
 
 const props = defineProps({
-  detail: Object
+  detail: Object,
+  element: HTMLDivElement
 })
 const protyle = computed(() => props.detail.value.protyle as IProtyle)
 const docBacklinks = ref([])
 const blockBackLinks = ref({})
-const renderRef = ref(null)
+const renderRef = ref([])
+watchEffect(() => {
+  let flag
+  props.element.addEventListener('scroll', () => {
+    if (flag) {
+      clearTimeout(flag)
+    }
+    setTimeout(() => {
+      renderRef.value.forEach((item) => {
+        hideGutterOnTarget(item)
+      })
+    }, 50)
+  })
+})
+
+const onMouseLeave = (event) => {
+  hideGutterOnTarget(event.target)
+}
+
 const getData = () => {
   const plugin = usePlugin()
   const currentDocId = protyle.value?.block?.id;

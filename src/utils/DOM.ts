@@ -52,6 +52,15 @@ export function useMobileEditorObserver(props) {
   })
 }
 
+
+export function hideGutterOnTarget(target) {
+  if (!target) return
+  target.querySelectorAll(".protyle-gutters").forEach(item => {
+    item.classList.add("fn__none");
+    item.innerHTML = "";
+  });
+}
+
 const registeredMap = new WeakMap()
 export function registerProtyleBottomArea() {
   const plugin = usePlugin()
@@ -70,6 +79,7 @@ export function registerProtyleBottomArea() {
     const div = getDomByVueComponent(ProtyleBottomContainerVue, {
       props: {
         detail: detailRef,
+        element,
       }
     })
     div.className = 'enhanceProtyleBottomContainer'
