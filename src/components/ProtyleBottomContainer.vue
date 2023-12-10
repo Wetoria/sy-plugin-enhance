@@ -407,8 +407,8 @@ const getData = () => {
         }
         r.push(node)
         childNodeIds.push(item.id)
-        const blockBacklinks = results[index]
-        blockBackLinks.value[item.id] = blockBacklinks
+        const blockBacklinksTemp = results[index]
+        blockBackLinks.value[item.id] = blockBacklinksTemp
 
         sql(`
           WITH RECURSIVE block_tree AS (
@@ -464,7 +464,7 @@ const getData = () => {
 
         new Protyle(plugin.app, renderRef.value[index], {
           blockId: currentDocId,
-          backlinkData: blockBacklinks.backlinks,
+          backlinkData: blockBacklinksTemp.backlinks,
           render: {
               background: false,
               title: false,
