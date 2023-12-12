@@ -537,7 +537,7 @@ const getData = async () => {
           sqlResult.push(n)
         })
         if (parent) {
-          parent.treePath += `/(${paths.join('||')})`
+          parent.treePath += `/(${paths.join('|')})`
         }
       }
     })
