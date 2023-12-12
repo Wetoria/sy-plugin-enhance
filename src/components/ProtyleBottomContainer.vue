@@ -120,7 +120,7 @@
         <div v-if="!docBacklinks.length">
           未找到相关内容
         </div>
-        <template v-else>
+        <template v-else-if="!useV">
           <div
             class="vBacklinkContainer backlinkList"
             ref="backlinkListRef"
@@ -152,7 +152,7 @@
             </ul>
           </div>
         </template>
-        <!-- <template v-else>
+        <template v-else>
           <div
             class="vBacklinkContainer backlinkList"
             ref="backlinkListRef"
@@ -197,7 +197,7 @@
               </div>
             </ul>
           </div>
-        </template> -->
+        </template>
       </div>
     </div>
   </div>
@@ -239,6 +239,8 @@ const docBacklinkFoldStatusMap = ref({})
 const switchBacklinkDocBlockFoldStatus = (docBacklink) => {
   docBacklinkFoldStatusMap.value[docBacklink.id] = !docBacklinkFoldStatusMap.value[docBacklink.id]
 }
+
+const useV = ref(true);
 
 const properties = ref<{
   [key: string]: {
@@ -331,6 +333,76 @@ const filterBacklinkDomNodes = () => {
     delete dom.dataset.shown
   })
   dealedDomList.value = []
+
+  if (!useV) {
+    return
+  }
+  const nodeListItems = [...backlinkListRef.value.querySelectorAll('[data-type="NodeListItem"]')]
+  console.log('nodeListItems is ', nodeListItems)
+  const shownNodeListItem =  nodeListItems.filter((node: HTMLElement) => {
+    const blockRefs = [...node.querySelectorAll('[data-type="block-ref"]')]
+    if (!blockRefs.length) {
+      return
+    }
+
+    const hasValidRef = blockRefs.some((blockRefNode: HTMLElement) => {
+      const blockRefId = blockRefNode.dataset.id
+      const isValid = !excludeRefs.value.find((i) => i.id === blockRefId) && !!includeRefs.value.find((i) => i.id === blockRefId)
+      return isValid
+    })
+
+    if (hasValidRef) {
+      node.dataset.shown = 'true'
+      return true
+    }
+  })
+
+  if (!shownNodeListItem.length) {
+    return
+  }
+
+  shownNodeListItem.forEach((item: HTMLElement) => {
+    dealedDomList.value.push({
+      dom: item,
+      display: item.style.display
+    })
+    const nodeListDoms = [...item.querySelectorAll('[data-type="NodeList"]')]
+    const itemShown = item.dataset.shown
+    nodeListDoms.forEach((listItem: HTMLElement) => {
+      listItem.dataset.shown = itemShown
+      dealedDomList.value.push({
+        dom: listItem,
+        display: listItem.style.display
+      })
+      const t  = [...listItem.querySelectorAll('[data-type=NodeListItem]')]
+      t.forEach((i: HTMLElement) => {
+        i.dataset.shown = itemShown
+        dealedDomList.value.push({
+          dom: i,
+          display: i.style.display
+        })
+      })
+    })
+  })
+
+  const hiddenNodeListItems = [...backlinkListRef.value.querySelectorAll('[data-type="NodeListItem"]:not([data-shown="true"])')]
+  console.log('hiddenNodeListItems is ', hiddenNodeListItems)
+  hiddenNodeListItems.forEach((item: HTMLElement) => {
+    dealedDomList.value.push({
+      dom: item,
+      display: item.style.display
+    })
+    item.style.display = 'none'
+
+    const prevDom: HTMLElement = item.previousSibling
+    if (prevDom && prevDom.classList.contains('protyle-breadcrumb__bar')) {
+      dealedDomList.value.push({
+        dom: prevDom,
+        display: prevDom.style.display
+      })
+      prevDom.style.display = 'none'
+    }
+  })
 
 
 }
@@ -552,17 +624,19 @@ const getData = async () => {
     sqlResult = sqlResult.filter(i => i._type === 'block_Ref').concat([node])
     refLinks.value.push(...sqlResult)
 
-    // new Protyle(plugin.app, renderRef.value[index], {
-    //   blockId: currentDocId,
-    //   backlinkData: blockBacklinksTemp.backlinks,
-    //   render: {
-    //       background: false,
-    //       title: false,
-    //       gutter: true,
-    //       scroll: false,
-    //       breadcrumb: false,
-    //   }
-    // })
+    if (useV.value) {
+      new Protyle(plugin.app, renderRef.value[index], {
+        blockId: currentDocId,
+        backlinkData: blockBacklinksTemp.backlinks,
+        render: {
+            background: false,
+            title: false,
+            gutter: true,
+            scroll: false,
+            breadcrumb: false,
+        }
+      })
+    }
   }
 }
 watchEffect(() => {
