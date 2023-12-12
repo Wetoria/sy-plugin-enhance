@@ -794,9 +794,9 @@ const switchBacklinkAreaFoldStatus = () => {
               flex-wrap: wrap;
 
               // TODO 去掉，否则没有跳转正文的入口了
-              .protyle-breadcrumb__item:only-child {
-                display: none;
-              }
+              // .protyle-breadcrumb__item:only-child {
+              //   display: none;
+              // }
               .protyle-breadcrumb__item.protyle-breadcrumb__item--active {
                 // display: none;
 
