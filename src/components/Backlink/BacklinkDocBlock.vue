@@ -329,8 +329,8 @@ const checkAndFilter = (parentData, filterList) => {
     return checkAllSubContainerBlock([...nodeList], filterList, parentData)
 }
 
-watch(props.filterList, () => {
-  checkAndFilter(props.parentData, props.filterList)
+watch(props, () => {
+    filterSuccess.value = checkAndFilter(props.parentData, props.filterList)
 })
 
 
