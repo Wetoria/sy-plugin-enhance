@@ -121,7 +121,42 @@
           未找到相关内容
         </div>
         <template v-else>
-          <div class="vBacklinkContainer backlinkList">
+          <div
+            class="vBacklinkContainer backlinkList"
+            ref="backlinkListRef"
+          >
+            <ul class="b3-list b3-list--background">
+              <div
+                v-for="docBacklink of docBacklinks"
+                :key="docBacklink.id"
+                class="backlinkDocBlock"
+              >
+                <BacklinkBlock
+                  :backlink-data="(blockBackLinks[docBacklink.id])?.backlinks"
+                  :display-map="displayMap"
+                  :doc-backlink-fold-status-map="docBacklinkFoldStatusMap"
+                  :doc-backlink="docBacklink"
+                  :current-doc-id="currentDocId"
+                  @switch-backlink-doc-block-fold-status="switchBacklinkDocBlockFoldStatus"
+                  :filterList="filterList"
+                />
+                <!-- <div
+                  ref="renderRef"
+                  @mouseleave="onMouseLeave"
+                  :style="{
+                    height: docBacklinkFoldStatusMap[docBacklink.id] ? '0px' : 'max-content',
+                    overflow: 'hidden',
+                  }"
+                ></div> -->
+              </div>
+            </ul>
+          </div>
+        </template>
+        <!-- <template v-else>
+          <div
+            class="vBacklinkContainer backlinkList"
+            ref="backlinkListRef"
+          >
             <ul class="b3-list b3-list--background">
               <div
                 v-for="docBacklink of docBacklinks"
@@ -162,7 +197,7 @@
               </div>
             </ul>
           </div>
-        </template>
+        </template> -->
       </div>
     </div>
   </div>
@@ -173,8 +208,9 @@ import { request, sql } from '@/api';
 import { usePlugin } from '@/main';
 import { hideGutterOnTarget } from '@/utils/DOM';
 import { IProtyle, Protyle } from 'siyuan';
-import { computed, ref, watchEffect } from 'vue';
+import { computed, ref, watch, watchEffect } from 'vue';
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
+import BacklinkBlock from './Backlink/BacklinkBlock.vue'
 
 interface Node {
   id: string;
@@ -197,6 +233,7 @@ const props = defineProps({
   element: HTMLDivElement
 })
 const protyle = computed(() => props.detail.value.protyle as IProtyle)
+const currentDocId = computed(() => protyle.value?.block?.id)
 const docBacklinks = ref([])
 const docBacklinkFoldStatusMap = ref({})
 const switchBacklinkDocBlockFoldStatus = (docBacklink) => {
@@ -210,6 +247,16 @@ const properties = ref<{
   }
 }>({})
 const refLinks = ref<Array<Node>>([])
+const filterList = computed(() => {
+  const result = []
+  Object.keys(properties.value).forEach((key) => {
+    result.push({
+      key,
+      include: properties.value[key].checked
+    })
+  })
+  return result
+})
 
 const backlinkFilterPanelShownStatus = ref(true)
 const switchBacklinkFilterPanelShownStatus = () => {
@@ -258,6 +305,37 @@ const includeRefs = computed<Array<UnionNode>>(() => {
     }
   })
   return list
+})
+
+const backlinkListRef = ref<HTMLElement>(null)
+const dealedDomList = ref<Array<{
+  dom: HTMLElement;
+  display: string;
+}>>([])
+const shoreAndHideDom = (dom) => {
+  dealedDomList.value.push({
+    dom,
+    display: dom.style.display
+  })
+}
+const filterBacklinkDomNodes = () => {
+  console.log('excludeRefs is ', excludeRefs.value)
+  console.log('includeRefs is ', includeRefs.value)
+  if (!backlinkListRef.value) {
+    return
+  }
+
+  dealedDomList.value.forEach((node) => {
+    const { dom } = node
+    dom.style.display = node.display
+    delete dom.dataset.shown
+  })
+  dealedDomList.value = []
+
+
+}
+watch([excludeRefs, includeRefs], () => {
+  filterBacklinkDomNodes()
 })
 
 
@@ -349,6 +427,7 @@ const unionRefLinks = computed<UnionNode[]>(() => {
 
 const blockBackLinks = ref({})
 const renderRef = ref([])
+const displayMap = ref({})
 watchEffect(() => {
   let flag
   props.element.addEventListener('scroll', () => {
@@ -473,17 +552,17 @@ const getData = async () => {
     sqlResult = sqlResult.filter(i => i._type === 'block_Ref').concat([node])
     refLinks.value.push(...sqlResult)
 
-    new Protyle(plugin.app, renderRef.value[index], {
-      blockId: currentDocId,
-      backlinkData: blockBacklinksTemp.backlinks,
-      render: {
-          background: false,
-          title: false,
-          gutter: true,
-          scroll: false,
-          breadcrumb: false,
-      }
-    })
+    // new Protyle(plugin.app, renderRef.value[index], {
+    //   blockId: currentDocId,
+    //   backlinkData: blockBacklinksTemp.backlinks,
+    //   render: {
+    //       background: false,
+    //       title: false,
+    //       gutter: true,
+    //       scroll: false,
+    //       breadcrumb: false,
+    //   }
+    // })
   }
 }
 watchEffect(() => {
