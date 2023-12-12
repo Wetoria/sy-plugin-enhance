@@ -76,6 +76,7 @@ const renderProtyle = () => {
     );
     ((renderRef.value as HTMLElement).querySelector('.protyle-wysiwyg.protyle-wysiwyg--attr div.protyle-breadcrumb__item[contenteditable="false"]') as HTMLElement)?.click()
     render = true
+    filterSuccess.value = checkAndFilter(props.parentData, props.filterList)
 }
 
 const getIconByType = (type: string, sub?: string) => {
