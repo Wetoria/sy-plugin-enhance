@@ -181,7 +181,8 @@ interface Node {
   parent_id: string;
   name: string;
   treePath: string;
-  _type: 'doc' | 'block_Ref';
+  level: number;
+_type: 'doc' | 'block_Ref';
 }
 
 interface UnionNode {
@@ -306,7 +307,7 @@ const unionRefLinks = computed<UnionNode[]>(() => {
   })
   .forEach((item) => {
     if (item._type === 'doc') {
-      const docDirectChildren = refLinks.value.filter(i => i.id === currentDocId && i.treePath.startsWith(item.id))
+      const docDirectChildren = refLinks.value.filter(i => i.level === 2 && i.treePath.startsWith(item.id))
 
       const n = {
         ...item,
@@ -366,116 +367,124 @@ const onMouseLeave = (event) => {
   hideGutterOnTarget(event.target)
 }
 
-const getData = () => {
+const getData = async () => {
   const plugin = usePlugin()
   const currentDocId = protyle.value?.block?.id;
   if (!currentDocId) {
     return
   }
   blockBackLinks.value = {}
-  request('/api/ref/getBacklink2', {
+  const res = await request('/api/ref/getBacklink2', {
     id: currentDocId,
     sort: '3',
     mSort: '3',
     k: '',
     mk: '',
-  }).then((res) => {
-    const { backlinks } = res;
+  })
+  const { backlinks } = res;
 
-    if (!backlinks.length) {
-      return
+  if (!backlinks.length) {
+    return
+  }
+  docBacklinks.value = backlinks
+
+  const results = await Promise.all(backlinks.map((item) => {
+    return request('/api/ref/getBacklinkDoc', {
+      defID: currentDocId,
+      refTreeID: item.id,
+      keyword: '',
+    })
+  }))
+  refLinks.value = []
+  for (let index = 0; index < backlinks.length; index++) {
+    const item = backlinks[index]
+    const node: Node = {
+      id: item.id,
+      parent_id: null,
+      name: item.name,
+      treePath: `${item.id}`,
+      level: 0,
+      _type: 'doc',
     }
-    docBacklinks.value = backlinks
+    const childNodeIds = []
+    // childNodeIds.push(item.id)
+    const blockBacklinksTemp = results[index]
+    blockBackLinks.value[item.id] = blockBacklinksTemp
 
-    Promise.all(backlinks.map((item) => {
-      return request('/api/ref/getBacklinkDoc', {
-        defID: currentDocId,
-        refTreeID: item.id,
-        keyword: '',
+    blockBacklinksTemp.backlinks.forEach((b) => {
+      childNodeIds.push(b.blockPaths[b.blockPaths.length - 1].id)
+    })
+
+    let sqlResult = await sql(`
+      WITH RECURSIVE block_tree AS (
+        SELECT id, parent_id, content, fcontent, markdown, type, subtype, 1 as level
+        FROM blocks
+        WHERE id in (${childNodeIds.map(i => `'${i}'`).join(', ')})
+        UNION
+        SELECT c.id, c.parent_id, c.content, c.fcontent, c.markdown, c.type, c.subtype, ct.level + 1
+        FROM blocks c
+        JOIN block_tree ct ON c.parent_id = ct.id
+      )
+      SELECT * FROM block_tree;
+    `)
+    sqlResult.forEach((sqlRes) => {
+      const { id } = sqlRes
+      sqlRes.treePath = id
+    })
+    sqlResult.filter((i) => i.level === 1)
+      .forEach((i) => {
+        i.treePath = `${node.treePath}/${i.treePath}`
       })
-    })).then((results) => {
-      refLinks.value = []
-      const childNodeIds = []
-      const r = []
-      backlinks.forEach((item, index) => {
-        const node: Node = {
-          id: item.id,
-          parent_id: null,
-          name: item.name,
-          treePath: `${item.id}`,
-          _type: 'doc',
-        }
-        r.push(node)
-        childNodeIds.push(item.id)
-        const blockBacklinksTemp = results[index]
-        blockBackLinks.value[item.id] = blockBacklinksTemp
-
-        sql(`
-          WITH RECURSIVE block_tree AS (
-            SELECT id, parent_id, content, fcontent, markdown, type, subtype, 1 as level
-            FROM blocks
-            WHERE id in (${childNodeIds.map(i => `'${i}'`).join(', ')})
-            UNION
-            SELECT c.id, c.parent_id, c.content, c.fcontent, c.markdown, c.type, c.subtype, ct.level + 1
-            FROM blocks c
-            JOIN block_tree ct ON c.parent_id = ct.id
-          )
-          SELECT * FROM block_tree;
-        `).then((sqlResult) => {
-          sqlResult.forEach((sqlRes) => {
-            const { id } = sqlRes
-            sqlRes.treePath = id
-          })
-          const pList = sqlResult.filter(i => i.type === 'p')
-          pList.forEach((p) => {
-            const { markdown } = p
-            const reg = /\(\([^)].*?\)\)/g
-            const match = markdown.match(reg)
-            if (match) {
-              const parent = sqlResult.find(i => i.id === p.parent_id)
-              let paths = []
-              match.forEach((m) => {
-                const [key, value] = m.replace(/[\(\)]/g, '').split(' ')
-                const fValue = value.substring(1, value.length - 1)
-                paths.push(key)
-                const n: Node = {
-                  id: key,
-                  parent_id: p.id,
-                  name: fValue,
-                  treePath: `${key}`,
-                  _type: 'block_Ref',
-                }
-                sqlResult.push(n)
-                r.push(n)
-              })
-              parent.treePath += `/(${paths.join('-')})`
-            }
-          })
-          sqlResult.forEach((sqlRes) => {
-            const { id, treePath } = sqlRes
-            const others = sqlResult.filter(i => i.parent_id === id)
-            sqlRes.children = others
-            others.forEach((i) => {
-              i.treePath = `${treePath}/${i.treePath}`
-            })
-          })
-          refLinks.value = r
-        })
-
-        new Protyle(plugin.app, renderRef.value[index], {
-          blockId: currentDocId,
-          backlinkData: blockBacklinksTemp.backlinks,
-          render: {
-              background: false,
-              title: false,
-              gutter: true,
-              scroll: false,
-              breadcrumb: false,
+    const pList = sqlResult.filter(i => i.type === 'p')
+    pList.forEach((p) => {
+      const { markdown } = p
+      const reg = /\(\([^)].*?\)\)/g
+      const match = markdown.match(reg)
+      if (match) {
+        const parent = sqlResult.find(i => i.id === p.parent_id)
+        let paths = []
+        match.forEach((m) => {
+          const [key, value] = m.replace(/[\(\)]/g, '').split(' ')
+          const fValue = value.substring(1, value.length - 1)
+          paths.push(key)
+          const n: Node = {
+            id: key,
+            parent_id: p.id,
+            name: fValue,
+            treePath: `${key}`,
+            level: p.level,
+            _type: 'block_Ref',
           }
+          sqlResult.push(n)
         })
+        if (parent) {
+          parent.treePath += `/(${paths.join('-')})`
+        }
+      }
+    })
+    sqlResult.forEach((sqlRes) => {
+      const { id, treePath } = sqlRes
+      const others = sqlResult.filter(i => i.parent_id === id)
+      sqlRes.children = others
+      others.forEach((i) => {
+        i.treePath = `${treePath}/${i.treePath}`
       })
     })
-  })
+    sqlResult = sqlResult.filter(i => i._type === 'block_Ref').concat([node])
+    refLinks.value.push(...sqlResult)
+
+    new Protyle(plugin.app, renderRef.value[index], {
+      blockId: currentDocId,
+      backlinkData: blockBacklinksTemp.backlinks,
+      render: {
+          background: false,
+          title: false,
+          gutter: true,
+          scroll: false,
+          breadcrumb: false,
+      }
+    })
+  }
 }
 watchEffect(() => {
   const currentDocId = protyle.value?.block?.id;
