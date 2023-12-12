@@ -491,7 +491,7 @@ const getData = async () => {
     blockBackLinks.value[item.id] = blockBacklinksTemp
 
     blockBacklinksTemp.backlinks.forEach((b) => {
-      childNodeIds.push(b.blockPaths[b.blockPaths.length - 1].id)
+      childNodeIds.push(b.blockPaths[1].id)
     })
 
     let sqlResult = await sql(`
@@ -537,7 +537,7 @@ const getData = async () => {
           sqlResult.push(n)
         })
         if (parent) {
-          parent.treePath += `/(${paths.join('-')})`
+          parent.treePath += `/(${paths.join('||')})`
         }
       }
     })
