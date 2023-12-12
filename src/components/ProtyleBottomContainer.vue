@@ -240,7 +240,7 @@ const switchBacklinkDocBlockFoldStatus = (docBacklink) => {
   docBacklinkFoldStatusMap.value[docBacklink.id] = !docBacklinkFoldStatusMap.value[docBacklink.id]
 }
 
-const useV = ref(true);
+const useV = ref(false);
 
 const properties = ref<{
   [key: string]: {

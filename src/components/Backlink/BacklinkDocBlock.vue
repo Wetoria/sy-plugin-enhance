@@ -236,6 +236,15 @@ const checkNodeListWithFilterExclude = (nodeList, filterList) => {
 
 const hiddenNode = (node) => {
     node.classList.add("fn__none")
+    node.classList.add("backlink-query-hidden")
+}
+const showNode = (node)=>{
+    console.log("show")
+    let hiddenNodeList = node.querySelectorAll('.backlink-query-hidden')
+    for (let hiddenNode of hiddenNodeList){
+        hiddenNode.classList.remove('backlink-query-hidden')
+        hiddenNode.classList.remove('fn__none')
+    }
 }
 
 const isLeftBlock = (node) => {
@@ -272,7 +281,7 @@ const checkAllSubContainerBlock = (subContainerBlockList, filterList, parentNode
 
 function filterByString(node, filterList, parentNodeList) {
     let road = [...parentNodeList]
-    console.log(node.innerText)
+    // console.log(node.innerText)
     if (!checkNodeListWithFilterInclude([...parentNodeList, node], filterList)) {
         hiddenNode(node)
         return false
@@ -330,6 +339,7 @@ const checkAndFilter = (parentData, filterList) => {
 }
 
 watch(props, () => {
+    showNode(renderRef.value)
     filterSuccess.value = checkAndFilter(props.parentData, props.filterList)
 })
 
