@@ -206,11 +206,12 @@
 <script setup lang="ts">
 import { request, sql } from '@/api';
 import { usePlugin } from '@/main';
-import { hideGutterOnTarget } from '@/utils/DOM';
+import { hideGutterOnTarget, queryAllByDom } from '@/utils/DOM';
 import { IProtyle, Protyle } from 'siyuan';
 import { computed, ref, watch, watchEffect } from 'vue';
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import BacklinkBlock from './Backlink/BacklinkBlock.vue'
+import { SyDomNodeTypes, checkNodeHasBlockRef, getBlockRefNodes, getChildNodeList, getSyHeadingNodeType, hideDom, isSyBreadCrumb, isSyNodeBlockquote, isSyNodeHeading, isSyNodeList, isSyNodeListItem, isSyNodeParagraph, isSyNodeSuperBlock, isSyNodeTable, showDom } from '@/utils/Siyuan';
 
 interface Node {
   id: string;
@@ -218,7 +219,7 @@ interface Node {
   name: string;
   treePath: string;
   level: number;
-_type: 'doc' | 'block_Ref';
+  _type: 'doc' | 'block_Ref';
 }
 
 interface UnionNode {
@@ -249,6 +250,7 @@ const properties = ref<{
   }
 }>({})
 const refLinks = ref<Array<Node>>([])
+const backlinkBlockRefNodes = ref([])
 const filterList = computed(() => {
   const result = []
   Object.keys(properties.value).forEach((key) => {
@@ -284,8 +286,6 @@ const handleClickFilterTag = (event: MouseEvent, item: UnionNode) => {
       origin: item
     }
   }
-
-  console.log('properties.value is ', properties.value)
 }
 
 const excludeRefs = computed<Array<UnionNode>>(() => {
@@ -296,6 +296,7 @@ const excludeRefs = computed<Array<UnionNode>>(() => {
       list.push(item.origin)
     }
   })
+  console.log('ex is ', list)
   return list
 })
 const includeRefs = computed<Array<UnionNode>>(() => {
@@ -306,108 +307,230 @@ const includeRefs = computed<Array<UnionNode>>(() => {
       list.push(item.origin)
     }
   })
+  console.log('in is ', list)
   return list
 })
 
 const backlinkListRef = ref<HTMLElement>(null)
 const dealedDomList = ref<Array<{
   dom: HTMLElement;
-  display: string;
+  // display: string;
 }>>([])
-const shoreAndHideDom = (dom) => {
+const storeDom = (dom: HTMLElement) => {
+  // hideDom(dom)
+  // dom.dataset.filterValid = 'true'
   dealedDomList.value.push({
     dom,
-    display: dom.style.display
+    // display: dom.style.display
+  })
+  // dom.dataset.vShown = 'false'
+}
+const recoverDom = (node) => {
+  const { dom } = node
+  showDom(dom)
+  // dom.dataset.vShown = 'true'
+  delete dom.dataset.include
+}
+const recoverDealedDom = (dom) => {
+  dealedDomList.value = dealedDomList.value.filter((item) => {
+    if (item.dom == dom) {
+      recoverDom(item)
+      return false
+    }
+    return true
   })
 }
-const filterBacklinkDomNodes = () => {
-  console.log('excludeRefs is ', excludeRefs.value)
-  console.log('includeRefs is ', includeRefs.value)
+const recoverAllDealedDoms = () => {
+  dealedDomList.value.forEach((node) => {
+    recoverDom(node)
+  })
+  dealedDomList.value = []
+}
+
+const dealNodesRecursion = (list: HTMLElement[], callback: (node: HTMLElement) => void) => {
+  if (!list || !list.length) {
+    return
+  }
+
+  for (let index = 0; index < list.length; index++) {
+    const node = list[index]
+    // 叶子块
+    const isParagraph = isSyNodeParagraph(node)
+    const isTable = isSyNodeTable(node)
+    const isHeading = isSyNodeHeading(node)
+
+    const isLeafNode = false
+      || isParagraph
+      || isTable
+      || isHeading
+
+
+    // 容器块
+    const isNodeListItem = isSyNodeListItem(node)
+    const isNodeList = isSyNodeList(node)
+    const isNodeBlockquote = isSyNodeBlockquote(node)
+    const isNodeSuperBlock = isSyNodeSuperBlock(node)
+
+
+    const isContainerNode = false
+      || isNodeListItem
+      || isNodeList
+      || isNodeBlockquote
+      || isNodeSuperBlock
+
+    if (!isLeafNode && !isContainerNode) {
+      continue
+    }
+    callback(node)
+    dealNodesRecursion([...node.children] as HTMLElement[], callback)
+  }
+}
+
+const filterProtyleNodes = (wysiwyg) => {
+  const children = wysiwyg.children
+
+
+}
+
+const markBlockRefNode = (node: HTMLElement, include: string, needCheckNodeListItems?: HTMLElement[]) => {
+    let currentNode = node
+    while (currentNode && !currentNode.classList.contains('backlinkDocBlock')) {
+      if (currentNode.dataset.include) {
+        return
+      }
+      currentNode.dataset.include = include
+      storeDom(currentNode)
+
+      // check heading
+
+      // check whether child list need to selected
+      if (isSyNodeListItem(currentNode) && needCheckNodeListItems) {
+        needCheckNodeListItems.push(currentNode)
+      }
+      checkNodeParentHeading(currentNode, include)
+      currentNode = currentNode.parentElement
+    }
+  }
+
+const checkNodeListShownStatus = (nodeListItem: HTMLElement) => {
+  const children = [...nodeListItem.children]
+  const nodeList = children.find((item) => isSyNodeList(item as HTMLElement)) as HTMLElement
+  if (nodeList) {
+    const listChildren = [...nodeList.children]
+    const marked = listChildren.some((item: HTMLElement) => item.dataset.include)
+    if (!marked) {
+      nodeList.dataset.include = nodeListItem.dataset.include
+      storeDom(nodeList)
+      // 递归标记
+      dealNodesRecursion(listChildren as HTMLElement[], (node) => {
+        node.dataset.include = nodeListItem.dataset.include
+        storeDom(node)
+      })
+    }
+  }
+}
+
+const checkNodeParentHeading = (node: HTMLElement, include: string) => {
+  let prevDom = node.previousElementSibling as HTMLElement
+  let headingType = ''
+  while (prevDom) {
+    if (prevDom && isSyNodeHeading(prevDom)) {
+      const curHeadingType = getSyHeadingNodeType(prevDom)
+      if (curHeadingType < headingType) {
+        break
+      }
+      prevDom.dataset.include = include
+      storeDom(prevDom)
+      headingType = curHeadingType
+    }
+    prevDom = prevDom.previousElementSibling as HTMLElement
+  }
+}
+
+const filterBacklinkDomNodes2 = () => {
+  recoverAllDealedDoms()
+
   if (!backlinkListRef.value) {
     return
   }
 
-  dealedDomList.value.forEach((node) => {
-    const { dom } = node
-    dom.style.display = node.display
-    delete dom.dataset.shown
-  })
-  dealedDomList.value = []
-
-  if (!useV) {
+  if (!excludeRefs.value.length && !includeRefs.value.length) {
     return
   }
-  const nodeListItems = [...backlinkListRef.value.querySelectorAll('[data-type="NodeListItem"]')]
-  console.log('nodeListItems is ', nodeListItems)
-  const shownNodeListItem =  nodeListItems.filter((node: HTMLElement) => {
-    const blockRefs = [...node.querySelectorAll('[data-type="block-ref"]')]
-    if (!blockRefs.length) {
+
+  const blockRefNodes = getBlockRefNodes(backlinkListRef.value)
+  if (!blockRefNodes.length) {
+    return
+  }
+
+  const inBlockRefNodes = blockRefNodes.filter((node: HTMLElement) => includeRefs.value.find(i => i.id == node.dataset.id))
+  const exBlockRefNodes = blockRefNodes.filter((node: HTMLElement) => excludeRefs.value.find(i => i.id == node.dataset.id))
+  const needCheckNodeListItems = []
+  exBlockRefNodes.forEach((item: HTMLElement) => {
+    markBlockRefNode(item, 'false', needCheckNodeListItems)
+  })
+  inBlockRefNodes.forEach((item: HTMLElement) => {
+    markBlockRefNode(item, 'true', needCheckNodeListItems)
+  })
+
+  needCheckNodeListItems.forEach((nodeListItem: HTMLElement) => {
+    if (nodeListItem.dataset.include === 'true') {
+      const children = [...nodeListItem.children] as HTMLElement[]
+      children.filter((item) => !isSyNodeList(item))
+        .forEach((item: HTMLElement) => {
+          item.dataset.include = 'true'
+        })
+    }
+    checkNodeListShownStatus(nodeListItem)
+  })
+
+  const backlinkDocBlockList = queryAllByDom(backlinkListRef.value, '.backlinkDocBlock')
+
+  if (!backlinkDocBlockList.length) {
+    return
+  }
+
+  backlinkDocBlockList.forEach((item: HTMLElement) => {
+    const wysiwyg = item.querySelector('.protyle-wysiwyg')
+    if (!wysiwyg) {
       return
     }
 
-    const hasValidRef = blockRefs.some((blockRefNode: HTMLElement) => {
-      const blockRefId = blockRefNode.dataset.id
-      const isValid = !excludeRefs.value.find((i) => i.id === blockRefId) && !!includeRefs.value.find((i) => i.id === blockRefId)
-      return isValid
+    dealNodesRecursion([...wysiwyg.children] as HTMLElement[], (node) => {
+      if (!node.dataset.include || node.dataset.include === 'false') {
+        storeDom(node)
+        hideDom(node)
+      }
     })
 
-    if (hasValidRef) {
-      node.dataset.shown = 'true'
-      return true
+    const breadCrumbList = queryAllByDom(item, `.${SyDomNodeTypes.BreadCrumb}`)
+    breadCrumbList.forEach((item: HTMLElement) => {
+      const nextDom = item.nextElementSibling as HTMLElement
+      if (!nextDom) return
+
+      if (!nextDom.dataset.include || nextDom.dataset.include == 'false') {
+        storeDom(item)
+        hideDom(item)
+      }
+    })
+
+    const protyleDom = item.querySelector('.protyle') as HTMLElement
+    const titleLine = item.querySelector('.backlinkDocBlockTitleLineSticky') as HTMLElement
+    if (!protyleDom) {
+      storeDom(titleLine)
+      hideDom(titleLine)
+    }
+    if (!protyleDom.dataset.include || protyleDom.dataset.include === 'false') {
+      storeDom(protyleDom)
+      hideDom(protyleDom)
+      storeDom(titleLine)
+      hideDom(titleLine)
     }
   })
-
-  if (!shownNodeListItem.length) {
-    return
-  }
-
-  shownNodeListItem.forEach((item: HTMLElement) => {
-    dealedDomList.value.push({
-      dom: item,
-      display: item.style.display
-    })
-    const nodeListDoms = [...item.querySelectorAll('[data-type="NodeList"]')]
-    const itemShown = item.dataset.shown
-    nodeListDoms.forEach((listItem: HTMLElement) => {
-      listItem.dataset.shown = itemShown
-      dealedDomList.value.push({
-        dom: listItem,
-        display: listItem.style.display
-      })
-      const t  = [...listItem.querySelectorAll('[data-type=NodeListItem]')]
-      t.forEach((i: HTMLElement) => {
-        i.dataset.shown = itemShown
-        dealedDomList.value.push({
-          dom: i,
-          display: i.style.display
-        })
-      })
-    })
-  })
-
-  const hiddenNodeListItems = [...backlinkListRef.value.querySelectorAll('[data-type="NodeListItem"]:not([data-shown="true"])')]
-  console.log('hiddenNodeListItems is ', hiddenNodeListItems)
-  hiddenNodeListItems.forEach((item: HTMLElement) => {
-    dealedDomList.value.push({
-      dom: item,
-      display: item.style.display
-    })
-    item.style.display = 'none'
-
-    const prevDom: HTMLElement = item.previousSibling
-    if (prevDom && prevDom.classList.contains('protyle-breadcrumb__bar')) {
-      dealedDomList.value.push({
-        dom: prevDom,
-        display: prevDom.style.display
-      })
-      prevDom.style.display = 'none'
-    }
-  })
-
-
 }
 watch([excludeRefs, includeRefs], () => {
-  filterBacklinkDomNodes()
+  filterBacklinkDomNodes2()
+  // convertIntoTreeData()
 })
 
 
@@ -547,6 +670,8 @@ const getData = async () => {
     })
   }))
   refLinks.value = []
+  backlinkBlockRefNodes.value = []
+  let tempBlockRefNodes = []
   for (let index = 0; index < backlinks.length; index++) {
     const item = backlinks[index]
     const node: Node = {
@@ -563,20 +688,35 @@ const getData = async () => {
     blockBackLinks.value[item.id] = blockBacklinksTemp
 
     blockBacklinksTemp.backlinks.forEach((b) => {
-      childNodeIds.push(b.blockPaths[1].id)
+      childNodeIds.push(b.blockPaths[b.blockPaths.length - 1].id)
+      // childNodeIds.push(b.blockPaths[1].id)
     })
 
     let sqlResult = await sql(`
-      WITH RECURSIVE block_tree AS (
-        SELECT id, parent_id, content, fcontent, markdown, type, subtype, 1 as level
+      WITH RECURSIVE parentList AS (
+        SELECT id, parent_id, content, fcontent, markdown, type, subtype
         FROM blocks
         WHERE id in (${childNodeIds.map(i => `'${i}'`).join(', ')})
+        and content is not null and content <> ''
         UNION
-        SELECT c.id, c.parent_id, c.content, c.fcontent, c.markdown, c.type, c.subtype, ct.level + 1
+        SELECT c.id, c.parent_id, c.content, c.fcontent, c.markdown, c.type, c.subtype
         FROM blocks c
-        JOIN block_tree ct ON c.parent_id = ct.id
+        JOIN parentList ct ON c.id= ct.parent_id
+        where c.content is not null and c.content <> ''
+      ), childList AS (
+        SELECT id, parent_id, content, fcontent, markdown, type, subtype
+        FROM blocks
+        WHERE id in (${childNodeIds.map(i => `'${i}'`).join(', ')})
+        and content is not null and content <> ''
+        UNION
+        SELECT c.id, c.parent_id, c.content, c.fcontent, c.markdown, c.type, c.subtype
+        FROM blocks c
+        JOIN childList ct ON c.parent_id= ct.id
+        where c.content is not null and c.content <> ''
       )
-      SELECT * FROM block_tree;
+      SELECT DISTINCT * FROM parentList
+      UNION
+      select DISTINCT * FROM childList
     `)
     sqlResult.forEach((sqlRes) => {
       const { id } = sqlRes
@@ -586,7 +726,7 @@ const getData = async () => {
       .forEach((i) => {
         i.treePath = `${node.treePath}/${i.treePath}`
       })
-    const pList = sqlResult.filter(i => i.type === 'p')
+    const pList = sqlResult.filter(i => ['p', 't', 'h'].includes(i.type))
     pList.forEach((p) => {
       const { markdown } = p
       const reg = /\(\([^)].*?\)\)/g
@@ -616,11 +756,20 @@ const getData = async () => {
     sqlResult.forEach((sqlRes) => {
       const { id, treePath } = sqlRes
       const others = sqlResult.filter(i => i.parent_id === id)
-      sqlRes.children = others
+      // sqlRes.children = others
       others.forEach((i) => {
         i.treePath = `${treePath}/${i.treePath}`
       })
     })
+    const temp = JSON.parse(JSON.stringify(sqlResult))
+    temp.forEach((tempNode) => {
+      const { id } = tempNode
+      const childList = temp.filter(i => i.parent_id === id && i.type === 'l')
+      tempNode.childList = childList
+      tempNode.content = temp.filter(i => i.parent_id === id && i.type !== 'l')
+      // tempNode.children = temp.filter(i => i.parent_id === id)
+    })
+    console.log('sqlResult is ', temp.filter(i => !i.parent_id))
     sqlResult = sqlResult.filter(i => i._type === 'block_Ref').concat([node])
     refLinks.value.push(...sqlResult)
 
@@ -794,9 +943,9 @@ const switchBacklinkAreaFoldStatus = () => {
               flex-wrap: wrap;
 
               // TODO 去掉，否则没有跳转正文的入口了
-              .protyle-breadcrumb__item:only-child {
-                display: none;
-              }
+              // .protyle-breadcrumb__item:only-child {
+              //   display: none;
+              // }
               .protyle-breadcrumb__item.protyle-breadcrumb__item--active {
                 // display: none;
 

@@ -18,6 +18,16 @@ export function useBodyObserver(props) {
   })
 }
 
+/**
+ * In order to convert query resutl into Array
+ * @param dom
+ * @param selector
+ * @returns
+ */
+export function queryAllByDom(dom: HTMLElement, selector: string) {
+  return [...dom.querySelectorAll(selector)]
+}
+
 export function useMobileEditorObserver(props) {
   const lastEditShownStatus = ref(false)
   const {
