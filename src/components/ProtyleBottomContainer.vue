@@ -102,13 +102,13 @@
           >
             {{ item.name }}
             <!-- TODO 实现选项的统计 -->
-            <!-- <sup
+            <sup
               style="
                 margin-left: 2px
               "
             >
-              {{ item.links.length }}
-            </sup> -->
+              {{ linkNumMap[item.id] }}
+            </sup>
           </div>
         </div>
       </div>
@@ -662,6 +662,31 @@ const onMouseLeave = (event) => {
 }
 // #endregion 处理gutter显示问题
 
+const linkNumMap = computed(() => {
+  const map = {}
+  const chainList = validChain.value.length ? validChain.value : backlinkTreePathChains.value
+
+  remainRefs.value.forEach((node) => {
+    let num = 0
+    chainList.forEach((chain) => {
+      const lastInChain = chain[chain.length - 1]
+      if (lastInChain._type != 'block_Ref') {
+        return
+      }
+      if (node._type == 'doc') {
+        if (lastInChain.id === currentDocId.value) {
+          num++
+        }
+      } else {
+        if (lastInChain.id === node.id) {
+          num++
+        }
+      }
+    })
+    map[node.id] = num || ''
+  })
+  return map
+})
 
 </script>
 
