@@ -41,7 +41,6 @@ const props = defineProps({
       include: boolean;
     }>,
 })
-console.log(props.backlinkData)
 const emit = defineEmits(['switchBacklinkDocBlockFoldStatus'])
 const switchBacklinkDocBlockFoldStatus = (docBacklink) => {
     emit('switchBacklinkDocBlockFoldStatus', docBacklink)

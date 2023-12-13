@@ -502,43 +502,20 @@ const markBacklinkTree = () => {
   backlinkFlatTree.value.forEach(item => {
     delete item.include
   })
-  // const blockRefNodeList = backlinkFlatTree.value.filter(item => {
-  //   delete item.include
-  //   return isBlockRef(item)
+
+  // console.log('tree is ', JSON.parse(JSON.stringify(backlinkDocTreeStruct.value)))
+
+  // const t = JSON.parse(JSON.stringify(backlinkTreePathChains.value))
+  // t.forEach((item) => {
+  //   item.forEach((i) => {
+  //       delete i.origin
+  //   })
   // })
-
-  // const needRecursionMark = []
-  // Object.keys(properties.value).forEach((key) => {
-  //   const selectedBlockRef = properties.value[key]
-  //   const targetList = blockRefNodeList.filter((i) => i.id === key)
-  //   if (targetList.length) {
-  //     targetList.forEach((blockRefNode) => {
-  //       blockRefNode.include = selectedBlockRef.include
-  //       const parentNode = getParentNode(backlinkFlatTree.value, blockRefNode)
-  //       if (parentNode) {
-  //         parentNode.include = selectedBlockRef.include
-  //         needRecursionMark.push(parentNode)
-  //       } else {
-  //         needRecursionMark.push(blockRefNode)
-  //       }
-  //     })
-  //   }
-  // })
-
-  console.log('tree is ', JSON.parse(JSON.stringify(backlinkDocTreeStruct.value)))
-
-  const t = JSON.parse(JSON.stringify(backlinkTreePathChains.value))
-  t.forEach((item) => {
-    item.forEach((i) => {
-        delete i.origin
-    })
-  })
-  console.log('t is ', t)
+  // console.log('t is ', t)
 
   let result = [...backlinkTreePathChains.value].filter((item) => {
     if (excludeRefs.value.length) {
       const hasExNode = excludeRefs.value.some(i => isInTreeChain(item, i))
-      console.log('hasExNode is ', hasExNode)
       if (hasExNode) {
         return false
       }
@@ -547,7 +524,6 @@ const markBacklinkTree = () => {
     const selectIncludes = !!includeRefs.value.length
     if (selectIncludes) {
       const someNotIn = includeRefs.value.some(i => !isInTreeChain(item, i))
-      console.log('someNotIn is ', someNotIn)
       if (someNotIn) {
         return false
       }
@@ -563,11 +539,6 @@ const markBacklinkTree = () => {
       const origin = item.origin
       origin.include = true
       if (isSyContainerNode(origin)) {
-        // recursionTree(origin.children, origin, (curNode) => {
-        //   if (!isSyContainerNode(curNode)) {
-        //     curNode.include = origin.include
-        //   }
-        // })
         origin.children.forEach((curNode) => {
           if (!isSyContainerNode(curNode)) {
             curNode.include = origin.include
@@ -576,14 +547,14 @@ const markBacklinkTree = () => {
       }
     })
   })
-  const tt = JSON.parse(JSON.stringify(result))
-  tt.forEach((item) => {
-    item.forEach((i) => {
-      i.include = i.origin.include
-      delete i.origin
-    })
-  })
-  console.log('result is ', tt)
+  // const tt = JSON.parse(JSON.stringify(result))
+  // tt.forEach((item) => {
+  //   item.forEach((i) => {
+  //     i.include = i.origin.include
+  //     delete i.origin
+  //   })
+  // })
+  // console.log('result is ', tt)
 
   hideDomByBlockRefTree()
 }
@@ -623,7 +594,6 @@ const hideDomByBlockRefTree = () => {
   }
 
 
-  console.log('validChain.value is ', validChain.value)
   recursionTree(backlinkDocTreeStruct.value, null, (curNode) => {
     const doms = queryAllByDom(backlinkListDomRef.value, `[data-node-id="${curNode.id}"]`)
     const targetChain = validChain.value.find((chain) => chain.find(i => {
@@ -645,10 +615,10 @@ const hideDomByBlockRefTree = () => {
       return i.id == curNode.id
     }))
     const inChain = !!targetChain
-    if (curNode.id == '20231214050520-u00c5w8') {
-      console.log(targetChain)
-      console.log('curNode is ', inChain, curNode.id, curNode.fcontent, curNode.name, '\n', curNode, '\n', doms)
-    }
+    // if (curNode.id == '20231214050520-u00c5w8') {
+    //   console.log(targetChain)
+    //   console.log('curNode is ', inChain, curNode.id, curNode.fcontent, curNode.name, '\n', curNode, '\n', doms)
+    // }
     if (doms.length) {
       if (!inChain) {
         doms.forEach((dom) => {

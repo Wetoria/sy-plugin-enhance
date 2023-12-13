@@ -51,14 +51,11 @@ const onMouseLeave = (event) => {
 const plugin = usePlugin()
 let blockPaths: any[] = props.blockBacklinkData.blockPaths
 let length = blockPaths.length
-console.log(111111)
 blockID.value = blockPaths[length - 1].id
-console.log(props.blockBacklinkData)
 const renderProtyle = () => {
     if (render) {
         return
     }
-    console.log("render")
     new Protyle(
         plugin.app,
         renderRef.value,
@@ -272,7 +269,6 @@ const checkAllSubContainerBlock = (subContainerBlockList, filterList, parentNode
 
 function filterByString(node, filterList, parentNodeList) {
     let road = [...parentNodeList]
-    console.log(node.innerText)
     if (!checkNodeListWithFilterInclude([...parentNodeList, node], filterList)) {
         hiddenNode(node)
         return false
@@ -314,7 +310,6 @@ function filterByString(node, filterList, parentNodeList) {
 }
 
 const checkAndFilter = (parentData, filterList) => {
-    console.log("start Check")
     if (!parentData || !filterList) {
         return true
     }
