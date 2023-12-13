@@ -132,7 +132,7 @@
                 :key="docBacklink.id"
                 class="backlinkDocBlock"
               >
-                <div class="backlinkDocBlockTitleLineSticky">
+                <div class="backlinkDocBlockTitleLineSticky" :data-node-id="docBacklink.id">
                   <div
                     class="backlinkDocBlockTitleLine"
                     @click="switchBacklinkDocBlockFoldStatus(docBacklink)"
@@ -177,25 +177,18 @@ import { request, sql } from '@/api';
 import { usePlugin } from '@/main';
 import { hideGutterOnTarget, queryAllByDom } from '@/utils/DOM';
 import { IProtyle, Protyle } from 'siyuan';
-import { computed, ref, watch, watchEffect } from 'vue';
+import { computed, ref, watchEffect } from 'vue';
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
-import { SyDomNodeTypes, getBlockRefNodes, getSyHeadingNodeType, hideDom, isSyNodeBlockquote, isSyNodeHeading, isSyNodeList, isSyNodeListItem, isSyNodeParagraph, isSyNodeSuperBlock, isSyNodeTable, showDom } from '@/utils/Siyuan';
-import { recursionTree, reomveDuplicated } from '@/utils';
+import { hideDom, isBlockRef, isSyBreadCrumbDom, isSyContainerNode, isSyListItemNode, isSyParagraphNode, showDom } from '@/utils/Siyuan';
+import { isInTreeChain, recursionTree, reomveDuplicated } from '@/utils';
 
 interface Node {
   id: string;
   parent_id: string;
   name: string;
+  treePath: string;
   _type: 'doc' | 'block_Ref';
 }
-
-interface UnionNode {
-  id: string;
-  name: string;
-  _type: 'doc' | 'block_Ref';
-  links: Node[];
-}
-
 const props = defineProps({
   detail: Object,
   element: HTMLDivElement
@@ -276,10 +269,11 @@ watchEffect(() => {
 
 // #region 反链结构数据
 
-const backlinkTreeStruct = ref([])
+const backlinkDocTreeStruct = ref([])
 const backlinkFlatTree = ref([])
+const backlinkTreePathChains = ref([])
 const getTreeStruct = async () => {
-  backlinkTreeStruct.value = []
+  backlinkDocTreeStruct.value = []
   backlinkFlatTree.value = []
   backlinkBlockRefNodes.value = []
   for (let index = 0; index < docBacklinks.value.length; index++) {
@@ -300,7 +294,6 @@ const getTreeStruct = async () => {
         SELECT c.id, c.parent_id, c.content, c.fcontent, c.markdown, c.type, c.subtype
         FROM blocks c
         JOIN parentList ct ON c.id= ct.parent_id
-        where c.content is not null and c.content <> ''
       ), childList AS (
         SELECT id, parent_id, content, fcontent, markdown, type, subtype
         FROM blocks
@@ -310,7 +303,6 @@ const getTreeStruct = async () => {
         SELECT c.id, c.parent_id, c.content, c.fcontent, c.markdown, c.type, c.subtype
         FROM blocks c
         JOIN childList ct ON c.parent_id= ct.id
-        where c.content is not null and c.content <> ''
       )
       SELECT DISTINCT * FROM parentList
       UNION
@@ -330,14 +322,24 @@ const getTreeStruct = async () => {
         const parent = sqlResult.find(i => i.id === p.parent_id)
         let paths = []
         match.forEach((m) => {
-          const [key, value] = m.replace(/[\(\)]/g, '').split(' ')
+          const t: string = m.replace(/[\(\)]/g, '')
+          const firstBlankIndex = t.indexOf(' ')
+          const key = t.substring(0, firstBlankIndex)
+          const value = t.substring(firstBlankIndex + 1, t.length)
           const fValue = value.substring(1, value.length - 1)
           paths.push(key)
           const n: Node = {
             id: key,
             parent_id: p.id,
             name: fValue,
+            treePath: key,
             _type: 'block_Ref',
+          }
+          if (p.blockRefs) {
+            p.blockRefs.push(n)
+          } else {
+            p.blockRefs = []
+            p.blockRefs.push(n)
           }
           sqlResult.push(n)
         })
@@ -358,27 +360,47 @@ const getTreeStruct = async () => {
                 return isChild
       })
     })
-    const blockRefNodes: Node[] = [...sqlResult.filter(i => ['doc', 'block_Ref'].includes(i._type)).map((i) => {
+    const blockRefNodes: Node[] = [...sqlResult.filter(i => isBlockRef(i)).map((i) => {
 
       return {
         id: i.id,
         parent_id: i.parent_id,
         name: i.name,
-        _type: i._type
+        _type: i._type,
+        treePath: i.treePath,
       }
     })]
     backlinkBlockRefNodes.value.push(...blockRefNodes)
-    backlinkTreeStruct.value.push([...sqlResult.filter(i => !i.parent_id)])
-    backlinkFlatTree.value.push([...sqlResult])
+    backlinkDocTreeStruct.value.push(...sqlResult.filter(i => !i.parent_id))
+
+    let result = []
+    const rc = (list, pathChain) => {
+      if (!list || !list.length) {
+        result.push(pathChain)
+        return
       }
-  backlinkTreeStruct.value.forEach((item) => {
-    recursionTree(item, null, (node, parent) => {
-      if (parent) {
-        node.level = parent.level + 1
-      } else {
-        node.level = 0
-      }
-    })
+      list.forEach((node) => {
+        const inner = [...pathChain]
+        const temp = {
+          ...node,
+          origin: node,
+        }
+        delete temp.children
+        inner.push(temp)
+        rc(node.children, inner)
+      })
+    }
+
+    rc(backlinkDocTreeStruct.value, [])
+    backlinkTreePathChains.value = result
+    backlinkFlatTree.value.push(...sqlResult)
+  }
+  recursionTree(backlinkDocTreeStruct.value, null, (node, parent) => {
+    if (parent) {
+      node.level = parent.level + 1
+    } else {
+      node.level = 0
+    }
   })
 }
 
@@ -428,8 +450,10 @@ const notSelectedRefs = computed<Array<Node>>(() => {
 const remainRefs = computed<Array<Node>>(() => {
   const list = notSelectedRefs.value
   // TODO 实现剩余选项的过滤
+
   return list
 })
+const validChain = ref([])
 const excludeRefs = computed<Array<Node>>(() => {
   const list = []
   Object.keys(properties.value).forEach((key) => {
@@ -440,7 +464,7 @@ const excludeRefs = computed<Array<Node>>(() => {
   })
   return list
 })
-const includeRefs = computed<Array<UnionNode>>(() => {
+const includeRefs = computed<Array<Node>>(() => {
   const list = []
   Object.keys(properties.value).forEach((key) => {
     const item = properties.value[key]
@@ -470,29 +494,115 @@ const handleClickFilterTag = (event: MouseEvent, item: Node) => {
       origin: item,
     }
   }
+
+  markBacklinkTree()
+}
+
+const markBacklinkTree = () => {
+  backlinkFlatTree.value.forEach(item => {
+    delete item.include
+  })
+  // const blockRefNodeList = backlinkFlatTree.value.filter(item => {
+  //   delete item.include
+  //   return isBlockRef(item)
+  // })
+
+  // const needRecursionMark = []
+  // Object.keys(properties.value).forEach((key) => {
+  //   const selectedBlockRef = properties.value[key]
+  //   const targetList = blockRefNodeList.filter((i) => i.id === key)
+  //   if (targetList.length) {
+  //     targetList.forEach((blockRefNode) => {
+  //       blockRefNode.include = selectedBlockRef.include
+  //       const parentNode = getParentNode(backlinkFlatTree.value, blockRefNode)
+  //       if (parentNode) {
+  //         parentNode.include = selectedBlockRef.include
+  //         needRecursionMark.push(parentNode)
+  //       } else {
+  //         needRecursionMark.push(blockRefNode)
+  //       }
+  //     })
+  //   }
+  // })
+
+  console.log('tree is ', JSON.parse(JSON.stringify(backlinkDocTreeStruct.value)))
+
+  const t = JSON.parse(JSON.stringify(backlinkTreePathChains.value))
+  t.forEach((item) => {
+    item.forEach((i) => {
+        delete i.origin
+    })
+  })
+  console.log('t is ', t)
+
+  let result = [...backlinkTreePathChains.value].filter((item) => {
+    if (excludeRefs.value.length) {
+      const hasExNode = excludeRefs.value.some(i => isInTreeChain(item, i))
+      console.log('hasExNode is ', hasExNode)
+      if (hasExNode) {
+        return false
+      }
+    }
+
+    const selectIncludes = !!includeRefs.value.length
+    if (selectIncludes) {
+      const someNotIn = includeRefs.value.some(i => !isInTreeChain(item, i))
+      console.log('someNotIn is ', someNotIn)
+      if (someNotIn) {
+        return false
+      }
+    }
+
+    return true
+  })
+
+  validChain.value = result
+
+  result.forEach((chain) => {
+    chain.forEach((item) => {
+      const origin = item.origin
+      origin.include = true
+      if (isSyContainerNode(origin)) {
+        // recursionTree(origin.children, origin, (curNode) => {
+        //   if (!isSyContainerNode(curNode)) {
+        //     curNode.include = origin.include
+        //   }
+        // })
+        origin.children.forEach((curNode) => {
+          if (!isSyContainerNode(curNode)) {
+            curNode.include = origin.include
+            }
+        })
+      }
+    })
+  })
+  const tt = JSON.parse(JSON.stringify(result))
+  tt.forEach((item) => {
+    item.forEach((i) => {
+      i.include = i.origin.include
+      delete i.origin
+    })
+  })
+  console.log('result is ', tt)
+
+  hideDomByBlockRefTree()
 }
 
 // #endregion 反链筛选项相关功能
 
+// #region 根据树结构处理页面元素
+
 const backlinkListDomRef = ref<HTMLElement>(null)
-const dealedDomList = ref<Array<{
-  dom: HTMLElement;
-  // display: string;
-}>>([])
-const storeDom = (dom: HTMLElement) => {
-  // hideDom(dom)
-  // dom.dataset.filterValid = 'true'
-  dealedDomList.value.push({
-    dom,
-    // display: dom.style.display
-  })
-  // dom.dataset.vShown = 'false'
+const dealedDomList = ref<Array<HTMLElement>>([])
+const storeDom = (dom) => {
+  dealedDomList.value.push(dom)
 }
-const recoverDom = (node) => {
-  const { dom } = node
+const storeAndHidDom = (dom) => {
+  hideDom(dom)
+  storeDom(dom)
+}
+const recoverDom = (dom) => {
   showDom(dom)
-  // dom.dataset.vShown = 'true'
-  delete dom.dataset.include
 }
 const recoverAllDealedDoms = () => {
   dealedDomList.value.forEach((node) => {
@@ -501,101 +611,7 @@ const recoverAllDealedDoms = () => {
   dealedDomList.value = []
 }
 
-const dealNodesRecursion = (list: HTMLElement[], callback: (node: HTMLElement) => void) => {
-  if (!list || !list.length) {
-    return
-  }
-
-  for (let index = 0; index < list.length; index++) {
-    const node = list[index]
-    // 叶子块
-    const isParagraph = isSyNodeParagraph(node)
-    const isTable = isSyNodeTable(node)
-    const isHeading = isSyNodeHeading(node)
-
-    const isLeafNode = false
-      || isParagraph
-      || isTable
-      || isHeading
-
-
-    // 容器块
-    const isNodeListItem = isSyNodeListItem(node)
-    const isNodeList = isSyNodeList(node)
-    const isNodeBlockquote = isSyNodeBlockquote(node)
-    const isNodeSuperBlock = isSyNodeSuperBlock(node)
-
-
-    const isContainerNode = false
-      || isNodeListItem
-      || isNodeList
-      || isNodeBlockquote
-      || isNodeSuperBlock
-
-    if (!isLeafNode && !isContainerNode) {
-      continue
-    }
-    callback(node)
-    dealNodesRecursion([...node.children] as HTMLElement[], callback)
-  }
-}
-
-const markBlockRefNode = (node: HTMLElement, include: string, needCheckNodeListItems?: HTMLElement[]) => {
-    let currentNode = node
-    while (currentNode && !currentNode.classList.contains('backlinkDocBlock')) {
-      if (currentNode.dataset.include) {
-        return
-      }
-      currentNode.dataset.include = include
-      storeDom(currentNode)
-
-      // check heading
-
-      // check whether child list need to selected
-      if (isSyNodeListItem(currentNode) && needCheckNodeListItems) {
-        needCheckNodeListItems.push(currentNode)
-      }
-      checkNodeParentHeading(currentNode, include)
-      currentNode = currentNode.parentElement
-    }
-  }
-
-const checkNodeListShownStatus = (nodeListItem: HTMLElement) => {
-  const children = [...nodeListItem.children]
-  const nodeList = children.find((item) => isSyNodeList(item as HTMLElement)) as HTMLElement
-  if (nodeList) {
-    const listChildren = [...nodeList.children]
-    const marked = listChildren.some((item: HTMLElement) => item.dataset.include)
-    if (!marked) {
-      nodeList.dataset.include = nodeListItem.dataset.include
-      storeDom(nodeList)
-      // 递归标记
-      dealNodesRecursion(listChildren as HTMLElement[], (node) => {
-        node.dataset.include = nodeListItem.dataset.include
-        storeDom(node)
-      })
-    }
-  }
-}
-
-const checkNodeParentHeading = (node: HTMLElement, include: string) => {
-  let prevDom = node.previousElementSibling as HTMLElement
-  let headingType = ''
-  while (prevDom) {
-    if (prevDom && isSyNodeHeading(prevDom)) {
-      const curHeadingType = getSyHeadingNodeType(prevDom)
-      if (curHeadingType < headingType) {
-        break
-      }
-      prevDom.dataset.include = include
-      storeDom(prevDom)
-      headingType = curHeadingType
-    }
-    prevDom = prevDom.previousElementSibling as HTMLElement
-  }
-}
-
-const filterBacklinkDomNodes2 = () => {
+const hideDomByBlockRefTree = () => {
   recoverAllDealedDoms()
 
   if (!backlinkListDomRef.value) {
@@ -606,80 +622,55 @@ const filterBacklinkDomNodes2 = () => {
     return
   }
 
-  const blockRefNodes = getBlockRefNodes(backlinkListDomRef.value)
-  if (!blockRefNodes.length) {
-    return
-  }
 
-  const inBlockRefNodes = blockRefNodes.filter((node: HTMLElement) => includeRefs.value.find(i => i.id == node.dataset.id))
-  const exBlockRefNodes = blockRefNodes.filter((node: HTMLElement) => excludeRefs.value.find(i => i.id == node.dataset.id))
-  const needCheckNodeListItems = []
-  exBlockRefNodes.forEach((item: HTMLElement) => {
-    markBlockRefNode(item, 'false', needCheckNodeListItems)
-  })
-  inBlockRefNodes.forEach((item: HTMLElement) => {
-    markBlockRefNode(item, 'true', needCheckNodeListItems)
-  })
+  console.log('validChain.value is ', validChain.value)
+  recursionTree(backlinkDocTreeStruct.value, null, (curNode) => {
+    const doms = queryAllByDom(backlinkListDomRef.value, `[data-node-id="${curNode.id}"]`)
+    const targetChain = validChain.value.find((chain) => chain.find(i => {
+      if (curNode._type == 'block_Ref') {
+        const paragraphParent = backlinkFlatTree.value.find((flatItem) => flatItem.id == curNode.parent_id)
+        if (paragraphParent) {
+          const parent = backlinkFlatTree.value.find((flatItem) => flatItem.id == paragraphParent.parent_id)
+          if (isSyListItemNode(parent)) {
+            return parent.id == i.id
+          }
+        }
+      }
+      if (isSyParagraphNode(curNode)) {
+        const parent = backlinkFlatTree.value.find((flatItem) => flatItem.id == curNode.parent_id)
+        if (isSyListItemNode(parent)) {
+          return parent.id == i.id
+        }
+      }
+      return i.id == curNode.id
+    }))
+    const inChain = !!targetChain
+    if (curNode.id == '20231214050520-u00c5w8') {
+      console.log(targetChain)
+      console.log('curNode is ', inChain, curNode.id, curNode.fcontent, curNode.name, '\n', curNode, '\n', doms)
+    }
+    if (doms.length) {
+      if (!inChain) {
+        doms.forEach((dom) => {
+          storeAndHidDom(dom)
 
-  needCheckNodeListItems.forEach((nodeListItem: HTMLElement) => {
-    if (nodeListItem.dataset.include === 'true') {
-      const children = [...nodeListItem.children] as HTMLElement[]
-      children.filter((item) => !isSyNodeList(item))
-        .forEach((item: HTMLElement) => {
-          item.dataset.include = 'true'
+          const prevDom = dom.previousElementSibling as HTMLElement
+          if (prevDom && isSyBreadCrumbDom(prevDom)) {
+            storeAndHidDom(prevDom)
+          }
+          const isTitleLine = dom.classList.contains('backlinkDocBlockTitleLineSticky')
+          if (isTitleLine) {
+            const protyleDom = dom.nextElementSibling as HTMLElement
+            storeAndHidDom(protyleDom)
+          }
         })
-    }
-    checkNodeListShownStatus(nodeListItem)
-  })
-
-  const backlinkDocBlockList = queryAllByDom(backlinkListDomRef.value, '.backlinkDocBlock')
-
-  if (!backlinkDocBlockList.length) {
-    return
-  }
-
-  backlinkDocBlockList.forEach((item: HTMLElement) => {
-    const wysiwyg = item.querySelector('.protyle-wysiwyg')
-    if (!wysiwyg) {
-      return
-    }
-
-    dealNodesRecursion([...wysiwyg.children] as HTMLElement[], (node) => {
-      if (!node.dataset.include || node.dataset.include === 'false') {
-        storeDom(node)
-        hideDom(node)
       }
-    })
-
-    const breadCrumbList = queryAllByDom(item, `.${SyDomNodeTypes.BreadCrumb}`)
-    breadCrumbList.forEach((item: HTMLElement) => {
-      const nextDom = item.nextElementSibling as HTMLElement
-      if (!nextDom) return
-
-      if (!nextDom.dataset.include || nextDom.dataset.include == 'false') {
-        storeDom(item)
-        hideDom(item)
-      }
-    })
-
-    const protyleDom = item.querySelector('.protyle') as HTMLElement
-    const titleLine = item.querySelector('.backlinkDocBlockTitleLineSticky') as HTMLElement
-    if (!protyleDom) {
-      storeDom(titleLine)
-      hideDom(titleLine)
-    }
-    if (!protyleDom.dataset.include || protyleDom.dataset.include === 'false') {
-      storeDom(protyleDom)
-      hideDom(protyleDom)
-      storeDom(titleLine)
-      hideDom(titleLine)
     }
   })
 }
-watch([excludeRefs, includeRefs], () => {
-  filterBacklinkDomNodes2()
-  // convertIntoTreeData()
-})
+
+// #endregion 根据树结构处理页面元素
+
 
 // #region 处理gutter显示问题
 watchEffect(() => {
