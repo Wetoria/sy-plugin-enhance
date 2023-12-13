@@ -241,7 +241,6 @@ const getData = async () => {
       keyword: '',
     })
   }))
-  refLinks.value = []
   for (let index = 0; index < backlinks.length; index++) {
     const item = backlinks[index]
     const blockBacklinksTemp = results[index]
@@ -280,7 +279,6 @@ watchEffect(() => {
 const backlinkTreeStruct = ref([])
 const backlinkFlatTree = ref([])
 const getTreeStruct = async () => {
-  refLinks.value = []
   backlinkTreeStruct.value = []
   backlinkFlatTree.value = []
   backlinkBlockRefNodes.value = []
@@ -357,10 +355,10 @@ const getTreeStruct = async () => {
       }
       tempNode.children = sqlResult.filter(i => {
         const isChild = i.parent_id === id
-        return isChild
+                return isChild
       })
     })
-    const blockRefNodes: Node[] = [...sqlResult.filter(i => i.type === 'd' || i._type === 'block_Ref').map((i) => {
+    const blockRefNodes: Node[] = [...sqlResult.filter(i => ['doc', 'block_Ref'].includes(i._type)).map((i) => {
 
       return {
         id: i.id,
@@ -369,11 +367,10 @@ const getTreeStruct = async () => {
         _type: i._type
       }
     })]
-    refLinks.value.push(...blockRefNodes)
     backlinkBlockRefNodes.value.push(...blockRefNodes)
     backlinkTreeStruct.value.push([...sqlResult.filter(i => !i.parent_id)])
     backlinkFlatTree.value.push([...sqlResult])
-  }
+      }
   backlinkTreeStruct.value.forEach((item) => {
     recursionTree(item, null, (node, parent) => {
       if (parent) {
@@ -420,7 +417,6 @@ const properties = ref<{
     origin: Node;
   }
 }>({})
-const refLinks = ref<Array<Node>>([])
 const backlinkBlockRefNodes = ref<Node[]>([])
 const backlinkBlockRefNodesDistinct = computed<Node[]>(() => {
   const list = reomveDuplicated(backlinkBlockRefNodes.value.filter(i => i.id !== currentDocId.value))
