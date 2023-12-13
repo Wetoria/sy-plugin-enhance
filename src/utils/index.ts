@@ -58,3 +58,24 @@ export function useMobileKeyBoardShown() {
   })
   return keyboardShown;
 }
+
+export function recursionTree(tree, parent, callback) {
+  if (!tree || !tree.length) {
+    return
+  }
+  tree.forEach((node) => {
+    callback(node, parent)
+    recursionTree(node.children, node, callback)
+  })
+}
+
+export function reomveDuplicated(list, compare = (cur, itemInResult) => (cur.id === itemInResult.id)) {
+  const result = []
+  list.forEach((item) => {
+    const exist = result.find(i => compare(i, item))
+    if (!exist) {
+      result.push(item)
+    }
+  })
+  return result
+}
