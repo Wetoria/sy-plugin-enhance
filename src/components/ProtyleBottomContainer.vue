@@ -180,7 +180,7 @@ import { IProtyle, Protyle } from 'siyuan';
 import { computed, ref, watch, watchEffect } from 'vue';
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import {
-chainHasTargetBlockRef,
+chainHasRefNode,
   hasTargetBlockRef,
   hideDom, isSyBreadCrumbDom, isSyContainerNode, isSyListItemNode, isSyNodeCanContainerBlockRef, showDom } from '@/utils/Siyuan';
 import {
@@ -392,12 +392,12 @@ const getTreeStruct = async () => {
   backlinkBlockRefNodes.value = [
     ...blockRefsOptions.map(i => ({
       ...i,
-      type: 'blockRef',
+      _type: 'blockRef',
     })),
     ...docBacklinks.value.map(i => ({
       id: i.id,
       name: i.name,
-      type: 'doc',
+      _type: 'doc',
     }))
   ]
 }
@@ -445,10 +445,11 @@ const notSelectedRefs = computed<Array<Node>>(() => {
 })
 const remainRefs = computed<Array<Node>>(() => {
   let list = notSelectedRefs.value
-  // TODO 实现剩余选项的过滤
-  // console.log('validChain is ', validChain.value)
-
-  return list
+  return list.filter((blockRef) => {
+    return validBacklinkTreePathChain.value.some((chain) => {
+      return chainHasRefNode(chain, blockRef)
+    })
+  })
 })
 
 const excludeRefs = computed<Array<Node>>(() => {
@@ -495,9 +496,9 @@ const handleClickFilterTag = (event: MouseEvent, item: Node) => {
 
 
 const validBacklinkTreePathChain = computed(() => {
-  return [...backlinkTreePathChains.value].filter((item) => {
+  return [...backlinkTreePathChains.value].filter((chain) => {
     if (excludeRefs.value.length) {
-      const hasExNode = excludeRefs.value.some(i => chainHasTargetBlockRef(item, i.id))
+      const hasExNode = excludeRefs.value.some(i => chainHasRefNode(chain, i))
       if (hasExNode) {
         return false
       }
@@ -505,7 +506,7 @@ const validBacklinkTreePathChain = computed(() => {
 
     const selectIncludes = !!includeRefs.value.length
     if (selectIncludes) {
-      const someNotIn = includeRefs.value.some(i => !chainHasTargetBlockRef(item, i.id))
+      const someNotIn = includeRefs.value.some(i => !chainHasRefNode(chain, i))
       if (someNotIn) {
         return false
       }
@@ -640,15 +641,6 @@ const linkNumMap = computed(() => {
   // console.log('---')
   const map = {}
   const chainList = backlinkTreePathChains.value
-
-  // const tt = JSON.parse(JSON.stringify(chainList))
-  // tt.forEach((item) => {
-  //   item.forEach((i) => {
-  //     i.include = i.origin.include
-  //     delete i.origin
-  //   })
-  // })
-  // console.log('result is ', tt)
 
   remainRefs.value.forEach((node) => {
     let validChainList
@@ -813,10 +805,6 @@ const linkNumMap = computed(() => {
               margin-bottom: unset !important;
               flex-wrap: wrap;
 
-              // TODO 去掉，否则没有跳转正文的入口了
-              // .protyle-breadcrumb__item:only-child {
-              //   display: none;
-              // }
               .protyle-breadcrumb__item.protyle-breadcrumb__item--active {
                 // display: none;
 
