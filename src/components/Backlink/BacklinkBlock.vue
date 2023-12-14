@@ -15,7 +15,7 @@
         <ul>
             <div v-for="blockBacklinkData of backlinkData" :key="blockBacklinkData.dom">
                 <backlinkDocBlock
-                  :parent-data="[]"
+                  :parent-data="ParentData[getBlockID(blockBacklinkData)]"
                   :filter-list="filterList"
                   :block-backlink-data="blockBacklinkData"
                   :displayMap="displayMap"
@@ -29,6 +29,8 @@
 <script setup lang="ts">
 import backlinkDocBlock from '@/components/Backlink/BacklinkDocBlock.vue';
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
+import {fetchSyncPost} from "siyuan"
+import { ref, watch } from 'vue'
 const props = defineProps({
     backlinkData: Object,
     displayMap: Object,
@@ -41,11 +43,155 @@ const props = defineProps({
       include: boolean;
     }>,
 })
+
+const getBlockID = (blockBacklinkData)=>{
+    let blockPaths = blockBacklinkData.blockPaths
+    let lastItem = blockPaths[blockPaths.length - 1]
+    // console.log(blockBacklinkData,lastItem)
+    return lastItem.id
+}
+
+const ParentData = ref({})
+
 console.log(props.backlinkData)
 const emit = defineEmits(['switchBacklinkDocBlockFoldStatus'])
 const switchBacklinkDocBlockFoldStatus = (docBacklink) => {
     emit('switchBacklinkDocBlockFoldStatus', docBacklink)
 }
+
+const isLeftBlock = (nodeType)=>{
+    switch (nodeType) {
+    case 'NodeHeading':
+    case 'NodeParagraph':
+    case 'NodeTable':
+    case 'NodeMathBlock':
+    case 'NodeCodeBlock':
+    case 'NodeHTMLBlock':
+        return true
+    default:
+        return false
+    }
+}
+
+
+const getParentRefData = async (backlinkData) => {
+    let blockPathsList = backlinkData.map(x => {
+        let blockPaths = [...x.blockPaths]
+        let lastItem = blockPaths.slice(blockPaths.length-1,blockPaths.length)
+        let res = blockPaths.slice(0,blockPaths.length)
+        return [lastItem[0].id, res]
+    }
+    )
+    let refMap = {}
+    let allLeft = []
+    let allContainer = []
+    blockPathsList.map(blockPaths => {
+        let container = blockPaths[1].filter(x => { return !isLeftBlock(x.type) && x.type != 'NodeDocument' })
+        let left = blockPaths[1].filter(x => isLeftBlock(x.type))
+        blockPaths[1].map(x => {
+            let temp = refMap[x.id]
+            if (temp) {
+                temp.push(blockPaths[0])
+                refMap[x.id] = temp
+            } else {
+                refMap[x.id] = [blockPaths[0]]
+            }
+        }
+        )
+        container.map(x => allContainer.push(x.id))
+        left.map(x => allLeft.push(x.id))
+        // return [blockPaths[0], [container, left]]
+    }
+    )
+
+
+
+    let sqlStmt = `
+with refParent as (select id, parent_id, type from blocks where 
+(parent_id in ('${allContainer.join('\',\'')}') and type = 'p')
+ or id  in  ('${allLeft.join('\',\'')}')
+)
+select def_block_id, markdown, content,  refParent.id, refParent.parent_id, refParent.type as type, 'ref' as mark_type from refs, refParent
+where refs.block_id = refParent.id
+limit 1024
+`
+
+
+
+    let sqlData = await fetchSyncPost('/api/query/sql', {
+        stmt: sqlStmt
+    })
+    let refParentMap = {}
+
+    for (let item of sqlData.data) {
+        let refID
+        if (item.type == "p") {
+            refID = item.parent_id
+        } else {
+            refID = item.id
+        }
+        let backlinkList = refMap[refID]
+        for (let backlink of backlinkList) {
+            let temp = refParentMap[backlink]
+            if (temp) {
+                // console.log("two", x, blockPaths[0])
+                temp.push(item)
+                refParentMap[backlink] = temp
+            } else {
+                refParentMap[backlink] = [item]
+            }
+        }
+    }
+    return refParentMap
+}
+const buildRefElement = (refParentData)=>{
+    let refElementMap = {}
+    let keys = Object.keys(refParentData)
+    for (let key of keys){
+        let blockParentData = refParentData[key]
+        let refElementList = []
+        for (let item of blockParentData){
+            let elemContainer = document.createElement('div')
+            let elem = document.createElement('div')
+            elem.dataset.id = item['def_block_id']
+            elem.dataset.type = "block-ref"
+            elem.innerText = item['content']
+            elemContainer.append(elem)
+            refElementList.push(elemContainer)
+        }
+        refElementMap[key] = refElementList
+    }
+    return refElementMap
+}
+const buildDocmentElemMap = (docId)=>{
+    let elemContainer = document.createElement('div')
+    let elem = document.createElement('div')
+    elem.dataset.type = "NodeDocument"
+    elem.dataset.nodeId = docId
+    elemContainer.append(elem)
+    return elemContainer 
+}
+const computeParentData= async(backlinkData,docId)=>{
+    let parentData = {}
+    let docElem = buildDocmentElemMap(docId)
+    let blockIdList =  backlinkData.map(x=>getBlockID(x))
+    console.log(blockIdList)
+    let refParentData = await getParentRefData(backlinkData)
+    let refParentElemMap = buildRefElement(refParentData)
+    
+    for (let blockId of blockIdList){
+        let refParentElemList = refParentElemMap[blockId] ? refParentElemMap[blockId] : []
+        let domList = [...refParentElemList,docElem]
+        parentData[blockId] = domList
+    }
+    return parentData
+}
+
+watch(props, async()=>{
+    if (props.backlinkData && props.currentDocId){
+        ParentData.value = await computeParentData(props.backlinkData,props.currentDocId)
+    }
+})
 </script>
 <style scoped lang="scss">
 .backlinkDocBlockTitleLineSticky {
