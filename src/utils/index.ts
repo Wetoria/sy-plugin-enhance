@@ -58,3 +58,49 @@ export function useMobileKeyBoardShown() {
   })
   return keyboardShown;
 }
+
+export function recursionTree(tree, parent, callback: (curNode, parentNode?) => void) {
+  if (!tree || !tree.length) {
+    return
+  }
+  tree.forEach((node) => {
+    callback(node, parent)
+    recursionTree(node.children, node, callback)
+  })
+}
+
+export function recursionTreeCanBreakChildren(tree, parent, callback: (curNode, parentNode?) => boolean) {
+  if (!tree || !tree.length) {
+    return
+  }
+  tree.forEach((node) => {
+    const breakChildren = callback(node, parent)
+    if (breakChildren) {
+      return
+    }
+    recursionTree(node.children, node, callback)
+  })
+}
+
+export function reomveDuplicated(list, compare = (cur, itemInResult) => (cur.id === itemInResult.id)) {
+  const result = []
+  list.forEach((item) => {
+    const exist = result.find(i => compare(i, item))
+    if (!exist) {
+      result.push(item)
+    }
+  })
+  return result
+}
+
+export function isInTreeChain(chain: any[], target) {
+  return chain.find((n) => {
+    if (n._type == 'doc') {
+      return target.id == n.id
+    }
+    return false
+      || target.id == n.id
+      || (n.blockRefs && n.blockRefs.find((b) => b.id == target.id))
+      || n.treePath.includes(target.id)
+  })
+}

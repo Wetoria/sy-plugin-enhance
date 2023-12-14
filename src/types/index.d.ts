@@ -123,3 +123,17 @@ interface Window {
     languages: any;
   };
 }
+
+interface IBreadcrumb {
+  id: string;
+  name: string;
+  type: string;
+  subType: string;
+  children: any; // You might want to replace `any` with a more specific type
+}
+
+interface backlinkData {
+  dom: string;
+  blockPaths: IBreadcrumb[];
+  expand: boolean;
+}[]
