@@ -20,35 +20,35 @@ export function getSyDomNodeSubType(node: HTMLElement) {
   return node.dataset.subtype
 }
 
-export function isSyNodeParagraph(node: HTMLElement) {
+export function isSyNodeParagraphDom(node: HTMLElement) {
   return getSyDomNodeType(node) === SyDomNodeTypes.NodeParagraph
 }
 
-export function isSyNodeList(node: HTMLElement) {
+export function isSyNodeListDom(node: HTMLElement) {
   return getSyDomNodeType(node) === SyDomNodeTypes.NodeList
 }
 
-export function isSyNodeListItem(node: HTMLElement) {
+export function isSyNodeListItemDom(node: HTMLElement) {
   return getSyDomNodeType(node) === SyDomNodeTypes.NodeListItem
 }
 
-export function isSyNodeHeading(node: HTMLElement) {
+export function isSyNodeHeadingDom(node: HTMLElement) {
   return getSyDomNodeType(node) === SyDomNodeTypes.NodeHeading
 }
 
-export function isSyNodeTable(node: HTMLElement) {
+export function isSyNodeTableDom(node: HTMLElement) {
   return getSyDomNodeType(node) === SyDomNodeTypes.NodeTable
 }
 
-export function isSyBreadCrumb(node: HTMLElement) {
-  return node.classList.contains(SyDomNodeTypes.BreadCrumb)
+export function isSyNodeBlockquoteDom(node: HTMLElement) {
+  return getSyDomNodeType(node) === SyDomNodeTypes.NodeBlockquote
+}
+export function isSyNodeSuperBlockDom(node: HTMLElement) {
+  return getSyDomNodeType(node) === SyDomNodeTypes.NodeSuperBlock
 }
 
-export function isSyNodeBlockquote(node: HTMLElement) {
-  return node.classList.contains(SyDomNodeTypes.NodeBlockquote)
-}
-export function isSyNodeSuperBlock(node: HTMLElement) {
-  return node.classList.contains(SyDomNodeTypes.NodeSuperBlock)
+export function isSyBreadCrumbDom(node: HTMLElement) {
+  return node.classList.contains(SyDomNodeTypes.BreadCrumb)
 }
 
 export function hideDom(dom: HTMLElement) {
@@ -82,4 +82,75 @@ export function getSyHeadingNodeType(node: HTMLElement) {
 
 export function getChildNodeList(node: HTMLElement) {
   return node.querySelector(`[data-type="${SyDomNodeTypes.NodeList}"]`)
+}
+
+export const isBlockRef = (node) => ['doc', 'block_Ref'].includes(node._type)
+
+export const getParentNode = (list, node) => {
+  return list.find(i => i.id === node.parent_id)
+}
+
+
+
+enum SyNodeTypes {
+  h = 'h',
+  c = 'c',
+  m = 'm',
+  t = 't',
+  p = 'p',
+  html = 'html',
+
+  d = 'd',
+  l = 'l',
+  i = 'i',
+  b = 'b',
+  s = 's',
+}
+
+export function getSyNodeType(node) {
+  return node.type
+}
+export function getSyNodeSubType(node) {
+  return node.subtype
+}
+
+export function isSyHeadingNode(node) {
+  return getSyNodeType(node) === SyNodeTypes.h
+}
+
+export function isSyCodeNode(node) {
+  return getSyNodeType(node) === SyNodeTypes.c
+}
+
+export function isSyMathNode(node) {
+  return getSyNodeType(node) === SyNodeTypes.m
+}
+
+export function isSyTableNode(node) {
+  return getSyNodeType(node) === SyNodeTypes.t
+}
+export function isSyParagraphNode(node) {
+  return getSyNodeType(node) === SyNodeTypes.p
+}
+
+
+export function isSyDocNode(node) {
+  return getSyNodeType(node) === SyNodeTypes.d
+}
+
+export function isSyListNode(node) {
+  return getSyNodeType(node) === SyNodeTypes.l
+}
+export function isSyListItemNode(node) {
+  return getSyNodeType(node) === SyNodeTypes.i
+}
+export function isSyQuoteNode(node) {
+  return getSyNodeType(node) === SyNodeTypes.b
+}
+export function isSySuperBlockNode(node) {
+  return getSyNodeType(node) === SyNodeTypes.s
+}
+
+export function isSyContainerNode(node) {
+  return isSyDocNode(node) || isSyListNode(node) || isSyListItemNode(node) || isSyQuoteNode(node) || isSySuperBlockNode(node)
 }

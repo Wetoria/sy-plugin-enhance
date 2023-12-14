@@ -105,7 +105,6 @@ const navList = ref<Array<{
 
 
 watchEffect(() => {
-  console.log('is ', isNewset.value, isOldest.value)
   navList.value[0].disabled = isOldest.value
   navList.value[1].disabled = isNewset.value
 })

@@ -48,6 +48,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['switchBacklinkDocBlockFoldStatus','updateSearchIndex'])
+
 const switchBacklinkDocBlockFoldStatus = (docBacklink) => {
     emit('switchBacklinkDocBlockFoldStatus', docBacklink)
 }

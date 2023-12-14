@@ -86,7 +86,7 @@
         </div>
         <div class="backlinkRefListContainer">
           <div
-            v-for="item of unionRefLinks"
+            v-for="item of remainRefs"
             :key="item.id"
             style="
               display: flex;
@@ -101,13 +101,14 @@
             @click="(event) => handleClickFilterTag(event, item)"
           >
             {{ item.name }}
-            <sup
+            <!-- TODO 实现选项的统计 -->
+            <!-- <sup
               style="
                 margin-left: 2px
               "
             >
               {{ item.links.length }}
-            </sup>
+            </sup> -->
           </div>
         </div>
       </div>
@@ -120,42 +121,10 @@
         <div v-if="!docBacklinks.length">
           未找到相关内容
         </div>
-        <template v-else-if="!useV">
-          <div
-            class="vBacklinkContainer backlinkList"
-            ref="backlinkListRef"
-          >
-            <ul class="b3-list b3-list--background">
-              <div
-                v-for="docBacklink of docBacklinks"
-                :key="docBacklink.id"
-                class="backlinkDocBlock"
-              >
-                <BacklinkBlock
-                  :backlink-data="(blockBackLinks[docBacklink.id])?.backlinks"
-                  :display-map="displayMap"
-                  :doc-backlink-fold-status-map="docBacklinkFoldStatusMap"
-                  :doc-backlink="docBacklink"
-                  :current-doc-id="currentDocId"
-                  @switch-backlink-doc-block-fold-status="switchBacklinkDocBlockFoldStatus"
-                  :filterList="filterList"
-                />
-                <!-- <div
-                  ref="renderRef"
-                  @mouseleave="onMouseLeave"
-                  :style="{
-                    height: docBacklinkFoldStatusMap[docBacklink.id] ? '0px' : 'max-content',
-                    overflow: 'hidden',
-                  }"
-                ></div> -->
-              </div>
-            </ul>
-          </div>
-        </template>
         <template v-else>
           <div
             class="vBacklinkContainer backlinkList"
-            ref="backlinkListRef"
+            ref="backlinkListDomRef"
           >
             <ul class="b3-list b3-list--background">
               <div
@@ -163,7 +132,7 @@
                 :key="docBacklink.id"
                 class="backlinkDocBlock"
               >
-                <div class="backlinkDocBlockTitleLineSticky">
+                <div class="backlinkDocBlockTitleLineSticky" :data-node-id="docBacklink.id">
                   <div
                     class="backlinkDocBlockTitleLine"
                     @click="switchBacklinkDocBlockFoldStatus(docBacklink)"
@@ -208,27 +177,18 @@ import { request, sql } from '@/api';
 import { usePlugin } from '@/main';
 import { hideGutterOnTarget, queryAllByDom } from '@/utils/DOM';
 import { IProtyle, Protyle } from 'siyuan';
-import { computed, ref, watch, watchEffect } from 'vue';
+import { computed, ref, watchEffect } from 'vue';
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
-import BacklinkBlock from './Backlink/BacklinkBlock.vue'
-import { SyDomNodeTypes, checkNodeHasBlockRef, getBlockRefNodes, getChildNodeList, getSyHeadingNodeType, hideDom, isSyBreadCrumb, isSyNodeBlockquote, isSyNodeHeading, isSyNodeList, isSyNodeListItem, isSyNodeParagraph, isSyNodeSuperBlock, isSyNodeTable, showDom } from '@/utils/Siyuan';
+import { hideDom, isBlockRef, isSyBreadCrumbDom, isSyContainerNode, isSyListItemNode, isSyParagraphNode, showDom } from '@/utils/Siyuan';
+import { isInTreeChain, recursionTree, reomveDuplicated } from '@/utils';
 
 interface Node {
   id: string;
   parent_id: string;
   name: string;
   treePath: string;
-  level: number;
   _type: 'doc' | 'block_Ref';
 }
-
-interface UnionNode {
-  id: string;
-  name: string;
-  _type: 'doc' | 'block_Ref';
-  links: Node[];
-}
-
 const props = defineProps({
   detail: Object,
   element: HTMLDivElement
@@ -236,411 +196,16 @@ const props = defineProps({
 const protyle = computed(() => props.detail.value.protyle as IProtyle)
 const currentDocId = computed(() => protyle.value?.block?.id)
 const docBacklinks = ref([])
-const docBacklinkFoldStatusMap = ref({})
-const switchBacklinkDocBlockFoldStatus = (docBacklink) => {
-  docBacklinkFoldStatusMap.value[docBacklink.id] = !docBacklinkFoldStatusMap.value[docBacklink.id]
-}
 
 const useV = ref(false);
 
-const properties = ref<{
-  [key: string]: {
-    checked: boolean;
-    origin: UnionNode;
-  }
-}>({})
-const refLinks = ref<Array<Node>>([])
-const backlinkBlockRefNodes = ref([])
-const filterList = computed(() => {
-  const result = []
-  Object.keys(properties.value).forEach((key) => {
-    result.push({
-      key,
-      include: properties.value[key].checked
-    })
-  })
-  return result
-})
-
-const backlinkFilterPanelShownStatus = ref(true)
-const switchBacklinkFilterPanelShownStatus = () => {
-  backlinkFilterPanelShownStatus.value = !backlinkFilterPanelShownStatus.value
-}
-
-const handleClickFilterTag = (event: MouseEvent, item: UnionNode) => {
-  const {
-    shiftKey,
-  } = event
-  const exist = properties.value[item.id]
-
-  let checkValue = true
-  if (shiftKey) {
-    checkValue = false
-  }
-
-  if (exist) {
-    delete properties.value[item.id]
-  } else {
-    properties.value[item.id] = {
-      checked: checkValue,
-      origin: item
-    }
-  }
-}
-
-const excludeRefs = computed<Array<UnionNode>>(() => {
-  const list = []
-  Object.keys(properties.value).forEach((key) => {
-    const item = properties.value[key]
-    if (!item.checked) {
-      list.push(item.origin)
-    }
-  })
-  console.log('ex is ', list)
-  return list
-})
-const includeRefs = computed<Array<UnionNode>>(() => {
-  const list = []
-  Object.keys(properties.value).forEach((key) => {
-    const item = properties.value[key]
-    if (item.checked) {
-      list.push(item.origin)
-    }
-  })
-  console.log('in is ', list)
-  return list
-})
-
-const backlinkListRef = ref<HTMLElement>(null)
-const dealedDomList = ref<Array<{
-  dom: HTMLElement;
-  // display: string;
-}>>([])
-const storeDom = (dom: HTMLElement) => {
-  // hideDom(dom)
-  // dom.dataset.filterValid = 'true'
-  dealedDomList.value.push({
-    dom,
-    // display: dom.style.display
-  })
-  // dom.dataset.vShown = 'false'
-}
-const recoverDom = (node) => {
-  const { dom } = node
-  showDom(dom)
-  // dom.dataset.vShown = 'true'
-  delete dom.dataset.include
-}
-const recoverDealedDom = (dom) => {
-  dealedDomList.value = dealedDomList.value.filter((item) => {
-    if (item.dom == dom) {
-      recoverDom(item)
-      return false
-    }
-    return true
-  })
-}
-const recoverAllDealedDoms = () => {
-  dealedDomList.value.forEach((node) => {
-    recoverDom(node)
-  })
-  dealedDomList.value = []
-}
-
-const dealNodesRecursion = (list: HTMLElement[], callback: (node: HTMLElement) => void) => {
-  if (!list || !list.length) {
-    return
-  }
-
-  for (let index = 0; index < list.length; index++) {
-    const node = list[index]
-    // 叶子块
-    const isParagraph = isSyNodeParagraph(node)
-    const isTable = isSyNodeTable(node)
-    const isHeading = isSyNodeHeading(node)
-
-    const isLeafNode = false
-      || isParagraph
-      || isTable
-      || isHeading
+// #region 基础数据处理
 
 
-    // 容器块
-    const isNodeListItem = isSyNodeListItem(node)
-    const isNodeList = isSyNodeList(node)
-    const isNodeBlockquote = isSyNodeBlockquote(node)
-    const isNodeSuperBlock = isSyNodeSuperBlock(node)
-
-
-    const isContainerNode = false
-      || isNodeListItem
-      || isNodeList
-      || isNodeBlockquote
-      || isNodeSuperBlock
-
-    if (!isLeafNode && !isContainerNode) {
-      continue
-    }
-    callback(node)
-    dealNodesRecursion([...node.children] as HTMLElement[], callback)
-  }
-}
-
-const filterProtyleNodes = (wysiwyg) => {
-  const children = wysiwyg.children
-
-
-}
-
-const markBlockRefNode = (node: HTMLElement, include: string, needCheckNodeListItems?: HTMLElement[]) => {
-    let currentNode = node
-    while (currentNode && !currentNode.classList.contains('backlinkDocBlock')) {
-      if (currentNode.dataset.include) {
-        return
-      }
-      currentNode.dataset.include = include
-      storeDom(currentNode)
-
-      // check heading
-
-      // check whether child list need to selected
-      if (isSyNodeListItem(currentNode) && needCheckNodeListItems) {
-        needCheckNodeListItems.push(currentNode)
-      }
-      checkNodeParentHeading(currentNode, include)
-      currentNode = currentNode.parentElement
-    }
-  }
-
-const checkNodeListShownStatus = (nodeListItem: HTMLElement) => {
-  const children = [...nodeListItem.children]
-  const nodeList = children.find((item) => isSyNodeList(item as HTMLElement)) as HTMLElement
-  if (nodeList) {
-    const listChildren = [...nodeList.children]
-    const marked = listChildren.some((item: HTMLElement) => item.dataset.include)
-    if (!marked) {
-      nodeList.dataset.include = nodeListItem.dataset.include
-      storeDom(nodeList)
-      // 递归标记
-      dealNodesRecursion(listChildren as HTMLElement[], (node) => {
-        node.dataset.include = nodeListItem.dataset.include
-        storeDom(node)
-      })
-    }
-  }
-}
-
-const checkNodeParentHeading = (node: HTMLElement, include: string) => {
-  let prevDom = node.previousElementSibling as HTMLElement
-  let headingType = ''
-  while (prevDom) {
-    if (prevDom && isSyNodeHeading(prevDom)) {
-      const curHeadingType = getSyHeadingNodeType(prevDom)
-      if (curHeadingType < headingType) {
-        break
-      }
-      prevDom.dataset.include = include
-      storeDom(prevDom)
-      headingType = curHeadingType
-    }
-    prevDom = prevDom.previousElementSibling as HTMLElement
-  }
-}
-
-const filterBacklinkDomNodes2 = () => {
-  recoverAllDealedDoms()
-
-  if (!backlinkListRef.value) {
-    return
-  }
-
-  if (!excludeRefs.value.length && !includeRefs.value.length) {
-    return
-  }
-
-  const blockRefNodes = getBlockRefNodes(backlinkListRef.value)
-  if (!blockRefNodes.length) {
-    return
-  }
-
-  const inBlockRefNodes = blockRefNodes.filter((node: HTMLElement) => includeRefs.value.find(i => i.id == node.dataset.id))
-  const exBlockRefNodes = blockRefNodes.filter((node: HTMLElement) => excludeRefs.value.find(i => i.id == node.dataset.id))
-  const needCheckNodeListItems = []
-  exBlockRefNodes.forEach((item: HTMLElement) => {
-    markBlockRefNode(item, 'false', needCheckNodeListItems)
-  })
-  inBlockRefNodes.forEach((item: HTMLElement) => {
-    markBlockRefNode(item, 'true', needCheckNodeListItems)
-  })
-
-  needCheckNodeListItems.forEach((nodeListItem: HTMLElement) => {
-    if (nodeListItem.dataset.include === 'true') {
-      const children = [...nodeListItem.children] as HTMLElement[]
-      children.filter((item) => !isSyNodeList(item))
-        .forEach((item: HTMLElement) => {
-          item.dataset.include = 'true'
-        })
-    }
-    checkNodeListShownStatus(nodeListItem)
-  })
-
-  const backlinkDocBlockList = queryAllByDom(backlinkListRef.value, '.backlinkDocBlock')
-
-  if (!backlinkDocBlockList.length) {
-    return
-  }
-
-  backlinkDocBlockList.forEach((item: HTMLElement) => {
-    const wysiwyg = item.querySelector('.protyle-wysiwyg')
-    if (!wysiwyg) {
-      return
-    }
-
-    dealNodesRecursion([...wysiwyg.children] as HTMLElement[], (node) => {
-      if (!node.dataset.include || node.dataset.include === 'false') {
-        storeDom(node)
-        hideDom(node)
-      }
-    })
-
-    const breadCrumbList = queryAllByDom(item, `.${SyDomNodeTypes.BreadCrumb}`)
-    breadCrumbList.forEach((item: HTMLElement) => {
-      const nextDom = item.nextElementSibling as HTMLElement
-      if (!nextDom) return
-
-      if (!nextDom.dataset.include || nextDom.dataset.include == 'false') {
-        storeDom(item)
-        hideDom(item)
-      }
-    })
-
-    const protyleDom = item.querySelector('.protyle') as HTMLElement
-    const titleLine = item.querySelector('.backlinkDocBlockTitleLineSticky') as HTMLElement
-    if (!protyleDom) {
-      storeDom(titleLine)
-      hideDom(titleLine)
-    }
-    if (!protyleDom.dataset.include || protyleDom.dataset.include === 'false') {
-      storeDom(protyleDom)
-      hideDom(protyleDom)
-      storeDom(titleLine)
-      hideDom(titleLine)
-    }
-  })
-}
-watch([excludeRefs, includeRefs], () => {
-  filterBacklinkDomNodes2()
-  // convertIntoTreeData()
-})
-
-
-const unionRefLinks = computed<UnionNode[]>(() => {
-  const result: UnionNode[] = []
-  const currentDocId = protyle.value?.block?.id;
-  const validRefLinks = refLinks.value.filter((item) => {
-    const itemAsParentPath = item.treePath.replace(new RegExp(`(?<=(\\([^\\(\\)]*${item.id}[^\\(\\)]*\\))).*$`), '')
-    if (includeRefs.value.length) {
-      const isInItemOrIsChildOrParentOfInItem = includeRefs.value.every((inItem) => {
-        if (inItem.id === item.id) {
-          return true
-        }
-        const inItemIsParentOfItem = item.treePath.includes(inItem.id)
-        const inItemIsChildOfItem = inItem.links.some(l => l.treePath.startsWith(itemAsParentPath))
-        if (inItemIsChildOfItem || inItemIsParentOfItem) {
-          return true
-        }
-        return false
-      })
-      if (!isInItemOrIsChildOrParentOfInItem) {
-        return false
-      }
-    }
-
-    if (excludeRefs.value.length) {
-      const isExItemOrIsChildOfExItem = excludeRefs.value.some((exItem) => {
-        if (exItem.id === item.id) {
-          return true
-        }
-        const isChildOfExItem = item.treePath.includes(exItem.id)
-        if (isChildOfExItem) {
-          return true
-        }
-      })
-      if (isExItemOrIsChildOfExItem) {
-        return
-      }
-    }
-
-    return true
-  })
-
-  validRefLinks
-  .filter(i => {
-    return i.id !== currentDocId && includeRefs.value.every(inItem => inItem.id !== i.id) && excludeRefs.value.every(exItem => exItem.id !== i.id)
-  })
-  .forEach((item) => {
-    if (item._type === 'doc') {
-      const docDirectChildren = refLinks.value.filter(i => i.level === 2 && i.treePath.startsWith(item.id))
-
-      const n = {
-        ...item,
-        links: docDirectChildren.map((child) => {
-          const tempPath = child.treePath.replace(/\).*$/g, '')
-          const isValid = validRefLinks.length + docDirectChildren.length === refLinks.value.length || validRefLinks.find(i => i.treePath.startsWith(tempPath))
-          const r: Node = {
-            ...child,
-            treePath: tempPath,
-          }
-          return isValid ? r : undefined
-        }).filter(i => i)
-      }
-      if (n.links.length) {
-        delete n.treePath
-        result.push(n)
-      }
-      return
-    }
-
-    const exist = result.find(i => i.id === item.id)
-    if (exist) {
-      exist.links.push(item)
-    } else {
-      const n = {
-        ...item,
-        links: [
-          item,
-        ]
-      }
-      delete n.treePath
-      result.push(n)
-    }
-  })
-
-  result.sort((a, b) => (b.links.length - a.links.length))
-  return result
-})
+// #region 反链数据
 
 const blockBackLinks = ref({})
 const renderRef = ref([])
-const displayMap = ref({})
-watchEffect(() => {
-  let flag
-  props.element.addEventListener('scroll', () => {
-    if (flag) {
-      clearTimeout(flag)
-    }
-    setTimeout(() => {
-      renderRef.value.forEach((item) => {
-        hideGutterOnTarget(item)
-      })
-    }, 50)
-  })
-})
-
-const onMouseLeave = (event) => {
-  hideGutterOnTarget(event.target)
-}
-
 const getData = async () => {
   const plugin = usePlugin()
   const currentDocId = protyle.value?.block?.id;
@@ -669,109 +234,10 @@ const getData = async () => {
       keyword: '',
     })
   }))
-  refLinks.value = []
-  backlinkBlockRefNodes.value = []
-  let tempBlockRefNodes = []
   for (let index = 0; index < backlinks.length; index++) {
     const item = backlinks[index]
-    const node: Node = {
-      id: item.id,
-      parent_id: null,
-      name: item.name,
-      treePath: `${item.id}`,
-      level: 0,
-      _type: 'doc',
-    }
-    const childNodeIds = []
-    // childNodeIds.push(item.id)
     const blockBacklinksTemp = results[index]
     blockBackLinks.value[item.id] = blockBacklinksTemp
-
-    blockBacklinksTemp.backlinks.forEach((b) => {
-      childNodeIds.push(b.blockPaths[b.blockPaths.length - 1].id)
-      // childNodeIds.push(b.blockPaths[1].id)
-    })
-
-    let sqlResult = await sql(`
-      WITH RECURSIVE parentList AS (
-        SELECT id, parent_id, content, fcontent, markdown, type, subtype
-        FROM blocks
-        WHERE id in (${childNodeIds.map(i => `'${i}'`).join(', ')})
-        and content is not null and content <> ''
-        UNION
-        SELECT c.id, c.parent_id, c.content, c.fcontent, c.markdown, c.type, c.subtype
-        FROM blocks c
-        JOIN parentList ct ON c.id= ct.parent_id
-        where c.content is not null and c.content <> ''
-      ), childList AS (
-        SELECT id, parent_id, content, fcontent, markdown, type, subtype
-        FROM blocks
-        WHERE id in (${childNodeIds.map(i => `'${i}'`).join(', ')})
-        and content is not null and content <> ''
-        UNION
-        SELECT c.id, c.parent_id, c.content, c.fcontent, c.markdown, c.type, c.subtype
-        FROM blocks c
-        JOIN childList ct ON c.parent_id= ct.id
-        where c.content is not null and c.content <> ''
-      )
-      SELECT DISTINCT * FROM parentList
-      UNION
-      select DISTINCT * FROM childList
-    `)
-    sqlResult.forEach((sqlRes) => {
-      const { id } = sqlRes
-      sqlRes.treePath = id
-    })
-    sqlResult.filter((i) => i.level === 1)
-      .forEach((i) => {
-        i.treePath = `${node.treePath}/${i.treePath}`
-      })
-    const pList = sqlResult.filter(i => ['p', 't', 'h'].includes(i.type))
-    pList.forEach((p) => {
-      const { markdown } = p
-      const reg = /\(\([^)].*?\)\)/g
-      const match = markdown.match(reg)
-      if (match) {
-        const parent = sqlResult.find(i => i.id === p.parent_id)
-        let paths = []
-        match.forEach((m) => {
-          const [key, value] = m.replace(/[\(\)]/g, '').split(' ')
-          const fValue = value.substring(1, value.length - 1)
-          paths.push(key)
-          const n: Node = {
-            id: key,
-            parent_id: p.id,
-            name: fValue,
-            treePath: `${key}`,
-            level: p.level,
-            _type: 'block_Ref',
-          }
-          sqlResult.push(n)
-        })
-        if (parent) {
-          parent.treePath += `/(${paths.join('|')})`
-        }
-      }
-    })
-    sqlResult.forEach((sqlRes) => {
-      const { id, treePath } = sqlRes
-      const others = sqlResult.filter(i => i.parent_id === id)
-      // sqlRes.children = others
-      others.forEach((i) => {
-        i.treePath = `${treePath}/${i.treePath}`
-      })
-    })
-    const temp = JSON.parse(JSON.stringify(sqlResult))
-    temp.forEach((tempNode) => {
-      const { id } = tempNode
-      const childList = temp.filter(i => i.parent_id === id && i.type === 'l')
-      tempNode.childList = childList
-      tempNode.content = temp.filter(i => i.parent_id === id && i.type !== 'l')
-      // tempNode.children = temp.filter(i => i.parent_id === id)
-    })
-    console.log('sqlResult is ', temp.filter(i => !i.parent_id))
-    sqlResult = sqlResult.filter(i => i._type === 'block_Ref').concat([node])
-    refLinks.value.push(...sqlResult)
 
     if (useV.value) {
       new Protyle(plugin.app, renderRef.value[index], {
@@ -787,7 +253,9 @@ const getData = async () => {
       })
     }
   }
+  getTreeStruct()
 }
+
 watchEffect(() => {
   const currentDocId = protyle.value?.block?.id;
   if (!currentDocId) {
@@ -796,10 +264,404 @@ watchEffect(() => {
   getData()
 })
 
+
+// #endregion 反链数据
+
+// #region 反链结构数据
+
+const backlinkDocTreeStruct = ref([])
+const backlinkFlatTree = ref([])
+const backlinkTreePathChains = ref([])
+const getTreeStruct = async () => {
+  backlinkDocTreeStruct.value = []
+  backlinkFlatTree.value = []
+  backlinkBlockRefNodes.value = []
+  for (let index = 0; index < docBacklinks.value.length; index++) {
+    const item = docBacklinks.value[index]
+    const childNodeIds = []
+    const blockBacklinksTemp = blockBackLinks.value[item.id]
+    blockBacklinksTemp.backlinks.forEach((b) => {
+      childNodeIds.push(b.blockPaths[b.blockPaths.length - 1].id)
+    })
+
+    let sqlResult = await sql(`
+      WITH RECURSIVE parentList AS (
+        SELECT id, parent_id, content, fcontent, markdown, type, subtype
+        FROM blocks
+        WHERE id in (${childNodeIds.map(i => `'${i}'`).join(', ')})
+        and content is not null and content <> ''
+        UNION
+        SELECT c.id, c.parent_id, c.content, c.fcontent, c.markdown, c.type, c.subtype
+        FROM blocks c
+        JOIN parentList ct ON c.id= ct.parent_id
+      ), childList AS (
+        SELECT id, parent_id, content, fcontent, markdown, type, subtype
+        FROM blocks
+        WHERE id in (${childNodeIds.map(i => `'${i}'`).join(', ')})
+        and content is not null and content <> ''
+        UNION
+        SELECT c.id, c.parent_id, c.content, c.fcontent, c.markdown, c.type, c.subtype
+        FROM blocks c
+        JOIN childList ct ON c.parent_id= ct.id
+      )
+      SELECT DISTINCT * FROM parentList
+      UNION
+      select DISTINCT * FROM childList
+    `)
+    sqlResult.forEach((sqlRes) => {
+      const { id } = sqlRes
+      sqlRes.treePath = id
+      sqlRes.level = 0
+    })
+    const pList = sqlResult.filter(i => ['p', 't', 'h'].includes(i.type))
+    pList.forEach((p) => {
+      const { markdown } = p
+      const reg = /\(\([^)].*?\)\)/g
+      const match = markdown.match(reg)
+      if (match) {
+        const parent = sqlResult.find(i => i.id === p.parent_id)
+        let paths = []
+        match.forEach((m) => {
+          const t: string = m.replace(/[\(\)]/g, '')
+          const firstBlankIndex = t.indexOf(' ')
+          const key = t.substring(0, firstBlankIndex)
+          const value = t.substring(firstBlankIndex + 1, t.length)
+          const fValue = value.substring(1, value.length - 1)
+          paths.push(key)
+          const n: Node = {
+            id: key,
+            parent_id: p.id,
+            name: fValue,
+            treePath: key,
+            _type: 'block_Ref',
+          }
+          if (p.blockRefs) {
+            p.blockRefs.push(n)
+          } else {
+            p.blockRefs = []
+            p.blockRefs.push(n)
+          }
+          sqlResult.push(n)
+        })
+        if (parent) {
+          parent.treePath += `/(${paths.join('|')})`
+        }
+      }
+    })
+    sqlResult.forEach((tempNode) => {
+      const { id } = tempNode
+      if (tempNode.type == 'd') {
+        tempNode.name = tempNode.fcontent
+        tempNode.level = 0
+        tempNode._type = 'doc'
+      }
+      tempNode.children = sqlResult.filter(i => {
+        const isChild = i.parent_id === id
+                return isChild
+      })
+    })
+    const blockRefNodes: Node[] = [...sqlResult.filter(i => isBlockRef(i)).map((i) => {
+
+      return {
+        id: i.id,
+        parent_id: i.parent_id,
+        name: i.name,
+        _type: i._type,
+        treePath: i.treePath,
+      }
+    })]
+    backlinkBlockRefNodes.value.push(...blockRefNodes)
+    backlinkDocTreeStruct.value.push(...sqlResult.filter(i => !i.parent_id))
+
+    let result = []
+    const rc = (list, pathChain) => {
+      if (!list || !list.length) {
+        result.push(pathChain)
+        return
+      }
+      list.forEach((node) => {
+        const inner = [...pathChain]
+        const temp = {
+          ...node,
+          origin: node,
+        }
+        delete temp.children
+        inner.push(temp)
+        rc(node.children, inner)
+      })
+    }
+
+    rc(backlinkDocTreeStruct.value, [])
+    backlinkTreePathChains.value = result
+    backlinkFlatTree.value.push(...sqlResult)
+  }
+  recursionTree(backlinkDocTreeStruct.value, null, (node, parent) => {
+    if (parent) {
+      node.level = parent.level + 1
+    } else {
+      node.level = 0
+    }
+  })
+}
+
+// #endregion 反链结构数据
+
+// #endregion 基础数据处理
+
+
+
+// #region 折叠控制相关
+
+const docBacklinkFoldStatusMap = ref({})
+const switchBacklinkDocBlockFoldStatus = (docBacklink) => {
+  docBacklinkFoldStatusMap.value[docBacklink.id] = !docBacklinkFoldStatusMap.value[docBacklink.id]
+}
+
 const backlinkAreaFolded = ref(false);
 const switchBacklinkAreaFoldStatus = () => {
   backlinkAreaFolded.value = !backlinkAreaFolded.value;
 }
+
+// #endregion 折叠控制相关
+
+
+
+// #region 反链筛选项相关功能
+
+const backlinkFilterPanelShownStatus = ref(true)
+const switchBacklinkFilterPanelShownStatus = () => {
+  backlinkFilterPanelShownStatus.value = !backlinkFilterPanelShownStatus.value
+}
+
+const properties = ref<{
+  [key: string]: {
+    include: boolean;
+    origin: Node;
+  }
+}>({})
+const backlinkBlockRefNodes = ref<Node[]>([])
+const backlinkBlockRefNodesDistinct = computed<Node[]>(() => {
+  const list = reomveDuplicated(backlinkBlockRefNodes.value.filter(i => i.id !== currentDocId.value))
+  return list
+})
+const notSelectedRefs = computed<Array<Node>>(() => {
+  return backlinkBlockRefNodesDistinct.value.filter((i) => !properties.value[i.id])
+})
+const remainRefs = computed<Array<Node>>(() => {
+  const list = notSelectedRefs.value
+  // TODO 实现剩余选项的过滤
+
+  return list
+})
+const validChain = ref([])
+const excludeRefs = computed<Array<Node>>(() => {
+  const list = []
+  Object.keys(properties.value).forEach((key) => {
+    const item = properties.value[key]
+    if (!item.include) {
+      list.push(item.origin)
+    }
+  })
+  return list
+})
+const includeRefs = computed<Array<Node>>(() => {
+  const list = []
+  Object.keys(properties.value).forEach((key) => {
+    const item = properties.value[key]
+    if (item.include) {
+      list.push(item.origin)
+    }
+  })
+  return list
+})
+
+const handleClickFilterTag = (event: MouseEvent, item: Node) => {
+  const {
+    shiftKey,
+  } = event
+  const exist = properties.value[item.id]
+
+  let checkValue = true
+  if (shiftKey) {
+    checkValue = false
+  }
+
+  if (exist) {
+    delete properties.value[item.id]
+  } else {
+    properties.value[item.id] = {
+      include: checkValue,
+      origin: item,
+    }
+  }
+
+  markBacklinkTree()
+}
+
+const markBacklinkTree = () => {
+  backlinkFlatTree.value.forEach(item => {
+    delete item.include
+  })
+
+  // console.log('tree is ', JSON.parse(JSON.stringify(backlinkDocTreeStruct.value)))
+
+  // const t = JSON.parse(JSON.stringify(backlinkTreePathChains.value))
+  // t.forEach((item) => {
+  //   item.forEach((i) => {
+  //       delete i.origin
+  //   })
+  // })
+  // console.log('t is ', t)
+
+  let result = [...backlinkTreePathChains.value].filter((item) => {
+    if (excludeRefs.value.length) {
+      const hasExNode = excludeRefs.value.some(i => isInTreeChain(item, i))
+      if (hasExNode) {
+        return false
+      }
+    }
+
+    const selectIncludes = !!includeRefs.value.length
+    if (selectIncludes) {
+      const someNotIn = includeRefs.value.some(i => !isInTreeChain(item, i))
+      if (someNotIn) {
+        return false
+      }
+    }
+
+    return true
+  })
+
+  validChain.value = result
+
+  result.forEach((chain) => {
+    chain.forEach((item) => {
+      const origin = item.origin
+      origin.include = true
+      if (isSyContainerNode(origin)) {
+        origin.children.forEach((curNode) => {
+          if (!isSyContainerNode(curNode)) {
+            curNode.include = origin.include
+            }
+        })
+      }
+    })
+  })
+  // const tt = JSON.parse(JSON.stringify(result))
+  // tt.forEach((item) => {
+  //   item.forEach((i) => {
+  //     i.include = i.origin.include
+  //     delete i.origin
+  //   })
+  // })
+  // console.log('result is ', tt)
+
+  hideDomByBlockRefTree()
+}
+
+// #endregion 反链筛选项相关功能
+
+// #region 根据树结构处理页面元素
+
+const backlinkListDomRef = ref<HTMLElement>(null)
+const dealedDomList = ref<Array<HTMLElement>>([])
+const storeDom = (dom) => {
+  dealedDomList.value.push(dom)
+}
+const storeAndHidDom = (dom) => {
+  hideDom(dom)
+  storeDom(dom)
+}
+const recoverDom = (dom) => {
+  showDom(dom)
+}
+const recoverAllDealedDoms = () => {
+  dealedDomList.value.forEach((node) => {
+    recoverDom(node)
+  })
+  dealedDomList.value = []
+}
+
+const hideDomByBlockRefTree = () => {
+  recoverAllDealedDoms()
+
+  if (!backlinkListDomRef.value) {
+    return
+  }
+
+  if (!excludeRefs.value.length && !includeRefs.value.length) {
+    return
+  }
+
+
+  recursionTree(backlinkDocTreeStruct.value, null, (curNode) => {
+    const doms = queryAllByDom(backlinkListDomRef.value, `[data-node-id="${curNode.id}"]`)
+    const targetChain = validChain.value.find((chain) => chain.find(i => {
+      if (curNode._type == 'block_Ref') {
+        const paragraphParent = backlinkFlatTree.value.find((flatItem) => flatItem.id == curNode.parent_id)
+        if (paragraphParent) {
+          const parent = backlinkFlatTree.value.find((flatItem) => flatItem.id == paragraphParent.parent_id)
+          if (isSyListItemNode(parent)) {
+            return parent.id == i.id
+          }
+        }
+      }
+      if (isSyParagraphNode(curNode)) {
+        const parent = backlinkFlatTree.value.find((flatItem) => flatItem.id == curNode.parent_id)
+        if (isSyListItemNode(parent)) {
+          return parent.id == i.id
+        }
+      }
+      return i.id == curNode.id
+    }))
+    const inChain = !!targetChain
+    // if (curNode.id == '20231214050520-u00c5w8') {
+    //   console.log(targetChain)
+    //   console.log('curNode is ', inChain, curNode.id, curNode.fcontent, curNode.name, '\n', curNode, '\n', doms)
+    // }
+    if (doms.length) {
+      if (!inChain) {
+        doms.forEach((dom) => {
+          storeAndHidDom(dom)
+
+          const prevDom = dom.previousElementSibling as HTMLElement
+          if (prevDom && isSyBreadCrumbDom(prevDom)) {
+            storeAndHidDom(prevDom)
+          }
+          const isTitleLine = dom.classList.contains('backlinkDocBlockTitleLineSticky')
+          if (isTitleLine) {
+            const protyleDom = dom.nextElementSibling as HTMLElement
+            storeAndHidDom(protyleDom)
+          }
+        })
+      }
+    }
+  })
+}
+
+// #endregion 根据树结构处理页面元素
+
+
+// #region 处理gutter显示问题
+watchEffect(() => {
+  let flag
+  props.element.addEventListener('scroll', () => {
+    if (flag) {
+      clearTimeout(flag)
+    }
+    setTimeout(() => {
+      renderRef.value.forEach((item) => {
+        hideGutterOnTarget(item)
+      })
+    }, 50)
+  })
+})
+
+const onMouseLeave = (event) => {
+  hideGutterOnTarget(event.target)
+}
+// #endregion 处理gutter显示问题
+
 
 </script>
 
