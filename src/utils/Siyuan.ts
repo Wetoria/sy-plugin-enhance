@@ -133,6 +133,10 @@ export function isSyParagraphNode(node) {
   return getSyNodeType(node) === SyNodeTypes.p
 }
 
+export function isSyNodeCanContainerBlockRef(node) {
+  return isSyHeadingNode(node) || isSyTableNode(node) || isSyParagraphNode(node)
+}
+
 
 export function isSyDocNode(node) {
   return getSyNodeType(node) === SyNodeTypes.d
@@ -153,4 +157,9 @@ export function isSySuperBlockNode(node) {
 
 export function isSyContainerNode(node) {
   return isSyDocNode(node) || isSyListNode(node) || isSyListItemNode(node) || isSyQuoteNode(node) || isSySuperBlockNode(node)
+}
+
+
+export function hasTargetBlockRef(markdown, defBlockId) {
+  return markdown.includes(`((${defBlockId}`)
 }

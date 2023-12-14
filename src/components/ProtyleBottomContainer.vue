@@ -179,7 +179,7 @@ import { hideGutterOnTarget, queryAllByDom } from '@/utils/DOM';
 import { IProtyle, Protyle } from 'siyuan';
 import { computed, ref, watchEffect } from 'vue';
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
-import { hideDom, isBlockRef, isSyBreadCrumbDom, isSyContainerNode, isSyListItemNode, isSyParagraphNode, showDom } from '@/utils/Siyuan';
+import { hasTargetBlockRef, hideDom, isSyBreadCrumbDom, isSyContainerNode, isSyListItemNode, isSyNodeCanContainerBlockRef, isSyParagraphNode, showDom } from '@/utils/Siyuan';
 import { isInTreeChain, recursionTree, reomveDuplicated } from '@/utils';
 
 interface Node {
@@ -272,136 +272,124 @@ watchEffect(() => {
 const backlinkDocTreeStruct = ref([])
 const backlinkFlatTree = ref([])
 const backlinkTreePathChains = ref([])
+
+const getBlockRefsInDoc = async (ids: string[]) => {
+  let sqlStmt = `
+    select
+      def_block_id as id,
+      content as name
+    from refs where block_id in (
+      ${ids.map(i => `'${i}'`).join(', ')}
+    ) group by def_block_id
+  `
+  return sql(sqlStmt)
+}
+
 const getTreeStruct = async () => {
   backlinkDocTreeStruct.value = []
   backlinkFlatTree.value = []
   backlinkBlockRefNodes.value = []
+
+  const childNodeIds = []
   for (let index = 0; index < docBacklinks.value.length; index++) {
     const item = docBacklinks.value[index]
-    const childNodeIds = []
     const blockBacklinksTemp = blockBackLinks.value[item.id]
     blockBacklinksTemp.backlinks.forEach((b) => {
       childNodeIds.push(b.blockPaths[b.blockPaths.length - 1].id)
     })
 
-    let sqlResult = await sql(`
-      WITH RECURSIVE parentList AS (
-        SELECT id, parent_id, content, fcontent, markdown, type, subtype
-        FROM blocks
-        WHERE id in (${childNodeIds.map(i => `'${i}'`).join(', ')})
-        and content is not null and content <> ''
-        UNION
-        SELECT c.id, c.parent_id, c.content, c.fcontent, c.markdown, c.type, c.subtype
-        FROM blocks c
-        JOIN parentList ct ON c.id= ct.parent_id
-      ), childList AS (
-        SELECT id, parent_id, content, fcontent, markdown, type, subtype
-        FROM blocks
-        WHERE id in (${childNodeIds.map(i => `'${i}'`).join(', ')})
-        and content is not null and content <> ''
-        UNION
-        SELECT c.id, c.parent_id, c.content, c.fcontent, c.markdown, c.type, c.subtype
-        FROM blocks c
-        JOIN childList ct ON c.parent_id= ct.id
-      )
-      SELECT DISTINCT * FROM parentList
-      UNION
-      select DISTINCT * FROM childList
-    `)
-    sqlResult.forEach((sqlRes) => {
-      const { id } = sqlRes
-      sqlRes.treePath = id
-      sqlRes.level = 0
-    })
-    const pList = sqlResult.filter(i => ['p', 't', 'h'].includes(i.type))
-    pList.forEach((p) => {
-      const { markdown } = p
-      const reg = /\(\([^)].*?\)\)/g
-      const match = markdown.match(reg)
-      if (match) {
-        const parent = sqlResult.find(i => i.id === p.parent_id)
-        let paths = []
-        match.forEach((m) => {
-          const t: string = m.replace(/[\(\)]/g, '')
-          const firstBlankIndex = t.indexOf(' ')
-          const key = t.substring(0, firstBlankIndex)
-          const value = t.substring(firstBlankIndex + 1, t.length)
-          const fValue = value.substring(1, value.length - 1)
-          paths.push(key)
-          const n: Node = {
-            id: key,
-            parent_id: p.id,
-            name: fValue,
-            treePath: key,
-            _type: 'block_Ref',
-          }
-          if (p.blockRefs) {
-            p.blockRefs.push(n)
-          } else {
-            p.blockRefs = []
-            p.blockRefs.push(n)
-          }
-          sqlResult.push(n)
-        })
-        if (parent) {
-          parent.treePath += `/(${paths.join('|')})`
-        }
-      }
-    })
-    sqlResult.forEach((tempNode) => {
-      const { id } = tempNode
-      if (tempNode.type == 'd') {
-        tempNode.name = tempNode.fcontent
-        tempNode.level = 0
-        tempNode._type = 'doc'
-      }
-      tempNode.children = sqlResult.filter(i => {
-        const isChild = i.parent_id === id
-                return isChild
-      })
-    })
-    const blockRefNodes: Node[] = [...sqlResult.filter(i => isBlockRef(i)).map((i) => {
-
-      return {
-        id: i.id,
-        parent_id: i.parent_id,
-        name: i.name,
-        _type: i._type,
-        treePath: i.treePath,
-      }
-    })]
-    backlinkBlockRefNodes.value.push(...blockRefNodes)
-    backlinkDocTreeStruct.value.push(...sqlResult.filter(i => !i.parent_id))
-
-    let result = []
-    const rc = (list, pathChain) => {
-      if (!list || !list.length) {
-        result.push(pathChain)
-        return
-      }
-      list.forEach((node) => {
-        const inner = [...pathChain]
-        const temp = {
-          ...node,
-          origin: node,
-        }
-        delete temp.children
-        inner.push(temp)
-        rc(node.children, inner)
-      })
-    }
-
-    rc(backlinkDocTreeStruct.value, [])
-    backlinkTreePathChains.value = result
-    backlinkFlatTree.value.push(...sqlResult)
   }
-  recursionTree(backlinkDocTreeStruct.value, null, (node, parent) => {
-    if (parent) {
-      node.level = parent.level + 1
+
+  // #region 获取并构建文档树结构
+
+  let sqlResult = await sql(`
+    WITH RECURSIVE parentList AS (
+        SELECT
+            id,
+            parent_id,
+            content,
+            fcontent,
+            markdown,
+            type,
+            subtype
+        FROM blocks
+        WHERE id in (
+            ${docBacklinks.value.map(i => `'${i.id}'`).join(',')}
+        )
+        UNION
+        SELECT c.id, c.parent_id, c.content, c.fcontent, c.markdown, c.type, c.subtype
+        FROM blocks c
+        JOIN parentList ct ON c.parent_id= ct.id
+    )
+    select * from parentList
+  `)
+  sqlResult.forEach((tempNode) => {
+    const { id } = tempNode
+    if (!isSyContainerNode(tempNode)) {
+      tempNode._markdown = tempNode.markdown
     } else {
-      node.level = 0
+      tempNode._markdown = ''
     }
+    const childNodeList = sqlResult.filter(i => i.parent_id === id)
+    tempNode.children = childNodeList
   })
+
+  backlinkFlatTree.value.push(...sqlResult)
+  backlinkDocTreeStruct.value.push(...sqlResult.filter(i => !i.parent_id))
+
+  // #endregion 获取并构建文档树结构
+
+
+
+  // #region 构建树链路
+
+  let result = []
+  const rc = (list, pathChain) => {
+    if (!list || !list.length) {
+      result.push(pathChain)
+      return
+    }
+    list.forEach((node) => {
+      const inner = [...pathChain]
+      const temp = {
+        ...node,
+        origin: node,
+      }
+      delete temp.children
+      inner.push(temp)
+      rc(node.children, inner)
+    })
+  }
+
+  rc(backlinkDocTreeStruct.value, [])
+
+  result = result.filter((item) => {
+    return item.some(i => hasTargetBlockRef(i._markdown, currentDocId.value))
+  })
+  backlinkTreePathChains.value = result
+
+  // #endregion 构建树链路
+
+
+  const ids = sqlResult.filter(i => isSyNodeCanContainerBlockRef(i)).map(i => i.id)
+  const allDocBlockRefs = await getBlockRefsInDoc(ids)
+  const blockRefsOptions = allDocBlockRefs.filter((blockRef) => {
+    if (blockRef.id === currentDocId.value) {
+      return false
+    }
+    return backlinkTreePathChains.value.some(chain => chain.some(i => hasTargetBlockRef(i._markdown, blockRef.id)))
+  })
+  backlinkBlockRefNodes.value = [
+    ...blockRefsOptions.map(i => ({
+      ...i,
+      type: 'blockRef',
+    })),
+    ...docBacklinks.value.map(i => ({
+      id: i.id,
+      name: i.name,
+      type: 'doc',
+    }))
+  ]
 }
 
 // #endregion 反链结构数据
