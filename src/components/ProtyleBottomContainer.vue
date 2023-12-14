@@ -448,8 +448,14 @@ const notSelectedRefs = computed<Array<Node>>(() => {
   return backlinkBlockRefNodesDistinct.value.filter((i) => !properties.value[i.id])
 })
 const remainRefs = computed<Array<Node>>(() => {
-  const list = notSelectedRefs.value
+  let list = notSelectedRefs.value
   // TODO 实现剩余选项的过滤
+  // console.log('validChain is ', validChain.value)
+  if (validChain.value.length) {
+    list = list.filter((node) => {
+      return validChain.value.find((chain) => isInTreeChain(chain, node))
+    })
+  }
 
   return list
 })
@@ -663,27 +669,37 @@ const onMouseLeave = (event) => {
 // #endregion 处理gutter显示问题
 
 const linkNumMap = computed(() => {
+  // console.log('---')
   const map = {}
   const chainList = validChain.value.length ? validChain.value : backlinkTreePathChains.value
 
+  // const tt = JSON.parse(JSON.stringify(chainList))
+  // tt.forEach((item) => {
+  //   item.forEach((i) => {
+  //     i.include = i.origin.include
+  //     delete i.origin
+  //   })
+  // })
+  // console.log('result is ', tt)
+
   remainRefs.value.forEach((node) => {
-    let num = 0
-    chainList.forEach((chain) => {
-      const lastInChain = chain[chain.length - 1]
-      if (lastInChain._type != 'block_Ref') {
-        return
-      }
-      if (node._type == 'doc') {
-        if (lastInChain.id === currentDocId.value) {
-          num++
-        }
-      } else {
-        if (lastInChain.id === node.id) {
-          num++
-        }
-      }
-    })
-    map[node.id] = num || ''
+    let validChainList
+    if (node._type === 'doc') {
+      validChainList = chainList.filter((chain) => {
+        const first = chain[0]
+        const lastInChain = chain[chain.length - 1]
+        // console.log('cu id ', currentDocId.value)
+        // console.log('first is ', first)
+        // console.log('lastInChain is ', lastInChain)
+        return first.id == node.id && (lastInChain._type == 'block_Ref' && lastInChain.id === currentDocId.value)
+      })
+      // console.log('validChainList is ', validChainList)
+    } else {
+      validChainList = chainList.filter((chain) => {
+        return chain.find(i => i.id === node.id)
+      })
+    }
+    map[node.id] = validChainList.length || ''
   })
   return map
 })
