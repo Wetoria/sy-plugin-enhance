@@ -15,12 +15,14 @@
         <ul>
             <div v-for="blockBacklinkData of backlinkData" :key="blockBacklinkData.dom">
                 <backlinkDocBlock
-                  :parent-data="ParentData[getBlockID(blockBacklinkData)]"
+                  :parent-data="ParentDomData[getBlockID(blockBacklinkData)]"
                   :filter-list="filterList"
                   :block-backlink-data="blockBacklinkData"
                   :displayMap="displayMap"
                   :current-doc-id="currentDocId"
                   :docBacklinkFoldStatus="docBacklinkFoldStatusMap[docBacklink.id]"
+                  @switch-item-visiable="switchItemVisiable"
+                  @update-sub-ref="updateSubRef"
                 />
             </div>
         </ul>
@@ -30,19 +32,31 @@
 import backlinkDocBlock from '@/components/Backlink/BacklinkDocBlock.vue';
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import {fetchSyncPost} from "siyuan"
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 const props = defineProps({
-    backlinkData: Object,
+    backlinkData: Array<Object>,
     displayMap: Object,
     docBacklinkFoldStatusMap: Object,
     docBacklink: Object,
     currentDocId: String,
+    defRefBacklinkDOcId:String,
     testNumber: Number,
     filterList: Array<{
       key: string;
       include: boolean;
     }>,
 })
+
+const emit = defineEmits(['switchBacklinkDocBlockFoldStatus','updateSearchIndex'])
+const switchBacklinkDocBlockFoldStatus = (docBacklink) => {
+    emit('switchBacklinkDocBlockFoldStatus', docBacklink)
+}
+
+
+const refParentData = ref({})
+const ParentDomData = ref({})
+const subItemVisiable = ref({})
+const subItemVisRef = ref({})
 
 const getBlockID = (blockBacklinkData)=>{
     let blockPaths = blockBacklinkData.blockPaths
@@ -51,13 +65,46 @@ const getBlockID = (blockBacklinkData)=>{
     return lastItem.id
 }
 
-const ParentData = ref({})
+
 
 console.log(props.backlinkData)
-const emit = defineEmits(['switchBacklinkDocBlockFoldStatus'])
-const switchBacklinkDocBlockFoldStatus = (docBacklink) => {
-    emit('switchBacklinkDocBlockFoldStatus', docBacklink)
+
+const switchItemVisiable= ({blockID, visiable})=>{
+    subItemVisiable.value[blockID] = visiable
 }
+const updateSubRef = ({blockID, subRef})=>{
+    subItemVisRef.value[blockID] = subRef
+}
+
+const docSearchIndex = computed(()=>{
+    let searchIndex = {}
+    let subItemEntries = Object.entries(subItemVisiable.value)
+    let visiableItemList = subItemEntries.filter(x=>x[1])
+    let visiableItemIdList = visiableItemList.map(x=>x[0])
+    if(visiableItemList.length === 0){
+        return searchIndex
+    }
+    searchIndex[props.docBacklink.id] = {index:[...visiableItemIdList], type:"doc"}
+    for (let subVisiableId of visiableItemIdList){
+        let visRefList = subItemVisRef.value[subVisiableId]
+        if(!visRefList){
+            continue;
+        }
+        visRefList = [...visRefList]
+        for (let visRef  of visRefList){
+            let tempIndex = searchIndex[visRef]
+            console.log(visRefList)
+            if(tempIndex){
+                tempIndex.index.push(visRef,subVisiableId)
+                searchIndex[visRef] = tempIndex
+            }
+            else{
+                searchIndex[visRef] = {index:[subVisiableId],type:'block_Ref'}
+            }
+        }
+    }
+    return searchIndex
+})
 
 const isLeftBlock = (nodeType)=>{
     switch (nodeType) {
@@ -176,8 +223,8 @@ const computeParentData= async(backlinkData,docId)=>{
     let docElem = buildDocmentElemMap(docId)
     let blockIdList =  backlinkData.map(x=>getBlockID(x))
     console.log(blockIdList)
-    let refParentData = await getParentRefData(backlinkData)
-    let refParentElemMap = buildRefElement(refParentData)
+    refParentData.value = await getParentRefData(backlinkData)
+    let refParentElemMap = buildRefElement(refParentData.value)
     
     for (let blockId of blockIdList){
         let refParentElemList = refParentElemMap[blockId] ? refParentElemMap[blockId] : []
@@ -188,9 +235,12 @@ const computeParentData= async(backlinkData,docId)=>{
 }
 
 watch(props, async()=>{
-    if (props.backlinkData && props.currentDocId){
-        ParentData.value = await computeParentData(props.backlinkData,props.currentDocId)
+    if (props.backlinkData && props.docBacklink.id){
+        ParentDomData.value = await computeParentData(props.backlinkData,props.docBacklink.id)
     }
+})
+watch([subItemVisiable,subItemVisRef],()=>{
+    emit('updateSearchIndex',docSearchIndex)
 })
 </script>
 <style scoped lang="scss">

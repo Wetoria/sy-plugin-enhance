@@ -45,6 +45,22 @@ const preBreadcrumb = ref()
 let blockID = ref()
 const filterSuccess = ref(true)
 let render = false
+
+const emit = defineEmits(['switchItemVisiable','updateSubRef'])
+const switchItemVisiable = (blockID:string, Visiable:boolean) => {
+    emit('switchItemVisiable', {
+        blockID:blockID,
+        visiable:Visiable
+    })
+}
+const updateSubRef = (blockID:string,subRef:string[])=>{
+    emit('updateSubRef',{
+        blockID:blockID,
+        subRef:subRef
+    })
+}
+
+
 const onMouseLeave = (event) => {
     hideGutterOnTarget(event.target)
 }
@@ -339,9 +355,33 @@ const checkAndFilter = (parentData, filterList) => {
     return checkAllSubContainerBlock([...nodeList], filterList, parentData)
 }
 
+const checkQueryHidden = (node)=>{
+    if(node.classList.contains("backlink-query-hidden") || node.classList.contains("fn__none")){
+        return true
+    }
+    if(node.classList.contains("protyle-wysiwyg")){
+        return false
+    }
+    if (!node.parentElement){
+        return false
+    }
+    return checkQueryHidden(node.parentElement)
+}
+
+const getAllRefVisiableNode = (node)=>{
+    let totalNode = node.querySelectorAll('div[data-node-id] span[data-type="block-ref"][data-id]')
+    let nodeList = [...totalNode]
+    //检查所有ref的可见性并排除当前反链的引用
+    let filterNodeList = nodeList.filter(x=>!checkQueryHidden(x) && x.dataset.id != props.currentDocId)
+    return filterNodeList
+}
+
 watch(props, () => {
     showNode(renderRef.value)
     filterSuccess.value = checkAndFilter(props.parentData, props.filterList)
+    let subRef = getAllRefVisiableNode(renderRef.value)
+    switchItemVisiable(blockID.value, filterSuccess.value)
+    updateSubRef(blockID.value, subRef.map(x=>x.dataset.id))
 })
 
 
@@ -349,6 +389,10 @@ onMounted(() => {
     preBreadcrumb.value.innerHTML = genBreadcrumb(props.blockBacklinkData.blockPaths)
     preRenderRef.value.innerHTML = setBacklinkFold(props.blockBacklinkData.dom, props.blockBacklinkData.expand)
     filterSuccess.value = checkAndFilter(props.parentData, props.filterList)
+
+    let subRef = getAllRefVisiableNode(renderRef.value)
+    switchItemVisiable(blockID.value, filterSuccess.value)
+    updateSubRef(blockID.value, subRef.map(x=>x.dataset.id))
 })
 
 </script>
