@@ -163,3 +163,7 @@ export function isSyContainerNode(node) {
 export function hasTargetBlockRef(markdown, defBlockId) {
   return markdown.includes(`((${defBlockId}`)
 }
+
+export function chainHasTargetBlockRef(chain, defBlockId) {
+  return chain.some(i => hasTargetBlockRef(i._markdown, defBlockId))
+}

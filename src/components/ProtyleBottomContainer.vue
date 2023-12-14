@@ -177,10 +177,16 @@ import { request, sql } from '@/api';
 import { usePlugin } from '@/main';
 import { hideGutterOnTarget, queryAllByDom } from '@/utils/DOM';
 import { IProtyle, Protyle } from 'siyuan';
-import { computed, ref, watchEffect } from 'vue';
+import { computed, ref, watch, watchEffect } from 'vue';
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
-import { hasTargetBlockRef, hideDom, isSyBreadCrumbDom, isSyContainerNode, isSyListItemNode, isSyNodeCanContainerBlockRef, isSyParagraphNode, showDom } from '@/utils/Siyuan';
-import { isInTreeChain, recursionTree, reomveDuplicated } from '@/utils';
+import {
+chainHasTargetBlockRef,
+  hasTargetBlockRef,
+  hideDom, isSyBreadCrumbDom, isSyContainerNode, isSyListItemNode, isSyNodeCanContainerBlockRef, showDom } from '@/utils/Siyuan';
+import {
+  recursionTree,
+} from '@/utils';
+
 
 interface Node {
   id: string;
@@ -326,7 +332,11 @@ const getTreeStruct = async () => {
   sqlResult.forEach((tempNode) => {
     const { id } = tempNode
     if (!isSyContainerNode(tempNode)) {
+      const parent = sqlResult.find((i) => i.id == tempNode.parent_id)
       tempNode._markdown = tempNode.markdown
+      if (parent && isSyContainerNode(parent)) {
+        parent._markdown += `|${tempNode._markdown}`
+      }
     } else {
       tempNode._markdown = ''
     }
@@ -428,26 +438,19 @@ const properties = ref<{
   }
 }>({})
 const backlinkBlockRefNodes = ref<Node[]>([])
-const backlinkBlockRefNodesDistinct = computed<Node[]>(() => {
-  const list = reomveDuplicated(backlinkBlockRefNodes.value.filter(i => i.id !== currentDocId.value))
-  return list
-})
+
+
 const notSelectedRefs = computed<Array<Node>>(() => {
-  return backlinkBlockRefNodesDistinct.value.filter((i) => !properties.value[i.id])
+  return backlinkBlockRefNodes.value.filter((i) => !properties.value[i.id])
 })
 const remainRefs = computed<Array<Node>>(() => {
   let list = notSelectedRefs.value
   // TODO 实现剩余选项的过滤
   // console.log('validChain is ', validChain.value)
-  if (validChain.value.length) {
-    list = list.filter((node) => {
-      return validChain.value.find((chain) => isInTreeChain(chain, node))
-    })
-  }
 
   return list
 })
-const validChain = ref([])
+
 const excludeRefs = computed<Array<Node>>(() => {
   const list = []
   Object.keys(properties.value).forEach((key) => {
@@ -488,28 +491,13 @@ const handleClickFilterTag = (event: MouseEvent, item: Node) => {
       origin: item,
     }
   }
-
-  markBacklinkTree()
 }
 
-const markBacklinkTree = () => {
-  backlinkFlatTree.value.forEach(item => {
-    delete item.include
-  })
 
-  // console.log('tree is ', JSON.parse(JSON.stringify(backlinkDocTreeStruct.value)))
-
-  // const t = JSON.parse(JSON.stringify(backlinkTreePathChains.value))
-  // t.forEach((item) => {
-  //   item.forEach((i) => {
-  //       delete i.origin
-  //   })
-  // })
-  // console.log('t is ', t)
-
-  let result = [...backlinkTreePathChains.value].filter((item) => {
+const validBacklinkTreePathChain = computed(() => {
+  return [...backlinkTreePathChains.value].filter((item) => {
     if (excludeRefs.value.length) {
-      const hasExNode = excludeRefs.value.some(i => isInTreeChain(item, i))
+      const hasExNode = excludeRefs.value.some(i => chainHasTargetBlockRef(item, i.id))
       if (hasExNode) {
         return false
       }
@@ -517,7 +505,7 @@ const markBacklinkTree = () => {
 
     const selectIncludes = !!includeRefs.value.length
     if (selectIncludes) {
-      const someNotIn = includeRefs.value.some(i => !isInTreeChain(item, i))
+      const someNotIn = includeRefs.value.some(i => !chainHasTargetBlockRef(item, i.id))
       if (someNotIn) {
         return false
       }
@@ -525,33 +513,19 @@ const markBacklinkTree = () => {
 
     return true
   })
+})
 
-  validChain.value = result
-
-  result.forEach((chain) => {
-    chain.forEach((item) => {
-      const origin = item.origin
-      origin.include = true
-      if (isSyContainerNode(origin)) {
-        origin.children.forEach((curNode) => {
-          if (!isSyContainerNode(curNode)) {
-            curNode.include = origin.include
-            }
-        })
-      }
+watchEffect(() => {
+  console.log('validBacklinkTreePathChain.value is ', validBacklinkTreePathChain.value)
+  const tt = JSON.parse(JSON.stringify(validBacklinkTreePathChain.value))
+  tt.forEach((item) => {
+    item.forEach((i) => {
+      delete i.origin
     })
   })
-  // const tt = JSON.parse(JSON.stringify(result))
-  // tt.forEach((item) => {
-  //   item.forEach((i) => {
-  //     i.include = i.origin.include
-  //     delete i.origin
-  //   })
-  // })
-  // console.log('result is ', tt)
+  console.log('result is ', tt)
+})
 
-  hideDomByBlockRefTree()
-}
 
 // #endregion 反链筛选项相关功能
 
@@ -568,6 +542,7 @@ const storeAndHidDom = (dom) => {
 }
 const recoverDom = (dom) => {
   showDom(dom)
+  dealedDomList.value = dealedDomList.value.filter(i => i != dom)
 }
 const recoverAllDealedDoms = () => {
   dealedDomList.value.forEach((node) => {
@@ -575,6 +550,10 @@ const recoverAllDealedDoms = () => {
   })
   dealedDomList.value = []
 }
+
+watch(validBacklinkTreePathChain, () => {
+  hideDomByBlockRefTree()
+})
 
 const hideDomByBlockRefTree = () => {
   recoverAllDealedDoms()
@@ -587,49 +566,50 @@ const hideDomByBlockRefTree = () => {
     return
   }
 
-
-  recursionTree(backlinkDocTreeStruct.value, null, (curNode) => {
+  const getDomAndDeal = (curNode, hide) => {
     const doms = queryAllByDom(backlinkListDomRef.value, `[data-node-id="${curNode.id}"]`)
-    const targetChain = validChain.value.find((chain) => chain.find(i => {
-      if (curNode._type == 'block_Ref') {
-        const paragraphParent = backlinkFlatTree.value.find((flatItem) => flatItem.id == curNode.parent_id)
-        if (paragraphParent) {
-          const parent = backlinkFlatTree.value.find((flatItem) => flatItem.id == paragraphParent.parent_id)
-          if (isSyListItemNode(parent)) {
-            return parent.id == i.id
-          }
-        }
-      }
-      if (isSyParagraphNode(curNode)) {
-        const parent = backlinkFlatTree.value.find((flatItem) => flatItem.id == curNode.parent_id)
-        if (isSyListItemNode(parent)) {
-          return parent.id == i.id
-        }
-      }
-      return i.id == curNode.id
-    }))
-    const inChain = !!targetChain
-    // if (curNode.id == '20231214050520-u00c5w8') {
-    //   console.log(targetChain)
-    //   console.log('curNode is ', inChain, curNode.id, curNode.fcontent, curNode.name, '\n', curNode, '\n', doms)
-    // }
-    if (doms.length) {
-      if (!inChain) {
-        doms.forEach((dom) => {
-          storeAndHidDom(dom)
-
-          const prevDom = dom.previousElementSibling as HTMLElement
-          if (prevDom && isSyBreadCrumbDom(prevDom)) {
-            storeAndHidDom(prevDom)
-          }
-          const isTitleLine = dom.classList.contains('backlinkDocBlockTitleLineSticky')
-          if (isTitleLine) {
-            const protyleDom = dom.nextElementSibling as HTMLElement
-            storeAndHidDom(protyleDom)
-          }
-        })
+    const hideOrShowDom = (dom) => {
+      if (hide) {
+        storeAndHidDom(dom)
+      } else {
+        recoverDom(dom)
       }
     }
+    if (doms.length) {
+      doms.forEach((dom) => {
+        hideOrShowDom(dom)
+
+        const prevDom = dom.previousElementSibling as HTMLElement
+        if (prevDom && isSyBreadCrumbDom(prevDom)) {
+          hideOrShowDom(prevDom)
+        }
+        const isTitleLine = dom.classList.contains('backlinkDocBlockTitleLineSticky')
+        if (isTitleLine) {
+          const protyleDom = dom.nextElementSibling as HTMLElement
+          hideOrShowDom(protyleDom)
+        }
+      })
+    }
+  }
+
+  const needDealChildContent = []
+  recursionTree(backlinkDocTreeStruct.value, null, (curNode) => {
+    const targetChain = validBacklinkTreePathChain.value.find((chain) => chain.some(i => i.id == curNode.id))
+    const inChain = !!targetChain
+    if (!inChain) {
+      getDomAndDeal(curNode, true)
+    } else {
+      if (isSyListItemNode(curNode)) {
+        needDealChildContent.push(curNode)
+      }
+    }
+  })
+
+  needDealChildContent.forEach((listItemNode) => {
+    const childContent = backlinkFlatTree.value.filter(i => i.parent_id == listItemNode.id && !isSyContainerNode(i))
+    childContent.forEach((childContentNode) => {
+      getDomAndDeal(childContentNode, false)
+    })
   })
 }
 
@@ -659,7 +639,7 @@ const onMouseLeave = (event) => {
 const linkNumMap = computed(() => {
   // console.log('---')
   const map = {}
-  const chainList = validChain.value.length ? validChain.value : backlinkTreePathChains.value
+  const chainList = backlinkTreePathChains.value
 
   // const tt = JSON.parse(JSON.stringify(chainList))
   // tt.forEach((item) => {
