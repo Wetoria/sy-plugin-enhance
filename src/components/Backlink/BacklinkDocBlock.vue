@@ -51,9 +51,9 @@ const onMouseLeave = (event) => {
 const plugin = usePlugin()
 let blockPaths: any[] = props.blockBacklinkData.blockPaths
 let length = blockPaths.length
-console.log(111111)
+
 blockID.value = blockPaths[length - 1].id
-console.log(props.blockBacklinkData)
+// console.log(props.blockBacklinkData)
 const renderProtyle = () => {
     if (render) {
         return
@@ -240,7 +240,7 @@ const hiddenNode = (node) => {
     node.classList.add("backlink-query-hidden")
 }
 const showNode = (node)=>{
-    console.log("show")
+    // console.log("show")
     let hiddenNodeList = node.querySelectorAll('.backlink-query-hidden')
     for (let hiddenNode of hiddenNodeList){
         hiddenNode.classList.remove('backlink-query-hidden')
@@ -324,7 +324,7 @@ function filterByString(node, filterList, parentNodeList) {
 }
 
 const checkAndFilter = (parentData, filterList) => {
-    console.log("start Check")
+    // console.log("start Check")
     if (!parentData || !filterList) {
         return true
     }
