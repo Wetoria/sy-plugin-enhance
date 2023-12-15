@@ -181,8 +181,10 @@ import { computed, ref, watch, watchEffect } from 'vue';
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import {
 chainHasRefNode,
+  chainHasTargetBlockRefId,
+  getTreeChainPathOfDoc,
   hasTargetBlockRef,
-  hideDom, isSyBreadCrumbDom, isSyContainerNode, isSyListItemNode, isSyNodeCanContainerBlockRef, showDom } from '@/utils/Siyuan';
+  hideDom, isSyBreadCrumbDom, isSyContainerNode, isSyDocNode, isSyHeadingNode, isSyListItemNode, isSyNodeCanContainerBlockRef, showDom } from '@/utils/Siyuan';
 import {
   recursionTree,
 } from '@/utils';
@@ -334,7 +336,7 @@ const getTreeStruct = async () => {
     if (!isSyContainerNode(tempNode)) {
       const parent = sqlResult.find((i) => i.id == tempNode.parent_id)
       tempNode._markdown = tempNode.markdown
-      if (parent && isSyContainerNode(parent)) {
+      if (parent && isSyContainerNode(parent) && !isSyDocNode(parent)) {
         parent._markdown += `|${tempNode._markdown}`
       }
     } else {
@@ -363,9 +365,11 @@ const getTreeStruct = async () => {
       const inner = [...pathChain]
       const temp = {
         ...node,
-        origin: node,
       }
       delete temp.children
+      if (isSyHeadingNode(temp)) {
+        result.push(inner)
+      }
       inner.push(temp)
       rc(node.children, inner)
     })
@@ -516,17 +520,6 @@ const validBacklinkTreePathChain = computed(() => {
   })
 })
 
-watchEffect(() => {
-  console.log('validBacklinkTreePathChain.value is ', validBacklinkTreePathChain.value)
-  const tt = JSON.parse(JSON.stringify(validBacklinkTreePathChain.value))
-  tt.forEach((item) => {
-    item.forEach((i) => {
-      delete i.origin
-    })
-  })
-  console.log('result is ', tt)
-})
-
 
 // #endregion 反链筛选项相关功能
 
@@ -638,28 +631,40 @@ const onMouseLeave = (event) => {
 // #endregion 处理gutter显示问题
 
 const linkNumMap = computed(() => {
-  // console.log('---')
   const map = {}
-  const chainList = backlinkTreePathChains.value
+  const chainList = validBacklinkTreePathChain.value.length ? validBacklinkTreePathChain.value : backlinkTreePathChains.value
 
   remainRefs.value.forEach((node) => {
-    let validChainList
+    let num = 0
     if (node._type === 'doc') {
-      validChainList = chainList.filter((chain) => {
+
+      const docTreePathChain = backlinkTreePathChains.value.filter((chain) => {
         const first = chain[0]
         const lastInChain = chain[chain.length - 1]
-        // console.log('cu id ', currentDocId.value)
-        // console.log('first is ', first)
-        // console.log('lastInChain is ', lastInChain)
-        return first.id == node.id && (lastInChain._type == 'block_Ref' && lastInChain.id === currentDocId.value)
+        return first.id == node.id && hasTargetBlockRef(lastInChain._markdown, currentDocId.value)
       })
-      // console.log('validChainList is ', validChainList)
+
+      const allDocCurDocRefPaths = getTreeChainPathOfDoc(docTreePathChain)
+      const validRefPaths = getTreeChainPathOfDoc(validBacklinkTreePathChain.value)
+
+      const uniqueDocRefPath = new Set()
+      allDocCurDocRefPaths.forEach((path) => {
+        const inValidPathList = validRefPaths.some((i: string) => i.startsWith(path))
+        if (inValidPathList) {
+          uniqueDocRefPath.add(path)
+        }
+      })
+
+      num = uniqueDocRefPath.size
     } else {
-      validChainList = chainList.filter((chain) => {
-        return chain.find(i => i.id === node.id)
+      let validChainList = chainList.filter((chain) => {
+        const lastInChain = chain[chain.length - 1]
+        return chainHasTargetBlockRefId(chain, node.id) && hasTargetBlockRef(lastInChain._markdown, node.id)
       })
+
+      num = validChainList.length
     }
-    map[node.id] = validChainList.length || ''
+    map[node.id] = num || ''
   })
   return map
 })

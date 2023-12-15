@@ -164,6 +164,32 @@ export function hasTargetBlockRef(markdown, defBlockId) {
   return markdown.includes(`((${defBlockId}`)
 }
 
-export function chainHasTargetBlockRef(chain, defBlockId) {
+export function chainHasTargetBlockRefId(chain, defBlockId) {
   return chain.some(i => hasTargetBlockRef(i._markdown, defBlockId))
+}
+
+export function chainHasRefNode(chain, node) {
+  if (node._type === 'doc') {
+    return chain.some(i => i.id === node.id)
+  } else {
+    return chainHasTargetBlockRefId(chain, node.id)
+  }
+}
+
+export function getTreeChainPathOfDoc(chainList) {
+  const chainPaths = []
+  chainList.forEach((chain) => {
+    let path = ''
+    chain.forEach((chainNode, index) => {
+      if (isSyParagraphNode(chainNode)) {
+        const prevNode = chain[index - 1]
+        if (prevNode && isSyContainerNode(prevNode)) {
+          return
+        }
+      }
+      path += `/${chainNode.id}|[${chainNode._markdown}]`
+    })
+    chainPaths.push(path)
+  })
+  return chainPaths
 }
