@@ -133,6 +133,10 @@ export function isSyParagraphNode(node) {
   return getSyNodeType(node) === SyNodeTypes.p
 }
 
+export function isSyNodeCanContainerBlockRef(node) {
+  return isSyHeadingNode(node) || isSyTableNode(node) || isSyParagraphNode(node)
+}
+
 
 export function isSyDocNode(node) {
   return getSyNodeType(node) === SyNodeTypes.d
@@ -153,4 +157,39 @@ export function isSySuperBlockNode(node) {
 
 export function isSyContainerNode(node) {
   return isSyDocNode(node) || isSyListNode(node) || isSyListItemNode(node) || isSyQuoteNode(node) || isSySuperBlockNode(node)
+}
+
+
+export function hasTargetBlockRef(markdown, defBlockId) {
+  return markdown.includes(`((${defBlockId}`)
+}
+
+export function chainHasTargetBlockRefId(chain, defBlockId) {
+  return chain.some(i => hasTargetBlockRef(i._markdown, defBlockId))
+}
+
+export function chainHasRefNode(chain, node) {
+  if (node._type === 'doc') {
+    return chain.some(i => i.id === node.id)
+  } else {
+    return chainHasTargetBlockRefId(chain, node.id)
+  }
+}
+
+export function getTreeChainPathOfDoc(chainList) {
+  const chainPaths = []
+  chainList.forEach((chain) => {
+    let path = ''
+    chain.forEach((chainNode, index) => {
+      if (isSyParagraphNode(chainNode)) {
+        const prevNode = chain[index - 1]
+        if (prevNode && isSyContainerNode(prevNode)) {
+          return
+        }
+      }
+      path += `/${chainNode.id}|[${chainNode._markdown}]`
+    })
+    chainPaths.push(path)
+  })
+  return chainPaths
 }
