@@ -4,7 +4,10 @@ import {
   jumpToPrevDailyNote,
 } from "./utils/DailyNoteHelper";
 import VPlugin from '.';
-import 'vconsole/dist/vconsole.min.js';
+
+import {
+  Menu,
+} from "siyuan";
 
 import MobileNavVue from './components/MobileNav.vue';
 import { getDomByVueComponent } from './utils';
@@ -66,6 +69,51 @@ const addCommand = () => {
   });
 }
 
+const addMenu = (rect?: DOMRect) => {
+  const plugin = usePlugin()
+  const menu = new Menu("SyEnhance", () => {
+  });
+  menu.addItem({
+    label: "Open Doc Window(open help first)",
+    click: () => {},
+  });
+  if (plugin.isMobile) {
+    menu.fullscreen();
+  } else {
+    menu.open({
+      x: rect.right,
+      y: rect.bottom,
+      isLeft: true,
+    });
+  }
+}
+
+const addTopBar = () => {
+  const plugin = usePlugin()
+  const topBarElement = plugin.addTopBar({
+    icon: "iconVIP",
+    title: plugin.i18n.addTopBarIcon,
+    position: "right",
+    callback: () => {
+      if (plugin.isMobile) {
+        addMenu();
+      } else {
+        let rect = topBarElement.getBoundingClientRect();
+        // 如果被隐藏，则使用更多按钮
+        if (rect.width === 0) {
+          rect = document.querySelector("#barMore").getBoundingClientRect();
+        }
+        if (rect.width === 0) {
+          rect = document
+            .querySelector("#barPlugins")
+            .getBoundingClientRect();
+        }
+        addMenu(rect);
+      }
+    },
+  });
+}
+
 
 export function init(plugin: VPlugin) {
   usePlugin(plugin);
@@ -73,4 +121,5 @@ export function init(plugin: VPlugin) {
   addCommand();
   loadMobileNav();
   registerProtyleBottomArea()
+  addTopBar()
 }
