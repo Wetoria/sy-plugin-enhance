@@ -39,7 +39,7 @@ import { ref, watchEffect } from 'vue';
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import { computed } from 'vue';
 import { createTodayDailyNote } from '@/utils/DailyNoteHelper'
-import {useMobileKeyBoardShown} from '@/utils'
+import {openSetting, useMobileKeyBoardShown} from '@/utils'
 import { useDocHistory } from '@/utils/History'
 
 const showLabel = ref(false)
@@ -89,6 +89,13 @@ const navList = ref<Array<{
     label: '日记',
     onClick: () => {
       createTodayDailyNote()
+    }
+  },
+  {
+    icon: 'iconSuper',
+    label: '插件',
+    onClick: () => {
+      openSetting()
     }
   },
   {

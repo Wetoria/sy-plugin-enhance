@@ -1,18 +1,22 @@
 <template>
-  <div>
-    {{ msg }} + {{ count }}
-    <button @click="onClick">
-      test
-    </button>
+  <div class="SyEnhancerApp">
+    <FixedTools />
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { watch } from 'vue';
+import FixedTools from './components/FixedTools.vue';
+import { useSettings } from './logic';
 
-const msg = ref('test');
-const count = ref(2);
-const onClick = () => {
-  count.value += 1;
-}
+const settings = useSettings()
+
+watch(() => settings.value.useVip, () => {
+  document.documentElement.dataset.enhancer = `${settings.value.useVip}`
+})
+
 </script>
+
+<style lang="scss">
+
+</style>

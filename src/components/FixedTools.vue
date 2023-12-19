@@ -1,14 +1,16 @@
 <template>
-  <div
-    class="v-fixedTools"
-    @mousedown="onMouseDown"
-    @touchstart="onMouseDown"
-    @click="onClick"
-  >
-    <svg class="v-fixedToolsIcon">
-      <use xlink:href="#iconAdd"></use>
-    </svg>
-  </div>
+  <Teleport to="body">
+    <div
+      class="v-fixedTools"
+      @mousedown="onMouseDown"
+      @touchstart="onMouseDown"
+      @click="onClick"
+    >
+      <svg class="v-fixedToolsIcon">
+        <use xlink:href="#iconAdd"></use>
+      </svg>
+    </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">

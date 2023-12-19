@@ -1,4 +1,7 @@
-import { createApp, onMounted, ref } from 'vue';
+import SettingsVue from '@/components/Settings.vue';
+import { usePlugin } from '@/main';
+import { Dialog } from 'siyuan';
+import { App, createApp, onMounted, ref } from 'vue';
 // import ArcoVue from '@arco-design/web-vue';
 // import '@arco-design/web-vue/dist/arco.css';
 
@@ -7,6 +10,16 @@ export function loadComponent(component) {
   const app = createApp(component);
   document.body.appendChild(div);
   app.mount(div);
+}
+
+const mountedVueMap = new WeakMap<HTMLDivElement, App>()
+
+export function unmout(div: HTMLDivElement) {
+  if (mountedVueMap.has(div)) {
+    const temp = mountedVueMap.get(div)
+    temp.unmount()
+    mountedVueMap.delete(div)
+  }
 }
 
 export function getDomByVueComponent(component, options = {
@@ -22,6 +35,7 @@ export function getDomByVueComponent(component, options = {
   //   app.use(ArcoVue);
   // }
   app.mount(div);
+  mountedVueMap.set(div, app)
   return div;
 }
 
@@ -92,3 +106,24 @@ export function reomveDuplicated(list, compare = (cur, itemInResult) => (cur.id 
   })
   return result
 }
+
+export const openSetting = () => {
+  const plugin = usePlugin()
+  const div = getDomByVueComponent(SettingsVue)
+  const dialog = new Dialog({
+    title: plugin.i18n.pluginName,
+    content: `
+      <div class="SyEnhancerSettingsContainer">
+      </div>
+    `,
+    width: '80%',
+    destroyCallback: () => {
+      console.log('dd')
+      unmout(div)
+    }
+  })
+  const container = dialog.element.querySelector('.SyEnhancerSettingsContainer')
+  container.innerHTML = ''
+  container.append(div)
+}
+

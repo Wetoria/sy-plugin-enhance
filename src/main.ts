@@ -1,17 +1,15 @@
-import { registerAllComponents } from '@/components';
 import {
   jumpToNextDailyNote,
   jumpToPrevDailyNote,
 } from "./utils/DailyNoteHelper";
 import VPlugin from '.';
 
-import {
-  Menu,
-} from "siyuan";
+import { getDomByVueComponent, loadComponent, openSetting } from './utils';
+import { registerProtyleBottomArea } from './utils/DOM';
 
 import MobileNavVue from './components/MobileNav.vue';
-import { getDomByVueComponent } from './utils';
-import { registerProtyleBottomArea } from './utils/DOM';
+import AppVue from './App.vue';
+
 
 let plugin: VPlugin = null
 export function usePlugin(pluginProps?) {
@@ -69,57 +67,31 @@ const addCommand = () => {
   });
 }
 
-const addMenu = (rect?: DOMRect) => {
-  const plugin = usePlugin()
-  const menu = new Menu("SyEnhance", () => {
-  });
-  menu.addItem({
-    label: "Open Doc Window(open help first)",
-    click: () => {},
-  });
-  if (plugin.isMobile) {
-    menu.fullscreen();
-  } else {
-    menu.open({
-      x: rect.right,
-      y: rect.bottom,
-      isLeft: true,
-    });
-  }
-}
-
 const addTopBar = () => {
   const plugin = usePlugin()
-  const topBarElement = plugin.addTopBar({
-    icon: "iconVIP",
-    title: plugin.i18n.addTopBarIcon,
+  plugin.addTopBar({
+    icon: "iconSuper",
+    title: plugin.i18n.pluginName,
     position: "right",
     callback: () => {
-      if (plugin.isMobile) {
-        addMenu();
-      } else {
-        let rect = topBarElement.getBoundingClientRect();
-        // 如果被隐藏，则使用更多按钮
-        if (rect.width === 0) {
-          rect = document.querySelector("#barMore").getBoundingClientRect();
-        }
-        if (rect.width === 0) {
-          rect = document
-            .querySelector("#barPlugins")
-            .getBoundingClientRect();
-        }
-        addMenu(rect);
-      }
+      openSetting()
     },
   });
 }
 
+const loadVueApp = () => {
+  loadComponent(AppVue)
+}
 
 export function init(plugin: VPlugin) {
   usePlugin(plugin);
-  registerAllComponents();
+  loadVueApp()
   addCommand();
   loadMobileNav();
   registerProtyleBottomArea()
   addTopBar()
+}
+
+export function destroy() {
+
 }
