@@ -7,7 +7,7 @@
 <script setup>
 import { computed, onMounted, watch } from 'vue';
 import FixedTools from './components/FixedTools.vue';
-import { loadSettings, useSettings } from './logic';
+import { syncLocalStorage, useSettings } from './logic';
 import { usePlugin } from './main';
 
 const settings = useSettings()
@@ -34,14 +34,8 @@ const showFloatingBall = computed(() => {
   return true
 })
 
-const listenSettingChange = () => {
-  setInterval(() => {
-    loadSettings()
-  }, 2000)
-}
-
 onMounted(() => {
-  listenSettingChange()
+  addEventListener("storage", syncLocalStorage);
 })
 
 </script>

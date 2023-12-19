@@ -18,6 +18,7 @@ import { computed, onMounted, onUnmounted, ref, watchEffect } from 'vue';
 import { Plugin, getFrontend } from 'siyuan';
 import { usePlugin } from '@/main'
 import { createTodayDailyNote } from '@/utils/DailyNoteHelper';
+import { debounce } from '@/utils';
 
 const storageKey = `vFixedToolPos-${getFrontend()}`;
 
@@ -67,6 +68,13 @@ const setPosByEvent = (event) => {
   setPos(posInfo)
 }
 
+const savePos = debounce(() => {
+  if (plugin) {
+    const posInfo = JSON.stringify(position.value);
+    plugin.saveData(storageKey, posInfo)
+  }
+})
+
 const setPos = (pos) => {
   position.value = pos;
   edgeFixedPos.value = ['', ''];
@@ -86,10 +94,7 @@ const setPos = (pos) => {
     position.value.y = document.body.clientHeight - 50;
     edgeFixedPos.value[1] = Direction.BOTTOM
   }
-  if (plugin) {
-    const posInfo = JSON.stringify(position.value);
-    plugin.saveData(storageKey, posInfo)
-  }
+  savePos()
 }
 
 const onMove = (event) => {

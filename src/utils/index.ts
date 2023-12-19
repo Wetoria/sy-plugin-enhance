@@ -1,5 +1,4 @@
 import SettingsVue from '@/components/Settings/index.vue';
-import { loadSettings } from '@/logic';
 import { usePlugin } from '@/main';
 import { Dialog } from 'siyuan';
 import { App, createApp, onMounted, ref } from 'vue';
@@ -111,7 +110,6 @@ export function reomveDuplicated(list, compare = (cur, itemInResult) => (cur.id 
 export const openSetting = () => {
   const plugin = usePlugin()
   const div = getDomByVueComponent(SettingsVue)
-  loadSettings();
   const dialog = new Dialog({
     title: plugin.i18n.pluginName,
     content: `
@@ -120,7 +118,6 @@ export const openSetting = () => {
     `,
     width: '80%',
     destroyCallback: () => {
-      console.log('dd')
       unmout(div)
     }
   })

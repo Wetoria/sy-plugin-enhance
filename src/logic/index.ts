@@ -16,11 +16,11 @@ const defaultSettings: EnhancerSettings = {
   floatingBallPlatform: 'all',
 }
 
-let updateByLoad = false
+let doNotSave = false
 let settings = ref<EnhancerSettings>({} as EnhancerSettings)
 watch(settings, () => {
-  if (updateByLoad) {
-    updateByLoad = false
+  if (doNotSave) {
+    doNotSave = false
     return
   }
   saveSettings()
@@ -41,7 +41,6 @@ export function useSettings() {
 export function loadSettings() {
   const plugin = usePlugin()
   plugin.loadData(STORAGE_KEY).then((res) => {
-    updateByLoad = true
     if (res) {
       settings.value = res
     } else {
@@ -55,4 +54,13 @@ export const saveSettings = debounce(()=> {
   const plugin = usePlugin()
   const info = JSON.stringify(settings.value);
   plugin.saveData(STORAGE_KEY, info)
+  localStorage.setItem(STORAGE_KEY, info)
 })
+
+export const syncLocalStorage = (event) => {
+  if (event.key === STORAGE_KEY) {
+    const newSettings = JSON.parse(event.newValue)
+    doNotSave = true
+    settings.value = newSettings
+  }
+}
