@@ -1,4 +1,5 @@
-import SettingsVue from '@/components/Settings.vue';
+import SettingsVue from '@/components/Settings/index.vue';
+import { loadSettings } from '@/logic';
 import { usePlugin } from '@/main';
 import { Dialog } from 'siyuan';
 import { App, createApp, onMounted, ref } from 'vue';
@@ -110,6 +111,7 @@ export function reomveDuplicated(list, compare = (cur, itemInResult) => (cur.id 
 export const openSetting = () => {
   const plugin = usePlugin()
   const div = getDomByVueComponent(SettingsVue)
+  loadSettings();
   const dialog = new Dialog({
     title: plugin.i18n.pluginName,
     content: `
@@ -127,3 +129,14 @@ export const openSetting = () => {
   container.append(div)
 }
 
+export function debounce(fn) {
+  let flag
+  return (...args) => {
+    if (flag) {
+      clearTimeout(flag)
+    }
+    flag = setTimeout(() => {
+      fn(...args)
+    }, 500)
+  }
+}
