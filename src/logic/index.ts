@@ -3,17 +3,19 @@ import { debounce } from '@/utils';
 import { ref, watch } from 'vue';
 
 interface EnhancerSettings {
-  useVip: boolean;
+  useVipStyle: boolean;
   boxId: string;
   sqlLimit: number;
   floatingBallPlatform: 'all' | 'only-mobile' | 'none';
+  showMobileNavLabel: boolean;
 }
 
 const defaultSettings: EnhancerSettings = {
-  useVip: true,
+  useVipStyle: true,
   boxId: '',
   sqlLimit: 999999999,
   floatingBallPlatform: 'all',
+  showMobileNavLabel: false,
 }
 
 let doNotSave = false

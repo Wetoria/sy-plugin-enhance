@@ -12,7 +12,7 @@
         </div>
       </template>
       <template #opt>
-        <SyCheckbox v-model="settings.useVip" />
+        <SyCheckbox v-model="settings.useVipStyle" />
       </template>
     </SettingItem>
 
@@ -62,6 +62,27 @@
       </template>
     </SettingItem>
 
+    <div class="sperator"></div>
+    <div
+      style="
+        font-weight: bold;
+      "
+    >
+      移动端
+    </div>
+    <SettingItem>
+      <div>
+        导航栏显示名称
+      </div>
+      <template #desc>
+        <div>
+          是否显示导航栏按钮的名称。
+        </div>
+      </template>
+      <template #opt>
+        <SyCheckbox v-model="settings.showMobileNavLabel" />
+      </template>
+    </SettingItem>
     <!-- <SettingItem mode="complex">
       <div>
         日记默认笔记本
@@ -102,6 +123,10 @@ const settings = useSettings()
   overflow-y: auto;
   gap: 8px;
 
-
+  .sperator {
+    width: 100%;
+    height: 1px;
+    border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  }
 }
 </style>

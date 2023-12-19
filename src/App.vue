@@ -12,8 +12,8 @@ import { usePlugin } from './main';
 
 const settings = useSettings()
 
-watch(() => settings.value.useVip, () => {
-  document.documentElement.dataset.enhancer = `${settings.value.useVip}`
+watch(() => settings.value.useVipStyle, () => {
+  document.documentElement.dataset.enhancer = `${settings.value.useVipStyle}`
 })
 
 const plugin = usePlugin()

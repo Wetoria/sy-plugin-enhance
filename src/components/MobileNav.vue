@@ -41,18 +41,21 @@ import { computed } from 'vue';
 import { createTodayDailyNote } from '@/utils/DailyNoteHelper'
 import {openSetting, useMobileKeyBoardShown} from '@/utils'
 import { useDocHistory } from '@/utils/History'
+import { useSettings } from '@/logic';
 
-const showLabel = ref(false)
+const settings = useSettings()
+
+const showLabel = computed(() => settings.value.showMobileNavLabel)
 const containerPaddingBottomHeight = 30;
 const containerPaddingBottomHeightCss = computed(() => `${containerPaddingBottomHeight}px`)
 
 const containerHeight = computed(() => {
-  if (showLabel) {
-    return 50
+  if (showLabel.value) {
+    return 45
   }
   return 30
 })
-const containerHeightCss = computed(() => `${containerHeight}px`)
+const containerHeightCss = computed(() => `${containerHeight.value}px`)
 
 const {
   goBack,
@@ -70,7 +73,7 @@ const navList = ref<Array<{
 }>>([
   {
     icon: 'iconBack',
-    label: 'Test',
+    label: '前一篇',
     disabled: isOldest.value,
     onClick: () => {
       goBack()
@@ -78,7 +81,7 @@ const navList = ref<Array<{
   },
   {
     icon: 'iconForward',
-    label: 'Test',
+    label: '后一篇',
     disabled: isNewset.value,
     onClick: () => {
       goForward()
@@ -86,21 +89,21 @@ const navList = ref<Array<{
   },
   {
     icon: 'iconAdd',
-    label: '日记',
+    label: '新建日记',
     onClick: () => {
       createTodayDailyNote()
     }
   },
   {
     icon: 'iconSuper',
-    label: '插件',
+    label: '插件设置',
     onClick: () => {
       openSetting()
     }
   },
   {
     icon: 'iconSettings',
-    label: '设置',
+    label: '思源设置',
     onClick: () => {
       const toolbarMore = document.body.querySelector('#toolbarMore')
       if (toolbarMore) {
@@ -152,6 +155,7 @@ watchEffect(() => {
       justify-content: center;
       align-items: center;
       box-sizing: border-box;
+      min-width: 80px;
       height: v-bind(containerHeightCss);
       padding: 0px 12px;
       gap: 4px;
@@ -164,7 +168,7 @@ watchEffect(() => {
       }
 
       .NavItemLabel {
-        font-size: 18px;
+        font-size: 14px;
         flex: 1;
       }
     }
