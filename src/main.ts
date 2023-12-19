@@ -4,7 +4,7 @@ import {
 } from "./utils/DailyNoteHelper";
 import VPlugin from '.';
 
-import { getDomByVueComponent, loadComponent, openSetting } from './utils';
+import { clearAllVueComponents, getDomByVueComponent, loadComponent, openSetting } from './utils';
 import { registerProtyleBottomArea } from './utils/DOM';
 
 import MobileNavVue from './components/MobileNav.vue';
@@ -93,5 +93,5 @@ export function init(plugin: VPlugin) {
 }
 
 export function destroy() {
-
+  clearAllVueComponents()
 }

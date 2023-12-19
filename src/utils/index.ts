@@ -5,20 +5,38 @@ import { App, createApp, onMounted, ref } from 'vue';
 // import ArcoVue from '@arco-design/web-vue';
 // import '@arco-design/web-vue/dist/arco.css';
 
+let mountedVueDoms = []
+
+export let mountedVueMap = new WeakMap<HTMLDivElement, App>()
+function saveDom(div, app) {
+  mountedVueMap.set(div, app)
+  mountedVueDoms.push(div)
+}
+
+export function clearAllVueComponents() {
+  const list = [...mountedVueDoms]
+  list.forEach((div) => {
+    unmout(div)
+  })
+  mountedVueMap = new WeakMap()
+}
+
 export function loadComponent(component) {
   const div = document.createElement('div');
   const app = createApp(component);
   document.body.appendChild(div);
   app.mount(div);
+  saveDom(div, app)
+  return div
 }
 
-const mountedVueMap = new WeakMap<HTMLDivElement, App>()
 
 export function unmout(div: HTMLDivElement) {
   if (mountedVueMap.has(div)) {
     const temp = mountedVueMap.get(div)
     temp.unmount()
     mountedVueMap.delete(div)
+    mountedVueDoms = mountedVueDoms.filter(i => i != div)
   }
 }
 
@@ -35,7 +53,7 @@ export function getDomByVueComponent(component, options = {
   //   app.use(ArcoVue);
   // }
   app.mount(div);
-  mountedVueMap.set(div, app)
+  saveDom(div, app)
   return div;
 }
 
