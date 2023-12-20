@@ -224,7 +224,15 @@ const blockBackLinks = ref({})
 const renderRef = ref([])
 const getData = async () => {
   const plugin = usePlugin()
+
   // IMP 需清空相关数据
+  docBacklinks.value = []
+  backlinkDocTreeStruct.value = []
+  backlinkFlatTree.value = []
+  backlinkTreePathChains.value = []
+  docBacklinkFoldStatusMap.value = {}
+  backlinkBlockRefNodes.value = []
+
   const currentDocId = protyle.value?.block?.id;
   if (!currentDocId) {
     return
