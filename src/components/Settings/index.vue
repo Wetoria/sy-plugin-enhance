@@ -46,6 +46,34 @@
       </template>
     </SettingItem>
 
+    <SettingItem>
+      <div>
+        启用底部反链
+      </div>
+      <template #desc>
+        <div>
+          是否启用底部反链。
+        </div>
+      </template>
+      <template #opt>
+        <SyCheckbox v-model="settings.enableBottomBacklink" />
+      </template>
+    </SettingItem>
+
+    <SettingItem>
+      <div>
+        启用底部反链筛选功能
+      </div>
+      <template #desc>
+        <div>
+          是否启用底部反链筛选功能。
+        </div>
+      </template>
+      <template #opt>
+        <SyCheckbox v-model="settings.enableBacklinkFilter" />
+      </template>
+    </SettingItem>
+
     <SettingItem mode="complex">
       <div>
         反链筛选 SQL 查询上限

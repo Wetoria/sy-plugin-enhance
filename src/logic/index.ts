@@ -9,6 +9,8 @@ interface EnhancerSettings {
   floatingBallPlatform: 'all' | 'only-mobile' | 'none';
   showMobileNavLabel: boolean;
   mobileSwitchDocMode: 'doc' | 'dailyNote';
+  enableBottomBacklink: boolean;
+  enableBacklinkFilter: boolean;
 }
 
 const defaultSettings: EnhancerSettings = {
@@ -18,6 +20,8 @@ const defaultSettings: EnhancerSettings = {
   floatingBallPlatform: 'all',
   showMobileNavLabel: false,
   mobileSwitchDocMode: 'doc',
+  enableBottomBacklink: true,
+  enableBacklinkFilter: true,
 }
 
 let doNotSave = false

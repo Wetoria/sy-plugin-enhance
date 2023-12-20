@@ -1,7 +1,7 @@
 <template>
   <div class="ProtyleBottomContainer">
     <div class="enhanceToBottomIndicator" :data-node-id="protyle.block.id"></div>
-    <div class="backlinkArea">
+    <div class="backlinkArea" v-if="enableBottomBacklink">
       <div
         class="backlinkAreaTitleLine"
       >
@@ -25,6 +25,7 @@
         </h2>
         <div class="opts">
           <SyIcon
+            v-if="enableBacklinkFilter"
             @click="switchBacklinkFilterPanelShownStatus"
             name="iconFilter"
             size="14"
@@ -33,6 +34,7 @@
 
       </div>
       <div
+        v-if="enableBacklinkFilter"
         class="backlinkFilterContainer"
         :style="{
           display: backlinkFilterPanelShownStatus ? 'flex' : 'none',
@@ -188,6 +190,7 @@ chainHasRefNode,
 import {
   recursionTree,
 } from '@/utils';
+import { useSettings } from '@/logic';
 
 
 interface Node {
@@ -206,6 +209,11 @@ const currentDocId = computed(() => protyle.value?.block?.id)
 const docBacklinks = ref([])
 
 const useV = ref(true);
+
+const settings = useSettings()
+
+const enableBottomBacklink = computed(() => settings.value.enableBottomBacklink)
+const enableBacklinkFilter = computed(() => settings.value.enableBacklinkFilter)
 
 // #region 基础数据处理
 
