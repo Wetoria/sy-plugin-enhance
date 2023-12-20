@@ -222,6 +222,18 @@ const enableBacklinkFilter = computed(() => settings.value.enableBacklinkFilter)
 
 const blockBackLinks = ref({})
 const renderRef = ref([])
+const backlinkListDomRef = ref<HTMLElement>(null)
+const dealedDomList = ref<Array<HTMLElement>>([])
+
+  // IMP 保存相关选择
+const backlinkDocTreeStruct = ref([])
+const backlinkFlatTree = ref([])
+const backlinkTreePathChains = ref([])
+
+const docBacklinkFoldStatusMap = ref({})
+
+const backlinkBlockRefNodes = ref<Node[]>([])
+
 const getData = async () => {
   const plugin = usePlugin()
 
@@ -294,10 +306,6 @@ watchEffect(() => {
 
 // #region 反链结构数据
 
-// IMP 保存相关选择
-const backlinkDocTreeStruct = ref([])
-const backlinkFlatTree = ref([])
-const backlinkTreePathChains = ref([])
 
 const getBlockRefsInDoc = async (ids: string[]) => {
   let sqlStmt = `
@@ -434,7 +442,7 @@ const getTreeStruct = async () => {
 
 // #region 折叠控制相关
 
-const docBacklinkFoldStatusMap = ref({})
+
 const switchBacklinkDocBlockFoldStatus = (docBacklink) => {
   docBacklinkFoldStatusMap.value[docBacklink.id] = !docBacklinkFoldStatusMap.value[docBacklink.id]
 }
@@ -461,7 +469,7 @@ const properties = ref<{
     origin: Node;
   }
 }>({})
-const backlinkBlockRefNodes = ref<Node[]>([])
+
 
 
 const notSelectedRefs = computed<Array<Node>>(() => {
@@ -545,8 +553,7 @@ const validBacklinkTreePathChain = computed(() => {
 
 // #region 根据树结构处理页面元素
 
-const backlinkListDomRef = ref<HTMLElement>(null)
-const dealedDomList = ref<Array<HTMLElement>>([])
+
 const storeDom = (dom) => {
   dealedDomList.value.push(dom)
 }
