@@ -60,6 +60,9 @@ export function loadSettings() {
 
 export const saveSettings = debounce(()=> {
   const plugin = usePlugin()
+  if (isNaN(settings.value.sqlLimit)) {
+    settings.value.sqlLimit = defaultSettings.sqlLimit
+  }
   const info = JSON.stringify(settings.value);
   plugin.saveData(STORAGE_KEY, info)
   localStorage.setItem(STORAGE_KEY, info)

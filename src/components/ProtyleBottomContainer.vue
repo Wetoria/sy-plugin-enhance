@@ -224,6 +224,7 @@ const blockBackLinks = ref({})
 const renderRef = ref([])
 const getData = async () => {
   const plugin = usePlugin()
+  // IMP 需清空相关数据
   const currentDocId = protyle.value?.block?.id;
   if (!currentDocId) {
     return
@@ -285,6 +286,7 @@ watchEffect(() => {
 
 // #region 反链结构数据
 
+// IMP 保存相关选择
 const backlinkDocTreeStruct = ref([])
 const backlinkFlatTree = ref([])
 const backlinkTreePathChains = ref([])
@@ -297,6 +299,7 @@ const getBlockRefsInDoc = async (ids: string[]) => {
     from refs where block_id in (
       ${ids.map(i => `'${i}'`).join(', ')}
     ) group by def_block_id
+    limit ${settings.value.sqlLimit}
   `
   return sql(sqlStmt)
 }
@@ -338,6 +341,7 @@ const getTreeStruct = async () => {
         JOIN parentList ct ON c.parent_id= ct.id
     )
     select * from parentList
+    limit ${settings.value.sqlLimit}
   `)
   sqlResult.forEach((tempNode) => {
     const { id } = tempNode
