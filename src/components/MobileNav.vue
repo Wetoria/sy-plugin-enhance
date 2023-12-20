@@ -38,21 +38,25 @@
 import { ref, watchEffect } from 'vue';
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import { computed } from 'vue';
-import { createTodayDailyNote } from '@/utils/DailyNoteHelper'
-import {useMobileKeyBoardShown} from '@/utils'
+import { createTodayDailyNote, jumpToNextDailyNote, jumpToPrevDailyNote } from '@/utils/DailyNoteHelper'
+import {openSetting, useMobileKeyBoardShown} from '@/utils'
 import { useDocHistory } from '@/utils/History'
+import { useSettings } from '@/logic';
 
-const showLabel = ref(false)
+const settings = useSettings()
+const isJumpDoc = computed(() => settings.value.mobileSwitchDocMode === 'doc')
+
+const showLabel = computed(() => settings.value.showMobileNavLabel)
 const containerPaddingBottomHeight = 30;
 const containerPaddingBottomHeightCss = computed(() => `${containerPaddingBottomHeight}px`)
 
 const containerHeight = computed(() => {
-  if (showLabel) {
-    return 50
+  if (showLabel.value) {
+    return 45
   }
   return 30
 })
-const containerHeightCss = computed(() => `${containerHeight}px`)
+const containerHeightCss = computed(() => `${containerHeight.value}px`)
 
 const {
   goBack,
@@ -70,30 +74,47 @@ const navList = ref<Array<{
 }>>([
   {
     icon: 'iconBack',
-    label: 'Test',
-    disabled: isOldest.value,
+    label: '前一篇',
+    disabled: isJumpDoc.value ? isOldest.value : false,
     onClick: () => {
-      goBack()
+      const mobileSwitchDocMode = settings.value.mobileSwitchDocMode;
+      if (mobileSwitchDocMode == 'doc') {
+        goBack()
+      } else if (mobileSwitchDocMode == 'dailyNote') {
+        jumpToPrevDailyNote()
+      }
     }
   },
   {
     icon: 'iconForward',
-    label: 'Test',
-    disabled: isNewset.value,
+    label: '后一篇',
+    disabled: isJumpDoc.value ? isNewset.value : false,
     onClick: () => {
-      goForward()
+      const mobileSwitchDocMode = settings.value.mobileSwitchDocMode;
+      if (mobileSwitchDocMode == 'doc') {
+        goForward()
+      } else if (mobileSwitchDocMode == 'dailyNote') {
+        jumpToNextDailyNote()
+      }
     }
   },
   {
     icon: 'iconAdd',
-    label: '日记',
+    label: '新建日记',
     onClick: () => {
       createTodayDailyNote()
     }
   },
   {
+    icon: 'iconSuper',
+    label: '插件设置',
+    onClick: () => {
+      openSetting()
+    }
+  },
+  {
     icon: 'iconSettings',
-    label: '设置',
+    label: '思源设置',
     onClick: () => {
       const toolbarMore = document.body.querySelector('#toolbarMore')
       if (toolbarMore) {
@@ -105,8 +126,8 @@ const navList = ref<Array<{
 
 
 watchEffect(() => {
-  navList.value[0].disabled = isOldest.value
-  navList.value[1].disabled = isNewset.value
+  navList.value[0].disabled = isJumpDoc.value ? isOldest.value : false
+  navList.value[1].disabled = isJumpDoc.value ? isNewset.value : false
 })
 
 const keyboardShown = useMobileKeyBoardShown();
@@ -125,11 +146,13 @@ watchEffect(() => {
 
 <style lang="scss" scoped>
 .MobileNavContainer {
+  padding: 0px 8px;
   padding-bottom: v-bind(containerPaddingBottomHeightCss);
   display: flex;
   height: fit-content;
   flex-direction: column;
   overflow: hidden;
+  box-sizing: border-box;
   // border: 1px solid red;
 
   .NavList {
@@ -145,6 +168,7 @@ watchEffect(() => {
       justify-content: center;
       align-items: center;
       box-sizing: border-box;
+      min-width: 85px;
       height: v-bind(containerHeightCss);
       padding: 0px 12px;
       gap: 4px;
@@ -157,7 +181,7 @@ watchEffect(() => {
       }
 
       .NavItemLabel {
-        font-size: 18px;
+        font-size: 14px;
         flex: 1;
       }
     }

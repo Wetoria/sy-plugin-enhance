@@ -1,12 +1,44 @@
-import { createApp, onMounted, ref } from 'vue';
+import SettingsVue from '@/components/Settings/index.vue';
+import { usePlugin } from '@/main';
+import { Dialog } from 'siyuan';
+import { App, createApp, onMounted, ref } from 'vue';
+import PluginInfo from '@/../plugin.json' assert { type: "json" }
 // import ArcoVue from '@arco-design/web-vue';
 // import '@arco-design/web-vue/dist/arco.css';
+
+let mountedVueDoms = []
+
+export let mountedVueMap = new WeakMap<HTMLDivElement, App>()
+function saveDom(div, app) {
+  mountedVueMap.set(div, app)
+  mountedVueDoms.push(div)
+}
+
+export function clearAllVueComponents() {
+  const list = [...mountedVueDoms]
+  list.forEach((div) => {
+    unmout(div)
+  })
+  mountedVueMap = new WeakMap()
+}
 
 export function loadComponent(component) {
   const div = document.createElement('div');
   const app = createApp(component);
   document.body.appendChild(div);
   app.mount(div);
+  saveDom(div, app)
+  return div
+}
+
+
+export function unmout(div: HTMLDivElement) {
+  if (mountedVueMap.has(div)) {
+    const temp = mountedVueMap.get(div)
+    temp.unmount()
+    mountedVueMap.delete(div)
+    mountedVueDoms = mountedVueDoms.filter(i => i != div)
+  }
 }
 
 export function getDomByVueComponent(component, options = {
@@ -22,6 +54,7 @@ export function getDomByVueComponent(component, options = {
   //   app.use(ArcoVue);
   // }
   app.mount(div);
+  saveDom(div, app)
   return div;
 }
 
@@ -91,4 +124,42 @@ export function reomveDuplicated(list, compare = (cur, itemInResult) => (cur.id 
     }
   })
   return result
+}
+
+export const openSetting = () => {
+  const plugin = usePlugin()
+  const div = getDomByVueComponent(SettingsVue)
+  const {
+    version
+  } = PluginInfo
+  const dialog = new Dialog({
+    title: `
+      <div class="SyEnhancerDialogTitle">
+        ${plugin.i18n.pluginName} ${version ? `v${version}` : ''}
+      </div>
+    `,
+    content: `
+      <div class="SyEnhancerSettingsContainer">
+      </div>
+    `,
+    width: '80%',
+    destroyCallback: () => {
+      unmout(div)
+    }
+  })
+  const container = dialog.element.querySelector('.SyEnhancerSettingsContainer')
+  container.innerHTML = ''
+  container.append(div)
+}
+
+export function debounce(fn) {
+  let flag
+  return (...args) => {
+    if (flag) {
+      clearTimeout(flag)
+    }
+    flag = setTimeout(() => {
+      fn(...args)
+    }, 500)
+  }
 }

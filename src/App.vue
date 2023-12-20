@@ -1,18 +1,45 @@
 <template>
-  <div>
-    {{ msg }} + {{ count }}
-    <button @click="onClick">
-      test
-    </button>
+  <div class="SyEnhancerApp">
+    <FixedTools v-if="showFloatingBall" />
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { computed, onMounted, watch } from 'vue';
+import FixedTools from './components/FixedTools.vue';
+import { syncLocalStorage, useSettings } from './logic';
+import { usePlugin } from './main';
 
-const msg = ref('test');
-const count = ref(2);
-const onClick = () => {
-  count.value += 1;
-}
+const settings = useSettings()
+
+watch(() => settings.value.useVipStyle, () => {
+  document.documentElement.dataset.enhancer = `${settings.value.useVipStyle}`
+})
+
+const plugin = usePlugin()
+
+const isMobile = computed(() => plugin.isMobile)
+
+const showFloatingBall = computed(() => {
+  const floatingBallPlatform = settings.value.floatingBallPlatform
+  if (floatingBallPlatform === 'none') {
+    return false;
+  }
+  if (floatingBallPlatform === 'all') {
+    return true
+  }
+  if (!isMobile.value) {
+    return false
+  }
+  return true
+})
+
+onMounted(() => {
+  addEventListener("storage", syncLocalStorage);
+})
+
 </script>
+
+<style lang="scss">
+
+</style>

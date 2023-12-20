@@ -1,8 +1,9 @@
 import {
   showMessage,
 } from "siyuan";
-import { lsNotebooks, request } from '@/api';
-import { createDailyNote, getDailyNote, openDoc } from './Note';
+import { createDailyNote, lsNotebooks, request } from '@/api';
+import { getDailyNote, openDoc, openDocById } from './Note';
+import { usePlugin } from '@/main';
 
 async function getCurrentDocAttr(currentDocId) {
   const data = {
@@ -54,9 +55,15 @@ export async function jumpToNextDailyNote() {
 }
 
 async function jumpTo(next = true) {
-  const currentDocTitleDom: HTMLDivElement = document.querySelector(
-    ".protyle:not(.fn__none) .protyle-title"
-  );
+  const plugin = usePlugin()
+
+  const currentDocTitleDom: HTMLDivElement = plugin.isMobile
+    ? document.querySelector(
+        "#editor:not(.fn__none) .protyle-background.protyle-background--enable"
+      )
+    : document.querySelector(
+        ".protyle:not(.fn__none) .protyle-title"
+      );
   if (!currentDocTitleDom) {
     showMessage("请先当开一篇文档");
     return;
@@ -79,7 +86,7 @@ async function jumpTo(next = true) {
     return;
   }
 
-  window.open(`siyuan://blocks/${prevDailyNoteInfo.id}`);
+  openDocById(prevDailyNoteInfo.id)
 }
 
 export function createTodayDailyNote() {
@@ -112,7 +119,9 @@ export function createTodayDailyNote() {
 
     const dailyNote = await getDailyNote(notebookId)
     if (!dailyNote || dailyNote.length === 0) {
-      createDailyNote(notebookId)
+      createDailyNote(notebookId).then((res) => {
+        openDocById(res.id);
+      })
       return
     }
 

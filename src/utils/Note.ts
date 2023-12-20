@@ -1,5 +1,4 @@
-import { createDocWithMd, request } from '@/api'
-import dayjs from 'dayjs';
+import { request } from '@/api'
 import { todayStr } from './Date';
 // import { request } from './DailyNoteHelper';
 
@@ -19,16 +18,6 @@ export function openDoc(note) {
 export function openDocById(noteId) {
   const path = getDocPath(noteId)
   openFileByURL(path)
-}
-
-export function createDailyNote(notebookId: NotebookId) {
-  const today = dayjs();
-  // IMP 可以配置
-  const path = `/daily note/${today.format('YYYY/MM/YYYY-MM-DD')}`
-  createDocWithMd(notebookId, path, '')
-    .then((res) => {
-      openDocById(res);
-    })
 }
 
 export function getDailyNote(notebookId: NotebookId) {

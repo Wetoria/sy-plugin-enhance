@@ -1,14 +1,15 @@
-import { registerAllComponents } from '@/components';
 import {
   jumpToNextDailyNote,
   jumpToPrevDailyNote,
 } from "./utils/DailyNoteHelper";
 import VPlugin from '.';
-import 'vconsole/dist/vconsole.min.js';
+
+import { clearAllVueComponents, getDomByVueComponent, loadComponent, openSetting } from './utils';
+import { registerProtyleBottomArea } from './utils/DOM';
 
 import MobileNavVue from './components/MobileNav.vue';
-import { getDomByVueComponent } from './utils';
-import { registerProtyleBottomArea } from './utils/DOM';
+import AppVue from './App.vue';
+
 
 let plugin: VPlugin = null
 export function usePlugin(pluginProps?) {
@@ -66,11 +67,31 @@ const addCommand = () => {
   });
 }
 
+const addTopBar = () => {
+  const plugin = usePlugin()
+  plugin.addTopBar({
+    icon: "iconSuper",
+    title: plugin.i18n.pluginName,
+    position: "right",
+    callback: () => {
+      openSetting()
+    },
+  });
+}
+
+const loadVueApp = () => {
+  loadComponent(AppVue)
+}
 
 export function init(plugin: VPlugin) {
   usePlugin(plugin);
-  registerAllComponents();
+  loadVueApp()
   addCommand();
   loadMobileNav();
   registerProtyleBottomArea()
+  addTopBar()
+}
+
+export function destroy() {
+  clearAllVueComponents()
 }

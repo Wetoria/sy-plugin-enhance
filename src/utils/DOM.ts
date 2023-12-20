@@ -1,22 +1,8 @@
-import { onMounted, ref } from 'vue'
+import { ref } from 'vue'
 import { getDomByVueComponent } from '.';
 import ProtyleBottomContainerVue from '@/components/ProtyleBottomContainer.vue';
 import { usePlugin } from '@/main';
 
-export function useBodyObserver(props) {
-  const {
-    onBodyChange = () => {},
-  } = props;
-  onMounted(() => {
-    const ob = new MutationObserver(() => {
-      onBodyChange()
-    })
-    ob.observe(document.body, {
-      childList: true, // 观察目标子节点的变化，是否有添加或者删除
-      subtree: true, // 观察后代节点，默认为 false
-    })
-  })
-}
 
 /**
  * In order to convert query resutl into Array
@@ -27,41 +13,6 @@ export function useBodyObserver(props) {
 export function queryAllByDom(dom: HTMLElement, selector: string) {
   return [...dom.querySelectorAll(selector)]
 }
-
-export function useMobileEditorObserver(props) {
-  const lastEditShownStatus = ref(false)
-  const {
-    onEditorShownChange = () => {},
-    onEditorShown = () => {},
-    onEditorHidden = () => {},
-  } = props;
-  const flag = ref(null)
-  const onBodyChange = () => {
-    if (flag.value) {
-      clearTimeout(flag.value)
-    }
-    flag.value = setTimeout(() => {
-      const dom = document.querySelector('#editor')
-      if (dom) {
-        const editorIsHidden = dom.classList.contains('fn__none')
-        if (lastEditShownStatus.value !== editorIsHidden) {
-          onEditorShownChange(editorIsHidden, lastEditShownStatus.value)
-          if (editorIsHidden) {
-            onEditorHidden()
-          } else {
-            onEditorShown()
-          }
-        }
-        lastEditShownStatus.value = editorIsHidden;
-      }
-    }, 100)
-  }
-
-  useBodyObserver({
-    onBodyChange,
-  })
-}
-
 
 export function hideGutterOnTarget(target) {
   if (!target) return

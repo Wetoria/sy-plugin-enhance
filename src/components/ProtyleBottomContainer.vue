@@ -1,7 +1,7 @@
 <template>
   <div class="ProtyleBottomContainer">
     <div class="enhanceToBottomIndicator" :data-node-id="protyle.block.id"></div>
-    <div class="backlinkArea">
+    <div class="backlinkArea" v-if="enableBottomBacklink">
       <div
         class="backlinkAreaTitleLine"
       >
@@ -25,6 +25,7 @@
         </h2>
         <div class="opts">
           <SyIcon
+            v-if="enableBacklinkFilter"
             @click="switchBacklinkFilterPanelShownStatus"
             name="iconFilter"
             size="14"
@@ -33,6 +34,7 @@
 
       </div>
       <div
+        v-if="enableBacklinkFilter"
         class="backlinkFilterContainer"
         :style="{
           display: backlinkFilterPanelShownStatus ? 'flex' : 'none',
@@ -188,6 +190,7 @@ chainHasRefNode,
 import {
   recursionTree,
 } from '@/utils';
+import { useSettings } from '@/logic';
 
 
 interface Node {
@@ -207,6 +210,11 @@ const docBacklinks = ref([])
 
 const useV = ref(true);
 
+const settings = useSettings()
+
+const enableBottomBacklink = computed(() => settings.value.enableBottomBacklink)
+const enableBacklinkFilter = computed(() => settings.value.enableBacklinkFilter)
+
 // #region 基础数据处理
 
 
@@ -216,6 +224,15 @@ const blockBackLinks = ref({})
 const renderRef = ref([])
 const getData = async () => {
   const plugin = usePlugin()
+
+  // IMP 需清空相关数据
+  docBacklinks.value = []
+  backlinkDocTreeStruct.value = []
+  backlinkFlatTree.value = []
+  backlinkTreePathChains.value = []
+  docBacklinkFoldStatusMap.value = {}
+  backlinkBlockRefNodes.value = []
+
   const currentDocId = protyle.value?.block?.id;
   if (!currentDocId) {
     return
@@ -277,6 +294,7 @@ watchEffect(() => {
 
 // #region 反链结构数据
 
+// IMP 保存相关选择
 const backlinkDocTreeStruct = ref([])
 const backlinkFlatTree = ref([])
 const backlinkTreePathChains = ref([])
@@ -289,6 +307,7 @@ const getBlockRefsInDoc = async (ids: string[]) => {
     from refs where block_id in (
       ${ids.map(i => `'${i}'`).join(', ')}
     ) group by def_block_id
+    limit ${settings.value.sqlLimit}
   `
   return sql(sqlStmt)
 }
@@ -330,6 +349,7 @@ const getTreeStruct = async () => {
         JOIN parentList ct ON c.parent_id= ct.id
     )
     select * from parentList
+    limit ${settings.value.sqlLimit}
   `)
   sqlResult.forEach((tempNode) => {
     const { id } = tempNode
