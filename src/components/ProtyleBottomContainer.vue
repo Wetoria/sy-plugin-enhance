@@ -153,7 +153,12 @@
                     <li
                       class="b3-list-item b3-list-item--hide-action"
                     >
-                      <span class="b3-list-item__text">{{ docBacklink.name }}</span>
+                      <span
+                        class="b3-list-item__text backlinkDocTitle"
+                        @click="jumpToDoc($event, docBacklink.id)"
+                      >
+                        {{ docBacklink.name }}
+                      </span>
                     </li>
                   </div>
                 </div>
@@ -191,6 +196,7 @@ import {
   recursionTree,
 } from '@/utils';
 import { useSettings } from '@/logic';
+import { openDocById } from '@/utils/Note';
 
 
 interface Node {
@@ -696,6 +702,13 @@ const linkNumMap = computed(() => {
   return map
 })
 
+const jumpToDoc = (event: MouseEvent, docId) => {
+  event.preventDefault();
+  event.stopPropagation();
+
+  openDocById(docId)
+}
+
 </script>
 
 <style>
@@ -822,6 +835,11 @@ const linkNumMap = computed(() => {
           &:hover .backlinkDocBlockFolder,
           .backlinkDocBlockFolder:hover {
             visibility: visible;
+          }
+
+          .backlinkDocTitle:hover {
+            color: var(--sky-blue);
+            text-decoration: underline;
           }
         }
 
