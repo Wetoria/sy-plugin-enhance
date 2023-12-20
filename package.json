@@ -10,7 +10,8 @@
   "scripts": {
     "make-link": "node  --no-warnings ./scripts/make_dev_link.js",
     "dev": "vite build --watch",
-    "tag": "git add ./plugin.json && git commit -m 'update version' && git push && node ./autoTag.js",
+    "tag": "node ./autoTag.js",
+    "commitAndTag": "git add ./plugin.json && git commit -m 'update version' && git push && node ./autoTag.js",
     "build": "vite build"
   },
   "devDependencies": {
