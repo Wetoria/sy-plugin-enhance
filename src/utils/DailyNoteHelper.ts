@@ -1,8 +1,8 @@
 import {
   showMessage,
 } from "siyuan";
-import { lsNotebooks, request } from '@/api';
-import { createDailyNote, getDailyNote, openDoc } from './Note';
+import { createDailyNote, lsNotebooks, request } from '@/api';
+import { getDailyNote, openDoc, openDocById } from './Note';
 
 async function getCurrentDocAttr(currentDocId) {
   const data = {
@@ -79,7 +79,7 @@ async function jumpTo(next = true) {
     return;
   }
 
-  window.open(`siyuan://blocks/${prevDailyNoteInfo.id}`);
+  openDocById(prevDailyNoteInfo.id)
 }
 
 export function createTodayDailyNote() {
@@ -112,7 +112,9 @@ export function createTodayDailyNote() {
 
     const dailyNote = await getDailyNote(notebookId)
     if (!dailyNote || dailyNote.length === 0) {
-      createDailyNote(notebookId)
+      createDailyNote(notebookId).then((res) => {
+        openDocById(res.id);
+      })
       return
     }
 

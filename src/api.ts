@@ -64,6 +64,18 @@ export async function setNotebookConf(
 }
 
 // **************************************** File Tree ****************************************
+export async function createDailyNote(
+  notebook: NotebookId,
+): Promise<{
+  id: DocumentId
+}> {
+  let data = {
+    notebook: notebook,
+  };
+  let url = "/api/filetree/createDailyNote";
+  return request(url, data);
+}
+
 export async function createDocWithMd(
   notebook: NotebookId,
   path: string,
