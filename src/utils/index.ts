@@ -129,7 +129,11 @@ export const openSetting = () => {
   const plugin = usePlugin()
   const div = getDomByVueComponent(SettingsVue)
   const dialog = new Dialog({
-    title: plugin.i18n.pluginName,
+    title: `
+      <div class="SyEnhancerDialogTitle">
+        ${plugin.i18n.pluginName}
+      </div>
+    `,
     content: `
       <div class="SyEnhancerSettingsContainer">
       </div>

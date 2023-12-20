@@ -38,12 +38,13 @@
 import { ref, watchEffect } from 'vue';
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import { computed } from 'vue';
-import { createTodayDailyNote } from '@/utils/DailyNoteHelper'
+import { createTodayDailyNote, jumpToNextDailyNote, jumpToPrevDailyNote } from '@/utils/DailyNoteHelper'
 import {openSetting, useMobileKeyBoardShown} from '@/utils'
 import { useDocHistory } from '@/utils/History'
 import { useSettings } from '@/logic';
 
 const settings = useSettings()
+const isJumpDoc = computed(() => settings.value.mobileSwitchDocMode === 'doc')
 
 const showLabel = computed(() => settings.value.showMobileNavLabel)
 const containerPaddingBottomHeight = 30;
@@ -74,17 +75,27 @@ const navList = ref<Array<{
   {
     icon: 'iconBack',
     label: '前一篇',
-    disabled: isOldest.value,
+    disabled: isJumpDoc.value ? isOldest.value : false,
     onClick: () => {
-      goBack()
+      const mobileSwitchDocMode = settings.value.mobileSwitchDocMode;
+      if (mobileSwitchDocMode == 'doc') {
+        goBack()
+      } else if (mobileSwitchDocMode == 'dailyNote') {
+        jumpToPrevDailyNote()
+      }
     }
   },
   {
     icon: 'iconForward',
     label: '后一篇',
-    disabled: isNewset.value,
+    disabled: isJumpDoc.value ? isNewset.value : false,
     onClick: () => {
-      goForward()
+      const mobileSwitchDocMode = settings.value.mobileSwitchDocMode;
+      if (mobileSwitchDocMode == 'doc') {
+        goForward()
+      } else if (mobileSwitchDocMode == 'dailyNote') {
+        jumpToNextDailyNote()
+      }
     }
   },
   {
@@ -101,22 +112,22 @@ const navList = ref<Array<{
       openSetting()
     }
   },
-  {
-    icon: 'iconSettings',
-    label: '思源设置',
-    onClick: () => {
-      const toolbarMore = document.body.querySelector('#toolbarMore')
-      if (toolbarMore) {
-        toolbarMore.dispatchEvent(new MouseEvent('click'))
-      }
-    }
-  },
+  // {
+  //   icon: 'iconSettings',
+  //   label: '思源',
+  //   onClick: () => {
+  //     const toolbarMore = document.body.querySelector('#toolbarMore')
+  //     if (toolbarMore) {
+  //       toolbarMore.dispatchEvent(new MouseEvent('click'))
+  //     }
+  //   }
+  // },
 ])
 
 
 watchEffect(() => {
-  navList.value[0].disabled = isOldest.value
-  navList.value[1].disabled = isNewset.value
+  navList.value[0].disabled = isJumpDoc.value ? isOldest.value : false
+  navList.value[1].disabled = isJumpDoc.value ? isNewset.value : false
 })
 
 const keyboardShown = useMobileKeyBoardShown();
@@ -155,7 +166,7 @@ watchEffect(() => {
       justify-content: center;
       align-items: center;
       box-sizing: border-box;
-      min-width: 80px;
+      min-width: 85px;
       height: v-bind(containerHeightCss);
       padding: 0px 12px;
       gap: 4px;

@@ -83,6 +83,32 @@
         <SyCheckbox v-model="settings.showMobileNavLabel" />
       </template>
     </SettingItem>
+
+    <SettingItem mode="complex">
+      <div>
+        导航栏文档切换模式
+      </div>
+      <template #desc>
+        <div>
+          切换导航栏上/下一篇翻页模式为翻日记，或翻浏览过的文档。
+        </div>
+      </template>
+      <template #opt>
+        <SySelect
+          v-model="settings.mobileSwitchDocMode"
+          :options="[
+            {
+              value: 'doc',
+              text: '切换历史文档'
+            },
+            {
+              value: 'dailyNote',
+              text: '切换日记'
+            },
+          ]"
+        ></SySelect>
+      </template>
+    </SettingItem>
     <!-- <SettingItem mode="complex">
       <div>
         日记默认笔记本
@@ -110,6 +136,12 @@ import SyInput from '../SiyuanTheme/SyInput.vue';
 const settings = useSettings()
 
 </script>
+
+<style lang="scss">
+.SyEnhancerDialogTitle {
+  font-weight: bold;
+}
+</style>
 
 <style scoped lang="scss">
 .EnhanceSettingsContainer {

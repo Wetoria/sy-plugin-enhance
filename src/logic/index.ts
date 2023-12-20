@@ -8,6 +8,7 @@ interface EnhancerSettings {
   sqlLimit: number;
   floatingBallPlatform: 'all' | 'only-mobile' | 'none';
   showMobileNavLabel: boolean;
+  mobileSwitchDocMode: 'doc' | 'dailyNote';
 }
 
 const defaultSettings: EnhancerSettings = {
@@ -16,6 +17,7 @@ const defaultSettings: EnhancerSettings = {
   sqlLimit: 999999999,
   floatingBallPlatform: 'all',
   showMobileNavLabel: false,
+  mobileSwitchDocMode: 'doc',
 }
 
 let doNotSave = false

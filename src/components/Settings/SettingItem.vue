@@ -80,6 +80,7 @@ defineProps<{
     flex: 1;
 
     .settingTitle {
+      font-weight: bold;
     }
 
     .settingDesc {
