@@ -46,7 +46,7 @@ export function loadSettings() {
   const plugin = usePlugin()
   plugin.loadData(STORAGE_KEY).then((res) => {
     if (res) {
-      settings.value = res
+      settings.value = Object.assign({}, defaultSettings, res)
     } else {
       settings.value = JSON.parse(JSON.stringify(defaultSettings))
     }

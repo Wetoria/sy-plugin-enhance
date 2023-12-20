@@ -112,16 +112,16 @@ const navList = ref<Array<{
       openSetting()
     }
   },
-  // {
-  //   icon: 'iconSettings',
-  //   label: '思源',
-  //   onClick: () => {
-  //     const toolbarMore = document.body.querySelector('#toolbarMore')
-  //     if (toolbarMore) {
-  //       toolbarMore.dispatchEvent(new MouseEvent('click'))
-  //     }
-  //   }
-  // },
+  {
+    icon: 'iconSettings',
+    label: '思源设置',
+    onClick: () => {
+      const toolbarMore = document.body.querySelector('#toolbarMore')
+      if (toolbarMore) {
+        toolbarMore.dispatchEvent(new MouseEvent('click'))
+      }
+    }
+  },
 ])
 
 
@@ -146,11 +146,13 @@ watchEffect(() => {
 
 <style lang="scss" scoped>
 .MobileNavContainer {
+  padding: 0px 8px;
   padding-bottom: v-bind(containerPaddingBottomHeightCss);
   display: flex;
   height: fit-content;
   flex-direction: column;
   overflow: hidden;
+  box-sizing: border-box;
   // border: 1px solid red;
 
   .NavList {

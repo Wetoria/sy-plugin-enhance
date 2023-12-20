@@ -153,7 +153,7 @@ const settings = useSettings()
   max-height: 80vh;
   overflow-x: hidden;
   overflow-y: auto;
-  gap: 8px;
+  gap: 12px;
 
   .sperator {
     width: 100%;
