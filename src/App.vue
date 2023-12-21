@@ -16,6 +16,11 @@ watch(() => settings.value.useVipStyle, () => {
   document.documentElement.dataset.enhancer = `${settings.value.useVipStyle}`
 })
 
+watch(() => settings.value.enableBlockTime, () => {
+  document.documentElement.dataset.enhancerEnableBlockTime = `${settings.value.enableBlockTime}`
+})
+
+
 const plugin = usePlugin()
 
 const isMobile = computed(() => plugin.isMobile)

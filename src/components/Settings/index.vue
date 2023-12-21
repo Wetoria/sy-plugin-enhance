@@ -48,6 +48,20 @@
 
     <SettingItem>
       <div>
+        显示编辑时间
+      </div>
+      <template #desc>
+        <div>
+          是否显示块的编辑时间。
+        </div>
+      </template>
+      <template #opt>
+        <SyCheckbox v-model="settings.enableBlockTime" />
+      </template>
+    </SettingItem>
+
+    <SettingItem>
+      <div>
         启用底部反链
       </div>
       <template #desc>
