@@ -48,3 +48,67 @@ html[data-enhancer="true"] {
   // #endregion 文档反链增加 [[]]
 
 }
+
+html[data-enhancer-enable-block-time="true"] {
+  div[data-type="NodeParagraph"],
+  div[data-type="NodeHeading"],
+  div[data-type="NodeTable"]
+  {
+    --topPos: 0px;
+    --timeFontSize: 9px;
+    --letterSpacing: 2.5px;
+    --rightPos: 0px;
+    --v-divider-color: var(--sky-blue);
+
+    padding-top: calc(var(--timeFontSize)) !important;
+
+    &[updated]::before {
+      content: attr(updated);
+
+      position: absolute;
+      width: 200px;
+      height: var(--timeFontSize);
+      right: var(--rightPos);
+      top: var(--topPos);
+      font-size: var(--timeFontSize);
+      line-height: var(--timeFontSize);
+
+      font-family: monospace;
+
+      display: flex;
+      justify-content: flex-end;
+
+      color: #d1d1d1;
+      letter-spacing: var(--letterSpacing);
+      font-weight: normal;
+    }
+    &[updated] >div:first-child:not(:empty):before {
+      content: "\00A0\00A0\00A0\00A0/\00A0/\00A0|\00A0:\00A0:\00A0\00A0";
+
+      position: absolute;
+      width: 200px;
+      right: calc(var(--rightPos) - (var(--timeFontSize) / 2) + 1px);
+      // right: calc((((var(--timeFontSize) - 1px) / 2)));
+      top: calc(var(--topPos) - 0.5px);
+      font-size: var(--timeFontSize);
+      height: var(--timeFontSize);
+      line-height: var(--timeFontSize);
+
+      font-family: monospace;
+
+      display: flex;
+      justify-content: flex-end;
+
+      color: var(--v-divider-color);
+      letter-spacing: var(--letterSpacing);
+    }
+  }
+
+  div[data-type="NodeListItem"] {
+    & div[data-type="NodeParagraph"],
+    & div[data-type="NodeHeading"],
+    & div[data-type="NodeTable"] {
+      --rightPos: 4px;
+    }
+  }
+}

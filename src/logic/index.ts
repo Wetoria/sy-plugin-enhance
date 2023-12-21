@@ -11,6 +11,7 @@ interface EnhancerSettings {
   mobileSwitchDocMode: 'doc' | 'dailyNote';
   enableBottomBacklink: boolean;
   enableBacklinkFilter: boolean;
+  enableBlockTime: boolean;
 }
 
 const defaultSettings: EnhancerSettings = {
@@ -22,6 +23,7 @@ const defaultSettings: EnhancerSettings = {
   mobileSwitchDocMode: 'doc',
   enableBottomBacklink: true,
   enableBacklinkFilter: true,
+  enableBlockTime: true,
 }
 
 let doNotSave = false
