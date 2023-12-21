@@ -56,7 +56,7 @@ html[data-enhancer-enable-block-time="true"] {
   {
     --topPos: 0px;
     --timeFontSize: 9px;
-    --letterSpacing: 2.5px;
+    --letterSpacing: 3px;
     --rightPos: 0px;
     --v-divider-color: var(--sky-blue);
 
@@ -87,7 +87,7 @@ html[data-enhancer-enable-block-time="true"] {
 
       position: absolute;
       width: 200px;
-      right: calc(var(--rightPos) - (var(--timeFontSize) / 2) + 1px);
+      right: calc(var(--rightPos) - (var(--timeFontSize) / 2) + 0.5px);
       // right: calc((((var(--timeFontSize) - 1px) / 2)));
       top: calc(var(--topPos) - 0.5px);
       font-size: var(--timeFontSize);
