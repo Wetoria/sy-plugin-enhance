@@ -2,156 +2,160 @@
   <div
     class="EnhanceSettingsContainer"
   >
-    <SettingItem>
-      <div>
-        启用样式效果
-      </div>
-      <template #desc>
-        <div>
-          是否启用双链颜色、双链增加中括号等样式。
-        </div>
-      </template>
-      <template #opt>
-        <SyCheckbox v-model="settings.useVipStyle" />
-      </template>
-    </SettingItem>
-
-    <SettingItem mode="complex">
-      <div>
-        悬浮球开启平台
-      </div>
-      <template #desc>
-        <div>
-          是否启用双链颜色、双链增加中括号等样式。
-        </div>
-      </template>
-      <template #opt>
-        <SySelect
-          v-model="settings.floatingBallPlatform"
-          :options="[
-            {
-              value: 'all',
-              text: '全部'
-            },
-            {
-              value: 'only-mobile',
-              text: '仅移动端'
-            },
-            {
-              value: 'none',
-              text: '关闭悬浮球'
-            },
-          ]"
-        ></SySelect>
-      </template>
-    </SettingItem>
-
-    <SettingItem>
-      <div>
-        显示编辑时间
-      </div>
-      <template #desc>
-        <div>
-          是否显示块的编辑时间。
-        </div>
-      </template>
-      <template #opt>
-        <SyCheckbox v-model="settings.enableBlockTime" />
-      </template>
-    </SettingItem>
-
-    <SettingItem>
-      <div>
-        启用底部反链
-      </div>
-      <template #desc>
-        <div>
-          是否启用底部反链。
-        </div>
-      </template>
-      <template #opt>
-        <SyCheckbox v-model="settings.enableBottomBacklink" />
-      </template>
-    </SettingItem>
-
-    <SettingItem>
-      <div>
-        启用底部反链筛选功能
-      </div>
-      <template #desc>
-        <div>
-          是否启用底部反链筛选功能。
-        </div>
-      </template>
-      <template #opt>
-        <SyCheckbox v-model="settings.enableBacklinkFilter" />
-      </template>
-    </SettingItem>
-
-    <SettingItem mode="complex">
-      <div>
-        反链筛选 SQL 查询上限
-      </div>
-      <template #desc>
-        <div>
-          与反链筛选功能有关。如果设置的太小，筛选项可能会不正确。<br />
-          请输入正确的数字，否则会重置为默认的 999999999.
-        </div>
-      </template>
-      <template #opt>
-        <SyInput
-          v-model="settings.sqlLimit"
-        />
-      </template>
-    </SettingItem>
-
-    <div class="sperator"></div>
     <div
-      style="
-        font-weight: bold;
-      "
+      class="SettingsScrollContent"
     >
-      移动端
-    </div>
-    <SettingItem>
-      <div>
-        导航栏显示名称
-      </div>
-      <template #desc>
+      <SettingItem>
         <div>
-          是否显示导航栏按钮的名称。
+          启用样式效果
         </div>
-      </template>
-      <template #opt>
-        <SyCheckbox v-model="settings.showMobileNavLabel" />
-      </template>
-    </SettingItem>
+        <template #desc>
+          <div>
+            是否启用双链颜色、双链增加中括号等样式。
+          </div>
+        </template>
+        <template #opt>
+          <SyCheckbox v-model="settings.useVipStyle" />
+        </template>
+      </SettingItem>
 
-    <SettingItem mode="complex">
-      <div>
-        导航栏文档切换模式
-      </div>
-      <template #desc>
+      <SettingItem>
         <div>
-          切换导航栏上/下一篇翻页模式为翻日记，或翻浏览过的文档。
+          显示编辑时间
         </div>
-      </template>
-      <template #opt>
-        <SySelect
-          v-model="settings.mobileSwitchDocMode"
-          :options="[
-            {
-              value: 'doc',
-              text: '切换历史文档'
-            },
-            {
-              value: 'dailyNote',
-              text: '切换日记'
-            },
-          ]"
-        ></SySelect>
-      </template>
-    </SettingItem>
+        <template #desc>
+          <div>
+            是否显示块的编辑时间。
+          </div>
+        </template>
+        <template #opt>
+          <SyCheckbox v-model="settings.enableBlockTime" />
+        </template>
+      </SettingItem>
+
+      <SettingItem>
+        <div>
+          启用底部反链
+        </div>
+        <template #desc>
+          <div>
+            是否启用底部反链。
+          </div>
+        </template>
+        <template #opt>
+          <SyCheckbox v-model="settings.enableBottomBacklink" />
+        </template>
+      </SettingItem>
+
+      <SettingItem>
+        <div>
+          启用底部反链筛选功能
+        </div>
+        <template #desc>
+          <div>
+            是否启用底部反链筛选功能。
+          </div>
+        </template>
+        <template #opt>
+          <SyCheckbox v-model="settings.enableBacklinkFilter" />
+        </template>
+      </SettingItem>
+
+      <SettingItem mode="complex">
+        <div>
+          反链筛选 SQL 查询上限
+        </div>
+        <template #desc>
+          <div>
+            与反链筛选功能有关。如果设置的太小，筛选项可能会不正确。<br />
+            请输入正确的数字，否则会重置为默认的 999999999.
+          </div>
+        </template>
+        <template #opt>
+          <SyInput
+            v-model="settings.sqlLimit"
+          />
+        </template>
+      </SettingItem>
+
+      <SettingItem mode="complex">
+        <div>
+          悬浮球开启平台
+        </div>
+        <template #desc>
+          <div>
+            是否启用双链颜色、双链增加中括号等样式。
+          </div>
+        </template>
+        <template #opt>
+          <SySelect
+            v-model="settings.floatingBallPlatform"
+            :options="[
+              {
+                value: 'all',
+                text: '全部'
+              },
+              {
+                value: 'only-mobile',
+                text: '仅移动端'
+              },
+              {
+                value: 'none',
+                text: '关闭悬浮球'
+              },
+            ]"
+          ></SySelect>
+        </template>
+      </SettingItem>
+
+      <div class="sperator"></div>
+      <div
+        style="
+          font-weight: bold;
+        "
+      >
+        移动端
+      </div>
+      <SettingItem>
+        <div>
+          导航栏显示名称
+        </div>
+        <template #desc>
+          <div>
+            是否显示导航栏按钮的名称。
+          </div>
+        </template>
+        <template #opt>
+          <SyCheckbox v-model="settings.showMobileNavLabel" />
+        </template>
+      </SettingItem>
+
+      <SettingItem mode="complex">
+        <div>
+          导航栏文档切换模式
+        </div>
+        <template #desc>
+          <div>
+            切换导航栏上/下一篇翻页模式为翻日记，或翻浏览过的文档。
+          </div>
+        </template>
+        <template #opt>
+          <SySelect
+            v-model="settings.mobileSwitchDocMode"
+            :options="[
+              {
+                value: 'doc',
+                text: '切换历史文档'
+              },
+              {
+                value: 'dailyNote',
+                text: '切换日记'
+              },
+            ]"
+          ></SySelect>
+        </template>
+      </SettingItem>
+    </div>
     <!-- <SettingItem mode="complex">
       <div>
         日记默认笔记本
@@ -196,7 +200,12 @@ const settings = useSettings()
   max-height: 80vh;
   overflow-x: hidden;
   overflow-y: auto;
-  gap: 12px;
+
+  .SettingsScrollContent {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
 
   .sperator {
     width: 100%;
