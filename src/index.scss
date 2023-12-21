@@ -50,15 +50,16 @@ html[data-enhancer="true"] {
 }
 
 html[data-enhancer-enable-block-time="true"] {
+  --topPos: 3px;
+  --timeFontSize: 9px;
+  --letterSpacing: 3px;
+  --rightPos: 0px;
+  --v-divider-color: var(--sky-blue);
+
   div[data-type="NodeParagraph"],
   div[data-type="NodeHeading"],
   div[data-type="NodeTable"]
   {
-    --topPos: 0px;
-    --timeFontSize: 9px;
-    --letterSpacing: 3px;
-    --rightPos: 0px;
-    --v-divider-color: var(--sky-blue);
 
     padding-top: calc(var(--timeFontSize)) !important;
 
@@ -105,10 +106,18 @@ html[data-enhancer-enable-block-time="true"] {
   }
 
   div[data-type="NodeListItem"] {
+    padding-top: calc(var(--timeFontSize)) !important;
+    --topPos: calc(var(--timeFontSize) * -1);
+
+    & .protyle-action {
+      top: calc(var(--timeFontSize) / 2) !important;
+    }
+
     & div[data-type="NodeParagraph"],
     & div[data-type="NodeHeading"],
     & div[data-type="NodeTable"] {
-      --rightPos: 4px;
+      --rightPos: -4px;
+      padding-top: unset !important;
     }
   }
 }
