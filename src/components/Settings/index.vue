@@ -84,7 +84,7 @@
         </div>
         <template #desc>
           <div>
-            是否启用双链颜色、双链增加中括号等样式。
+            选择悬浮球启用的平台。全部、仅移动端、关闭悬浮球。
           </div>
         </template>
         <template #opt>
