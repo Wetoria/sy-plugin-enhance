@@ -14,6 +14,8 @@ interface EnhancerSettings {
 
   enableBlockTime: boolean;
   blockTimeFontSize: number;
+
+  defaultShowBacklinkFilter: boolean;
 }
 
 const defaultSettings: EnhancerSettings = {
@@ -27,6 +29,7 @@ const defaultSettings: EnhancerSettings = {
   enableBacklinkFilter: true,
   enableBlockTime: true,
   blockTimeFontSize: 9,
+  defaultShowBacklinkFilter: false,
 }
 
 let doNotSave = false

@@ -451,7 +451,7 @@ const switchBacklinkAreaFoldStatus = () => {
 
 // #region 反链筛选项相关功能
 
-const backlinkFilterPanelShownStatus = ref(false)
+const backlinkFilterPanelShownStatus = ref(settings.value.defaultShowBacklinkFilter || false)
 const switchBacklinkFilterPanelShownStatus = () => {
   backlinkFilterPanelShownStatus.value = !backlinkFilterPanelShownStatus.value
 }

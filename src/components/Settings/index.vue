@@ -72,6 +72,20 @@
 
       <SettingItem>
         <div>
+          默认展开反链筛选区域
+        </div>
+        <template #desc>
+          <div>
+            是否默认展开底部反链的筛选区域。
+          </div>
+        </template>
+        <template #opt>
+          <SyCheckbox v-model="settings.defaultShowBacklinkFilter" />
+        </template>
+      </SettingItem>
+
+      <SettingItem>
+        <div>
           启用底部反链筛选功能
         </div>
         <template #desc>
