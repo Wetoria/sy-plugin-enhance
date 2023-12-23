@@ -10,6 +10,7 @@ import { registerProtyleBottomArea } from './utils/DOM';
 import MobileNavVue from './components/MobileNav.vue';
 import AppVue from './App.vue';
 import { useEnhancer } from './logic/GlobalStatus';
+import { vip } from './utils/Vip';
 
 
 let plugin: VPlugin = null
@@ -102,6 +103,8 @@ export function init(plugin: VPlugin) {
   plugin.eventBus.on('sync-fail', () => {
     state.value.isSync = false
   })
+
+  vip()
 }
 
 export function destroy() {
