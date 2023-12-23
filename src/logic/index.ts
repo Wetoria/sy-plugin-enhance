@@ -11,7 +11,9 @@ interface EnhancerSettings {
   mobileSwitchDocMode: 'doc' | 'dailyNote';
   enableBottomBacklink: boolean;
   enableBacklinkFilter: boolean;
+
   enableBlockTime: boolean;
+  blockTimeFontSize: number;
 }
 
 const defaultSettings: EnhancerSettings = {
@@ -24,6 +26,7 @@ const defaultSettings: EnhancerSettings = {
   enableBottomBacklink: true,
   enableBacklinkFilter: true,
   enableBlockTime: true,
+  blockTimeFontSize: 9,
 }
 
 let doNotSave = false
@@ -60,11 +63,25 @@ export function loadSettings() {
   })
 }
 
-export const saveSettings = debounce(()=> {
-  const plugin = usePlugin()
+function reviseSettingsValue() {
   if (isNaN(settings.value.sqlLimit)) {
     settings.value.sqlLimit = defaultSettings.sqlLimit
   }
+
+  const blockTimeFontSize = settings.value.blockTimeFontSize
+  if (blockTimeFontSize < 9) {
+    settings.value.blockTimeFontSize = 9
+  }
+  if (blockTimeFontSize > 16) {
+    settings.value.blockTimeFontSize = 16
+  }
+}
+
+export const saveSettings = debounce(()=> {
+  const plugin = usePlugin()
+
+  reviseSettingsValue()
+
   const info = JSON.stringify(settings.value);
   plugin.saveData(STORAGE_KEY, info)
   localStorage.setItem(STORAGE_KEY, info)

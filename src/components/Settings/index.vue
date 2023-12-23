@@ -19,6 +19,8 @@
         </template>
       </SettingItem>
 
+      <div class="sperator"></div>
+
       <SettingItem>
         <div>
           显示编辑时间
@@ -32,6 +34,27 @@
           <SyCheckbox v-model="settings.enableBlockTime" />
         </template>
       </SettingItem>
+
+      <SettingItem mode="complex">
+        <div>
+          编辑时间字体大小
+        </div>
+        <template #desc>
+          <div>
+            块编辑时间的字体大小。最大 16px、，最小 9px。
+          </div>
+        </template>
+        <template #opt>
+          <SyInput
+            v-model="settings.blockTimeFontSize"
+            type="number"
+            min="9"
+            max="16"
+          />
+        </template>
+      </SettingItem>
+
+      <div class="sperator"></div>
 
       <SettingItem>
         <div>
@@ -78,6 +101,8 @@
         </template>
       </SettingItem>
 
+      <div class="sperator"></div>
+
       <SettingItem mode="complex">
         <div>
           悬浮球开启平台
@@ -109,6 +134,7 @@
       </SettingItem>
 
       <div class="sperator"></div>
+
       <div
         style="
           font-weight: bold;

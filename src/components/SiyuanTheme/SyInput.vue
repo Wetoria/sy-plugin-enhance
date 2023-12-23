@@ -3,6 +3,7 @@
     class="b3-text-field fn__flex-center fn__size200"
     :value="modelValue"
     @input="$emit('update:modelValue', $event.target.value)"
+    v-bind="$attrs"
   />
 </template>
 
