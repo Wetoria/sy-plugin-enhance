@@ -48,62 +48,41 @@
         </div>
         <div class="backlinkRefListContainer" v-if="includeRefs.length">
           include:
-          <div
+          <BacklinkFilterOptionTag
             v-for="item of includeRefs"
             :key="'in-' + item.id"
-            style="
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              padding: 2px 8px;
-              border: 1px solid black;
-              border-radius: 6px;
-              cursor: pointer;
-              height: 20px;
-            "
             @click="(event) => handleClickFilterTag(event, item)"
+            :title="item.name"
           >
-            {{ item.name }}
-          </div>
+            <span class="optionName">
+              {{ item.name }}
+            </span>
+          </BacklinkFilterOptionTag>
         </div>
         <div class="backlinkRefListContainer" v-if="excludeRefs.length">
           exclude:
-          <div
+          <BacklinkFilterOptionTag
             v-for="item of excludeRefs"
             :key="'ex-' + item.id"
-            style="
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              padding: 2px 8px;
-              border: 1px solid black;
-              border-radius: 6px;
-              cursor: pointer;
-              height: 20px;
-            "
             @click="(event) => handleClickFilterTag(event, item)"
+            :title="item.name"
           >
-            {{ item.name }}
-          </div>
+            <span class="optionName">
+              {{ item.name }}
+            </span>
+          </BacklinkFilterOptionTag>
         </div>
         <div class="backlinkRefListContainer">
-          <div
+
+          <BacklinkFilterOptionTag
             v-for="item of remainRefs"
             :key="item.id"
-            style="
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              padding: 2px 8px;
-              border: 1px solid black;
-              border-radius: 6px;
-              cursor: pointer;
-              height: 20px;
-            "
             @click="(event) => handleClickFilterTag(event, item)"
+            :title="item.name"
           >
-            {{ item.name }}
-            <!-- TODO 实现选项的统计 -->
+            <span class="optionName">
+              {{ item.name }}
+            </span>
             <sup
               style="
                 margin-left: 2px
@@ -111,7 +90,7 @@
             >
               {{ linkNumMap[item.id] }}
             </sup>
-          </div>
+          </BacklinkFilterOptionTag>
         </div>
       </div>
       <div
@@ -197,6 +176,7 @@ import {
 } from '@/utils';
 import { useSettings } from '@/logic';
 import { openDocById } from '@/utils/Note';
+import BacklinkFilterOptionTag from './Backlink/BacklinkFilterOptionTag.vue';
 
 
 interface Node {
@@ -789,6 +769,13 @@ const jumpToDoc = (event: MouseEvent, docId) => {
         flex-direction: row;
         flex-wrap: wrap;
         gap: 8px;
+
+        .optionName {
+          max-width: 162px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
       }
     }
 
