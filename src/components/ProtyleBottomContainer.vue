@@ -440,6 +440,9 @@ const switchBacklinkDocBlockFoldStatus = (docBacklink) => {
 const backlinkAreaFolded = ref(false);
 const switchBacklinkAreaFoldStatus = () => {
   backlinkAreaFolded.value = !backlinkAreaFolded.value;
+  if (backlinkAreaFolded.value) {
+    backlinkFilterPanelShownStatus.value = false
+  }
 }
 
 // #endregion 折叠控制相关
@@ -448,7 +451,7 @@ const switchBacklinkAreaFoldStatus = () => {
 
 // #region 反链筛选项相关功能
 
-const backlinkFilterPanelShownStatus = ref(true)
+const backlinkFilterPanelShownStatus = ref(false)
 const switchBacklinkFilterPanelShownStatus = () => {
   backlinkFilterPanelShownStatus.value = !backlinkFilterPanelShownStatus.value
 }
