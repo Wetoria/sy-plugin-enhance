@@ -4,6 +4,7 @@ import {
 import { createDailyNote, lsNotebooks, request } from '@/api';
 import { getDailyNote, openDoc, openDocById } from './Note';
 import { usePlugin } from '@/main';
+import { jumpToProtyleBottom } from '.';
 
 async function getCurrentDocAttr(currentDocId) {
   const data = {
@@ -121,6 +122,9 @@ export function createTodayDailyNote() {
     if (!dailyNote || dailyNote.length === 0) {
       createDailyNote(notebookId).then((res) => {
         openDocById(res.id);
+        setTimeout(() => {
+          jumpToProtyleBottom(res.id)
+        }, 100)
       })
       return
     }
@@ -130,5 +134,8 @@ export function createTodayDailyNote() {
     }
     const todayNote = dailyNote[0]
     openDoc(todayNote)
+    setTimeout(() => {
+      jumpToProtyleBottom(todayNote.id)
+    }, 100)
   })
 }

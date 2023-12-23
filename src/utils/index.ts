@@ -163,3 +163,28 @@ export function debounce(fn) {
     }, 500)
   }
 }
+
+export function jumpToProtyleBottom(docId) {
+  if (!docId) {
+    return
+  }
+
+  const plugin = usePlugin()
+  let docTargetDom = null
+  if (plugin.isMobile) {
+    docTargetDom = document.querySelector(`.protyle-background[data-node-id="${docId}"]`)
+  } else {
+    docTargetDom = document.querySelector(`.protyle-title[data-node-id="${docId}"]`)
+  }
+  if (!docTargetDom) {
+    return
+  }
+
+  const protyleContent = docTargetDom.parentNode
+  const indicator: HTMLElement = protyleContent.querySelector('.ProtyleBottomContainer .enhanceToBottomIndicator')
+  if (!indicator) {
+    return
+  }
+
+  indicator.scrollIntoView(false)
+}
