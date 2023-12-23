@@ -152,7 +152,7 @@ export const openSetting = () => {
   container.append(div)
 }
 
-export function debounce(fn) {
+export function debounce(fn, time = 500) {
   let flag
   return (...args) => {
     if (flag) {
@@ -160,7 +160,7 @@ export function debounce(fn) {
     }
     flag = setTimeout(() => {
       fn(...args)
-    }, 500)
+    }, time)
   }
 }
 
