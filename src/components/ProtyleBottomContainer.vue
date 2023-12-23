@@ -47,7 +47,9 @@
           单击左键来包含，或则 shift-单击左键来排除，再次点击取消选中。
         </div>
         <div class="backlinkRefListContainer" v-if="includeRefs.length">
-          include:
+          <span>
+            include:
+          </span>
           <BacklinkFilterOptionTag
             v-for="item of includeRefs"
             :key="'in-' + item.id"
@@ -60,7 +62,9 @@
           </BacklinkFilterOptionTag>
         </div>
         <div class="backlinkRefListContainer" v-if="excludeRefs.length">
-          exclude:
+          <span>
+            exclude:
+          </span>
           <BacklinkFilterOptionTag
             v-for="item of excludeRefs"
             :key="'ex-' + item.id"
@@ -704,6 +708,13 @@ const jumpToDoc = (event: MouseEvent, docId) => {
   display: flex;
   flex-direction: column;
 }
+
+html[data-theme-mode="dark"] {
+  --v-border-color: #d1d1d1;
+}
+html[data-theme-mode="light"] {
+  --v-border-color: #363636;
+}
 </style>
 
 <style scoped lang="scss">
@@ -769,6 +780,8 @@ const jumpToDoc = (event: MouseEvent, docId) => {
         flex-direction: row;
         flex-wrap: wrap;
         gap: 8px;
+
+        align-items: center;
 
         .optionName {
           max-width: 162px;
