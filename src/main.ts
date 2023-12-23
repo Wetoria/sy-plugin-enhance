@@ -9,6 +9,7 @@ import { registerProtyleBottomArea } from './utils/DOM';
 
 import MobileNavVue from './components/MobileNav.vue';
 import AppVue from './App.vue';
+import { useEnhancer } from './logic/GlobalStatus';
 
 
 let plugin: VPlugin = null
@@ -90,6 +91,17 @@ export function init(plugin: VPlugin) {
   loadMobileNav();
   registerProtyleBottomArea()
   addTopBar()
+
+  const state = useEnhancer()
+  plugin.eventBus.on('sync-start', () => {
+    state.value.isSync = true
+  })
+  plugin.eventBus.on('sync-end', () => {
+    state.value.isSync = false
+  })
+  plugin.eventBus.on('sync-fail', () => {
+    state.value.isSync = false
+  })
 }
 
 export function destroy() {

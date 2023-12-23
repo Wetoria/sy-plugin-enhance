@@ -5,6 +5,7 @@ import { createDailyNote, lsNotebooks, request } from '@/api';
 import { getDailyNote, openDoc, openDocById } from './Note';
 import { usePlugin } from '@/main';
 import { jumpToProtyleBottom } from '.';
+import { useEnhancer } from '@/logic/GlobalStatus';
 
 async function getCurrentDocAttr(currentDocId) {
   const data = {
@@ -91,7 +92,12 @@ async function jumpTo(next = true) {
 }
 
 export function createTodayDailyNote() {
-  // TODO 笔记本完整打开了以后才显示，否则容易出现重复创建日记的可能
+  const enhancer = useEnhancer()
+  if (enhancer.value.isSync) {
+    showMessage('正在同步中，请等待同步完成再创建笔记', 1000)
+    return
+  }
+
   lsNotebooks().then(async (res) => {
     const {
       notebooks = [],
