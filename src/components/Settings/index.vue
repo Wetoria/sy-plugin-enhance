@@ -58,15 +58,13 @@
         </div>
         <template #desc>
           <div>
-            块编辑时间的字体大小。最大 16px、，最小 9px。
+            块编辑时间的字体大小。
           </div>
         </template>
         <template #opt>
           <SyInput
             v-model="settings.blockTimeFontSize"
             type="number"
-            min="9"
-            max="16"
           />
         </template>
       </SettingItem>

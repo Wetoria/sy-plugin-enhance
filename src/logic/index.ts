@@ -1,8 +1,10 @@
 import { usePlugin } from '@/main';
 import { debounce } from '@/utils';
-import { onEditorUpdate } from '@/utils/Siyuan';
+import { SyDomNodeTypes, onEditorUpdate } from '@/utils/Siyuan';
 import { ref, watch, watchEffect } from 'vue';
 import { useEnhancer } from './GlobalStatus';
+import { queryAllByDom } from '@/utils/DOM';
+import dayjs from 'dayjs';
 
 interface EnhancerSettings {
   useVipStyle: boolean;
@@ -83,13 +85,6 @@ function reviseSettingsValue() {
     settings.value.sqlLimit = defaultSettings.sqlLimit
   }
 
-  const blockTimeFontSize = settings.value.blockTimeFontSize
-  if (blockTimeFontSize < 9) {
-    settings.value.blockTimeFontSize = 9
-  }
-  if (blockTimeFontSize > 16) {
-    settings.value.blockTimeFontSize = 16
-  }
 }
 
 export const saveSettings = debounce(()=> {
@@ -178,5 +173,33 @@ export function autoSync() {
     } else {
       destroy()
     }
+  })
+}
+
+export function insertBlockTime() {
+  const insertBlockTime = () => {
+    const paragraphList = queryAllByDom(document.body, `[data-type="${SyDomNodeTypes.NodeParagraph}"]`)
+    paragraphList.forEach((dom: HTMLDivElement) => {
+      const updateTimeStr = dom.getAttribute('updated')
+      if (!updateTimeStr) {
+        return
+      }
+      if (updateTimeStr == dom.dataset.enUpdatedBackup) {
+        return
+      }
+      const updated = dayjs(updateTimeStr)
+
+      dom.dataset.enUpdatedBackup = updateTimeStr
+      dom.dataset.enUpdated = updated.format('YYYY/MM/DD HH:mm:ss')
+      dom.dataset.enUpdatedFormat = '    /  /     :  :  '
+    })
+  }
+
+  insertBlockTime()
+  const observer = new MutationObserver(debounce(insertBlockTime, 100));
+  observer.observe(document.documentElement, {
+    childList: true, // 观察目标子节点的变化，是否有添加或者删除
+    subtree: true, // 观察后代节点，默认为 false
+    attributes: true,
   })
 }

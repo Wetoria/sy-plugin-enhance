@@ -9,7 +9,7 @@
 <script setup>
 import { computed, onMounted, watch } from 'vue';
 import FixedTools from './components/FixedTools.vue';
-import { autoSync, syncLocalStorage, useSettings } from './logic';
+import { autoSync, insertBlockTime, syncLocalStorage, useSettings } from './logic';
 import { usePlugin } from './main';
 import LifeLog from './components/LifeLog/LifeLog.vue';
 const settings = useSettings()
@@ -51,6 +51,8 @@ onMounted(() => {
   addEventListener("storage", syncLocalStorage);
 
   autoSync()
+
+  insertBlockTime();
 })
 
 </script>
