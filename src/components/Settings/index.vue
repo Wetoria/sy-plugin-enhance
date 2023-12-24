@@ -19,7 +19,7 @@
         </template>
       </SettingItem>
 
-      <SettingItem>
+      <!-- <SettingItem>
         <div>
           编辑完自动同步
         </div>
@@ -34,7 +34,7 @@
         <template #opt>
           <SyCheckbox v-model="settings.enableAutoSync" />
         </template>
-      </SettingItem>
+      </SettingItem> -->
 
       <div class="sperator"></div>
 
