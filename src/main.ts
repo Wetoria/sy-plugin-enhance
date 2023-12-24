@@ -104,6 +104,7 @@ export function init(plugin: VPlugin) {
     state.value.isSync = false
   })
 
+  return
   vip()
 }
 
