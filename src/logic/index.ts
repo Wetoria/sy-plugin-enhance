@@ -16,6 +16,9 @@ interface EnhancerSettings {
   blockTimeFontSize: number;
 
   defaultShowBacklinkFilter: boolean;
+
+  lifelogPostUrl: string;
+  lifelogEnableBlockTag: boolean;
 }
 
 const defaultSettings: EnhancerSettings = {
@@ -30,6 +33,8 @@ const defaultSettings: EnhancerSettings = {
   enableBlockTime: true,
   blockTimeFontSize: 9,
   defaultShowBacklinkFilter: false,
+  lifelogPostUrl: '',
+  lifelogEnableBlockTag: true,
 }
 
 let doNotSave = false

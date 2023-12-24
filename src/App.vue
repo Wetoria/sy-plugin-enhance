@@ -1,6 +1,8 @@
 <template>
   <div class="SyEnhancerApp">
     <FixedTools v-if="showFloatingBall" />
+
+    <LifeLog />
   </div>
 </template>
 
@@ -9,6 +11,7 @@ import { computed, onMounted, watch } from 'vue';
 import FixedTools from './components/FixedTools.vue';
 import { syncLocalStorage, useSettings } from './logic';
 import { usePlugin } from './main';
+import LifeLog from './components/LifeLog/LifeLog.vue';
 
 const settings = useSettings()
 

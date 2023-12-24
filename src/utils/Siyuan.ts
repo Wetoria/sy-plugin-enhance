@@ -1,4 +1,7 @@
+import { usePlugin } from '@/main'
 import { queryAllByDom } from './DOM'
+import { debounce } from '.'
+import { IOperation } from 'siyuan'
 
 export enum SyDomNodeTypes {
   NodeParagraph = 'NodeParagraph',
@@ -14,7 +17,7 @@ export enum SyDomNodeTypes {
 }
 
 export function getSyDomNodeType(node: HTMLElement) {
-  return node.dataset.type
+  return node.dataset.type as SyDomNodeTypes
 }
 export function getSyDomNodeSubType(node: HTMLElement) {
   return node.dataset.subtype
@@ -192,4 +195,64 @@ export function getTreeChainPathOfDoc(chainList) {
     chainPaths.push(path)
   })
   return chainPaths
+}
+
+export interface EnhanceIOperation extends Pick<IOperation, 'action' | 'data' | 'id'> {
+  text: string;
+  timestamp: number;
+  nodeType: '' | SyDomNodeTypes;
+}
+
+function convertIOperationIntoDoOperation(data: IOperation, timestamp: number) {
+  const result: EnhanceIOperation = {
+    action: data.action,
+    timestamp,
+    id: data.id,
+    text: '',
+    data: data.data,
+    nodeType: ''
+  }
+  if (data.data) {
+    let dom = document.createElement('div')
+    dom.innerHTML = data.data
+    dom = dom.firstElementChild as HTMLDivElement
+    if (!dom) {
+      return result
+    }
+
+    result.nodeType = getSyDomNodeType(dom)
+
+    const editDom = dom.firstElementChild
+    result.text = editDom.textContent
+  }
+  return result
+}
+
+export function onEditorUpdate(
+  callback: (operations: EnhanceIOperation[]) => void,
+  time = 5000,
+) {
+  const plugin = usePlugin()
+  let doOperationList: EnhanceIOperation[] = []
+  const debounceTime = time
+  const run = debounce(() => {
+    callback(doOperationList)
+    doOperationList = []
+  }, debounceTime)
+  plugin.eventBus.on('ws-main', ({ detail }) => {
+    if (detail.cmd === 'transactions') {
+      detail.data.forEach((item) => {
+        const {
+          doOperations,
+          timestamp,
+        } = item
+        doOperations.forEach((doOperation) => {
+          doOperationList.push(
+            convertIOperationIntoDoOperation(doOperation, timestamp)
+          )
+        })
+      })
+      run()
+    }
+  })
 }

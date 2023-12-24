@@ -137,3 +137,11 @@ interface backlinkData {
   blockPaths: IBreadcrumb[];
   expand: boolean;
 }[]
+
+interface LifeLogItem {
+  time: string;
+  type: string;
+  content: string;
+  syBlockId: string;
+  isMobile: boolean;
+}

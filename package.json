@@ -37,6 +37,7 @@
   "dependencies": {
     "@arco-design/web-vue": "^2.53.3",
     "@arco-plugins/vite-vue": "^1.4.5",
+    "axios": "^1.6.2",
     "dayjs": "^1.11.10",
     "vconsole": "^3.15.1",
     "vue": "^3.3.8"

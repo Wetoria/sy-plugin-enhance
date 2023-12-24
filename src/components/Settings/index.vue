@@ -149,13 +149,53 @@
 
       <div class="sperator"></div>
 
-      <div
+      <h3
+        style="
+          font-weight: bold;
+        "
+      >
+        LifeLog
+      </h3>
+
+      <SettingItem mode="complex">
+        <div>
+          同步地址
+        </div>
+        <template #desc>
+          <div>
+            LifeLog 数据同步用的地址。
+          </div>
+        </template>
+        <template #opt>
+          <SyInput
+            v-model="settings.lifelogPostUrl"
+          />
+        </template>
+      </SettingItem>
+
+      <SettingItem>
+        <div>
+          显示段落前标记
+        </div>
+        <template #desc>
+          <div>
+            是否显示 LifeLog 段落前标记。
+          </div>
+        </template>
+        <template #opt>
+          <SyCheckbox v-model="settings.lifelogEnableBlockTag" />
+        </template>
+      </SettingItem>
+
+      <div class="sperator"></div>
+
+      <h3
         style="
           font-weight: bold;
         "
       >
         移动端
-      </div>
+      </h3>
       <SettingItem>
         <div>
           导航栏显示名称
