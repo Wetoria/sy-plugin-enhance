@@ -19,6 +19,23 @@
         </template>
       </SettingItem>
 
+      <SettingItem>
+        <div>
+          编辑完自动同步
+        </div>
+        <template #desc>
+          <div>
+            是否在编辑完以后自动同步。<br />
+            开启后，将会在停止编辑的2秒后，或敲击回车时自动同步。<br />
+            配合思源的「同步感知」功能，能做到一定程度的多端实时同步。<br />
+            注意：该功能会有一定的性能影响，请按需开启。
+          </div>
+        </template>
+        <template #opt>
+          <SyCheckbox v-model="settings.enableAutoSync" />
+        </template>
+      </SettingItem>
+
       <div class="sperator"></div>
 
       <SettingItem>

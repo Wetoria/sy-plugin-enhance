@@ -239,7 +239,8 @@ export function onEditorUpdate(
     callback(doOperationList)
     doOperationList = []
   }, debounceTime)
-  plugin.eventBus.on('ws-main', ({ detail }) => {
+
+  const eventFunc = ({ detail }) => {
     if (detail.cmd === 'transactions') {
       detail.data.forEach((item) => {
         const {
@@ -254,5 +255,9 @@ export function onEditorUpdate(
       })
       run()
     }
-  })
+  }
+  plugin.eventBus.on('ws-main', eventFunc)
+  return () => {
+    plugin.eventBus.off('ws-main', eventFunc)
+  }
 }

@@ -1,24 +1,30 @@
 import { usePlugin } from '@/main';
 import { debounce } from '@/utils';
-import { ref, watch } from 'vue';
+import { onEditorUpdate } from '@/utils/Siyuan';
+import { ref, watch, watchEffect } from 'vue';
+import { useEnhancer } from './GlobalStatus';
 
 interface EnhancerSettings {
   useVipStyle: boolean;
   boxId: string;
-  sqlLimit: number;
+
   floatingBallPlatform: 'all' | 'only-mobile' | 'none';
+
   showMobileNavLabel: boolean;
   mobileSwitchDocMode: 'doc' | 'dailyNote';
-  enableBottomBacklink: boolean;
-  enableBacklinkFilter: boolean;
 
   enableBlockTime: boolean;
   blockTimeFontSize: number;
 
+  enableBottomBacklink: boolean;
+  enableBacklinkFilter: boolean;
   defaultShowBacklinkFilter: boolean;
+  sqlLimit: number;
 
   lifelogPostUrl: string;
   lifelogEnableBlockTag: boolean;
+
+  enableAutoSync: boolean;
 }
 
 const defaultSettings: EnhancerSettings = {
@@ -35,6 +41,7 @@ const defaultSettings: EnhancerSettings = {
   defaultShowBacklinkFilter: false,
   lifelogPostUrl: '',
   lifelogEnableBlockTag: true,
+  enableAutoSync: false,
 }
 
 let doNotSave = false
@@ -101,4 +108,75 @@ export const syncLocalStorage = (event) => {
     doNotSave = true
     settings.value = newSettings
   }
+}
+
+export function autoSync() {
+  const settings = useSettings()
+
+  const plugin = usePlugin()
+  const state = useEnhancer()
+
+  let needSync: HTMLDivElement = null
+  watchEffect(() => {
+    if (!state.value.isSync && needSync) {
+      needSync.click()
+      needSync = null
+    }
+  })
+  const startSync = () => {
+    const dom = document.body.querySelector(plugin.isMobile ? '#menuSyncNow' : '#barSync') as HTMLDivElement
+    if (!dom) {
+      console.warn('调用同步功能失败：未找到同步按钮。')
+      return
+    }
+
+    if (!state.value.isSync) {
+      dom.click();
+    } else {
+      needSync = dom
+    }
+  }
+
+  let firedByEnter = false
+  const enterPressListener = (event) => {
+    if (event.key !== 'Enter') {
+      return
+    }
+    firedByEnter = true
+    startSync()
+  }
+
+  let registered = false
+
+  let destroyEvent = null
+  const init = () => {
+    if (registered) {
+      return
+    }
+    destroyEvent = onEditorUpdate(() => {
+      if (firedByEnter) {
+        firedByEnter = false
+        return
+      }
+      startSync()
+    }, 2000)
+
+    document.body.addEventListener('keydown', enterPressListener, true)
+    registered = true
+  }
+  const destroy = () => {
+    if (destroyEvent) {
+      destroyEvent()
+    }
+    document.body.removeEventListener('keydown', enterPressListener)
+    registered = false
+  }
+
+  watchEffect(() => {
+    if (settings.value.enableAutoSync) {
+      init()
+    } else {
+      destroy()
+    }
+  })
 }
