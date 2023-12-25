@@ -24,6 +24,7 @@ export function hideGutterOnTarget(target) {
 
 const registeredMap = new WeakMap()
 export function registerProtyleBottomArea() {
+  return
   const plugin = usePlugin()
   plugin.eventBus.on('loaded-protyle-static', (event) => {
     const {

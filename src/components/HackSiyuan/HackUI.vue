@@ -3,6 +3,7 @@
     to=".enhance-hack-ui"
   >
     <div class="main">
+      <div ref="statusAreaRef"></div>
       <div
         class="contantSection"
         @scroll="onScroll"
@@ -16,7 +17,8 @@
         :style="{
           // visibility: showToolBar ? 'visible' : 'hidden'
           opacity: showToolBar ? 1 : 0,
-          pointerEvents: showToolBar ? undefined : 'none'
+          pointerEvents: showToolBar ? undefined : 'none',
+          transition: keyboardShown ? 'all 0.1s linear' : 'all 0.3s linear',
         }"
       >
         <HackMobileNav />
@@ -29,8 +31,11 @@
 import { onMounted, ref } from 'vue';
 import HackMobileNav from './HackMobileNav.vue';
 import { debounce } from '@/utils';
+import { usePlugin } from '@/main';
 
 const protyleContainerRef = ref(null)
+
+const statusAreaRef = ref(null)
 
 onMounted(() => {
   const editorDom = document.body.querySelector('#editor') as HTMLElement
@@ -42,9 +47,10 @@ onMounted(() => {
       if (registered) {
         return
       }
-      const wysiwyg = editorDom.querySelector('.protyle-wysiwyg')
+      const wysiwyg = editorDom.querySelector('.protyle-wysiwyg') as HTMLElement
       console.log('wysiwyg is ', wysiwyg)
       if (wysiwyg) {
+        wysiwyg.style.paddingBottom = '100px'
         protyleContainerRef.value.appendChild(wysiwyg)
         registered = true
       }
@@ -62,6 +68,12 @@ onMounted(() => {
     }
 
   }
+
+  const statusDom = document.body.querySelector('#status') as HTMLElement
+  if (statusDom) {
+    statusDom.style.position = 'static'
+    statusAreaRef.value.appendChild(statusDom)
+  }
 })
 
 const lastScrollTop = ref(0);
@@ -69,30 +81,42 @@ const showToolBar = ref(true)
 const onScroll = (event) => {
   let currentScrollTop = (event.target as HTMLElement).scrollTop
 
-  if (currentScrollTop > lastScrollTop.value) {
+  if (currentScrollTop == 0) {
+    showToolBar.value = true
+  }
+  if (currentScrollTop - 20 > lastScrollTop.value) {
     console.log('向下滚动');
     showToolBar.value = false
-  } else if (currentScrollTop < lastScrollTop.value) {
+  } else if (currentScrollTop + 10 < lastScrollTop.value) {
     console.log('向上滚动');
     showToolBar.value = true
   }
 
   lastScrollTop.value = currentScrollTop;
 }
+
+const plugin = usePlugin()
+const keyboardShown = ref(false)
+plugin.eventBus.on('mobile-keyboard-show', () => {
+  showToolBar.value = false
+  keyboardShown.value = true
+})
+plugin.eventBus.on('mobile-keyboard-hide', () => {
+  showToolBar.value = false
+})
 </script>
 
 <style lang="scss">
 html {
-  background-color: red;
 }
-
 .enhance-hack-ui {
 
   // --hack-theme-color: #1e1e1e;
-  --hack-theme-color: #000000;
+  // --hack-theme-color: #000000;
+  --hack-theme-color: white;
 
   width: 100%;
-  height: 96%;
+  height: 100%;
   background-color: var(--hack-theme-color);
 
   position: fixed;
@@ -108,12 +132,12 @@ html {
 <style lang="scss" scoped>
 .main {
   width: 100%;
-  height: 100%;
+  height: 99.9%;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
   position: relative;
-  // border: 1px solid white;
+  overflow: hidden;
 
   .contantSection {
     flex: 1;
@@ -124,12 +148,12 @@ html {
   .toolbar {
     position: absolute;
     width: 80%;
-    bottom: 80px;
+    bottom: 50px;
     left: calc(10%);
     border-radius: 30px;
-    background-color: #1A1A1A;
+    // background-color: #1A1A1A;
+    background-color: rgb(221,221,221);
     z-index: 1;
-    transition: all 0.3s linear;
   }
   .MobileNavContainer {
   }
