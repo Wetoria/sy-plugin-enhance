@@ -4,6 +4,9 @@
   >
     <div
       class="main"
+      ref="fixedAreaRef"
+      @dragenter="onDragEnter"
+      @dragleave="onDragLeave"
       @dragover="onDragOver"
       @drop="onDrop"
     >
@@ -17,16 +20,12 @@
             v-for="item of fixedDocsInfo"
             :key="item.id"
             class="fixedDocItem"
+            draggable="true"
+            @dragstart="(event) => onMoveFixedDocStart(event, item)"
           >
-            <span>
+            <span class="fixedDocName">
               {{ item.content }}
             </span>
-            <div class="removeIcon">
-              <SyIcon
-                name="iconMin"
-                size="10"
-              />
-            </div>
           </div>
         </template>
         <template v-else>
@@ -35,7 +34,26 @@
       </div>
     </div>
   </Teleport>
-  <!-- <div class="fixedDocAreaMask"></div> -->
+  <div
+    class="fixedDocAreaMask"
+    v-if="movingDocId"
+    @drop="() => onMaskDrop(false)"
+    @dragover="onMaskOver"
+  >
+    <div
+      class="deleteIcon"
+      ref="deleteAreaRef"
+      @drop="() => onMaskDrop(true)"
+      @dragover="onMaskOver"
+      @dragenter="onMaskEnter"
+      @dragleave="onMaskLeave"
+    >
+      <SyIcon
+        name="iconTrashcan"
+        size="60"
+      />
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -99,10 +117,25 @@ observer.observe(document.documentElement, {
   subtree: true, // 观察后代节点，默认为 false
 })
 
+const fixedAreaRef = ref(null)
 
+const activeFixedAreaBg = (flag: boolean) => {
+  if (!fixedAreaRef.value) {
+    return
+  }
+  fixedAreaRef.value.classList.toggle('fixedDocArea--drag', flag)
+}
+
+const onDragEnter = () => {
+  activeFixedAreaBg(true)
+}
+const onDragLeave = () => {
+  activeFixedAreaBg(false)
+}
 
 const onDragOver = (event: DragEvent) => {
   event.preventDefault()
+  activeFixedAreaBg(true)
 
   if (!draggingNodeId.value) {
     const dom: HTMLElement = document.body.querySelector('.protyle-wysiwyg--hl')
@@ -147,6 +180,9 @@ const removeDocId = (id) => {
   fixedDocInfoMap.value[id] = null
 }
 const onDrop = () => {
+  activeFixedAreaBg(false)
+
+  movingDocId.value = null
 
   const newNodeId = draggingNodeId.value
   draggingNodeId.value = null
@@ -162,7 +198,6 @@ const fixedDocsInfo = ref([])
 watchEffect(async () => {
   let result = []
 
-  console.log('test')
   for (let index = 0; index < fixedDocIds.value.length; index++) {
     const docId = fixedDocIds.value[index]
     const docInfo = fixedDocInfoMap.value[docId]
@@ -182,6 +217,57 @@ watchEffect(async () => {
   fixedDocsInfo.value = result
 })
 
+let movingDocId = ref(null)
+let movingDocDom = ref<HTMLElement>(null)
+const onMoveFixedDocStart = (event: DragEvent, doc) => {
+  movingDocId.value = doc.id
+  movingDocDom.value = event.target as HTMLElement
+
+  event.dataTransfer.effectAllowed = 'move'
+  event.dataTransfer.dropEffect = 'move'
+}
+
+
+const activeDeleteStyle = () => {
+  if (deleteAreaRef.value) {
+    deleteAreaRef.value.style.opacity = '0.8'
+  }
+}
+
+const deactiveDeleteStyle = () => {
+  if (deleteAreaRef.value) {
+    deleteAreaRef.value.style.opacity = '0.5'
+  }
+}
+
+const deleteAreaRef = ref(null)
+const onMaskEnter = (event: DragEvent) => {
+  movingDocDom.value.classList.toggle('fixedDocNeedDelete', true)
+
+  activeDeleteStyle()
+
+  event.dataTransfer.effectAllowed = 'move'
+  event.dataTransfer.dropEffect = 'move'
+}
+
+const onMaskOver = (event: DragEvent) => {
+  event.preventDefault()
+}
+
+const onMaskLeave = () => {
+  deactiveDeleteStyle()
+}
+
+const onMaskDrop = (needDelete: boolean) => {
+  if (needDelete) {
+    removeDocId(movingDocId.value)
+  }
+  movingDocId.value = null
+
+  deactiveDeleteStyle()
+
+}
+
 </script>
 
 <style lang="scss">
@@ -190,6 +276,7 @@ watchEffect(async () => {
   height: 34px;
   display: flex;
 }
+
 </style>
 
 <style lang="scss" scoped>
@@ -200,7 +287,8 @@ watchEffect(async () => {
   overflow-x: auto;
   padding: 4px 8px;
   box-sizing: border-box;
-  z-index: 1;
+  z-index: 3;
+  background-color: var(--b3-theme-background);
 
   .scrollArea {
     flex-wrap: nowrap;
@@ -211,6 +299,9 @@ watchEffect(async () => {
 
   .fixedDocItem {
     padding: 2px 8px;
+    box-sizing: border-box;
+    height: 22px;
+    font-size: 14px;
     border: 1px solid var(--v-border-color);
     cursor: pointer;
     display: flex;
@@ -220,24 +311,13 @@ watchEffect(async () => {
     white-space: nowrap;
     position: relative;
 
-    .removeIcon {
-      width: 12px;
-      height: 12px;
-      border-radius: 100%;
-      border: 1px solid;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      position: absolute;
-      top: -6px;
-      right: -6px;
-      visibility: hidden;
-      background-color: var(--b3-theme-background);
+    .fixedDocName {
+      white-space: nowrap;
     }
+  }
 
-    &:hover .removeIcon {
-      visibility: visible;
-    }
+  &.fixedDocArea--drag {
+    background-color: var(--b3-theme-primary-lightest);
   }
 
   .promptText {
@@ -248,7 +328,27 @@ watchEffect(async () => {
   width: 100vw;
   height: 100vh;
   position: fixed;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   top: 0;
   left: 0;
+  z-index: 2;
+
+  .deleteIcon {
+    width: 100px;
+    height: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 100%;
+    border: 5px solid red;
+    opacity: 0.5;
+    color: red;
+
+    & * {
+      pointer-events: none;
+    }
+  }
 }
 </style>
