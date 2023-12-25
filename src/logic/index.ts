@@ -27,6 +27,8 @@ interface EnhancerSettings {
   lifelogEnableBlockTag: boolean;
 
   enableAutoSync: boolean;
+
+  fixedDocIds: string[];
 }
 
 const defaultSettings: EnhancerSettings = {
@@ -44,6 +46,8 @@ const defaultSettings: EnhancerSettings = {
   lifelogPostUrl: '',
   lifelogEnableBlockTag: true,
   enableAutoSync: false,
+
+  fixedDocIds: [],
 }
 
 let doNotSave = false

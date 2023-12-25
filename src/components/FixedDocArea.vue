@@ -42,8 +42,11 @@
 import { getBlockByID } from '@/api';
 import { debounce } from '@/utils';
 import { queryAllByDom } from '@/utils/DOM';
-import { ref, watchEffect } from 'vue';
+import { computed, ref, watchEffect } from 'vue';
 import SyIcon from './SiyuanTheme/SyIcon.vue';
+import { useSettings } from '@/logic';
+
+const settings = useSettings()
 
 const containerClassName = 'enFixedDocArea'
 
@@ -113,8 +116,17 @@ const onDragOver = (event: DragEvent) => {
   }
 }
 
+console.log('settings.value.fixedDocIds is ', settings.value.fixedDocIds)
 const fixedDocInfoMap = ref({})
-const fixedDocIds = ref([])
+const fixedDocIds = computed(() => {
+  const list = settings.value.fixedDocIds || []
+  const initMap = {}
+  list.forEach((i) => {
+    initMap[i] = {}
+  })
+  fixedDocInfoMap.value = initMap
+  return list
+})
 const saveDocId = (id) => {
 
   const exist = fixedDocInfoMap.value[id]
@@ -131,7 +143,7 @@ const removeDocId = (id) => {
     return
   }
 
-  fixedDocIds.value = fixedDocIds.value.filter(i => i != id)
+  settings.value.fixedDocIds = fixedDocIds.value.filter(i => i != id)
   fixedDocInfoMap.value[id] = null
 }
 const onDrop = () => {
