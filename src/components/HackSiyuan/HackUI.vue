@@ -10,7 +10,8 @@
       >
         <div
           ref="protyleContainerRef"
-        ></div>
+        >
+        </div>
       </div>
       <div
         class="toolbar"
@@ -28,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import HackMobileNav from './HackMobileNav.vue';
 import { debounce } from '@/utils';
 import { usePlugin } from '@/main';
@@ -37,11 +38,14 @@ const protyleContainerRef = ref(null)
 
 const statusAreaRef = ref(null)
 
-const hintDomRef = ref(null)
+const hintDomRef = ref<HTMLElement>(null)
+const hintDomTop = ref(0)
+const hintDomTopCss = computed(() => `${hintDomTop.value}px !important`)
 onMounted(() => {
   const editorDom = document.body.querySelector('#editor') as HTMLElement
   if (editorDom) {
-
+    // protyleContainerRef.value.appendChild(editorDom)
+    // return
     const editor = document.querySelector('#editor')
     let registeredW = false;
     let regHint = false
@@ -69,13 +73,11 @@ onMounted(() => {
       const selection = window.getSelection()
       if (selection.anchorNode?.parentElement) {
         const rect = selection.anchorNode?.parentElement.getBoundingClientRect()
-        const pos = rect.top + 50
-        if (pos > document.body.clientHeight - 20) {
-
-          hintDomRef.value.style.bottom = `${30}px`;
-        } else {
-          hintDomRef.value.style.top = `${pos}px`;
-        }
+        let pos = rect.top
+        const diff = document.body.clientHeight - window.visualViewport.height
+        pos = pos + (diff / 2)
+        hintDomRef.value.style.bottom = `${document.body.clientHeight - pos + 0}px`;
+        hintDomTop.value = pos
       }
     });
     if (editor) {
@@ -105,18 +107,20 @@ const showToolBar = ref(true)
 const onScroll = (event) => {
   let currentScrollTop = (event.target as HTMLElement).scrollTop
 
-  if (currentScrollTop == 0) {
+  if (currentScrollTop + 60 <= lastScrollTop.value) {
+    console.log('向上滚动');
     showToolBar.value = true
-  }
-  if (currentScrollTop - 20 > lastScrollTop.value) {
+    lastScrollTop.value = currentScrollTop;
+  } else if (currentScrollTop - 10 >= lastScrollTop.value) {
     console.log('向下滚动');
     showToolBar.value = false
-  } else if (currentScrollTop + 10 < lastScrollTop.value) {
-    console.log('向上滚动');
+    lastScrollTop.value = currentScrollTop;
+  }
+
+  if (currentScrollTop <= 0) {
     showToolBar.value = true
   }
 
-  lastScrollTop.value = currentScrollTop;
 }
 
 const plugin = usePlugin()
@@ -127,6 +131,7 @@ plugin.eventBus.on('mobile-keyboard-show', () => {
 })
 plugin.eventBus.on('mobile-keyboard-hide', () => {
   showToolBar.value = false
+  showToolBar.value = true
 })
 </script>
 
@@ -162,19 +167,23 @@ html {
       overflow-y: auto;
       overflow-x: hidden;
 
+      .protyle-breadcrumb,
+      .protyle-background {
+        display: none !important;
+      }
+
       .protyle-hint {
-        // top: v-bind(hintTopCss) !important;
-        // bottom: 20px !important;
         height: fit-content;
+        top: v-bind(hintDomTopCss) !important;
 
         & > div {
           display: flex;
-          flex-direction: column;
+          flex-direction: column-reverse;
           flex: unset !important;
 
           .b3-list-item {
             display: flex;
-            flex-direction: column;
+            flex-direction: column-reverse;
             align-items: flex-start;
             height: 44px;
             line-height: 44px;
