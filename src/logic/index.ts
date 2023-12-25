@@ -106,6 +106,7 @@ export const syncLocalStorage = (event) => {
 }
 
 export function autoSync() {
+  return
   const settings = useSettings()
 
   const plugin = usePlugin()
