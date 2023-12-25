@@ -130,7 +130,7 @@ export function createTodayDailyNote() {
         openDocById(res.id);
         setTimeout(() => {
           jumpToProtyleBottom(res.id)
-        }, 100)
+        }, 300)
       })
       return
     }
@@ -142,6 +142,6 @@ export function createTodayDailyNote() {
     openDoc(todayNote)
     setTimeout(() => {
       jumpToProtyleBottom(todayNote.id)
-    }, 100)
+    }, 300)
   })
 }

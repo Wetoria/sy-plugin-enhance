@@ -5,7 +5,7 @@
     <div class="main">
       <div ref="statusAreaRef"></div>
       <div
-        class="contantSection"
+        class="contentSection"
         @scroll="onScroll"
       >
         <div
@@ -37,36 +37,59 @@ const protyleContainerRef = ref(null)
 
 const statusAreaRef = ref(null)
 
+const hintDomRef = ref(null)
 onMounted(() => {
   const editorDom = document.body.querySelector('#editor') as HTMLElement
   if (editorDom) {
 
     const editor = document.querySelector('#editor')
-    let registered = false;
+    let registeredW = false;
+    let regHint = false
     const handler = () => {
-      if (registered) {
-        return
-      }
       const wysiwyg = editorDom.querySelector('.protyle-wysiwyg') as HTMLElement
       console.log('wysiwyg is ', wysiwyg)
-      if (wysiwyg) {
-        wysiwyg.style.paddingBottom = '100px'
+      if (wysiwyg && !registeredW) {
+        wysiwyg.style.padding = '16px 0px 200px 0px'
         protyleContainerRef.value.appendChild(wysiwyg)
-        registered = true
+        registeredW = true
       }
+      const hintDom = editorDom.querySelector('.protyle-hint') as HTMLElement
+      if (hintDom && !regHint) {
+
+        hintDomRef.value = hintDom
+        protyleContainerRef.value.appendChild(hintDom)
+        regHint = true
+      }
+
     }
-    const run = debounce(handler)
+    const run = debounce(handler, 500)
     handler()
     const observer = new MutationObserver(() => {
       run()
+      const selection = window.getSelection()
+      if (selection.anchorNode?.parentElement) {
+        const rect = selection.anchorNode?.parentElement.getBoundingClientRect()
+        const pos = rect.top + 50
+        if (pos > document.body.clientHeight - 20) {
+
+          hintDomRef.value.style.bottom = `${30}px`;
+        } else {
+          hintDomRef.value.style.top = `${pos}px`;
+        }
+      }
     });
     if (editor) {
       observer.observe(editor, {
         childList: true, // 观察目标子节点的变化，是否有添加或者删除
         subtree: true, // 观察后代节点，默认为 false
+        attributes: true,
       })
     }
 
+  }
+
+  if (!statusAreaRef.value) {
+    return
   }
 
   const statusDom = document.body.querySelector('#status') as HTMLElement
@@ -74,6 +97,7 @@ onMounted(() => {
     statusDom.style.position = 'static'
     statusAreaRef.value.appendChild(statusDom)
   }
+
 })
 
 const lastScrollTop = ref(0);
@@ -123,39 +147,71 @@ html {
   top: 0;
   left: 0;
   z-index: 1;
+
+  .main {
+    width: 100%;
+    height: 99.9%;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    position: relative;
+
+    .contentSection {
+      flex: 1;
+      padding: 4px 12px;
+      overflow-y: auto;
+      overflow-x: hidden;
+
+      .protyle-hint {
+        // top: v-bind(hintTopCss) !important;
+        // bottom: 20px !important;
+        height: fit-content;
+
+        & > div {
+          display: flex;
+          flex-direction: column;
+          flex: unset !important;
+
+          .b3-list-item {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            height: 44px;
+            line-height: 44px;
+            box-sizing: border-box;
+            flex-shrink: 0;
+
+            .b3-list-item__first {
+              height: 28px;
+              line-height: 28px;
+              flex-direction: row;
+            }
+            .b3-list-item__meta {
+              overflow: hidden;
+              white-space: nowrap;
+              text-overflow: ellipsis;
+              width: 100%;
+            }
+          }
+        }
+      }
+    }
+
+    .toolbar {
+      position: absolute;
+      width: 80%;
+      bottom: 50px;
+      left: calc(10%);
+      border-radius: 30px;
+      // background-color: #1A1A1A;
+      background-color: rgb(221,221,221);
+      z-index: 1;
+    }
+    .MobileNavContainer {
+    }
+  }
 }
 .EnhanceSettingsContainer {
   max-height: 70vh !important;
-}
-</style>
-
-<style lang="scss" scoped>
-.main {
-  width: 100%;
-  height: 99.9%;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-  position: relative;
-  overflow: hidden;
-
-  .contantSection {
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-  }
-
-  .toolbar {
-    position: absolute;
-    width: 80%;
-    bottom: 50px;
-    left: calc(10%);
-    border-radius: 30px;
-    // background-color: #1A1A1A;
-    background-color: rgb(221,221,221);
-    z-index: 1;
-  }
-  .MobileNavContainer {
-  }
 }
 </style>

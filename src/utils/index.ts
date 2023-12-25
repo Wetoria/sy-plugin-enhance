@@ -168,7 +168,7 @@ export function jumpToProtyleBottom(docId) {
   const plugin = usePlugin()
   let docTargetDom = null
   if (plugin.isMobile) {
-    docTargetDom = document.querySelector(`.protyle-background[data-node-id="${docId}"]`)
+    docTargetDom = document.querySelector(`.enhance-hack-ui`)
   } else {
     docTargetDom = document.querySelector(`.protyle-title[data-node-id="${docId}"]`)
   }
@@ -183,4 +183,10 @@ export function jumpToProtyleBottom(docId) {
   }
 
   indicator.scrollIntoView(false)
+
+  const enhanceProtyleBottomContainer = docTargetDom.querySelector('.enhanceProtyleBottomContainer')
+  if (enhanceProtyleBottomContainer) {
+    console.log('enhanceProtyleBottomContainer.parentElement is ', enhanceProtyleBottomContainer.parentElement)
+    enhanceProtyleBottomContainer.parentElement.scrollTop += 30
+  }
 }

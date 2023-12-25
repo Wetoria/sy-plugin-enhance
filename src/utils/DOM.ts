@@ -24,13 +24,17 @@ export function hideGutterOnTarget(target) {
 
 const registeredMap = new WeakMap()
 export function registerProtyleBottomArea() {
-  return
   const plugin = usePlugin()
   plugin.eventBus.on('loaded-protyle-static', (event) => {
     const {
       detail
     } = event
-    const element = detail.protyle.contentElement;
+    let element
+    if (plugin.isMobile) {
+      element = document.querySelector('.enhance-hack-ui .main .contentSection')
+    } else {
+      element = detail.protyle.contentElement;
+    }
     if (registeredMap.has(element)) {
       const detailRef = registeredMap.get(element)
       detailRef.value = detail
