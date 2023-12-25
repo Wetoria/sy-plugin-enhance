@@ -1,12 +1,10 @@
 
 import { EnhanceIOperation, SyDomNodeTypes, onEditorUpdate } from '../../utils/Siyuan'
-import { getBlockAttrs, setBlockAttrs } from '@/api'
+import { getBlockAttrs, request, setBlockAttrs } from '@/api'
 import { useSettings } from '@/logic'
 import { usePlugin } from '@/main'
-import axios from 'axios'
 
 const lifelogPrefix = 'custom-lifelog-'
-const lifelogAttrKey = `${lifelogPrefix}synced`
 const lifelogAttrTime = `${lifelogPrefix}time`
 const lifelogAttrType = `${lifelogPrefix}type`
 const lifelogAttrContent = `${lifelogPrefix}content`
@@ -30,7 +28,7 @@ export function markLifeLogBlock() {
     for (const opt of optList) {
       const blockAttrs = await getBlockAttrs(opt.id)
 
-      const synced = lifelogAttrKey in blockAttrs
+      const synced = lifelogAttrType in blockAttrs
       if (synced) {
         return
       }
@@ -74,13 +72,14 @@ export function markLifeLogBlock() {
       return
     }
 
-    axios.post(
-      lifelogPostUrl,
+    request(
+      lifelogPostUrl + `?data=${encodeURIComponent(JSON.stringify(records))}`,
       {
         data: records,
       }
     ).catch((err) => {
       console.error('[Enhance]| LifeLog Post Error: ', err)
     })
+
   })
 }
