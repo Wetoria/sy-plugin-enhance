@@ -63,6 +63,9 @@ import { queryAllByDom } from '@/utils/DOM';
 import { computed, ref, watchEffect } from 'vue';
 import SyIcon from './SiyuanTheme/SyIcon.vue';
 import { useSettings } from '@/logic';
+import { usePlugin } from '@/main';
+
+const plugin = usePlugin()
 
 const settings = useSettings()
 
@@ -83,15 +86,27 @@ const onEachDragStart = (event) => {
   draggingNodeId.value = nodeId
 }
 const handler = () => {
-  const targetElement = document.querySelector('.layout__center .layout-tab-container')
-  if (!targetElement) {
-    return
+  if (plugin.isMobile) {
+    const targetElement = document.querySelector('.toolbar')
+    if (!targetElement) {
+      return
+    }
+    const siblingDom = targetElement.nextElementSibling
+    if (siblingDom.classList.contains(containerClassName)) {
+      return
+    }
+    targetElement.insertAdjacentElement('afterend', fixedDocArea);
+  } else {
+    const targetElement = document.querySelector('.layout__center .layout-tab-container')
+    if (!targetElement) {
+      return
+    }
+    const preDom = targetElement.previousElementSibling
+    if (preDom.classList.contains(containerClassName)) {
+      return
+    }
+    targetElement.parentNode.insertBefore(fixedDocArea, targetElement);
   }
-  const preDom = targetElement.previousElementSibling
-  if (preDom.classList.contains(containerClassName)) {
-    return
-  }
-  targetElement.parentNode.insertBefore(fixedDocArea, targetElement);
 }
 const bindDragStart = () => {
   const draggableDoms = queryAllByDom(document.body, '[draggable="true"]')
