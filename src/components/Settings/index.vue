@@ -177,8 +177,17 @@
           同步地址
         </div>
         <template #desc>
-          <div>
-            LifeLog 数据同步用的地址。
+          <div
+            style="
+              width: 100%;
+              white-space: break-all;
+              white-space: wr;
+            "
+          >
+            LifeLog 数据同步用的地址。<br />
+            <span style="word-wrap: break-word;">
+              当前地址：{{ settings.lifelogPostUrl }}
+            </span>
           </div>
         </template>
         <template #opt>
@@ -207,37 +216,37 @@
       <h3
         style="
           font-weight: bold;
-        "
+          "
       >
-        移动端
-      </h3>
-      <SettingItem>
+      移动端
+    </h3>
+    <SettingItem>
+      <div>
+        导航栏显示名称
+      </div>
+      <template #desc>
         <div>
-          导航栏显示名称
+          是否显示导航栏按钮的名称。
         </div>
-        <template #desc>
-          <div>
-            是否显示导航栏按钮的名称。
-          </div>
-        </template>
-        <template #opt>
-          <SyCheckbox v-model="settings.showMobileNavLabel" />
-        </template>
-      </SettingItem>
+      </template>
+      <template #opt>
+        <SyCheckbox v-model="settings.showMobileNavLabel" />
+      </template>
+    </SettingItem>
 
-      <SettingItem mode="complex">
+    <SettingItem mode="complex">
+      <div>
+        导航栏文档切换模式
+      </div>
+      <template #desc>
         <div>
-          导航栏文档切换模式
+          切换导航栏上/下一篇翻页模式为翻日记，或翻浏览过的文档。
         </div>
-        <template #desc>
-          <div>
-            切换导航栏上/下一篇翻页模式为翻日记，或翻浏览过的文档。
-          </div>
-        </template>
-        <template #opt>
-          <SySelect
-            v-model="settings.mobileSwitchDocMode"
-            :options="[
+      </template>
+      <template #opt>
+        <SySelect
+        v-model="settings.mobileSwitchDocMode"
+        :options="[
               {
                 value: 'doc',
                 text: '切换历史文档'
@@ -251,20 +260,18 @@
         </template>
       </SettingItem>
     </div>
-    <!-- <SettingItem mode="complex">
-      <div>
-        日记默认笔记本
-      </div>
-      <template #desc>
-        <div>
-          默认存放日记的笔记本。
-        </div>
-      </template>
-      <template #opt>
-
-      </template>
-    </SettingItem> -->
-
+  </div>
+  <div
+    class="aboutArea"
+  >
+    <span>
+      使用说明：
+      <a href="https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse">{{plugin.version ? `v${plugin.version}` : ''}}</a>
+    </span>
+    <span>
+      作者：
+      <a href="https://wetoria.me">Wetoria</a>
+    </span>
   </div>
 </template>
 
@@ -274,8 +281,11 @@ import SyCheckbox from '../SiyuanTheme/SyCheckbox.vue';
 import SySelect from '../SiyuanTheme/SySelect.vue';
 import SettingItem from './SettingItem.vue';
 import SyInput from '../SiyuanTheme/SyInput.vue';
+import { usePlugin } from '@/main';
 
 const settings = useSettings()
+
+const plugin = usePlugin()
 
 </script>
 
@@ -307,5 +317,16 @@ const settings = useSettings()
     height: 1px;
     border-bottom: 1px solid var(--b3-theme-surface-lighter);
   }
+
+}
+.aboutArea {
+  display: flex;
+  width: 100%;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 9px 24px;
+  box-sizing: border-box;
+  border-top: 1px solid var(--b3-theme-surface-lighter);
+  gap: 12px;
 }
 </style>

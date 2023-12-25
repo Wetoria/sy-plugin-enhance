@@ -2,7 +2,6 @@ import SettingsVue from '@/components/Settings/index.vue';
 import { usePlugin } from '@/main';
 import { Dialog } from 'siyuan';
 import { App, createApp, onMounted, ref } from 'vue';
-import PluginInfo from '@/../plugin.json' assert { type: "json" }
 // import ArcoVue from '@arco-design/web-vue';
 // import '@arco-design/web-vue/dist/arco.css';
 
@@ -129,13 +128,10 @@ export function reomveDuplicated(list, compare = (cur, itemInResult) => (cur.id 
 export const openSetting = () => {
   const plugin = usePlugin()
   const div = getDomByVueComponent(SettingsVue)
-  const {
-    version
-  } = PluginInfo
   const dialog = new Dialog({
     title: `
       <div class="SyEnhancerDialogTitle">
-        ${plugin.i18n.pluginName} ${version ? `v${version}` : ''}
+        ${plugin.i18n.pluginName}
       </div>
     `,
     content: `
