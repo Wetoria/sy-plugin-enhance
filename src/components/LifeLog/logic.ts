@@ -10,6 +10,8 @@ const lifelogAttrType = `${lifelogPrefix}type`
 const lifelogAttrContent = `${lifelogPrefix}content`
 
 export function markLifeLogBlock() {
+  const settings = useSettings()
+
   onEditorUpdate(async (operations: EnhanceIOperation[]) => {
     let optList = operations.filter(i => i.text)
     optList.sort((a, b) => a.timestamp - b.timestamp)
@@ -81,5 +83,5 @@ export function markLifeLogBlock() {
       console.error('[Enhance]| LifeLog Post Error: ', err)
     })
 
-  })
+  }, settings.value.lifelogTriggerTime * 1000)
 }

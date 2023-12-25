@@ -25,6 +25,7 @@ interface EnhancerSettings {
 
   lifelogPostUrl: string;
   lifelogEnableBlockTag: boolean;
+  lifelogTriggerTime: number;
 
   enableAutoSync: boolean;
 
@@ -43,8 +44,11 @@ const defaultSettings: EnhancerSettings = {
   enableBlockTime: true,
   blockTimeFontSize: 9,
   defaultShowBacklinkFilter: false,
+
   lifelogPostUrl: '',
   lifelogEnableBlockTag: true,
+  lifelogTriggerTime: 5,
+
   enableAutoSync: false,
 
   fixedDocIds: [],

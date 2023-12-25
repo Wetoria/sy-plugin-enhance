@@ -211,6 +211,24 @@
         </template>
       </SettingItem>
 
+      <SettingItem mode="complex">
+        <div>
+          LifeLog触发时间
+        </div>
+        <template #desc>
+          <div>
+            停止编辑以后，触发标记逻辑的等待时间。单位：秒。
+          </div>
+        </template>
+        <template #opt>
+          <SyInput
+            v-model="settings.lifelogTriggerTime"
+            type="number"
+            min="1"
+          />
+        </template>
+      </SettingItem>
+
       <div class="sperator"></div>
 
       <h3
