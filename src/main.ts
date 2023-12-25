@@ -10,6 +10,7 @@ import { registerProtyleBottomArea } from './utils/DOM';
 import MobileNavVue from './components/MobileNav.vue';
 import AppVue from './App.vue';
 import { useEnhancer } from './logic/GlobalStatus';
+import { hackSiyuanMobile } from './utils/hacker';
 
 
 let plugin: VPlugin = null
@@ -84,11 +85,15 @@ const loadVueApp = () => {
   loadComponent(AppVue)
 }
 
+let bodyCopy = null
 export function init(plugin: VPlugin) {
   usePlugin(plugin);
+
+  hackSiyuanMobile()
+
   loadVueApp()
   addCommand();
-  loadMobileNav();
+  // loadMobileNav();
   registerProtyleBottomArea()
   addTopBar()
 

@@ -1,10 +1,12 @@
 <template>
   <div class="SyEnhancerApp">
+    <HackUI />
+
     <FixedTools v-if="showFloatingBall" />
 
     <LifeLog />
 
-    <FixedDocArea />
+    <FixedDocArea v-if="!plugin.isMobile" />
   </div>
 </template>
 
@@ -15,6 +17,7 @@ import { autoSync, insertBlockTime, syncLocalStorage, useSettings } from './logi
 import { usePlugin } from './main';
 import LifeLog from './components/LifeLog/LifeLog.vue';
 import FixedDocArea from './components/FixedDocArea.vue';
+import HackUI from './components/HackSiyuan/HackUI.vue';
 const settings = useSettings()
 
 watch(() => settings.value.useVipStyle, () => {
