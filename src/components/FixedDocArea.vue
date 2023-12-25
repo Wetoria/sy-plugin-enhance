@@ -22,6 +22,7 @@
             class="fixedDocItem"
             draggable="true"
             @dragstart="(event) => onMoveFixedDocStart(event, item)"
+            @click="jumpToDoc(item.id)"
           >
             <span class="fixedDocName">
               {{ item.content }}
@@ -64,6 +65,7 @@ import { computed, ref, watchEffect } from 'vue';
 import SyIcon from './SiyuanTheme/SyIcon.vue';
 import { useSettings } from '@/logic';
 import { usePlugin } from '@/main';
+import { openDocById } from '@/utils/Note';
 
 const plugin = usePlugin()
 
@@ -281,6 +283,10 @@ const onMaskDrop = (needDelete: boolean) => {
 
   deactiveDeleteStyle()
 
+}
+
+const jumpToDoc = (id) => {
+  openDocById(id)
 }
 
 </script>
