@@ -3,6 +3,8 @@
     <FixedTools v-if="showFloatingBall" />
 
     <LifeLog />
+
+    <FixedDocArea />
   </div>
 </template>
 
@@ -12,6 +14,7 @@ import FixedTools from './components/FixedTools.vue';
 import { autoSync, insertBlockTime, syncLocalStorage, useSettings } from './logic';
 import { usePlugin } from './main';
 import LifeLog from './components/LifeLog/LifeLog.vue';
+import FixedDocArea from './components/FixedDocArea.vue';
 const settings = useSettings()
 
 watch(() => settings.value.useVipStyle, () => {
