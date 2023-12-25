@@ -13,13 +13,21 @@
         <template
           v-if="fixedDocsInfo.length"
         >
-        <span
+        <div
             v-for="item of fixedDocsInfo"
             :key="item.id"
             class="fixedDocItem"
           >
-            {{ item.content }}
-          </span>
+            <span>
+              {{ item.content }}
+            </span>
+            <div class="removeIcon">
+              <SyIcon
+                name="iconMin"
+                size="10"
+              />
+            </div>
+          </div>
         </template>
         <template v-else>
           <span class="promptText">拖动文档至此处，将其固定在这</span>
@@ -35,6 +43,7 @@ import { getBlockByID } from '@/api';
 import { debounce } from '@/utils';
 import { queryAllByDom } from '@/utils/DOM';
 import { ref, watchEffect } from 'vue';
+import SyIcon from './SiyuanTheme/SyIcon.vue';
 
 const containerClassName = 'enFixedDocArea'
 
@@ -166,7 +175,7 @@ watchEffect(async () => {
 <style lang="scss">
 .enFixedDocArea {
   width: 100%;
-  height: 30px;
+  height: 34px;
   display: flex;
 }
 </style>
@@ -197,6 +206,26 @@ watchEffect(async () => {
     align-items: center;
     border-radius: 6px;
     white-space: nowrap;
+    position: relative;
+
+    .removeIcon {
+      width: 12px;
+      height: 12px;
+      border-radius: 100%;
+      border: 1px solid;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      visibility: hidden;
+      background-color: var(--b3-theme-background);
+    }
+
+    &:hover .removeIcon {
+      visibility: visible;
+    }
   }
 
   .promptText {
