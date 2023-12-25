@@ -3,6 +3,7 @@ import { EnhanceIOperation, SyDomNodeTypes, onEditorUpdate } from '../../utils/S
 import { getBlockAttrs, request, setBlockAttrs } from '@/api'
 import { useSettings } from '@/logic'
 import { usePlugin } from '@/main'
+import { getFrontend } from 'siyuan'
 
 const lifelogPrefix = 'custom-lifelog-'
 const lifelogAttrTime = `${lifelogPrefix}time`
@@ -11,6 +12,8 @@ const lifelogAttrContent = `${lifelogPrefix}content`
 
 export function markLifeLogBlock() {
   const settings = useSettings()
+
+  const plugin = usePlugin()
 
   onEditorUpdate(async (operations: EnhanceIOperation[]) => {
     let optList = operations.filter(i => i.text)
@@ -52,7 +55,6 @@ export function markLifeLogBlock() {
       const logType = elseContent.substring(0, colonIndex)
       const logContent = elseContent.substring(colonIndex + 1, elseContent.length)
 
-      const plugin = usePlugin()
       records.push({
         time,
         type: logType,
@@ -74,14 +76,18 @@ export function markLifeLogBlock() {
       return
     }
 
-    request(
-      lifelogPostUrl + `?data=${encodeURIComponent(JSON.stringify(records))}`,
-      {
-        data: records,
-      }
-    ).catch((err) => {
-      console.error('[Enhance]| LifeLog Post Error: ', err)
-    })
+    const frontEnd = getFrontend();
+
+    if (!plugin.isMobile || frontEnd === "mobile") {
+      request(
+        lifelogPostUrl + `?data=${encodeURIComponent(JSON.stringify(records))}`,
+        {
+          data: records,
+        }
+      ).catch((err) => {
+        console.error('[Enhance]| LifeLog Post Error: ', err)
+      })
+    }
 
   }, settings.value.lifelogTriggerTime * 1000)
 }
