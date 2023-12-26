@@ -51,9 +51,8 @@ onMounted(() => {
     let regHint = false
     const handler = () => {
       const wysiwyg = editorDom.querySelector('.protyle-wysiwyg') as HTMLElement
-      console.log('wysiwyg is ', wysiwyg)
       if (wysiwyg && !registeredW) {
-        wysiwyg.style.padding = '16px 0px 200px 0px'
+        // wysiwyg.style.padding = '16px 0px 200px 0px'
         protyleContainerRef.value.appendChild(wysiwyg)
         registeredW = true
       }
@@ -70,15 +69,16 @@ onMounted(() => {
     handler()
     const observer = new MutationObserver(() => {
       run()
-      const selection = window.getSelection()
-      if (selection.anchorNode?.parentElement) {
-        const rect = selection.anchorNode?.parentElement.getBoundingClientRect()
-        let pos = rect.top
-        const diff = document.body.clientHeight - window.visualViewport.height
-        pos = pos + (diff / 2)
-        hintDomRef.value.style.bottom = `${document.body.clientHeight - pos + 0}px`;
-        hintDomTop.value = pos
-      }
+      // const selection = window.getSelection()
+      // if (selection.anchorNode?.parentElement) {
+      //   const rect = selection.anchorNode?.parentElement.getBoundingClientRect()
+      //   let pos = rect.top
+      //   console.log('pos is ', pos)
+      //   const diff = document.body.clientHeight - window.visualViewport.height
+      //   pos = pos + (diff / 2)
+      //   hintDomRef.value.style.bottom = `${document.body.clientHeight - pos + 0}px`;
+      //   hintDomTop.value = pos
+      // }
     });
     if (editor) {
       observer.observe(editor, {
@@ -148,10 +148,13 @@ html {
   height: 100%;
   background-color: var(--hack-theme-color);
 
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 
   .main {
     width: 100%;
@@ -174,7 +177,9 @@ html {
 
       .protyle-hint {
         height: fit-content;
-        top: v-bind(hintDomTopCss) !important;
+        // top: v-bind(hintDomTopCss) !important;
+        top: unset !important;
+        bottom: 200px;
 
         & > div {
           display: flex;
