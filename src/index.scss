@@ -48,6 +48,15 @@ html[data-enhancer="true"] {
   }
   // #endregion 文档反链增加 [[]]
 
+
+  .protyle-wysiwyg {
+
+    & > [data-type="NodeList"] {
+      & > [data-type="NodeListItem"]::before {
+        border-left-color: var(--sky-blue);
+      }
+    }
+  }
 }
 
 html[data-enhancer-enable-block-time="true"] {
