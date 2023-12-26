@@ -9,6 +9,10 @@
         @scroll="onScroll"
       >
         <div
+          class="stickyTitleLine"
+          ref="titleContainerRef"
+        ></div>
+        <div
           ref="protyleContainerRef"
         >
         </div>
@@ -38,6 +42,8 @@ const protyleContainerRef = ref(null)
 
 const statusAreaRef = ref(null)
 
+const titleContainerRef = ref(null)
+
 const hintDomRef = ref<HTMLElement>(null)
 const hintDomTop = ref(0)
 const hintDomTopCss = computed(() => `${hintDomTop.value}px !important`)
@@ -49,10 +55,21 @@ onMounted(() => {
     const editor = document.querySelector('#editor')
     let registeredW = false;
     let regHint = false
+    let toolbarAppended = false
     const handler = () => {
+      const toolbarNameDom = document.querySelector('#toolbarName')
+      if (toolbarNameDom && !toolbarAppended) {
+        titleContainerRef.value.appendChild(toolbarNameDom)
+        toolbarAppended = true
+      }
       const wysiwyg = editorDom.querySelector('.protyle-wysiwyg') as HTMLElement
       if (wysiwyg && !registeredW) {
         // wysiwyg.style.padding = '16px 0px 200px 0px'
+        wysiwyg.style.paddingTop = '16px'
+        wysiwyg.style.paddingLeft = '0px'
+        wysiwyg.style.paddingRight = '0px'
+
+
         protyleContainerRef.value.appendChild(wysiwyg)
         registeredW = true
       }
@@ -136,13 +153,18 @@ plugin.eventBus.on('mobile-keyboard-hide', () => {
 </script>
 
 <style lang="scss">
-html {
+html[data-theme-mode="dark"] {
+  --hack-theme-color: black;
+  --hack-tool-bar-bg-color: #1A1A1A;
+}
+html[data-theme-mode="light"] {
+  --hack-theme-color: white;
+  --hack-tool-bar-bg-color: rgb(221,221,221);
 }
 .enhance-hack-ui {
 
   // --hack-theme-color: #1e1e1e;
   // --hack-theme-color: #000000;
-  --hack-theme-color: white;
 
   width: 100%;
   height: 100%;
@@ -169,6 +191,17 @@ html {
       padding: 4px 12px;
       overflow-y: auto;
       overflow-x: hidden;
+
+      .stickyTitleLine {
+        position: sticky;
+        width: calc(100% + 24px);
+        top: -4px;
+        transform: translateX(-12px);
+        background-color: var(--hack-theme-color);
+        z-index: 100;
+        border-bottom: 1px solid;
+        padding: 4px 12px;
+      }
 
       .protyle-breadcrumb,
       .protyle-background {
@@ -218,7 +251,7 @@ html {
       left: calc(10%);
       border-radius: 30px;
       // background-color: #1A1A1A;
-      background-color: rgb(221,221,221);
+      background-color: var(--hack-tool-bar-bg-color);
       z-index: 1;
     }
     .MobileNavContainer {
