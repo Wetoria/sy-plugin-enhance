@@ -31,7 +31,7 @@ export function registerProtyleBottomArea() {
     } = event
     let element
     if (plugin.isMobile) {
-      element = document.querySelector('.enhance-hack-ui .main .contentSection')
+      element = document.querySelector('.enhanceHackUi .main .contentSection')
     } else {
       element = detail.protyle.contentElement;
     }

@@ -1,17 +1,17 @@
 <template>
   <Teleport
-    to=".enhance-hack-ui"
+    to=".enhanceHackUi"
   >
     <div class="main">
       <div ref="statusAreaRef"></div>
       <div
+        class="stickyTitleLine"
+        ref="titleContainerRef"
+      ></div>
+      <div
         class="contentSection"
         @scroll="onScroll"
       >
-        <div
-          class="stickyTitleLine"
-          ref="titleContainerRef"
-        ></div>
         <div
           ref="protyleContainerRef"
         >
@@ -161,7 +161,7 @@ html[data-theme-mode="light"] {
   --hack-theme-color: white;
   --hack-tool-bar-bg-color: rgb(221,221,221);
 }
-.enhance-hack-ui {
+.enhanceHackUi {
 
   // --hack-theme-color: #1e1e1e;
   // --hack-theme-color: #000000;

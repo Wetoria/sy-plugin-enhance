@@ -168,7 +168,7 @@ export function jumpToProtyleBottom(docId) {
   const plugin = usePlugin()
   let docTargetDom = null
   if (plugin.isMobile) {
-    docTargetDom = document.querySelector(`.enhance-hack-ui`)
+    docTargetDom = document.querySelector(`.enhanceHackUi`)
   } else {
     docTargetDom = document.querySelector(`.protyle-title[data-node-id="${docId}"]`)
   }

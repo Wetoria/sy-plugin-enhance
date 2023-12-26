@@ -7,6 +7,9 @@ import {
 } from './logic'
 import { onMounted, watchEffect } from 'vue';
 import { queryAllByDom } from '@/utils/DOM';
+import { usePlugin } from '@/main';
+
+const plugin = usePlugin()
 
 const listenerSticky = () => {
   const map = new WeakMap()
@@ -34,7 +37,7 @@ const listenerSticky = () => {
     })
   }
   const observer = new MutationObserver(() => {
-    const protyleContentList = queryAllByDom(document.body, '.protyle-content')
+    const protyleContentList = queryAllByDom(document.body, plugin.isMobile ? '.enhanceHackUi .contentSection' : '.protyle-content')
     protyleContentList.forEach((item: HTMLElement) => {
       if (map.has(item)) {
         return
@@ -60,6 +63,7 @@ onMounted(() => {
 const settings = useSettings()
 watchEffect(() => {
   document.documentElement.dataset.enhancerEnableLifelogTag = `${settings.value.lifelogEnableBlockTag}`
+  document.documentElement.dataset.enhancerIsMobile = `${plugin.isMobile}`
 })
 </script>
 
@@ -73,16 +77,13 @@ html[data-enhancer-enable-lifelog-tag="true"] {
     box-sizing: border-box;
     z-index: 2;
   }
+
   & [data-type="NodeParagraph"] {
 
     &[custom-lifelog-type] {
-      top: -0px;
       z-index: 2;
-      background-color: var(--b3-theme-background);
-
       &.en-stickied {
         position: sticky;
-        border-bottom: 1px solid transparent;
       }
     }
 
@@ -134,6 +135,25 @@ html[data-enhancer-enable-lifelog-tag="true"] {
       border-left: 1px solid rgb(156, 123, 85);
     }
 
+  }
+
+  &[data-enhancer-is-mobile="true"] {
+    [custom-lifelog-type] {
+      background-color: var(--hack-theme-color);
+
+      &.en-stickied {
+        top: -4px;
+      }
+    }
+  }
+  &[data-enhancer-is-mobile="false"] {
+    [custom-lifelog-type] {
+      background-color: var(--b3-theme-background);
+
+      &.en-stickied {
+        top: -0px;
+      }
+    }
   }
 }
 </style>

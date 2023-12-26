@@ -34,6 +34,6 @@ export function hackSiyuanMobile() {
   }, true)
 
   const dom = document.createElement('div')
-  dom.classList.toggle('enhance-hack-ui')
+  dom.classList.toggle('enhanceHackUi', true)
   document.body.append(dom)
 }
