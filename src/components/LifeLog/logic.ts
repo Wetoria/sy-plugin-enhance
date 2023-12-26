@@ -34,9 +34,6 @@ export function markLifeLogBlock() {
       const blockAttrs = await getBlockAttrs(opt.id)
 
       const synced = lifelogAttrType in blockAttrs
-      if (synced) {
-        return
-      }
 
       const content = opt.text
 
@@ -56,13 +53,15 @@ export function markLifeLogBlock() {
       const logType = elseContent.substring(0, colonIndex)
       const logContent = elseContent.substring(colonIndex + 1, elseContent.length)
 
-      records.push({
-        time,
-        type: logType,
-        content: logContent,
-        syBlockId: opt.id,
-        isMobile: plugin.isMobile,
-      })
+      if (!synced) {
+        records.push({
+          time,
+          type: logType,
+          content: logContent,
+          syBlockId: opt.id,
+          isMobile: plugin.isMobile,
+        })
+      }
 
       setBlockAttrs(opt.id, {
         [lifelogAttrTime]: time,
