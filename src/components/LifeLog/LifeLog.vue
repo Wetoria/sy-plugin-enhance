@@ -6,9 +6,55 @@ import {
   markLifeLogBlock,
 } from './logic'
 import { onMounted, watchEffect } from 'vue';
+import { queryAllByDom } from '@/utils/DOM';
+
+const listenerSticky = () => {
+  const map = new WeakMap()
+
+  const handler = (scrollArea) => {
+    const paragraphList = queryAllByDom(document.body, '[data-type="NodeParagraph"][custom-lifelog-time]')
+
+    let flag = true
+    paragraphList.reverse()
+    paragraphList.forEach((p: HTMLElement) => {
+
+      const pRect = p.getBoundingClientRect()
+      const sRect = scrollArea.getBoundingClientRect()
+
+      if (pRect.top <= sRect.top && flag) {
+        p.classList.toggle('en-stickied', true)
+        p.style.borderBottom = getComputedStyle(p).borderLeft
+        p.style.borderRight = getComputedStyle(p).borderLeft
+        flag = false
+      } else {
+        p.classList.toggle('en-stickied', false)
+        p.style.borderBottom = ''
+        p.style.borderRight = ''
+      }
+    })
+  }
+  const observer = new MutationObserver(() => {
+    const protyleContentList = queryAllByDom(document.body, '.protyle-content')
+    protyleContentList.forEach((item: HTMLElement) => {
+      if (map.has(item)) {
+        return
+      }
+
+      item.addEventListener('scroll', () => {
+        handler(item)
+      })
+      map.set(item, true)
+    })
+  });
+  observer.observe(document.body, {
+    childList: true, // 观察目标子节点的变化，是否有添加或者删除
+    subtree: true, // 观察后代节点，默认为 false
+  })
+}
 
 onMounted(() => {
   markLifeLogBlock()
+  listenerSticky();
 })
 
 const settings = useSettings()
@@ -19,7 +65,26 @@ watchEffect(() => {
 
 <style>
 html[data-enhancer-enable-lifelog-tag="true"] {
+  .enLifeLogStickyContainer {
+    position: absolute;
+    top: 30px;
+    width: 100%;
+    height: max-content;
+    box-sizing: border-box;
+    z-index: 2;
+  }
   & [data-type="NodeParagraph"] {
+
+    &[custom-lifelog-type] {
+      top: -0px;
+      z-index: 2;
+      background-color: var(--b3-theme-background);
+
+      &.en-stickied {
+        position: sticky;
+        border-bottom: 1px solid transparent;
+      }
+    }
 
     &[custom-lifelog-type="固"] {
       border-left: 1px solid #D3D3D3;
