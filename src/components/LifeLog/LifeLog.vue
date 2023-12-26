@@ -15,7 +15,7 @@ const listenerSticky = () => {
   const map = new WeakMap()
 
   const handler = (scrollArea) => {
-    const paragraphList = queryAllByDom(document.body, '[data-type="NodeParagraph"][custom-lifelog-time]')
+    const paragraphList = queryAllByDom(scrollArea, '[data-type="NodeParagraph"][custom-lifelog-time]')
 
     let flag = true
     paragraphList.reverse()
