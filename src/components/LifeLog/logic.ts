@@ -41,12 +41,12 @@ export function markLifeLogBlock() {
       const content = opt.text
 
       // const isLifeLogParagraph = /^\d{2}:\d{2}\s+/.test(content)
-      const isLifeLogParagraph = /^\d{2}:\d{2}\s+.*?🅻$/.test(content)
+      const isLifeLogParagraph = /^\d{2}:\d{2}\s+.*?🫧$/.test(content)
       if (!isLifeLogParagraph) {
         return
       }
       const time = (content.match(/^\d{2}:\d{2}/) || [])[0]
-      const elseContent = content.replace(/^\d{2}:\d{2}\s+/, '').replace('🅻', '')
+      const elseContent = content.replace(/^\d{2}:\d{2}\s+/, '').replace('🫧', '')
 
       if (!elseContent) {
         return
