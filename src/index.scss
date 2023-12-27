@@ -53,7 +53,13 @@ html[data-enhancer="true"] {
 
     & > [data-type="NodeList"] {
       // background-color: rgba(0, 47, 255, 0.1);
-      background-color: rgba(65, 65, 65, 0.1);
+      // background-color: rgba(65, 65, 65, 0.1);
+      // background-color: rgba(255, 255, 255, 0.1);
+      // 👇 这个还可以
+      // background-color: rgba(77, 77, 77, 0.1);
+      // background-color: rgba(93, 93, 93, 0.1);
+      // 就👇这个配色了，哪种模式下都舒服
+      background-color: rgba(109, 109, 109, 0.1);
 
 
       & > [data-type="NodeListItem"] {
