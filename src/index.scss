@@ -52,8 +52,15 @@ html[data-enhancer="true"] {
   .protyle-wysiwyg {
 
     & > [data-type="NodeList"] {
-      & > [data-type="NodeListItem"]::before {
-        border-left-color: var(--sky-blue);
+      // background-color: rgba(0, 47, 255, 0.1);
+      background-color: rgba(65, 65, 65, 0.1);
+
+
+      & > [data-type="NodeListItem"] {
+
+        & > ::before {
+          border-left-color: var(--sky-blue);
+        }
       }
     }
   }
