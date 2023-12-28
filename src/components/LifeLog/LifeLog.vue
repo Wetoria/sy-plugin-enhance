@@ -37,7 +37,7 @@ const listenerSticky = () => {
     })
   }
   const observer = new MutationObserver(() => {
-    const protyleContentList = queryAllByDom(document.body, plugin.isMobile ? '.enhanceHackUi .contentSection' : '.protyle-content')
+    const protyleContentList = queryAllByDom(document.body, '.protyle-content')
     protyleContentList.forEach((item: HTMLElement) => {
       if (map.has(item)) {
         return
@@ -139,18 +139,16 @@ html[data-enhancer-enable-lifelog-tag="true"] {
 
   &[data-enhancer-is-mobile="true"] {
     [custom-lifelog-type] {
-      background-color: var(--hack-theme-color);
-
       &.en-stickied {
+        background-color: var(--hack-theme-color);
         top: -4px;
       }
     }
   }
   &[data-enhancer-is-mobile="false"] {
     [custom-lifelog-type] {
-      background-color: var(--b3-theme-background);
-
       &.en-stickied {
+        background-color: var(--b3-theme-background);
         top: -0px;
       }
     }
