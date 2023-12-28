@@ -13,8 +13,12 @@
     <TopBarEntry />
     <FixedTools v-if="showFloatingBall" />
     <LifeLog />
-    <FixedDocArea v-if="!plugin.isMobile" />
+    <!-- <FixedDocArea v-if="!plugin.isMobile" /> -->
     <HackEditor />
+    <Teleport to="html">
+      <div class="enBackground">
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -130,5 +134,22 @@ onMounted(() => {
   .hidderArea {
     display: none;
   }
+}
+.enBackground {
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-size: cover;
+  background-position: center center;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  z-index: -10000;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  background-image: url('./bg.png');
+}
+body {
+  opacity: 0.815;
 }
 </style>
