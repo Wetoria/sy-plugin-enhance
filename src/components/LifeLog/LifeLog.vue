@@ -140,7 +140,7 @@ html[data-enhancer-enable-lifelog-tag="true"] {
   &[data-enhancer-is-mobile="true"] {
     [custom-lifelog-type] {
       &.en-stickied {
-        background-color: var(--hack-theme-color);
+        background-color: var(--b3-theme-background);
         top: -4px;
       }
     }
