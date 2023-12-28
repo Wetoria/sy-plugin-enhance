@@ -167,27 +167,17 @@ export function jumpToProtyleBottom(docId) {
   }
 
   const plugin = usePlugin()
-  let docTargetDom = null
-  if (plugin.isMobile) {
-    docTargetDom = document.querySelector(`.enhanceHackUi`)
-  } else {
-    docTargetDom = document.querySelector(`.protyle-title[data-node-id="${docId}"]`)
-  }
+  let docTargetDom = document.querySelector(`.enhanceToBottomIndicator[data-node-id="${docId}"]`)
+
   if (!docTargetDom) {
     return
   }
 
-  const protyleContent = docTargetDom.parentNode
-  const indicator: HTMLElement = protyleContent.querySelector('.ProtyleBottomContainer .enhanceToBottomIndicator')
-  if (!indicator) {
-    return
-  }
+  docTargetDom.scrollIntoView(false)
 
-  indicator.scrollIntoView(false)
-
-  const enhanceProtyleBottomContainer = docTargetDom.querySelector('.enhanceProtyleBottomContainer')
+  const enhanceProtyleBottomContainer = docTargetDom.parentElement
   if (enhanceProtyleBottomContainer) {
     console.log('enhanceProtyleBottomContainer.parentElement is ', enhanceProtyleBottomContainer.parentElement)
-    enhanceProtyleBottomContainer.parentElement.scrollTop += 30
+    enhanceProtyleBottomContainer.parentElement.scrollTop += 80
   }
 }
