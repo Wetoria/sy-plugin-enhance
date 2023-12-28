@@ -252,7 +252,7 @@
       </template>
     </SettingItem>
 
-    <SettingItem mode="complex">
+    <!-- <SettingItem mode="complex">
       <div>
         导航栏文档切换模式
       </div>
@@ -276,7 +276,7 @@
             ]"
           ></SySelect>
         </template>
-      </SettingItem>
+      </SettingItem> -->
     </div>
   </div>
   <div

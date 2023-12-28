@@ -60,6 +60,8 @@ const {
 } = useDocHistory()
 
 const navListRef = ref(null)
+let clickNum = ref(0)
+let timeoutFlag = ref(null)
 const navList = ref<Array<{
   icon: string;
   label: string;
@@ -71,26 +73,38 @@ const navList = ref<Array<{
     label: '前一篇',
     disabled: isJumpDoc.value ? isOldest.value : false,
     onClick: () => {
-      const mobileSwitchDocMode = settings.value.mobileSwitchDocMode;
-      if (mobileSwitchDocMode == 'doc') {
-        goBack()
-      } else if (mobileSwitchDocMode == 'dailyNote') {
-        jumpToPrevDailyNote()
+      if (timeoutFlag.value) {
+        clearTimeout(timeoutFlag.value)
       }
-    }
+      clickNum.value += 1
+      timeoutFlag.value = setTimeout(() => {
+        if (clickNum.value == 1) {
+          goBack()
+        } else {
+          jumpToPrevDailyNote()
+        }
+        clickNum.value = 0
+      }, 500)
+    },
   },
   {
     icon: 'iconForward',
     label: '后一篇',
     disabled: isJumpDoc.value ? isNewset.value : false,
     onClick: () => {
-      const mobileSwitchDocMode = settings.value.mobileSwitchDocMode;
-      if (mobileSwitchDocMode == 'doc') {
-        goForward()
-      } else if (mobileSwitchDocMode == 'dailyNote') {
-        jumpToNextDailyNote()
+      if (timeoutFlag.value) {
+        clearTimeout(timeoutFlag.value)
       }
-    }
+      clickNum.value += 1
+      timeoutFlag.value = setTimeout(() => {
+        if (clickNum.value == 1) {
+          goForward()
+        } else {
+          jumpToNextDailyNote()
+        }
+        clickNum.value = 0
+      }, 500)
+    },
   },
   {
     icon: 'iconAdd',
