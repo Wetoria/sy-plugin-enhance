@@ -1,11 +1,9 @@
 <template>
   <div class="SyEnhancerApp">
+    <TopBarEntry />
     <HackUI />
-
     <FixedTools v-if="showFloatingBall" />
-
     <LifeLog />
-
     <FixedDocArea v-if="!plugin.isMobile" />
   </div>
 </template>
@@ -18,7 +16,11 @@ import { usePlugin } from './main';
 import LifeLog from './components/LifeLog/LifeLog.vue';
 import FixedDocArea from './components/FixedDocArea.vue';
 import HackUI from './components/HackSiyuan/HackUI.vue';
+import { registerShortcutKey } from './logic/ShortcutKey.ts';
+import TopBarEntry from './components/TopBarEntry.vue';
 const settings = useSettings()
+
+registerShortcutKey();
 
 watch(() => settings.value.useVipStyle, () => {
   document.documentElement.dataset.enhancer = `${settings.value.useVipStyle}`
@@ -60,7 +62,6 @@ onMounted(() => {
 
   insertBlockTime();
 })
-
 </script>
 
 <style lang="scss">
@@ -73,6 +74,6 @@ onMounted(() => {
   border: 2px solid red;
   top: 0;
   left: 0;
-  z-index: 2;
+  z-index: 100;
 }
 </style>

@@ -1,7 +1,3 @@
-import {
-  jumpToNextDailyNote,
-  jumpToPrevDailyNote,
-} from "./utils/DailyNoteHelper";
 import VPlugin from '.';
 
 import { clearAllVueComponents, getDomByVueComponent, loadComponentAppendToBody, openSetting } from './utils';
@@ -9,8 +5,6 @@ import { registerProtyleBottomArea } from './utils/DOM';
 
 import MobileNavVue from './components/MobileNav.vue';
 import AppVue from './App.vue';
-import { useEnhancer } from './logic/GlobalStatus';
-import { hackSiyuanMobile } from './utils/hacker';
 
 
 let plugin: VPlugin = null
@@ -50,63 +44,14 @@ function loadMobileNav() {
   }
 }
 
-
-const addCommand = () => {
-  const plugin = usePlugin()
-  plugin.addCommand({
-    langKey: "goPrevDailyNote",
-    hotkey: "⌥⌘↑",
-    callback: () => {
-      jumpToPrevDailyNote();
-    },
-  });
-  plugin.addCommand({
-    langKey: "goNextDailyNote",
-    hotkey: "⌥⌘↓",
-    callback: () => {
-      jumpToNextDailyNote();
-    },
-  });
-}
-
-const addTopBar = () => {
-  const plugin = usePlugin()
-  plugin.addTopBar({
-    icon: "iconSuper",
-    title: plugin.i18n.pluginName,
-    position: "right",
-    callback: () => {
-      openSetting()
-    },
-  });
-}
-
 const loadVueApp = () => {
   loadComponentAppendToBody(AppVue)
 }
 
-let bodyCopy = null
 export function init(plugin: VPlugin) {
   usePlugin(plugin);
-
-  hackSiyuanMobile()
-
   loadVueApp()
-  addCommand();
-  // loadMobileNav();
   registerProtyleBottomArea()
-  addTopBar()
-
-  const state = useEnhancer()
-  plugin.eventBus.on('sync-start', () => {
-    state.value.isSync = true
-  })
-  plugin.eventBus.on('sync-end', () => {
-    state.value.isSync = false
-  })
-  plugin.eventBus.on('sync-fail', () => {
-    state.value.isSync = false
-  })
 }
 
 export function destroy() {
