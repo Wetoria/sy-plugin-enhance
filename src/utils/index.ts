@@ -22,6 +22,7 @@ export function clearAllVueComponents() {
 
 export function loadComponentAppendToBody(component) {
   const div = document.createElement('div');
+  div.id = 'enApp'
   const app = createApp(component);
   document.body.appendChild(div);
   app.use(ArcoVue);

@@ -1,6 +1,6 @@
 import VPlugin from '.';
 
-import { clearAllVueComponents, getDomByVueComponent, loadComponentAppendToBody, openSetting } from './utils';
+import { clearAllVueComponents, getDomByVueComponent, loadComponentAppendToBody } from './utils';
 import { registerProtyleBottomArea } from './utils/DOM';
 
 import MobileNavVue from './components/MobileNav.vue';

@@ -3,9 +3,40 @@
 </template>
 
 <script setup lang="ts">
-import { insertBlockTime } from '@/logic';
 import { useSettings } from '@/logic/Settings';
+import { debounce } from '@/utils';
+import { queryAllByDom } from '@/utils/DOM';
+import { SyDomNodeTypes } from '@/utils/Siyuan';
+import dayjs from 'dayjs';
 import { onMounted, watchEffect } from 'vue';
+
+function insertBlockTime() {
+  const handler = () => {
+    const paragraphList = queryAllByDom(document.body, `[data-type="${SyDomNodeTypes.NodeParagraph}"]`)
+    paragraphList.forEach((dom: HTMLDivElement) => {
+      const updateTimeStr = dom.getAttribute('updated')
+      if (!updateTimeStr) {
+        return
+      }
+      if (updateTimeStr == dom.dataset.enUpdatedBackup) {
+        return
+      }
+      const updated = dayjs(updateTimeStr)
+
+      dom.dataset.enUpdatedBackup = updateTimeStr
+      dom.dataset.enUpdated = updated.format('YYYY/MM/DD HH:mm:ss')
+      dom.dataset.enUpdatedFormat = '    /  /     :  :  '
+    })
+  }
+
+  handler()
+  const observer = new MutationObserver(debounce(handler, 100));
+  observer.observe(document.documentElement, {
+    childList: true, // 观察目标子节点的变化，是否有添加或者删除
+    subtree: true, // 观察后代节点，默认为 false
+    attributes: true,
+  })
+}
 
 const settings = useSettings()
 watchEffect(() => {

@@ -14,6 +14,10 @@ export function queryAllByDom(dom: HTMLElement, selector: string) {
   return [...dom.querySelectorAll(selector)]
 }
 
+export function querySelectorByBody(str) {
+  return document.body.querySelector(str)
+}
+
 export function hideGutterOnTarget(target) {
   if (!target) return
   target.querySelectorAll(".protyle-gutters").forEach(item => {

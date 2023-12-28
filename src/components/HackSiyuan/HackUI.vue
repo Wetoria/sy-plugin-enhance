@@ -1,35 +1,37 @@
 <template>
-  <Teleport
-    to=".enhanceHackUi"
-  >
-    <div class="main">
-      <div ref="statusAreaRef"></div>
-      <div
-        class="stickyTitleLine"
-        ref="titleContainerRef"
-      ></div>
-      <div
-        class="contentSection"
-        @scroll="onScroll"
-      >
+  <div>
+    <Teleport
+      to=".enhanceHackUi"
+    >
+      <div class="main">
+        <div ref="statusAreaRef"></div>
         <div
-          ref="protyleContainerRef"
+          class="stickyTitleLine"
+          ref="titleContainerRef"
+        ></div>
+        <div
+          class="contentSection"
+          @scroll="onScroll"
         >
+          <div
+            ref="protyleContainerRef"
+          >
+          </div>
         </div>
       </div>
-      <div
-        class="toolbar"
-        :style="{
-          // visibility: showToolBar ? 'visible' : 'hidden'
-          opacity: showToolBar ? 1 : 0,
-          pointerEvents: showToolBar ? undefined : 'none',
-          transition: keyboardShown ? 'all 0.1s linear' : 'all 0.3s linear',
-        }"
-      >
-        <HackMobileNav />
-      </div>
-    </div>
-  </Teleport>
+    </Teleport>
+  </div>
+  <div
+    class="enToolbar"
+    :style="{
+      // visibility: showToolBar ? 'visible' : 'hidden'
+      // opacity: showToolBar ? 1 : 0,
+      pointerEvents: showToolBar ? undefined : 'none',
+      transition: keyboardShown ? 'all 0.1s linear' : 'all 0.3s linear',
+    }"
+  >
+    <HackMobileNav />
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -44,10 +46,36 @@ const statusAreaRef = ref(null)
 
 const titleContainerRef = ref(null)
 
+const touchmoveDisableFunc = (event) => {
+    event.stopPropagation()
+  }
+
+function disableSiyuanTouchMove() {
+  document.documentElement.addEventListener('touchmove', touchmoveDisableFunc, true)
+}
+function enableSiyuanTouchMove() {
+  document.documentElement.removeEventListener('touchmove', touchmoveDisableFunc)
+}
+
+function hackSiyuanMobile() {
+  const plugin = usePlugin()
+
+  if (!plugin.isMobile) {
+    return
+  }
+
+  disableSiyuanTouchMove()
+  const dom = document.createElement('div')
+  // dom.classList.toggle('enhanceHackUi', true)
+  document.body.append(dom)
+}
+
 const hintDomRef = ref<HTMLElement>(null)
 const hintDomTop = ref(0)
 const hintDomTopCss = computed(() => `${hintDomTop.value}px !important`)
 onMounted(() => {
+  hackSiyuanMobile()
+  return
   const editorDom = document.body.querySelector('#editor') as HTMLElement
   if (editorDom) {
     // protyleContainerRef.value.appendChild(editorDom)
@@ -156,9 +184,11 @@ plugin.eventBus.on('mobile-keyboard-hide', () => {
 html[data-theme-mode="dark"] {
   --hack-theme-color: black;
   --hack-tool-bar-bg-color: #1A1A1A;
+  --b3-theme-background: black;
 }
 html[data-theme-mode="light"] {
   --hack-theme-color: white;
+  --b3-theme-background: white;
   --hack-tool-bar-bg-color: rgb(221,221,221);
 }
 .enhanceHackUi {
@@ -244,19 +274,21 @@ html[data-theme-mode="light"] {
       }
     }
 
-    .toolbar {
-      position: absolute;
-      width: 80%;
-      bottom: 50px;
-      left: calc(10%);
-      border-radius: 30px;
-      // background-color: #1A1A1A;
-      background-color: var(--hack-tool-bar-bg-color);
-      z-index: 1;
-    }
     .MobileNavContainer {
     }
   }
+}
+.enToolbar {
+  position: absolute;
+  pointer-events: auto;
+  width: 80%;
+  bottom: 50px;
+  height: max-content;
+  left: calc(10%);
+  border-radius: 30px;
+  // background-color: #1A1A1A;
+  background-color: var(--hack-tool-bar-bg-color);
+  z-index: 1;
 }
 .EnhanceSettingsContainer {
   max-height: 70vh !important;
