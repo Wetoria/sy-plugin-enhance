@@ -17,6 +17,12 @@
     <HackEditor />
     <Teleport to="html">
       <div class="enBackground">
+        <div
+          v-if="EnhancerState.isStandalone"
+          class="enPWAPadding"
+        >
+
+        </div>
       </div>
     </Teleport>
   </div>
@@ -35,6 +41,7 @@ import TopBarEntry from './components/TopBarEntry.vue';
 import { syncLocalStorage, useSettings } from './logic/Settings.ts';
 import HackEditor from './components/HackEditor.vue';
 import { listenerViewport, useViewportInfo } from './logic/Viewport';
+import { useEnhancer } from './logic/GlobalStatus';
 const settings = useSettings()
 
 registerShortcutKey();
@@ -45,6 +52,8 @@ watch(() => settings.value.useVipStyle, () => {
 
 
 const plugin = usePlugin()
+
+const EnhancerState = useEnhancer()
 
 const isMobile = computed(() => plugin.isMobile)
 const SyEnhancerAppRef = ref<HTMLDivElement>(null)
@@ -92,6 +101,19 @@ onMounted(() => {
   addEventListener("storage", syncLocalStorage);
   // listenerViewport()
   autoSync()
+
+  const metaDom = document.createElement('meta')
+  metaDom.name = "apple-mobile-web-app-status-bar-style"
+  metaDom.content = "black-translucent"
+
+  const headDom = document.documentElement.querySelector('head')
+  headDom.appendChild(metaDom)
+
+  const isStandalone = window.navigator.standalone
+  EnhancerState.value.isStandalone = isStandalone
+  if (isStandalone) {
+    document.documentElement.dataset.enIsStandalone = isStandalone
+  }
 })
 </script>
 
@@ -135,13 +157,32 @@ onMounted(() => {
     display: none;
   }
 }
+
+html[data-en-is-standalone="true"] {
+  height: 100vh;
+  --en-status-height: 56px;
+  body {
+    padding-top: var(--en-status-height);
+    box-sizing: border-box;
+
+    #menu {
+      padding-top: var(--en-status-height);
+    }
+  }
+  .enPWAPadding {
+    width: 100%;
+    height: var(--en-status-height);
+    background-color: var(--b3-theme-background);
+    opacity: 0.815;
+  }
+}
 .enBackground {
   background-repeat: no-repeat;
   background-attachment: fixed;
   background-size: cover;
   background-position: center center;
   width: 100%;
-  height: 100%;
+  height: 100vh;
   position: absolute;
   z-index: -10000;
   top: 0;

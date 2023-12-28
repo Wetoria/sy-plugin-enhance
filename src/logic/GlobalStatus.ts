@@ -3,6 +3,7 @@ import { ref } from 'vue';
 
 interface EnhancerState {
   isSync: boolean;
+  isStandalone: boolean;
 }
 
 let EnhancerState = ref<EnhancerState>({} as EnhancerState)
