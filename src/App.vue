@@ -12,7 +12,7 @@
 <script setup>
 import { computed, onMounted, watch } from 'vue';
 import FixedTools from './components/FixedTools.vue';
-import { autoSync, insertBlockTime } from './logic';
+import { autoSync } from './logic';
 import { usePlugin } from './main';
 import LifeLog from './components/LifeLog/LifeLog.vue';
 import FixedDocArea from './components/FixedDocArea.vue';
@@ -52,8 +52,6 @@ onMounted(() => {
   addEventListener("storage", syncLocalStorage);
 
   autoSync()
-
-  insertBlockTime();
 })
 </script>
 

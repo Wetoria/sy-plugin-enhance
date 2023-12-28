@@ -3,8 +3,9 @@
 </template>
 
 <script setup lang="ts">
+import { insertBlockTime } from '@/logic';
 import { useSettings } from '@/logic/Settings';
-import { watchEffect } from 'vue';
+import { onMounted, watchEffect } from 'vue';
 
 const settings = useSettings()
 watchEffect(() => {
@@ -13,6 +14,10 @@ watchEffect(() => {
   if (isEnableBlockTime) {
     document.documentElement.style.setProperty('--timeFontSize', `${settings.value.blockTimeFontSize}px`)
   }
+})
+
+onMounted(() => {
+  insertBlockTime();
 })
 </script>
 
