@@ -21,7 +21,7 @@ export function clearAllVueComponents() {
   mountedVueMap = new WeakMap()
 }
 
-export function loadComponent(component) {
+export function loadComponentAppendToBody(component) {
   const div = document.createElement('div');
   const app = createApp(component);
   document.body.appendChild(div);

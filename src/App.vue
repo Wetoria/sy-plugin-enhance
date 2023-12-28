@@ -64,5 +64,15 @@ onMounted(() => {
 </script>
 
 <style lang="scss">
-
+.SyEnhancerApp {
+  position: fixed;
+  width: 100vw;
+  height: 100dvh;
+  box-sizing: border-box;
+  pointer-events: none;
+  border: 2px solid red;
+  top: 0;
+  left: 0;
+  z-index: 2;
+}
 </style>

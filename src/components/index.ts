@@ -1,4 +1,4 @@
-import { loadComponent } from '@/utils';
+import { loadComponentAppendToBody } from '@/utils';
 
 import FixedTools from './FixedTools.vue';
 
@@ -8,6 +8,6 @@ export function registerAllComponents() {
   ];
 
   components.forEach((item) => {
-    loadComponent(item);
+    loadComponentAppendToBody(item);
   })
 }

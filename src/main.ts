@@ -4,7 +4,7 @@ import {
 } from "./utils/DailyNoteHelper";
 import VPlugin from '.';
 
-import { clearAllVueComponents, getDomByVueComponent, loadComponent, openSetting } from './utils';
+import { clearAllVueComponents, getDomByVueComponent, loadComponentAppendToBody, openSetting } from './utils';
 import { registerProtyleBottomArea } from './utils/DOM';
 
 import MobileNavVue from './components/MobileNav.vue';
@@ -82,7 +82,7 @@ const addTopBar = () => {
 }
 
 const loadVueApp = () => {
-  loadComponent(AppVue)
+  loadComponentAppendToBody(AppVue)
 }
 
 let bodyCopy = null
