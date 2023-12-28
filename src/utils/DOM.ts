@@ -35,6 +35,9 @@ export function registerProtyleBottomArea() {
     } else {
       element = detail.protyle.contentElement;
     }
+    if (!element) {
+      return
+    }
     if (registeredMap.has(element)) {
       const detailRef = registeredMap.get(element)
       detailRef.value = detail

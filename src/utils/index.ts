@@ -1,4 +1,4 @@
-import SettingsVue from '@/components/Settings/index.vue';
+import SettingsVue from '@/components/Settings/SettingDialogContent.vue';
 import { usePlugin } from '@/main';
 import { Dialog } from 'siyuan';
 import { App, createApp, onMounted, ref } from 'vue';

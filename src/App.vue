@@ -1,7 +1,7 @@
 <template>
   <div class="SyEnhancerApp">
     <TopBarEntry />
-    <HackUI />
+    <!-- <HackUI /> -->
     <FixedTools v-if="showFloatingBall" />
     <LifeLog />
     <FixedDocArea v-if="!plugin.isMobile" />
@@ -27,16 +27,6 @@ registerShortcutKey();
 
 watch(() => settings.value.useVipStyle, () => {
   document.documentElement.dataset.enhancer = `${settings.value.useVipStyle}`
-})
-
-watch(() => settings.value.enableBlockTime, () => {
-  document.documentElement.dataset.enhancerEnableBlockTime = `${settings.value.enableBlockTime}`
-})
-watch(() => settings.value.blockTimeFontSize, () => {
-  const isEnableBlockTime = settings.value.enableBlockTime
-  if (isEnableBlockTime) {
-    document.documentElement.style.setProperty('--timeFontSize', `${settings.value.blockTimeFontSize}px`)
-  }
 })
 
 
