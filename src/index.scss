@@ -1,7 +1,10 @@
+@import './styles/PWA.scss';
+
 :root {
   --sky-blue: #00bfff;
   // --b3-theme-background: #000;
 }
+
 html[data-enhancer="true"] {
   .protyle-wysiwyg [data-node-id] span[data-type~=block-ref] {
     color: var(--sky-blue);

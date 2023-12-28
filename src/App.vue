@@ -16,13 +16,16 @@
     <!-- <FixedDocArea v-if="!plugin.isMobile" /> -->
     <HackEditor />
     <Teleport to="html">
-      <div class="enBackground">
+      <div class="enBackground" id="enhancerContainer">
         <div
-          v-if="EnhancerState.isStandalone"
-          class="enPWAPadding"
-        >
-
-        </div>
+          class="enPWAPadding1"
+        ></div>
+        <div
+          class="enPWAMain"
+        ></div>
+        <div
+          class="enPWAPadding2"
+        ></div>
       </div>
     </Teleport>
   </div>
@@ -114,6 +117,11 @@ onMounted(() => {
   if (isStandalone) {
     document.documentElement.dataset.enIsStandalone = isStandalone
   }
+  document.documentElement.dataset.enOrientation = window.screen.orientation.type
+  window.screen.orientation.addEventListener('change', (event) => {
+    document.documentElement.dataset.enOrientation = (event.target as ScreenOrientation).type
+  })
+  // window.enhancerContainer.appendChild(document.body)
 })
 </script>
 
@@ -158,24 +166,6 @@ onMounted(() => {
   }
 }
 
-html[data-en-is-standalone="true"] {
-  height: 100vh;
-  --en-status-height: 56px;
-  body {
-    padding-top: var(--en-status-height);
-    box-sizing: border-box;
-
-    #menu {
-      padding-top: var(--en-status-height);
-    }
-  }
-  .enPWAPadding {
-    width: 100%;
-    height: var(--en-status-height);
-    background-color: var(--b3-theme-background);
-    opacity: 0.815;
-  }
-}
 .enBackground {
   background-repeat: no-repeat;
   background-attachment: fixed;
@@ -189,6 +179,7 @@ html[data-en-is-standalone="true"] {
   left: 0;
   pointer-events: none;
   background-image: url('./bg.png');
+  display: flex;
 }
 body {
   opacity: 0.815;
