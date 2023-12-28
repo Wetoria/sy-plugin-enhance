@@ -21,6 +21,11 @@ function insertBlockTime() {
       if (updateTimeStr == dom.dataset.enUpdatedBackup) {
         return
       }
+      const text = dom?.firstChild?.textContent
+      if (!text.trim()) {
+        return
+      }
+
       const updated = dayjs(updateTimeStr)
 
       dom.dataset.enUpdatedBackup = updateTimeStr
