@@ -60,17 +60,33 @@ const showFloatingBall = computed(() => {
 })
 
 const ViewportInfo = useViewportInfo()
+const position = ref({
+  top: 0,
+  height: undefined,
+})
 watchEffect(() => {
-  console.log('test')
-  SyEnhancerAppRef.value.style.top = ViewportInfo.value.top + 'px'
+  if (!SyEnhancerAppRef.value) {
+    return
+  }
+  const {
+    top,
+    height,
+  } = ViewportInfo.value
+  if (position.value.top !== top) {
+    SyEnhancerAppRef.value.style.top = ViewportInfo.value.top + 'px'
+    position.value.top = top
+  }
   if (ViewportInfo.value.height) {
-    SyEnhancerAppRef.value.style.height = ViewportInfo.value.height + 'px'
+    if (position.value.height !== height) {
+      SyEnhancerAppRef.value.style.height = ViewportInfo.value.height + 'px'
+      position.value.height = height
+    }
   }
 })
 
 onMounted(() => {
   addEventListener("storage", syncLocalStorage);
-  listenerViewport()
+  // listenerViewport()
   autoSync()
 })
 </script>
@@ -79,6 +95,7 @@ onMounted(() => {
 #enApp {
   width: 100vw;
   height: 100dvh;
+  max-height: 100vh;
   position: absolute;
   top: 0px;
   left: 0px;
@@ -88,9 +105,9 @@ onMounted(() => {
 .SyEnhancerApp {
   width: 100%;
   height: 100%;
+  max-height: 100vh;
   box-sizing: border-box;
   pointer-events: none;
-  border: 2px solid red;
 
   position: absolute;
   top: 0;

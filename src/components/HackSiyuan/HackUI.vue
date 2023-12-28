@@ -1,31 +1,10 @@
 <template>
-  <div>
-    <Teleport
-      to=".enhanceHackUi"
-    >
-      <div class="main">
-        <div ref="statusAreaRef"></div>
-        <div
-          class="stickyTitleLine"
-          ref="titleContainerRef"
-        ></div>
-        <div
-          class="contentSection"
-          @scroll="onScroll"
-        >
-          <div
-            ref="protyleContainerRef"
-          >
-          </div>
-        </div>
-      </div>
-    </Teleport>
-  </div>
   <div
+    v-if="plugin.isMobile"
     class="enToolbar"
     :style="{
       // visibility: showToolBar ? 'visible' : 'hidden'
-      // opacity: showToolBar ? 1 : 0,
+      opacity: showToolBar ? 1 : 0,
       pointerEvents: showToolBar ? undefined : 'none',
       transition: keyboardShown ? 'all 0.1s linear' : 'all 0.3s linear',
     }"
@@ -35,16 +14,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import HackMobileNav from './HackMobileNav.vue';
 import { debounce } from '@/utils';
 import { usePlugin } from '@/main';
-
-const protyleContainerRef = ref(null)
-
-const statusAreaRef = ref(null)
-
-const titleContainerRef = ref(null)
+import { querySelectorByBody } from '@/utils/DOM';
+import { hideDom } from '@/utils/Siyuan';
 
 const touchmoveDisableFunc = (event) => {
     event.stopPropagation()
@@ -58,75 +33,34 @@ function enableSiyuanTouchMove() {
 }
 
 function hackSiyuanMobile() {
-  const plugin = usePlugin()
+  disableSiyuanTouchMove()
 
+  const statusDom = querySelectorByBody('#status')
+  if (statusDom) {
+    hideDom(statusDom)
+  }
+}
+
+onMounted(() => {
   if (!plugin.isMobile) {
     return
   }
-
-  disableSiyuanTouchMove()
-  const dom = document.createElement('div')
-  // dom.classList.toggle('enhanceHackUi', true)
-  document.body.append(dom)
-}
-
-const hintDomRef = ref<HTMLElement>(null)
-const hintDomTop = ref(0)
-const hintDomTopCss = computed(() => `${hintDomTop.value}px !important`)
-onMounted(() => {
   hackSiyuanMobile()
-  return
   const editorDom = document.body.querySelector('#editor') as HTMLElement
   if (editorDom) {
-    // protyleContainerRef.value.appendChild(editorDom)
-    // return
-    const editor = document.querySelector('#editor')
-    let registeredW = false;
-    let regHint = false
-    let toolbarAppended = false
     const handler = () => {
-      const toolbarNameDom = document.querySelector('#toolbarName')
-      if (toolbarNameDom && !toolbarAppended) {
-        titleContainerRef.value.appendChild(toolbarNameDom)
-        toolbarAppended = true
+      const contentDom = editorDom.querySelector('.protyle-content')
+      if (contentDom) {
+        contentDom.addEventListener('scroll', onScroll)
       }
-      const wysiwyg = editorDom.querySelector('.protyle-wysiwyg') as HTMLElement
-      if (wysiwyg && !registeredW) {
-        // wysiwyg.style.padding = '16px 0px 200px 0px'
-        wysiwyg.style.paddingTop = '16px'
-        wysiwyg.style.paddingLeft = '0px'
-        wysiwyg.style.paddingRight = '0px'
-
-
-        protyleContainerRef.value.appendChild(wysiwyg)
-        registeredW = true
-      }
-      const hintDom = editorDom.querySelector('.protyle-hint') as HTMLElement
-      if (hintDom && !regHint) {
-
-        hintDomRef.value = hintDom
-        protyleContainerRef.value.appendChild(hintDom)
-        regHint = true
-      }
-
     }
     const run = debounce(handler, 500)
     handler()
     const observer = new MutationObserver(() => {
       run()
-      // const selection = window.getSelection()
-      // if (selection.anchorNode?.parentElement) {
-      //   const rect = selection.anchorNode?.parentElement.getBoundingClientRect()
-      //   let pos = rect.top
-      //   console.log('pos is ', pos)
-      //   const diff = document.body.clientHeight - window.visualViewport.height
-      //   pos = pos + (diff / 2)
-      //   hintDomRef.value.style.bottom = `${document.body.clientHeight - pos + 0}px`;
-      //   hintDomTop.value = pos
-      // }
     });
-    if (editor) {
-      observer.observe(editor, {
+    if (editorDom) {
+      observer.observe(editorDom, {
         childList: true, // 观察目标子节点的变化，是否有添加或者删除
         subtree: true, // 观察后代节点，默认为 false
         attributes: true,
@@ -134,17 +68,6 @@ onMounted(() => {
     }
 
   }
-
-  if (!statusAreaRef.value) {
-    return
-  }
-
-  const statusDom = document.body.querySelector('#status') as HTMLElement
-  if (statusDom) {
-    statusDom.style.position = 'static'
-    statusAreaRef.value.appendChild(statusDom)
-  }
-
 })
 
 const lastScrollTop = ref(0);
