@@ -2,8 +2,7 @@ import SettingsVue from '@/components/Settings/index.vue';
 import { usePlugin } from '@/main';
 import { Dialog } from 'siyuan';
 import { App, createApp, onMounted, ref } from 'vue';
-// import ArcoVue from '@arco-design/web-vue';
-// import '@arco-design/web-vue/dist/arco.css';
+import ArcoVue from '@arco-design/web-vue';
 
 let mountedVueDoms = []
 
@@ -25,6 +24,7 @@ export function loadComponentAppendToBody(component) {
   const div = document.createElement('div');
   const app = createApp(component);
   document.body.appendChild(div);
+  app.use(ArcoVue);
   app.mount(div);
   saveDom(div, app)
   return div
