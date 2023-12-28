@@ -3,7 +3,15 @@ import {
   getFrontend,
 } from "siyuan";
 import "./index.scss";
-import PluginInfo from '@/../plugin.json' assert { type: "json" }
+import PluginInfoString from '@/../plugin.json?raw'
+let PluginInfo = {
+  version: '',
+}
+try {
+  PluginInfo = JSON.parse(PluginInfoString)
+} catch(err) {
+  console.log('err is ', err)
+}
 const {
   version
 } = PluginInfo
