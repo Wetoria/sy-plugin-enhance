@@ -41,7 +41,7 @@ import { computed } from 'vue';
 import { createTodayDailyNote, jumpToNextDailyNote, jumpToPrevDailyNote } from '@/utils/DailyNoteHelper'
 import {openSetting, useMobileKeyBoardShown} from '@/utils'
 import { useDocHistory } from '@/utils/History'
-import { useSettings } from '@/logic';
+import { useSettings } from '@/logic/Settings';
 
 const settings = useSettings()
 const isJumpDoc = computed(() => settings.value.mobileSwitchDocMode === 'doc')

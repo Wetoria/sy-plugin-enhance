@@ -1,13 +1,13 @@
 <template></template>
 
 <script setup lang="ts">
-import { useSettings } from '@/logic';
 import {
   markLifeLogBlock,
 } from './logic'
 import { onMounted, watchEffect } from 'vue';
 import { queryAllByDom } from '@/utils/DOM';
 import { usePlugin } from '@/main';
+import { useSettings } from '@/logic/Settings';
 
 const plugin = usePlugin()
 

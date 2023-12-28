@@ -178,9 +178,9 @@ chainHasRefNode,
 import {
   recursionTree,
 } from '@/utils';
-import { useSettings } from '@/logic';
 import { openDocById } from '@/utils/Note';
 import BacklinkFilterOptionTag from './Backlink/BacklinkFilterOptionTag.vue';
+import { useSettings } from '@/logic/Settings';
 
 
 interface Node {

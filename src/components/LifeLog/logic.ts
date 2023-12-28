@@ -1,7 +1,7 @@
 
 import { EnhanceIOperation, SyDomNodeTypes, onEditorUpdate } from '../../utils/Siyuan'
 import { getBlockAttrs, request, setBlockAttrs } from '@/api'
-import { useSettings } from '@/logic'
+import { useSettings } from '@/logic/Settings'
 import { usePlugin } from '@/main'
 import { getFrontend } from 'siyuan'
 

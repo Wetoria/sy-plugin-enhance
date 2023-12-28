@@ -5,19 +5,22 @@
     <FixedTools v-if="showFloatingBall" />
     <LifeLog />
     <FixedDocArea v-if="!plugin.isMobile" />
+    <HackEditor />
   </div>
 </template>
 
 <script setup>
 import { computed, onMounted, watch } from 'vue';
 import FixedTools from './components/FixedTools.vue';
-import { autoSync, insertBlockTime, syncLocalStorage, useSettings } from './logic';
+import { autoSync, insertBlockTime } from './logic';
 import { usePlugin } from './main';
 import LifeLog from './components/LifeLog/LifeLog.vue';
 import FixedDocArea from './components/FixedDocArea.vue';
 import HackUI from './components/HackSiyuan/HackUI.vue';
 import { registerShortcutKey } from './logic/ShortcutKey.ts';
 import TopBarEntry from './components/TopBarEntry.vue';
+import { syncLocalStorage, useSettings } from './logic/Settings.ts';
+import HackEditor from './components/HackEditor.vue';
 const settings = useSettings()
 
 registerShortcutKey();

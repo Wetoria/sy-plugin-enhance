@@ -63,9 +63,9 @@ import { debounce } from '@/utils';
 import { queryAllByDom } from '@/utils/DOM';
 import { computed, ref, watchEffect } from 'vue';
 import SyIcon from './SiyuanTheme/SyIcon.vue';
-import { useSettings } from '@/logic';
 import { usePlugin } from '@/main';
 import { openDocById } from '@/utils/Note';
+import { useSettings } from '@/logic/Settings';
 
 const plugin = usePlugin()
 
