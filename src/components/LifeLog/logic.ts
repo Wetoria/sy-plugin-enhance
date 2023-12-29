@@ -76,6 +76,10 @@ export function markLifeLogBlock() {
       return
     }
 
+    if (!records.length) {
+      return
+    }
+
     const frontEnd = getFrontend();
 
     if (!plugin.isMobile || frontEnd === "mobile") {
