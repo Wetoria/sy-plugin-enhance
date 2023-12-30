@@ -144,4 +144,6 @@ interface LifeLogItem {
   content: string;
   syBlockId: string;
   isMobile: boolean;
+  created: string;
+  updated: string;
 }

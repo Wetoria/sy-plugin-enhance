@@ -4,11 +4,14 @@ import { getBlockAttrs, request, setBlockAttrs } from '@/api'
 import { useSettings } from '@/logic/Settings'
 import { usePlugin } from '@/main'
 import { getFrontend } from 'siyuan'
+import dayjs from 'dayjs'
 
 const lifelogPrefix = 'custom-lifelog-'
 const lifelogAttrTime = `${lifelogPrefix}time`
 const lifelogAttrType = `${lifelogPrefix}type`
 const lifelogAttrContent = `${lifelogPrefix}content`
+const lifelogAttrCreated = `${lifelogPrefix}created`
+const lifelogAttrUpdated = `${lifelogPrefix}updated`
 
 export function markLifeLogBlock() {
   const settings = useSettings()
@@ -53,6 +56,13 @@ export function markLifeLogBlock() {
       const logType = elseContent.substring(0, colonIndex)
       const logContent = elseContent.substring(colonIndex + 1, elseContent.length)
 
+      let createdTime = blockAttrs[lifelogAttrCreated]
+      const isFirstCreate = !(createdTime)
+      if (isFirstCreate) {
+        createdTime = dayjs().format('YYYY/MM/DD HH:mm:ss')
+      }
+      let updatedTime = dayjs().format('YYYY/MM/DD HH:mm:ss')
+
       if (!synced) {
         records.push({
           time,
@@ -60,6 +70,8 @@ export function markLifeLogBlock() {
           content: logContent,
           syBlockId: opt.id,
           isMobile: plugin.isMobile,
+          created: createdTime,
+          updated: updatedTime,
         })
       }
 
@@ -67,6 +79,8 @@ export function markLifeLogBlock() {
         [lifelogAttrTime]: time,
         [lifelogAttrType]: logType,
         [lifelogAttrContent]: logContent,
+        [lifelogAttrCreated]: createdTime,
+        [lifelogAttrUpdated]: updatedTime,
       })
     }
 
