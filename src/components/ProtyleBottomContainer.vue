@@ -17,12 +17,12 @@
             size="10"
           />
         </div>
-        <h2
+        <span
           class="backlinkTitle"
           @click="switchBacklinkAreaFoldStatus"
         >
           反链
-        </h2>
+        </span>
         <div class="opts">
           <SyIcon
             v-if="enableBacklinkFilter"
@@ -100,7 +100,7 @@
       <div
         :style="{
           height: backlinkAreaFolded ? '0px' : 'max-content',
-          overflow: 'hidden',
+          // overflow: 'hidden',
         }"
       >
         <div v-if="!docBacklinks.length">
@@ -797,7 +797,7 @@ html[data-theme-mode="light"] {
 
     .backlinkList {
       background: var(--v-backlink-area-bg-color);
-      padding: 6px 10px;
+      padding: 6px 8px;
       border-radius: var(--v-backlink-area-border-radius);
 
       .backlinkDocBlock {
@@ -834,6 +834,7 @@ html[data-theme-mode="light"] {
             z-index: 1;
             transition: all 0.1s linear;
             visibility: hidden;
+            margin-left: -18px;
           }
           &:hover .backlinkDocBlockFolder,
           .backlinkDocBlockFolder:hover {
@@ -849,9 +850,15 @@ html[data-theme-mode="light"] {
         .protyle {
           background: unset;
           min-height: unset;
+          overflow: visible !important;
+
+          :deep(.protyle-content) {
+            overflow: visible;
+          }
 
           :deep(.protyle-wysiwyg) {
-            padding: 0px 36px;
+            padding: 0px 0px;
+            overflow: visible;
 
             .protyle-breadcrumb__bar {
               min-height: unset;
@@ -875,6 +882,9 @@ html[data-theme-mode="light"] {
               border-top: 1px solid var(--v-border-color);
             }
 
+            .protyle-breadcrumb__text {
+              max-width: 100px;
+            }
           }
         }
 

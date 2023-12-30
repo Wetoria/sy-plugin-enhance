@@ -54,8 +54,10 @@ export function registerProtyleBottomArea() {
     const wysiwyg: HTMLDivElement = element.querySelector('.protyle-wysiwyg')
     if (wysiwyg) {
       const bindPadding = () => {
-        div.style.paddingLeft = wysiwyg.style.paddingLeft
-        div.style.paddingRight = wysiwyg.style.paddingRight
+        const leftPadding = Number(wysiwyg.style.paddingLeft.replace('px', ''))
+        const rightPadding = Number(wysiwyg.style.paddingRight.replace('px', ''))
+        div.style.paddingLeft = (leftPadding - 8) + 'px'
+        div.style.paddingRight = (rightPadding - 8) + 'px'
         // IMP 改成可以配置的
         wysiwyg.style.paddingBottom = '68px'
       }
