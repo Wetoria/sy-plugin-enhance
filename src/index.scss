@@ -5,9 +5,50 @@
   // --b3-theme-background: #000;
 }
 
+
+// #region 修改奥德赛配色
+
+:root {
+  --b3-theme-background: #0b0e0c !important;
+  --b3-theme-surface: #0b0e0c !important;
+  --O-toolbar-background: #0b0e0c !important;
+  --O-dock-background: #0b0e0c !important;
+  --O-tabbar-background: #0b0e0c !important;
+  --b3-scroll-color: #1C1C1C !important;
+}
+
+.layout-tab-bar .item:not(.item--readonly):hover,
+.layout-tab-bar .item--focus {
+  background-color: #363636 !important;
+}
+
+.layout__resize--lr.layout__resize {
+  background-color: black !important;
+  width: 6px;
+}
+
+body > .fn__flex-1.fn__flex {
+  padding-bottom: 32px;
+}
+
+#status {
+  background-color: #1C1C1C !important;
+  position: fixed;
+  bottom: 6px;
+  right: 6px;
+  border-radius: 12px;
+}
+
+
+// #endregion 修改奥德赛配色
+
+
+
+
 html[data-enhancer="true"] {
-  .protyle-wysiwyg [data-node-id] span[data-type~=block-ref] {
-    color: var(--sky-blue);
+  [data-type="block-ref"],
+  [data-type="a"] {
+    color: var(--sky-blue) !important;
   }
 
   // 反链列表项的提示效果
