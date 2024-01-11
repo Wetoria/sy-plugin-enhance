@@ -2,6 +2,7 @@
 
 :root {
   --sky-blue: #00bfff;
+  --sky-blue-blur: #00bfff7F;
   // --b3-theme-background: #000;
 }
 
@@ -14,7 +15,9 @@
   --O-toolbar-background: #0b0e0c !important;
   --O-dock-background: #0b0e0c !important;
   --O-tabbar-background: #0b0e0c !important;
+  --O-list-counter: var(--sky-blue-blur) !important;
   --b3-scroll-color: #1C1C1C !important;
+  --b3-theme-primary: var(--sky-blue) !important;
 }
 
 .layout-tab-bar .item:not(.item--readonly):hover,
@@ -37,6 +40,22 @@ body > .fn__flex-1.fn__flex {
   bottom: 6px;
   right: 6px;
   border-radius: 12px;
+}
+
+.b3-slider {
+  // background-color: var(--sky-blue);
+  &::-webkit-slider-runnable-track {
+    background: var(--sky-blue-blur);
+  }
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    box-shadow: 0px 0px 0px 3px var(--b3-theme-primary) ;
+  }
+}
+
+.protyle-attr--refcount.popover__block {
+  background-color: var(--sky-blue-blur);
 }
 
 
