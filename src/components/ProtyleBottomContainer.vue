@@ -100,7 +100,7 @@
       <div
         :style="{
           height: backlinkAreaFolded ? '0px' : 'max-content',
-          // overflow: 'hidden',
+          overflow: 'hidden',
         }"
       >
         <div v-if="!docBacklinks.length">
@@ -732,6 +732,7 @@ html[data-theme-mode="light"] {
   }
 
   .backlinkArea {
+    padding-right: 8px;
     padding-bottom: 20px;
     display: flex;
     flex-direction: column;
