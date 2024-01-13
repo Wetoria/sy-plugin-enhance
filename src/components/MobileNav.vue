@@ -168,7 +168,6 @@ watchEffect(() => {
       justify-content: center;
       align-items: center;
       box-sizing: border-box;
-      min-width: 85px;
       height: v-bind(containerHeightCss);
       padding: 0px 12px;
       gap: 4px;
