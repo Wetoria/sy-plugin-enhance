@@ -182,6 +182,6 @@ onMounted(() => {
   display: flex;
 }
 body {
-  opacity: 0.815;
+  opacity: 0.9;
 }
 </style>
