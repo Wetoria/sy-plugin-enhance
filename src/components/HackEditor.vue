@@ -106,10 +106,10 @@ onMounted(() => {
 <style lang="scss">
 html[data-enhancer-enable-block-time="true"] {
   --topPos: 3px;
-  --bottomPos: -4px;
+  --bottomPos: -5px;
   --timeFontSize: 9px;
   --letterSpacing: 3px;
-  --rightPos: 0px;
+  --rightPos: 2px;
   --v-divider-color: var(--sky-blue);
 
   div[data-type="NodeParagraph"],
@@ -158,7 +158,7 @@ html[data-enhancer-enable-block-time="true"] {
     & div[data-type="NodeParagraph"],
     & div[data-type="NodeHeading"],
     & div[data-type="NodeTable"] {
-      --rightPos: -4px;
+      --rightPos: -2px;
       // padding-top: unset !important;
     }
   }
@@ -167,7 +167,7 @@ html[data-enhancer-enable-block-time="true"] {
 .enParagraphContainer {
   position: absolute;
   height: calc(var(--timeFontSize) + 2px);
-  bottom: -4px;
+  bottom: var(--bottomPos);
   display: flex;
   align-items: center;
   padding-right: 4px;
