@@ -27,28 +27,28 @@ function insertBlockTime() {
       // TODO 时间增加参数控制
       if (currentTime.subtract(1, 'minute').isAfter(created) && initLock) {
         const editableDiv = dom.firstElementChild as HTMLDivElement
-        dom.dataset.enCanEdit = editableDiv.contentEditable = 'false'
+        // dom.dataset.enCanEdit = editableDiv.contentEditable = 'false'
       }
 
-      const bindedLockClick = dom.dataset.enBindedLockClick
-      if (!bindedLockClick) {
-        let count = 0
-        const resetCount = debounce(() => {
-          count = 0
-        })
-        dom.addEventListener('click', () => {
-          count++
-          resetCount()
+      // const bindedLockClick = dom.dataset.enBindedLockClick
+      // if (!bindedLockClick) {
+      //   let count = 0
+      //   const resetCount = debounce(() => {
+      //     count = 0
+      //   })
+      //   dom.addEventListener('click', () => {
+      //     count++
+      //     resetCount()
 
-          if (count >= 2) {
-            const nowIsCanEdit = dom.dataset.enCanEdit === 'true'
-            const newCanEdit = !nowIsCanEdit
-            const editableDiv = dom.firstElementChild as HTMLDivElement
-            dom.dataset.enCanEdit = editableDiv.contentEditable = `${newCanEdit}`
-            dom.dataset.enFormat = `${newCanEdit ? '🔓' : '🔒'}     /  /     :  :  `
-          }
-        })
-      }
+      //     if (count >= 2) {
+      //       const nowIsCanEdit = dom.dataset.enCanEdit === 'true'
+      //       const newCanEdit = !nowIsCanEdit
+      //       const editableDiv = dom.firstElementChild as HTMLDivElement
+      //       dom.dataset.enCanEdit = editableDiv.contentEditable = `${newCanEdit}`
+      //       dom.dataset.enFormat = `${newCanEdit ? '🔓' : '🔒'}     /  /     :  :  `
+      //     }
+      //   })
+      // }
 
       if (!updateTimeStr) {
         return
