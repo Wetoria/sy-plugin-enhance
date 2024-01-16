@@ -66,7 +66,7 @@ function insertBlockTime() {
       const canEdit = dom.dataset.enCanEdit === 'true'
       dom.dataset.enUpdatedBackup = updateTimeStr
       dom.dataset.enUpdated = updated.format('YYYY/MM/DD HH:mm:ss')
-      dom.dataset.enFormat = `${canEdit ? '🔓' : '🔒'}     /  /     :  :  `
+      dom.dataset.enFormat = `${'enCanEdit' in dom.dataset ? (canEdit ? '🔓' : '🔒') : ''}     /  /     :  :  `
     })
   }
 
