@@ -30,35 +30,24 @@ function insertBlockTime() {
         dom.dataset.enCanEdit = editableDiv.contentEditable = 'false'
       }
 
-      const enInserted = dom.dataset.enInsertedContainer
-      if (!enInserted) {
-        const enParagraphContainer = document.createElement('div')
-        enParagraphContainer.classList.toggle('enParagraphContainer', true)
-        enParagraphContainer.contentEditable = 'false'
+      const bindedLockClick = dom.dataset.enBindedLockClick
+      if (!bindedLockClick) {
+        let count = 0
+        const resetCount = debounce(() => {
+          count = 0
+        })
+        dom.addEventListener('click', () => {
+          count++
+          resetCount()
 
-        const lockDom = document.createElement('div')
-        lockDom.innerHTML = '🔒'
-        lockDom.classList.toggle('enPLock', true)
-        enParagraphContainer.append(lockDom)
-
-        lockDom.addEventListener('click', () => {
-          const canEdit = dom.dataset.enCanEdit === 'true'
-          const editableDiv = dom.firstElementChild as HTMLDivElement
-          if (canEdit) {
-            lockDom.innerHTML = '🔒'
-            dom.dataset.enCanEdit = editableDiv.contentEditable = 'false'
-          } else {
-            lockDom.innerHTML = '🔓'
-            dom.dataset.enCanEdit = editableDiv.contentEditable = 'true'
+          if (count >= 2) {
+            const nowIsCanEdit = dom.dataset.enCanEdit === 'true'
+            const newCanEdit = !nowIsCanEdit
+            const editableDiv = dom.firstElementChild as HTMLDivElement
+            dom.dataset.enCanEdit = editableDiv.contentEditable = `${newCanEdit}`
+            dom.dataset.enFormat = `${newCanEdit ? '🔓' : '🔒'}     /  /     :  :  `
           }
         })
-
-        const attrDom = dom.querySelector('.protyle-attr')
-        if (!attrDom) {
-          return
-        }
-        attrDom.insertAdjacentElement('beforebegin', enParagraphContainer)
-        dom.dataset.enInsertedContainer = 'true'
       }
 
       if (!updateTimeStr) {
@@ -74,9 +63,10 @@ function insertBlockTime() {
 
       const updated = dayjs(updateTimeStr)
 
+      const canEdit = dom.dataset.enCanEdit === 'true'
       dom.dataset.enUpdatedBackup = updateTimeStr
       dom.dataset.enUpdated = updated.format('YYYY/MM/DD HH:mm:ss')
-      dom.dataset.enFormat = '    /  /     :  :  '
+      dom.dataset.enFormat = `${canEdit ? '🔓' : '🔒'}     /  /     :  :  `
     })
   }
 
@@ -106,7 +96,7 @@ onMounted(() => {
 <style lang="scss">
 html[data-enhancer-enable-block-time="true"] {
   --topPos: 3px;
-  --bottomPos: -5px;
+  --bottomPos: 0px;
   --timeFontSize: 9px;
   --letterSpacing: 3px;
   --rightPos: 2px;
@@ -150,6 +140,7 @@ html[data-enhancer-enable-block-time="true"] {
   div[data-type="NodeListItem"] {
     // padding-top: calc(var(--timeFontSize)) !important;
     --topPos: calc(var(--timeFontSize) * -1);
+    --bottomPos: -5px;
 
     & .protyle-action {
       // top: calc(var(--timeFontSize) / 2) !important;
