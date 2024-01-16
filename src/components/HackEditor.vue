@@ -14,12 +14,53 @@ function insertBlockTime() {
   const handler = () => {
     const paragraphList = queryAllByDom(document.body, `[data-type="${SyDomNodeTypes.NodeParagraph}"]`)
     paragraphList.forEach((dom: HTMLDivElement) => {
+      const currentTime = dayjs()
+
       const updateTimeStr = dom.getAttribute('updated')
       const nodeId = dom.dataset.nodeId
       const createdInId = nodeId.split('-')[0]
       dom.setAttribute('created', createdInId)
       const created = dayjs(createdInId)
       dom.dataset.enCreated = created.format('YYYY/MM/DD HH:mm:ss')
+
+      const initLock = !('enCanEdit' in dom.dataset)
+      // TODO 时间增加参数控制
+      if (currentTime.subtract(5, 'minute').isAfter(created) && initLock) {
+        const editableDiv = dom.firstElementChild as HTMLDivElement
+        dom.dataset.enCanEdit = editableDiv.contentEditable = 'false'
+      }
+
+      const enInserted = dom.dataset.enInsertedContainer
+      if (!enInserted) {
+        const enParagraphContainer = document.createElement('div')
+        enParagraphContainer.classList.toggle('enParagraphContainer', true)
+        enParagraphContainer.contentEditable = 'false'
+
+        const lockDom = document.createElement('div')
+        lockDom.innerHTML = '🔒'
+        lockDom.classList.toggle('enPLock', true)
+        enParagraphContainer.append(lockDom)
+
+        lockDom.addEventListener('click', () => {
+          const canEdit = dom.dataset.enCanEdit === 'true'
+          const editableDiv = dom.firstElementChild as HTMLDivElement
+          if (canEdit) {
+            lockDom.innerHTML = '🔒'
+            dom.dataset.enCanEdit = editableDiv.contentEditable = 'false'
+          } else {
+            lockDom.innerHTML = '🔓'
+            dom.dataset.enCanEdit = editableDiv.contentEditable = 'true'
+          }
+        })
+
+        const attrDom = dom.querySelector('.protyle-attr')
+        if (!attrDom) {
+          return
+        }
+        attrDom.insertAdjacentElement('beforebegin', enParagraphContainer)
+        dom.dataset.enInsertedContainer = 'true'
+      }
+
       if (!updateTimeStr) {
         return
       }
@@ -32,42 +73,10 @@ function insertBlockTime() {
       }
 
       const updated = dayjs(updateTimeStr)
-      const currentTime = dayjs()
 
       dom.dataset.enUpdatedBackup = updateTimeStr
       dom.dataset.enUpdated = updated.format('YYYY/MM/DD HH:mm:ss')
       dom.dataset.enFormat = '    /  /     :  :  '
-      // TODO 时间增加参数控制
-      if (currentTime.subtract(5, 'minute').isAfter(created)) {
-        dom.dataset.enLocked = 'true'
-        const editableDiv = dom.querySelector('div')
-        editableDiv.contentEditable = 'false'
-        editableDiv.dataset.enLocked = 'true'
-        // if (editableDiv.dataset.enBindedClick !== 'true') {
-
-        //   let count = 0
-        //   editableDiv.addEventListener('click', () => {
-        //     count++
-        //     if (count >= 3) {
-        //       editableDiv.dataset.enLocked = 'false'
-        //       editableDiv.contentEditable = 'true'
-        //     }
-        //     setTimeout(() => {
-
-        //     })
-        //     setTimeout(() => {
-        //       count = 0
-        //       editableDiv.dataset.enLocked = 'true'
-        //       editableDiv.contentEditable = 'false'
-        //     }, 5 * 60 * 1000)
-        //     // }, 3 * 1000)
-        //   })
-        //   editableDiv.addEventListener('input', () => {
-        //     console.log('inputed')
-        //   })
-        //   editableDiv.dataset.enBindedClick = 'true'
-        // }
-      }
     })
   }
 
@@ -97,6 +106,7 @@ onMounted(() => {
 <style lang="scss">
 html[data-enhancer-enable-block-time="true"] {
   --topPos: 3px;
+  --bottomPos: -4px;
   --timeFontSize: 9px;
   --letterSpacing: 3px;
   --rightPos: 0px;
@@ -107,14 +117,15 @@ html[data-enhancer-enable-block-time="true"] {
   div[data-type="NodeTable"]
   {
 
-    padding-top: calc(var(--timeFontSize)) !important;
+    // padding-top: calc(var(--timeFontSize)) !important;
 
     &[updated]::before,
     &[updated]::after {
       position: absolute;
       height: var(--timeFontSize);
       right: var(--rightPos);
-      top: var(--topPos);
+      // top: var(--topPos);
+      bottom: var(--bottomPos);
       font-size: var(--timeFontSize);
       line-height: var(--timeFontSize);
 
@@ -137,19 +148,35 @@ html[data-enhancer-enable-block-time="true"] {
   }
 
   div[data-type="NodeListItem"] {
-    padding-top: calc(var(--timeFontSize)) !important;
+    // padding-top: calc(var(--timeFontSize)) !important;
     --topPos: calc(var(--timeFontSize) * -1);
 
     & .protyle-action {
-      top: calc(var(--timeFontSize) / 2) !important;
+      // top: calc(var(--timeFontSize) / 2) !important;
     }
 
     & div[data-type="NodeParagraph"],
     & div[data-type="NodeHeading"],
     & div[data-type="NodeTable"] {
       --rightPos: -4px;
-      padding-top: unset !important;
+      // padding-top: unset !important;
     }
+  }
+}
+
+.enParagraphContainer {
+  position: absolute;
+  height: calc(var(--timeFontSize) + 2px);
+  bottom: -4px;
+  display: flex;
+  align-items: center;
+  padding-right: 4px;
+  right: calc(var(--rightPos) + var(--timeFontSize) * 11.5);
+
+  .enPLock {
+    display: flex;
+    font-size: var(--timeFontSize);
+    cursor: pointer;
   }
 }
 
