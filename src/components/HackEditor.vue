@@ -25,7 +25,7 @@ function insertBlockTime() {
 
       const initLock = !('enCanEdit' in dom.dataset)
       // TODO 时间增加参数控制
-      if (currentTime.subtract(5, 'minute').isAfter(created) && initLock) {
+      if (currentTime.subtract(1, 'minute').isAfter(created) && initLock) {
         const editableDiv = dom.firstElementChild as HTMLDivElement
         dom.dataset.enCanEdit = editableDiv.contentEditable = 'false'
       }
