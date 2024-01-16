@@ -27,10 +27,17 @@ function insertBlockTime() {
       }
 
       const updated = dayjs(updateTimeStr)
+      const currentTime = dayjs()
 
       dom.dataset.enUpdatedBackup = updateTimeStr
       dom.dataset.enUpdated = updated.format('YYYY/MM/DD HH:mm:ss')
       dom.dataset.enUpdatedFormat = '    /  /     :  :  '
+      if (currentTime.subtract(5, 'minute').isAfter(updated)) {
+        dom.dataset.enLocked = 'true'
+        const editableDiv = dom.querySelector('div')
+        editableDiv.contentEditable = 'false'
+        editableDiv.dataset.enLocked = 'true'
+      }
     })
   }
 
@@ -114,6 +121,10 @@ html[data-enhancer-enable-block-time="true"] {
       padding-top: unset !important;
     }
   }
+}
+
+.block-focus {
+  border-right: 1px solid var(--sky-blue);
 }
 
 </style>
