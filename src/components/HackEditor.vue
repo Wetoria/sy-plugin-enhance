@@ -15,6 +15,11 @@ function insertBlockTime() {
     const paragraphList = queryAllByDom(document.body, `[data-type="${SyDomNodeTypes.NodeParagraph}"]`)
     paragraphList.forEach((dom: HTMLDivElement) => {
       const updateTimeStr = dom.getAttribute('updated')
+      const nodeId = dom.dataset.nodeId
+      const createdInId = nodeId.split('-')[0]
+      dom.setAttribute('created', createdInId)
+      const created = dayjs(createdInId)
+      dom.dataset.enCreated = created.format('YYYY/MM/DD HH:mm:ss')
       if (!updateTimeStr) {
         return
       }
@@ -31,12 +36,37 @@ function insertBlockTime() {
 
       dom.dataset.enUpdatedBackup = updateTimeStr
       dom.dataset.enUpdated = updated.format('YYYY/MM/DD HH:mm:ss')
-      dom.dataset.enUpdatedFormat = '    /  /     :  :  '
-      if (currentTime.subtract(5, 'minute').isAfter(updated)) {
+      dom.dataset.enFormat = '    /  /     :  :  '
+      // TODO 时间增加参数控制
+      if (currentTime.subtract(5, 'minute').isAfter(created)) {
         dom.dataset.enLocked = 'true'
         const editableDiv = dom.querySelector('div')
         editableDiv.contentEditable = 'false'
         editableDiv.dataset.enLocked = 'true'
+        // if (editableDiv.dataset.enBindedClick !== 'true') {
+
+        //   let count = 0
+        //   editableDiv.addEventListener('click', () => {
+        //     count++
+        //     if (count >= 3) {
+        //       editableDiv.dataset.enLocked = 'false'
+        //       editableDiv.contentEditable = 'true'
+        //     }
+        //     setTimeout(() => {
+
+        //     })
+        //     setTimeout(() => {
+        //       count = 0
+        //       editableDiv.dataset.enLocked = 'true'
+        //       editableDiv.contentEditable = 'false'
+        //     }, 5 * 60 * 1000)
+        //     // }, 3 * 1000)
+        //   })
+        //   editableDiv.addEventListener('input', () => {
+        //     console.log('inputed')
+        //   })
+        //   editableDiv.dataset.enBindedClick = 'true'
+        // }
       }
     })
   }
@@ -97,10 +127,10 @@ html[data-enhancer-enable-block-time="true"] {
       font-weight: normal;
     }
     &[updated]::before {
-      content: attr(data-en-updated);
+      content: attr(data-en-created);
     }
     &[updated]::after {
-      content: attr(data-en-updated-format);
+      content: attr(data-en-format);
       white-space: pre;
       color: var(--v-divider-color);
     }
