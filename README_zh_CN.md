@@ -14,12 +14,26 @@
 
 ## 功能列表
 
-**如果你不了解这个插件的功能，证明你不需要它。**
+> **如果你不了解这个插件的功能，证明你不需要它。**
 
+- 底部反链
+- 固定文档
+- 移动端底部导航栏
+- 显示段落编辑时间
+- 标记 LifeLog 段落
+
+
+## 如何反馈
+
+参见 [这里](https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse#Ah7nd5EAxowrfUxKj1ucTAuUn6b)
 
 ## 其他
 
-打赏、鼓励、催更：[Wetoria](https://afdian.net/item/7b52976c917f11eea2875254001e7c00)
-
 联系作者：[𝓦𝓮𝓽𝓸𝓻𝓲𝓪](https://simplest-frontend.feishu.cn/docx/R1UxdUYPtoWVi2xapQXclJd2nUh#H5N9dK061o6R4sxUWTiccgvYnAc)
+
+如果觉得好用，来点实际的。
+打赏、鼓励、催更:
+<div align="left">
+  <img src="./asset/praise.png" width="250" />
+</div>
 
