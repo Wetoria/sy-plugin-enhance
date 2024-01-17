@@ -139,16 +139,16 @@ html[data-enhancer-enable-lifelog-tag="true"] {
 
   &[data-enhancer-is-mobile="true"] {
     [custom-lifelog-type] {
+      background-color: var(--b3-theme-background);
       &.en-stickied {
-        background-color: var(--b3-theme-background);
         top: -4px;
       }
     }
   }
   &[data-enhancer-is-mobile="false"] {
     [custom-lifelog-type] {
+      background-color: var(--b3-theme-background);
       &.en-stickied {
-        background-color: var(--b3-theme-background);
         top: -0px;
       }
     }
