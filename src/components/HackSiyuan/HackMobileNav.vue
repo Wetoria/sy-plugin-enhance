@@ -48,7 +48,7 @@ const containerHeight = computed(() => {
   if (showLabel.value) {
     return 45
   }
-  return 30
+  return 24
 })
 const containerHeightCss = computed(() => `${containerHeight.value}px`)
 

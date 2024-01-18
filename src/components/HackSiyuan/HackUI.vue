@@ -114,6 +114,9 @@ html[data-theme-mode="light"] {
   // --b3-theme-background: white;
   --hack-tool-bar-bg-color: rgb(221,221,221);
 }
+#enApp {
+  z-index: 2;
+}
 .enhanceHackUi {
 
   // --hack-theme-color: #1e1e1e;
@@ -209,6 +212,7 @@ html[data-theme-mode="light"] {
   height: max-content;
   left: calc(10%);
   border-radius: 30px;
+  box-shadow: 0px 0px 2px #c1c1c17f;
   // background-color: #1A1A1A;
   background-color: var(--hack-tool-bar-bg-color);
   z-index: 1;
