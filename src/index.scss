@@ -139,3 +139,8 @@ html[data-enhancer="true"] {
     }
   }
 }
+
+[data-type="img"] {
+  display: inline-block !important;
+  width: 33%;
+}
