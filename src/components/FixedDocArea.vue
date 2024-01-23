@@ -9,6 +9,7 @@
       @dragleave="onDragLeave"
       @dragover="onDragOver"
       @drop="onDrop"
+      v-if="settings.enableFixedDocArea"
     >
       <div
         class="scrollArea"
@@ -16,7 +17,7 @@
         <template
           v-if="fixedDocsInfo.length"
         >
-        <div
+          <div
             v-for="item of fixedDocsInfo"
             :key="item.id"
             class="fixedDocItem"
@@ -25,7 +26,13 @@
             @click="jumpToDoc(item.id)"
           >
             <span class="fixedDocName">
-              {{ item.content }}
+              {{ item.content || item.id }}
+            </span>
+            <span
+              class="itemDelete"
+              @click="event => handleRemoveDoc(event, item.id)"
+            >
+              <SyIcon name="iconMin" size="8" />
             </span>
           </div>
         </template>
@@ -37,7 +44,7 @@
   </Teleport>
   <div
     class="fixedDocAreaMask"
-    v-if="movingDocId"
+    v-if="false && movingDocId"
     @drop="() => onMaskDrop(false)"
     @dragover="onMaskOver"
   >
@@ -89,15 +96,15 @@ const onEachDragStart = (event) => {
 }
 const handler = () => {
   if (plugin.isMobile) {
-    const targetElement = document.querySelector('.toolbar')
-    if (!targetElement) {
-      return
-    }
-    const siblingDom = targetElement.nextElementSibling
-    if (siblingDom.classList.contains(containerClassName)) {
-      return
-    }
-    targetElement.insertAdjacentElement('afterend', fixedDocArea);
+    // const targetElement = document.querySelector('.toolbar')
+    // if (!targetElement) {
+    //   return
+    // }
+    // const siblingDom = targetElement.nextElementSibling
+    // if (siblingDom.classList.contains(containerClassName)) {
+    //   return
+    // }
+    // targetElement.insertAdjacentElement('afterend', fixedDocArea);
   } else {
     const targetElement = document.querySelector('.layout__center .layout-tab-container')
     if (!targetElement) {
@@ -169,7 +176,7 @@ const onDragOver = (event: DragEvent) => {
 console.log('settings.value.fixedDocIds is ', settings.value.fixedDocIds)
 const fixedDocInfoMap = ref({})
 const fixedDocIds = computed(() => {
-  const list = settings.value.fixedDocIds || []
+  const list = settings?.value?.fixedDocIds || []
   const initMap = {}
   list.forEach((i) => {
     initMap[i] = {}
@@ -187,6 +194,11 @@ const saveDocId = (id) => {
   fixedDocInfoMap.value[id] = {}
 }
 
+const handleRemoveDoc = (event: MouseEvent, id) => {
+  event.preventDefault()
+  event.stopPropagation();
+  removeDocId(id)
+}
 const removeDocId = (id) => {
   const exist = fixedDocInfoMap.value[id]
   if (!exist) {
@@ -225,13 +237,20 @@ watchEffect(async () => {
       continue
     }
 
-    result[index] = {}
     const data = await getBlockByID(docId)
-    fixedDocInfoMap.value[docId] = data
-    result[index] = data
+    if (data) {
+      fixedDocInfoMap.value[docId] = data
+      result[index] = data
+    } else {
+      const docInfo = {
+        id: docId,
+      }
+      fixedDocInfoMap.value[docId] = docInfo
+      result[index] = docInfo
+    }
   }
 
-  fixedDocsInfo.value = result
+  fixedDocsInfo.value = result.filter(i => i)
 })
 
 let movingDocId = ref(null)
@@ -294,7 +313,6 @@ const jumpToDoc = (id) => {
 <style lang="scss">
 .enFixedDocArea {
   width: 100%;
-  height: 34px;
   display: flex;
 }
 
@@ -302,10 +320,11 @@ const jumpToDoc = (id) => {
 
 <style lang="scss" scoped>
 .main {
-  flex: 1;
   display: flex;
   overflow-y: hidden;
   overflow-x: auto;
+  width: 100%;
+  height: 34px;
   padding: 4px 8px;
   box-sizing: border-box;
   z-index: 3;
@@ -334,6 +353,27 @@ const jumpToDoc = (id) => {
 
     .fixedDocName {
       white-space: nowrap;
+    }
+
+    .itemDelete {
+      width: 14px;
+      height: 14px;
+      position: absolute;
+      top: -4px;
+      right: -7px;
+
+      display: none;
+      justify-content: center;
+      align-items: center;
+      border: 1px solid red;
+      border-radius: 14px;
+      font-size: 8px;
+      color: red;
+      background-color: var(--b3-theme-surface);
+    }
+
+    &:hover .itemDelete {
+      display: flex;
     }
   }
 

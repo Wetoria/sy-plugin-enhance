@@ -25,6 +25,7 @@ interface EnhancerSettings {
 
   enableAutoSync: boolean;
 
+  enableFixedDocArea: boolean;
   fixedDocIds: string[];
 }
 
@@ -47,6 +48,7 @@ const defaultSettings: EnhancerSettings = {
 
   enableAutoSync: false,
 
+  enableFixedDocArea: true,
   fixedDocIds: [],
 }
 

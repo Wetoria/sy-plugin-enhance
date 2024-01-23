@@ -5,6 +5,9 @@
     <div
       class="SettingsScrollContent"
     >
+      <SettingItemAreaHeading>
+        其他
+      </SettingItemAreaHeading>
       <SettingItem>
         <div>
           启用样式效果
@@ -38,6 +41,9 @@
 
       <div class="sperator"></div>
 
+      <SettingItemAreaHeading>
+        段落编辑时间
+      </SettingItemAreaHeading>
       <SettingItem>
         <div>
           显示编辑时间
@@ -71,6 +77,9 @@
 
       <div class="sperator"></div>
 
+      <SettingItemAreaHeading>
+        底部反链
+      </SettingItemAreaHeading>
       <SettingItem>
         <div>
           启用底部反链
@@ -119,7 +128,7 @@
         </div>
         <template #desc>
           <div>
-            与反链筛选功能有关。如果设置的太小，筛选项可能会不正确。<br />
+            与反链筛选功能有关。如果设置的太小，可能会导致数据不正确。<br />
             请输入正确的数字，否则会重置为默认的 999999999.
           </div>
         </template>
@@ -132,6 +141,9 @@
 
       <div class="sperator"></div>
 
+      <SettingItemAreaHeading>
+        悬浮球
+      </SettingItemAreaHeading>
       <SettingItem mode="complex">
         <div>
           悬浮球开启平台
@@ -164,14 +176,9 @@
 
       <div class="sperator"></div>
 
-      <h3
-        style="
-          font-weight: bold;
-        "
-      >
+      <SettingItemAreaHeading>
         LifeLog
-      </h3>
-
+      </SettingItemAreaHeading>
       <SettingItem mode="complex">
         <div>
           同步地址
@@ -230,14 +237,33 @@
       </SettingItem>
 
       <div class="sperator"></div>
+      <SettingItemAreaHeading>
+        固定文档
+      </SettingItemAreaHeading>
+      <div>
+        由于交互上的问题，<b>这个版本移除了移动端的文档固定区域。</b><br>
+        关于移动端的交互，已经有了新的想法，敬请期待。
+      </div>
+      <SettingItem>
+        <div>
+          启用文档固定功能
+        </div>
+        <template #desc>
+          <div>
+            是否启用文档固定功能。
+          </div>
+        </template>
+        <template #opt>
+          <SyCheckbox v-model="settings.enableFixedDocArea" />
+        </template>
+      </SettingItem>
 
-      <h3
-        style="
-          font-weight: bold;
-          "
-      >
+
+      <div class="sperator"></div>
+
+    <SettingItemAreaHeading>
       移动端
-    </h3>
+    </SettingItemAreaHeading>
     <SettingItem>
       <div>
         导航栏显示名称
@@ -299,6 +325,7 @@ import SySelect from '../SiyuanTheme/SySelect.vue';
 import SettingItem from './SettingItem.vue';
 import SyInput from '../SiyuanTheme/SyInput.vue';
 import { usePlugin } from '@/main';
+import SettingItemAreaHeading from './SettingItemAreaHeading.vue';
 import { useSettings } from '@/logic/Settings';
 
 const settings = useSettings()
@@ -310,6 +337,7 @@ const plugin = usePlugin()
 <style lang="scss">
 .SyEnhancerDialogTitle {
   font-weight: bold;
+  color: var(--b3-theme-primary);
 }
 </style>
 
