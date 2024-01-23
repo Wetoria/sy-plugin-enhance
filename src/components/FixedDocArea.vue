@@ -17,7 +17,7 @@
         <template
           v-if="fixedDocsInfo.length"
         >
-        <div
+          <div
             v-for="item of fixedDocsInfo"
             :key="item.id"
             class="fixedDocItem"
@@ -27,6 +27,12 @@
           >
             <span class="fixedDocName">
               {{ item.content || item.id }}
+            </span>
+            <span
+              class="itemDelete"
+              @click="event => handleRemoveDoc(event, item.id)"
+            >
+              <SyIcon name="iconMin" size="8" />
             </span>
           </div>
         </template>
@@ -38,7 +44,7 @@
   </Teleport>
   <div
     class="fixedDocAreaMask"
-    v-if="movingDocId"
+    v-if="false && movingDocId"
     @drop="() => onMaskDrop(false)"
     @dragover="onMaskOver"
   >
@@ -188,6 +194,11 @@ const saveDocId = (id) => {
   fixedDocInfoMap.value[id] = {}
 }
 
+const handleRemoveDoc = (event: MouseEvent, id) => {
+  event.preventDefault()
+  event.stopPropagation();
+  removeDocId(id)
+}
 const removeDocId = (id) => {
   const exist = fixedDocInfoMap.value[id]
   if (!exist) {
@@ -312,6 +323,7 @@ const jumpToDoc = (id) => {
   display: flex;
   overflow-y: hidden;
   overflow-x: auto;
+  width: 100%;
   height: 34px;
   padding: 4px 8px;
   box-sizing: border-box;
@@ -341,6 +353,27 @@ const jumpToDoc = (id) => {
 
     .fixedDocName {
       white-space: nowrap;
+    }
+
+    .itemDelete {
+      width: 14px;
+      height: 14px;
+      position: absolute;
+      top: -4px;
+      right: -7px;
+
+      display: none;
+      justify-content: center;
+      align-items: center;
+      border: 1px solid red;
+      border-radius: 14px;
+      font-size: 8px;
+      color: red;
+      background-color: var(--b3-theme-surface);
+    }
+
+    &:hover .itemDelete {
+      display: flex;
     }
   }
 
