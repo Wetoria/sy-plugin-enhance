@@ -25,7 +25,7 @@
             @click="jumpToDoc(item.id)"
           >
             <span class="fixedDocName">
-              {{ item.content }}
+              {{ item.content || item.id }}
             </span>
           </div>
         </template>
@@ -89,15 +89,15 @@ const onEachDragStart = (event) => {
 }
 const handler = () => {
   if (plugin.isMobile) {
-    const targetElement = document.querySelector('.toolbar')
-    if (!targetElement) {
-      return
-    }
-    const siblingDom = targetElement.nextElementSibling
-    if (siblingDom.classList.contains(containerClassName)) {
-      return
-    }
-    targetElement.insertAdjacentElement('afterend', fixedDocArea);
+    // const targetElement = document.querySelector('.toolbar')
+    // if (!targetElement) {
+    //   return
+    // }
+    // const siblingDom = targetElement.nextElementSibling
+    // if (siblingDom.classList.contains(containerClassName)) {
+    //   return
+    // }
+    // targetElement.insertAdjacentElement('afterend', fixedDocArea);
   } else {
     const targetElement = document.querySelector('.layout__center .layout-tab-container')
     if (!targetElement) {
@@ -169,7 +169,7 @@ const onDragOver = (event: DragEvent) => {
 console.log('settings.value.fixedDocIds is ', settings.value.fixedDocIds)
 const fixedDocInfoMap = ref({})
 const fixedDocIds = computed(() => {
-  const list = settings.value.fixedDocIds || []
+  const list = settings?.value?.fixedDocIds || []
   const initMap = {}
   list.forEach((i) => {
     initMap[i] = {}
@@ -225,13 +225,20 @@ watchEffect(async () => {
       continue
     }
 
-    result[index] = {}
     const data = await getBlockByID(docId)
-    fixedDocInfoMap.value[docId] = data
-    result[index] = data
+    if (data) {
+      fixedDocInfoMap.value[docId] = data
+      result[index] = data
+    } else {
+      const docInfo = {
+        id: docId,
+      }
+      fixedDocInfoMap.value[docId] = docInfo
+      result[index] = docInfo
+    }
   }
 
-  fixedDocsInfo.value = result
+  fixedDocsInfo.value = result.filter(i => i)
 })
 
 let movingDocId = ref(null)
@@ -294,7 +301,6 @@ const jumpToDoc = (id) => {
 <style lang="scss">
 .enFixedDocArea {
   width: 100%;
-  height: 34px;
   display: flex;
 }
 
@@ -302,10 +308,10 @@ const jumpToDoc = (id) => {
 
 <style lang="scss" scoped>
 .main {
-  flex: 1;
   display: flex;
   overflow-y: hidden;
   overflow-x: auto;
+  height: 34px;
   padding: 4px 8px;
   box-sizing: border-box;
   z-index: 3;
