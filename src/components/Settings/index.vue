@@ -237,6 +237,25 @@
       </SettingItem>
 
       <div class="sperator"></div>
+      <SettingItemAreaHeading>
+        固定文档
+      </SettingItemAreaHeading>
+      <SettingItem>
+        <div>
+          启用文档固定功能
+        </div>
+        <template #desc>
+          <div>
+            是否启用文档固定功能。
+          </div>
+        </template>
+        <template #opt>
+          <SyCheckbox v-model="settings.enableFixedDocArea" />
+        </template>
+      </SettingItem>
+
+
+      <div class="sperator"></div>
 
     <SettingItemAreaHeading>
       移动端

@@ -9,6 +9,7 @@
       @dragleave="onDragLeave"
       @dragover="onDragOver"
       @drop="onDrop"
+      v-if="settings.enableFixedDocArea"
     >
       <div
         class="scrollArea"
