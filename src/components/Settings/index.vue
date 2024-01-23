@@ -5,6 +5,9 @@
     <div
       class="SettingsScrollContent"
     >
+      <SettingItemAreaHeading>
+        其他
+      </SettingItemAreaHeading>
       <SettingItem>
         <div>
           启用样式效果
@@ -38,6 +41,9 @@
 
       <div class="sperator"></div>
 
+      <SettingItemAreaHeading>
+        段落编辑时间
+      </SettingItemAreaHeading>
       <SettingItem>
         <div>
           显示编辑时间
@@ -71,6 +77,9 @@
 
       <div class="sperator"></div>
 
+      <SettingItemAreaHeading>
+        底部反链
+      </SettingItemAreaHeading>
       <SettingItem>
         <div>
           启用底部反链
@@ -132,6 +141,9 @@
 
       <div class="sperator"></div>
 
+      <SettingItemAreaHeading>
+        悬浮球
+      </SettingItemAreaHeading>
       <SettingItem mode="complex">
         <div>
           悬浮球开启平台
@@ -164,14 +176,9 @@
 
       <div class="sperator"></div>
 
-      <h3
-        style="
-          font-weight: bold;
-        "
-      >
+      <SettingItemAreaHeading>
         LifeLog
-      </h3>
-
+      </SettingItemAreaHeading>
       <SettingItem mode="complex">
         <div>
           同步地址
@@ -231,13 +238,9 @@
 
       <div class="sperator"></div>
 
-      <h3
-        style="
-          font-weight: bold;
-          "
-      >
+    <SettingItemAreaHeading>
       移动端
-    </h3>
+    </SettingItemAreaHeading>
     <SettingItem>
       <div>
         导航栏显示名称
@@ -300,6 +303,7 @@ import SySelect from '../SiyuanTheme/SySelect.vue';
 import SettingItem from './SettingItem.vue';
 import SyInput from '../SiyuanTheme/SyInput.vue';
 import { usePlugin } from '@/main';
+import SettingItemAreaHeading from './SettingItemAreaHeading.vue';
 
 const settings = useSettings()
 
@@ -310,6 +314,7 @@ const plugin = usePlugin()
 <style lang="scss">
 .SyEnhancerDialogTitle {
   font-weight: bold;
+  color: var(--b3-theme-primary);
 }
 </style>
 
