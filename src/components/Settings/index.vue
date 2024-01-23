@@ -128,7 +128,7 @@
         </div>
         <template #desc>
           <div>
-            与反链筛选功能有关。如果设置的太小，筛选项可能会不正确。<br />
+            与反链筛选功能有关。如果设置的太小，可能会导致数据不正确。<br />
             请输入正确的数字，否则会重置为默认的 999999999.
           </div>
         </template>
@@ -240,6 +240,10 @@
       <SettingItemAreaHeading>
         固定文档
       </SettingItemAreaHeading>
+      <div>
+        由于交互上的问题，<b>这个版本移除了移动端的文档固定区域。</b><br>
+        关于移动端的交互，已经有了新的想法，敬请期待。
+      </div>
       <SettingItem>
         <div>
           启用文档固定功能
