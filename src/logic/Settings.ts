@@ -27,6 +27,8 @@ interface EnhancerSettings {
 
   enableFixedDocArea: boolean;
   fixedDocIds: string[];
+
+  enableLockParagraph: boolean;
 }
 
 const defaultSettings: EnhancerSettings = {
@@ -50,6 +52,8 @@ const defaultSettings: EnhancerSettings = {
 
   enableFixedDocArea: true,
   fixedDocIds: [],
+
+  enableLockParagraph: true,
 }
 
 let doNotSave = false

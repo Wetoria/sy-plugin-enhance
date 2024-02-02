@@ -22,6 +22,22 @@
         </template>
       </SettingItem>
 
+      <div class="sperator"></div>
+
+      <SettingItem>
+        <div>
+          锁定段落块
+        </div>
+        <template #desc>
+          <div>
+            是否开启锁定段落块为不可编辑。
+          </div>
+        </template>
+        <template #opt>
+          <SyCheckbox v-model="settings.enableLockParagraph" />
+        </template>
+      </SettingItem>
+
       <!-- <SettingItem>
         <div>
           编辑完自动同步

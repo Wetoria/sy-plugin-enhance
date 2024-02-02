@@ -10,6 +10,8 @@ import { SyDomNodeTypes } from '@/utils/Siyuan';
 import dayjs from 'dayjs';
 import { onMounted, watchEffect } from 'vue';
 
+const settings = useSettings()
+
 function insertBlockTime() {
   const handler = () => {
     const paragraphList = queryAllByDom(document.body, `[data-type="${SyDomNodeTypes.NodeParagraph}"]`)
@@ -23,11 +25,15 @@ function insertBlockTime() {
       const created = dayjs(createdInId)
       dom.dataset.enCreated = created.format('YYYY/MM/DD HH:mm:ss')
 
-      const initLock = !('enCanEdit' in dom.dataset)
-      // TODO 时间增加参数控制
-      if (currentTime.subtract(1, 'minute').isAfter(created) && initLock) {
-        const editableDiv = dom.firstElementChild as HTMLDivElement
-        // dom.dataset.enCanEdit = editableDiv.contentEditable = 'false'
+      const editableDiv = dom.firstElementChild as HTMLDivElement
+      if (settings.value.enableLockParagraph) {
+        // TODO 时间增加参数控制
+        if (currentTime.subtract(5, 'minute').isAfter(created)) {
+          dom.dataset.enCanEdit = editableDiv.contentEditable = 'false'
+        }
+      } else {
+        editableDiv.contentEditable = 'true'
+        delete dom.dataset.enCanEdit
       }
 
       // const bindedLockClick = dom.dataset.enBindedLockClick
@@ -55,7 +61,7 @@ function insertBlockTime() {
       }
       if (updateTimeStr == dom.dataset.enUpdatedBackup) {
         const canEdit = dom.dataset.enCanEdit === 'true'
-        dom.dataset.enFormat = `${'enCanEdit' in dom.dataset ? (canEdit ? '🔓' : '🔒') : ''}     /  /     :  :  `
+        dom.dataset.enFormat = `${'enCanEdit' in dom.dataset && settings.value.enableLockParagraph ? (canEdit ? '🔓' : '🔒') : ''}     /  /     :  :  `
         return
       }
       const text = dom?.firstChild?.textContent
@@ -68,7 +74,7 @@ function insertBlockTime() {
       const canEdit = dom.dataset.enCanEdit === 'true'
       dom.dataset.enUpdatedBackup = updateTimeStr
       dom.dataset.enUpdated = updated.format('YYYY/MM/DD HH:mm:ss')
-      dom.dataset.enFormat = `${'enCanEdit' in dom.dataset ? (canEdit ? '🔓' : '🔒') : ''}     /  /     :  :  `
+      dom.dataset.enFormat = `${'enCanEdit' in dom.dataset && settings.value.enableLockParagraph ? (canEdit ? '🔓' : '🔒') : ''}     /  /     :  :  `
     })
   }
 
@@ -81,7 +87,7 @@ function insertBlockTime() {
   })
 }
 
-const settings = useSettings()
+
 watchEffect(() => {
   const isEnableBlockTime = settings.value.enableBlockTime
   document.documentElement.dataset.enhancerEnableBlockTime = `${isEnableBlockTime}`
