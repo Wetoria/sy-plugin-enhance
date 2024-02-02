@@ -25,17 +25,6 @@ function insertBlockTime() {
       const created = dayjs(createdInId)
       dom.dataset.enCreated = created.format('YYYY/MM/DD HH:mm:ss')
 
-      const editableDiv = dom.firstElementChild as HTMLDivElement
-      if (settings.value.enableLockParagraph) {
-        // TODO 时间增加参数控制
-        if (currentTime.subtract(5, 'minute').isAfter(created)) {
-          dom.dataset.enCanEdit = editableDiv.contentEditable = 'false'
-        }
-      } else {
-        editableDiv.contentEditable = 'true'
-        delete dom.dataset.enCanEdit
-      }
-
       // const bindedLockClick = dom.dataset.enBindedLockClick
       // if (!bindedLockClick) {
       //   let count = 0
@@ -70,6 +59,17 @@ function insertBlockTime() {
       }
 
       const updated = dayjs(updateTimeStr)
+
+      const editableDiv = dom.firstElementChild as HTMLDivElement
+      if (settings.value.enableLockParagraph) {
+        // TODO 时间增加参数控制
+        if (currentTime.subtract(5, 'minute').isAfter(updated)) {
+          dom.dataset.enCanEdit = editableDiv.contentEditable = 'false'
+        }
+      } else {
+        editableDiv.contentEditable = 'true'
+        delete dom.dataset.enCanEdit
+      }
 
       const canEdit = dom.dataset.enCanEdit === 'true'
       dom.dataset.enUpdatedBackup = updateTimeStr
