@@ -26,12 +26,12 @@ const listenerSticky = () => {
 
       if (pRect.top <= sRect.top && flag) {
         p.classList.toggle('en-stickied', true)
-        p.style.borderBottom = getComputedStyle(p).borderLeft
-        p.style.borderRight = getComputedStyle(p).borderLeft
+        p.style.borderLeft = getComputedStyle(p).borderBottom
+        p.style.borderRight = getComputedStyle(p).borderBottom
         flag = false
       } else {
         p.classList.toggle('en-stickied', false)
-        p.style.borderBottom = ''
+        p.style.borderLeft = ''
         p.style.borderRight = ''
       }
     })
@@ -88,57 +88,58 @@ html[data-enhancer-enable-lifelog-tag="true"] {
     }
 
     &[custom-lifelog-type="固"] {
-      border-left: 1px solid #D3D3D3;
+      border-bottom: 1px solid #D3D3D3;
     }
     &[custom-lifelog-type="固定"] {
-      border-left: 1px solid #D3D3D3;
+      border-bottom: 1px solid #D3D3D3;
     }
 
     &[custom-lifelog-type="增"] {
-      border-left: 1px solid #90EE90;
+      border-bottom: 1px solid #90EE90;
     }
     &[custom-lifelog-type="学习"] {
-      border-left: 1px solid #90EE90;
+      border-bottom: 1px solid #90EE90;
     }
 
     &[custom-lifelog-type="事业"] {
-      border-left: 1px solid #90EE90;
+      border-bottom: 1px solid #90EE90;
     }
 
     &[custom-lifelog-type="工作"] {
-      border-left: 1px solid #FFD700;
+      border-bottom: 1px solid #FFD700;
     }
 
     &[custom-lifelog-type="废"] {
-      border-left: 1px solid #FF0000;
+      border-bottom: 1px solid #FF0000;
     }
     &[custom-lifelog-type="娱乐"] {
-      border-left: 1px solid #FF0000;
+      border-bottom: 1px solid #FF0000;
     }
     &[custom-lifelog-type="荒废"] {
-      border-left: 1px solid #FF0000;
+      border-bottom: 1px solid #FF0000;
     }
     &[custom-lifelog-type="玩"] {
-      border-left: 1px solid #FF0000;
+      border-bottom: 1px solid #FF0000;
     }
 
     &[custom-lifelog-type="家庭"] {
-      border-left: 1px solid rgb(71, 255, 248);
+      border-bottom: 1px solid rgb(71, 255, 248);
     }
     &[custom-lifelog-type="家"] {
-      border-left: 1px solid rgb(71, 255, 248);
+      border-bottom: 1px solid rgb(71, 255, 248);
     }
     &[custom-lifelog-type="朋友"] {
-      border-left: 1px solid rgb(156, 123, 85);
+      border-bottom: 1px solid rgb(156, 123, 85);
     }
     &[custom-lifelog-type="友"] {
-      border-left: 1px solid rgb(156, 123, 85);
+      border-bottom: 1px solid rgb(156, 123, 85);
     }
 
   }
 
   &[data-enhancer-is-mobile="true"] {
     [custom-lifelog-type] {
+      /* 解决吸顶以后，依旧能看到下方内容的问题 */
       background-color: var(--b3-theme-background);
       &.en-stickied {
         top: -4px;
@@ -147,6 +148,7 @@ html[data-enhancer-enable-lifelog-tag="true"] {
   }
   &[data-enhancer-is-mobile="false"] {
     [custom-lifelog-type] {
+      /* 解决吸顶以后，依旧能看到下方内容的问题 */
       background-color: var(--b3-theme-background);
       &.en-stickied {
         top: -0px;
