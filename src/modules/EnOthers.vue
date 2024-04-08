@@ -11,7 +11,7 @@
       </div>
       <template #desc>
         <div>
-          是否启用双链颜色、双链增加中括号等样式。
+          是否启用 双链颜色、双链增加中括号、图片宽度 50% 等样式。
         </div>
         <div>开关该选项查看效果：<a data-type="a">示例</a>、<span data-type="block-ref">示例</span></div>
       </template>
@@ -126,6 +126,11 @@ html[data-enhancer="true"] {
         }
       }
     }
+  }
+
+  [data-type="img"] {
+    display: inline-block !important;
+    width: 50%;
   }
 }
 </style>

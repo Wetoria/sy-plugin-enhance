@@ -2,7 +2,6 @@ import {
   Plugin,
   getFrontend,
 } from "siyuan";
-import "./index.scss";
 import PluginInfoString from '@/../plugin.json?raw'
 let PluginInfo = {
   version: '',
