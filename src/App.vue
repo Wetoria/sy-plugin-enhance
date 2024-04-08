@@ -58,7 +58,6 @@ import { listenerViewport, useViewportInfo } from './logic/Viewport';
 import { useEnhancer } from './modules/GlobalStatus.ts';
 import HackBackground from './components/HackSiyuan/HackBackground.vue';
 import TestArco, { TestArcoType, testFunc } from './modules/Test/TestArco.vue';
-import { EnhancerGlobal } from './global';
 import ArcoDartkTheme from './modules/ArcoDartkTheme.vue';
 import EnPWA from './modules/EnPWA.vue';
 import DailyNote from './modules/DailyNote/DailyNote.vue';

@@ -11,23 +11,9 @@ const settings = useSettings()
 
 
 <script lang="ts">
-import { EnhancerGlobal, registerModule } from '@/global';
 import { useSettings } from '@/logic/Settings';
-import { onMounted, onUnmounted, ref } from 'vue';
-import EnSettings from '../Settings/EnSettings.vue';
+import { ref } from 'vue';
 
-
-registerModule('testArco', {})
-onMounted(() => {
-  console.log('test arco mounted')
-  console.log('EnhancerGlobal is ', EnhancerGlobal.testArco);
-  testFunc('testArco')
-})
-onUnmounted(() => {
-  console.log('test arco unmounted')
-  EnhancerGlobal.testArco.test = false
-  console.log('EnhancerGlobal is ', EnhancerGlobal.testArco);
-})
 export interface TestArcoType {
   test: boolean;
 }
