@@ -42,6 +42,7 @@ import { createTodayDailyNote, jumpToNextDailyNote, jumpToPrevDailyNote } from '
 import {openSetting, useMobileKeyBoardShown} from '@/utils'
 import { useDocHistory } from '@/utils/History'
 import { useSettings } from '@/logic/Settings';
+import { openSettings } from '@/modules/Settings/EnSettings.vue';
 
 const settings = useSettings()
 const isJumpDoc = computed(() => settings.value.mobileSwitchDocMode === 'doc')
@@ -109,7 +110,7 @@ const navList = ref<Array<{
     icon: 'iconSuper',
     label: '插件设置',
     onClick: () => {
-      openSetting()
+      openSettings()
     }
   },
   {

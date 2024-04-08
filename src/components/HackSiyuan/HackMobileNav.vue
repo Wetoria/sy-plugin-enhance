@@ -17,13 +17,19 @@
       >
         <div class="NavItemIcon">
           <SyIcon
+            v-if="item.icon != 'iconMore'"
             :name="item.icon"
             :disabled="item.disabled"
             size="18"
           />
-        </div>
-        <div class="NavItemLabel" v-if="showLabel">
-          {{ item.label }}
+          <a-dropdown v-else position="tr">
+            <icon-apps size="18" />
+            <template #content>
+              <a-doption>Option 1</a-doption>
+              <a-doption disabled>Option 2</a-doption>
+              <a-doption :value="{ value: 'Option3' }">Option 3</a-doption>
+            </template>
+          </a-dropdown>
         </div>
       </div>
     </div>
@@ -34,14 +40,16 @@
 import { ref, watchEffect } from 'vue';
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import { computed } from 'vue';
-import { createTodayDailyNote, jumpToNextDailyNote, jumpToPrevDailyNote } from '@/utils/DailyNoteHelper'
-import {openSetting} from '@/utils'
 import { useDocHistory } from '@/utils/History'
 import { useSettings } from '@/logic/Settings';
+import { openSettings } from '@/modules/Settings/EnSettings.vue';
+import { createTodayDailyNote, jumpToNextDailyNote, jumpToPrevDailyNote } from '@/modules/DailyNote/DailyNote.vue';
+import { openSetting } from '@/utils';
 
 const settings = useSettings()
 const isJumpDoc = computed(() => settings.value.mobileSwitchDocMode === 'doc')
 
+// TODO 找时间删掉相关逻辑
 const showLabel = computed(() => settings.value.showMobileNavLabel)
 
 const containerHeight = computed(() => {
@@ -118,10 +126,19 @@ const navList = ref<Array<{
     label: '插件设置',
     onClick: () => {
       openSetting()
+      // openSettings()
     }
   },
   {
-    icon: 'iconSettings',
+    icon: 'iconSuper',
+    label: '插件设置',
+    onClick: () => {
+      // openSetting()
+      openSettings()
+    }
+  },
+  {
+    icon: 'iconSiYuan',
     label: '思源设置',
     onClick: () => {
       const toolbarMore = document.body.querySelector('#toolbarMore')
@@ -129,6 +146,10 @@ const navList = ref<Array<{
         toolbarMore.dispatchEvent(new MouseEvent('click'))
       }
     }
+  },
+  {
+    icon: 'iconMore',
+    label: '新建日记',
   },
 ])
 

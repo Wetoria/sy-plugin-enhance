@@ -4,6 +4,7 @@
 
 <script setup lang="ts">
 import { usePlugin } from '@/main';
+import { openSettings } from '@/modules/Settings/EnSettings.vue';
 import { openSetting } from '@/utils';
 import { onMounted } from 'vue';
 
@@ -14,7 +15,7 @@ const registerTopBar = () => {
     title: plugin.i18n.pluginName,
     position: "right",
     callback: () => {
-      openSetting()
+      openSettings()
     },
   });
 }

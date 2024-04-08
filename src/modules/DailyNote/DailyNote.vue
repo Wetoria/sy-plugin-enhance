@@ -1,11 +1,50 @@
+<template>
+  <EnSettingsTeleport name="DailyNote">
+    <div>Test teleport</div>
+  </EnSettingsTeleport>
+</template>
+
+
+
+<script setup lang="ts">
+import { usePlugin } from '@/main';
 import {
   showMessage,
 } from "siyuan";
 import { createDailyNote, lsNotebooks, request } from '@/api';
-import { getDailyNote, openDoc, openDocById } from './Note';
-import { usePlugin } from '@/main';
-import { jumpToProtyleBottom } from '.';
-import { useEnhancer } from '@/logic/GlobalStatus';
+import { useEnhancer } from '@/modules/GlobalStatus';
+import { getDailyNote, openDoc, openDocById } from '@/utils/Note';
+import { jumpToProtyleBottom } from '@/utils';
+import { onMounted } from 'vue';
+import { settingsTestRef } from '../Settings/EnSettings.vue';
+import EnSettingsTeleport from '../Settings/EnSettingsTeleport.vue';
+
+settingsTestRef
+console.log('settingsTestRef is ', settingsTestRef.value)
+
+const plugin = usePlugin()
+onMounted(() => {
+  plugin.addCommand({
+    langKey: "goPrevDailyNote",
+    hotkey: "⌥⌘↑",
+    callback: () => {
+      jumpToPrevDailyNote();
+    },
+  });
+  plugin.addCommand({
+    langKey: "goNextDailyNote",
+    hotkey: "⌥⌘↓",
+    callback: () => {
+      jumpToNextDailyNote();
+    },
+  });
+})
+</script>
+
+
+
+<script lang="ts">
+
 
 async function getCurrentDocAttr(currentDocId) {
   const data = {
@@ -145,3 +184,10 @@ export function createTodayDailyNote() {
     }, 300)
   })
 }
+</script>
+
+
+
+<style lang="scss">
+
+</style>

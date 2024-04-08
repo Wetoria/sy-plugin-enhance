@@ -6,7 +6,7 @@
     <template
       v-if="isMobile"
     >
-      <template v-if="!mode || mode == 'simple'">
+      <template v-if="!mode || mode == 'horizontal'">
         <div class="settingItemDescArea">
           <div class="settingTitle">
             <slot></slot>
@@ -19,14 +19,11 @@
           <slot name="opt"></slot>
         </div>
       </template>
-      <template v-else-if="mode == 'complex'">
+      <template v-else-if="mode == 'vertical'">
         <div
-          class="settingItemDescArea"
+          class="settingItemDescArea flexColumn"
           style="
-            display: flex;
-            flex-direction: column;
             width: 100%;
-            gap: 8px;
           "
         >
           <div class="settingTitle">
@@ -65,7 +62,7 @@ const plugin = usePlugin()
 const isMobile = computed(() => plugin.isMobile)
 
 defineProps<{
-  mode?: 'simple' | 'complex';
+  mode?: 'horizontal' | 'vertical';
 }>()
 </script>
 
@@ -75,7 +72,7 @@ defineProps<{
   width: 100%;
   min-height: 32px;
   align-items: center;
-  gap: 8px;
+  gap: var(--en-gap);
 
   .settingItemDescArea {
     flex: 1;

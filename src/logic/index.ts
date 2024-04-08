@@ -1,7 +1,7 @@
 import { usePlugin } from '@/main';
 import { onEditorUpdate } from '@/utils/Siyuan';
 import { watchEffect } from 'vue';
-import { useEnhancer } from './GlobalStatus';
+import { useEnhancer } from '../modules/GlobalStatus';
 import { useSettings } from './Settings';
 
 export function autoSync() {

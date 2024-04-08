@@ -90,6 +90,9 @@ export function loadSettings() {
   })
 }
 
+/**
+ * 修正设置中，错误的值
+ */
 function reviseSettingsValue() {
   if (isNaN(settings.value.sqlLimit)) {
     settings.value.sqlLimit = defaultSettings.sqlLimit
@@ -100,6 +103,7 @@ function reviseSettingsValue() {
 export const saveSettings = debounce(()=> {
   const plugin = usePlugin()
 
+  // 保存前对值进行校验和修正。
   reviseSettingsValue()
 
   const info = JSON.stringify(settings.value);

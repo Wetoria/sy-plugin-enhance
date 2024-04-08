@@ -105,14 +105,14 @@ plugin.eventBus.on('mobile-keyboard-hide', () => {
 
 <style lang="scss">
 html[data-theme-mode="dark"] {
-  --hack-theme-color: black;
+  // --hack-theme-color: black;
   // --b3-theme-background: black;
-  --hack-tool-bar-bg-color: #1A1A1A;
+  // --hack-tool-bar-bg-color: #1A1A1A;
 }
 html[data-theme-mode="light"] {
-  --hack-theme-color: white;
+  // --hack-theme-color: white;
   // --b3-theme-background: white;
-  --hack-tool-bar-bg-color: rgb(221,221,221);
+  // --hack-tool-bar-bg-color: rgb(221,221,221);
 }
 #enApp {
   z-index: 2;

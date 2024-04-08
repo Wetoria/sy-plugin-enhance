@@ -1,0 +1,131 @@
+<template>
+  <EnSettingsTeleport name="EnOthers">
+    <template #header>
+      <SettingItemAreaHeading>
+        其他设置
+      </SettingItemAreaHeading>
+    </template>
+    <SettingItem>
+      <div>
+        启用样式效果
+      </div>
+      <template #desc>
+        <div>
+          是否启用双链颜色、双链增加中括号等样式。
+        </div>
+        <div>开关该选项查看效果：<a data-type="a">示例</a>、<span data-type="block-ref">示例</span></div>
+      </template>
+      <template #opt>
+        <a-switch v-model="settings.useVipStyle" />
+      </template>
+    </SettingItem>
+
+    <EnDivider />
+
+    <SettingItem>
+      <div>
+        锁定段落块
+      </div>
+      <template #desc>
+        <div>
+          是否开启锁定段落块为不可编辑。
+        </div>
+      </template>
+      <template #opt>
+        <a-switch v-model="settings.enableLockParagraph" />
+      </template>
+    </SettingItem>
+  </EnSettingsTeleport>
+</template>
+
+
+
+<script setup lang="ts">
+import SettingItem from '@/components/Settings/SettingItem.vue';
+import EnSettingsTeleport from './Settings/EnSettingsTeleport.vue';
+import SettingItemAreaHeading from '@/components/Settings/SettingItemAreaHeading.vue';
+import { useSettings } from '@/logic/Settings';
+import EnDivider from '@/components/EnDivider.vue';
+import { watch } from 'vue';
+
+const settings = useSettings()
+
+watch(() => settings.value.useVipStyle, () => {
+  document.documentElement.dataset.enhancer = `${settings.value.useVipStyle}`
+})
+</script>
+
+
+
+<style lang="scss">
+html[data-enhancer="true"] {
+  [data-type="block-ref"],
+  [data-type="a"] {
+    color: var(--sky-blue) !important;
+  }
+
+  // 反链列表项的提示效果
+  // .protyle-wysiwyg [data-node-id].li[fold="1"] > .protyle-action:after {
+  //   background-color: var(--b3-list-hover, #363636);
+  // }
+
+
+  // #region 反链面板文档名称sticky
+  // .backlinkMList .b3-list-item,
+  // .backlinkList .b3-list-item {
+  //     --b3-theme-primary-lightest: rgba(53, 115, 240, 1);
+  //     position: sticky;
+  //     top: 0;
+  //     z-index: 2;
+  //     background-color: var(--b3-list-hover, #363636);
+  // }
+  // #endregion 反链面板文档名称sticky
+
+
+  // #region 文档反链增加 [[]]
+  span[data-type="block-ref"] {
+    font-weight: inherit;
+    background-color: transparent !important;
+    border-bottom: none !important;
+  }
+
+  /* 为引用块后面增加引用图标 */
+  span[data-type="block-ref"]::before {
+    color: var(--b3-theme-on-surface) !important;
+    content: "[[";
+  }
+
+  span[data-type="block-ref"]::after {
+    color: var(--b3-theme-on-surface) !important;
+    content: "]]";
+  }
+
+  span[data-type="block-ref"]:hover {
+    background-color: var(--b3-theme-primary-lightest) !important;
+  }
+  // #endregion 文档反链增加 [[]]
+
+
+  .protyle-wysiwyg {
+
+    & > [data-type="NodeList"] {
+      // background-color: rgba(0, 47, 255, 0.1);
+      // background-color: rgba(65, 65, 65, 0.1);
+      // background-color: rgba(255, 255, 255, 0.1);
+      // 👇 这个还可以
+      // background-color: rgba(77, 77, 77, 0.1);
+      // background-color: rgba(93, 93, 93, 0.1);
+      // 就👇这个配色了，哪种模式下都舒服
+      background-color: rgba(109, 109, 109, 0.1);
+
+
+      & > [data-type="NodeListItem"] {
+
+        & > ::before {
+          border-left-color: var(--sky-blue);
+        }
+      }
+    }
+  }
+}
+</style>

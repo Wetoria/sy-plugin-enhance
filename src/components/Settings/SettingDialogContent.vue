@@ -74,7 +74,7 @@
         </template>
       </SettingItem>
 
-      <SettingItem mode="complex">
+      <SettingItem mode="vertical">
         <div>
           编辑时间字体大小
         </div>
@@ -138,7 +138,7 @@
         </template>
       </SettingItem>
 
-      <SettingItem mode="complex">
+      <SettingItem mode="vertical">
         <div>
           反链筛选 SQL 查询上限
         </div>
@@ -160,7 +160,7 @@
       <SettingItemAreaHeading>
         悬浮球
       </SettingItemAreaHeading>
-      <SettingItem mode="complex">
+      <SettingItem mode="vertical">
         <div>
           悬浮球开启平台
         </div>
@@ -195,7 +195,7 @@
       <SettingItemAreaHeading>
         LifeLog
       </SettingItemAreaHeading>
-      <SettingItem mode="complex">
+      <SettingItem mode="vertical">
         <div>
           同步地址
         </div>
@@ -234,7 +234,7 @@
         </template>
       </SettingItem>
 
-      <SettingItem mode="complex">
+      <SettingItem mode="vertical">
         <div>
           LifeLog触发时间
         </div>

@@ -1,144 +1,66 @@
-:root {
-  --sky-blue: #00bfff;
-  --sky-blue-blur: #00bfff7F;
-  // --b3-theme-background: #000;
-}
+
 
 
 // #region 修改奥德赛配色
 
-:root {
-  --b3-theme-background: #0b0e0c !important;
-  --b3-theme-surface: #0b0e0c !important;
-  --O-toolbar-background: #0b0e0c !important;
-  --O-dock-background: #0b0e0c !important;
-  --O-tabbar-background: #0b0e0c !important;
-  --O-list-counter: var(--sky-blue-blur) !important;
-  --O-list-background-activefocus: var(--sky-blue-blur) !important;
-  --b3-scroll-color: #1C1C1C !important;
-  --b3-theme-primary: var(--sky-blue) !important;
-  --b3-theme-primary-light: var(--sky-blue-blur) !important;
-  --b3-theme-primary-lighter: var(--sky-blue-blur) !important;
-  --b3-theme-primary-lightest: var(--sky-blue-blur) !important;
-}
-
-.layout-tab-bar .item:not(.item--readonly):hover,
-.layout-tab-bar .item--focus {
-  background-color: #363636 !important;
-}
-
-.layout__resize--lr.layout__resize {
-  background-color: black !important;
-  width: 6px;
-}
-
-// body > .fn__flex-1.fn__flex {
-//   padding-bottom: 32px;
+// :root {
+//   --b3-theme-background: #0b0e0c !important;
+//   --b3-theme-surface: #0b0e0c !important;
+//   --O-toolbar-background: #0b0e0c !important;
+//   --O-dock-background: #0b0e0c !important;
+//   --O-tabbar-background: #0b0e0c !important;
+//   --O-list-counter: var(--sky-blue-blur) !important;
+//   --O-list-background-activefocus: var(--sky-blue-blur) !important;
+//   --b3-scroll-color: #1C1C1C !important;
+//   --b3-theme-primary: var(--sky-blue) !important;
+//   --b3-theme-primary-light: var(--sky-blue-blur) !important;
+//   --b3-theme-primary-lighter: var(--sky-blue-blur) !important;
+//   --b3-theme-primary-lightest: var(--sky-blue-blur) !important;
 // }
 
-// #status {
-//   background-color: #1C1C1C !important;
-//   position: fixed;
-//   bottom: 6px;
-//   right: 6px;
-//   border-radius: 12px;
+// .layout-tab-bar .item:not(.item--readonly):hover,
+// .layout-tab-bar .item--focus {
+//   background-color: #363636 !important;
 // }
 
-.b3-slider {
-  // background-color: var(--sky-blue);
-  &::-webkit-slider-runnable-track {
-    background: var(--sky-blue-blur);
-  }
+// .layout__resize--lr.layout__resize {
+//   background-color: black !important;
+//   width: 6px;
+// }
 
-  &::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    box-shadow: 0px 0px 0px 3px var(--b3-theme-primary) ;
-  }
-}
+// // body > .fn__flex-1.fn__flex {
+// //   padding-bottom: 32px;
+// // }
 
-.protyle-attr--refcount.popover__block {
-  background-color: var(--sky-blue-blur);
-}
+// // #status {
+// //   background-color: #1C1C1C !important;
+// //   position: fixed;
+// //   bottom: 6px;
+// //   right: 6px;
+// //   border-radius: 12px;
+// // }
 
-.protyle-gutters button svg {
-  color: color-mix(in srgb,var(--b3-theme-on-background) 60%, transparent);
-}
+// .b3-slider {
+//   // background-color: var(--sky-blue);
+//   &::-webkit-slider-runnable-track {
+//     background: var(--sky-blue-blur);
+//   }
+
+//   &::-webkit-slider-thumb {
+//     -webkit-appearance: none;
+//     box-shadow: 0px 0px 0px 3px var(--b3-theme-primary) ;
+//   }
+// }
+
+// .protyle-attr--refcount.popover__block {
+//   background-color: var(--sky-blue-blur);
+// }
+
+// .protyle-gutters button svg {
+//   color: color-mix(in srgb,var(--b3-theme-on-background) 60%, transparent);
+// }
 
 // #endregion 修改奥德赛配色
-
-
-
-
-html[data-enhancer="true"] {
-  [data-type="block-ref"],
-  [data-type="a"] {
-    color: var(--sky-blue) !important;
-  }
-
-  // 反链列表项的提示效果
-  // .protyle-wysiwyg [data-node-id].li[fold="1"] > .protyle-action:after {
-  //   background-color: var(--b3-list-hover, #363636);
-  // }
-
-
-  // #region 反链面板文档名称sticky
-  // .backlinkMList .b3-list-item,
-  // .backlinkList .b3-list-item {
-  //     --b3-theme-primary-lightest: rgba(53, 115, 240, 1);
-  //     position: sticky;
-  //     top: 0;
-  //     z-index: 2;
-  //     background-color: var(--b3-list-hover, #363636);
-  // }
-  // #endregion 反链面板文档名称sticky
-
-
-  // #region 文档反链增加 [[]]
-  .protyle-wysiwyg [data-node-id] span[data-type="block-ref"] {
-    font-weight: inherit;
-    background-color: transparent !important;
-    border-bottom: none !important;
-  }
-
-  /* 为引用块后面增加引用图标 */
-  .protyle-wysiwyg [data-node-id] span[data-type="block-ref"]::before {
-    color: var(--b3-theme-on-surface) !important;
-    content: "[[";
-  }
-
-  .protyle-wysiwyg [data-node-id] span[data-type="block-ref"]::after {
-    color: var(--b3-theme-on-surface) !important;
-    content: "]]";
-  }
-
-  .protyle-wysiwyg [data-node-id] span[data-type="block-ref"]:hover {
-    background-color: var(--b3-theme-primary-lightest) !important;
-  }
-  // #endregion 文档反链增加 [[]]
-
-
-  .protyle-wysiwyg {
-
-    & > [data-type="NodeList"] {
-      // background-color: rgba(0, 47, 255, 0.1);
-      // background-color: rgba(65, 65, 65, 0.1);
-      // background-color: rgba(255, 255, 255, 0.1);
-      // 👇 这个还可以
-      // background-color: rgba(77, 77, 77, 0.1);
-      // background-color: rgba(93, 93, 93, 0.1);
-      // 就👇这个配色了，哪种模式下都舒服
-      background-color: rgba(109, 109, 109, 0.1);
-
-
-      & > [data-type="NodeListItem"] {
-
-        & > ::before {
-          border-left-color: var(--sky-blue);
-        }
-      }
-    }
-  }
-}
 
 [data-type="img"] {
   display: inline-block !important;
