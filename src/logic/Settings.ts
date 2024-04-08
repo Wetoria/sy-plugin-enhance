@@ -1,8 +1,14 @@
 import { usePlugin } from '@/main';
 import { debounce } from '@/utils';
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 
-interface EnhancerSettings {
+export interface EnModule {
+  enabled: boolean
+  options: object
+  defaultOptions: object
+}
+
+interface EnSettings {
   useVipStyle: boolean;
   boxId: string;
 
@@ -29,9 +35,13 @@ interface EnhancerSettings {
   fixedDocIds: string[];
 
   enableLockParagraph: boolean;
+
+  modules: {
+    [module: string]: EnModule
+  }
 }
 
-const defaultSettings: EnhancerSettings = {
+const defaultSettings: EnSettings = {
   useVipStyle: true,
   boxId: '',
   sqlLimit: 999999999,
@@ -54,10 +64,13 @@ const defaultSettings: EnhancerSettings = {
   fixedDocIds: [],
 
   enableLockParagraph: true,
+  modules: {},
 }
 
 let doNotSave = false
-let settings = ref<EnhancerSettings>({} as EnhancerSettings)
+let settings = ref<EnSettings>({
+  modules: {},
+} as EnSettings)
 watch(settings, () => {
   if (doNotSave) {
     doNotSave = false
@@ -69,24 +82,42 @@ watch(settings, () => {
 })
 
 let STORAGE_KEY = 'SyEnhancerSettings'
-let loaded = false
 
 export function useSettings() {
-  if (!loaded) {
-    loadSettings()
-  }
   return settings
+}
+
+export function useModule(moduleName: string, defaultOptions: object) {
+  const module = computed<EnModule>(() => settings.value.modules[moduleName])
+
+  if (!module.value) {
+    registerModule(moduleName, defaultOptions)
+  }
+  return module
+}
+
+export function registerModule(module: string, defaultOptions: object) {
+  const isInSetting = module in settings.value.modules
+  if (!isInSetting) {
+    settings.value.modules[module] = {
+      enabled: false,
+      options: defaultOptions,
+      defaultOptions: defaultOptions,
+    }
+  }
 }
 
 export function loadSettings() {
   const plugin = usePlugin()
   plugin.loadData(STORAGE_KEY).then((res) => {
     if (res) {
-      settings.value = Object.assign({}, defaultSettings, res)
+      settings.value = Object.assign({}, defaultSettings, settings.value, res)
     } else {
-      settings.value = JSON.parse(JSON.stringify(defaultSettings))
+      settings.value = Object.assign({}, settings.value, JSON.parse(JSON.stringify(defaultSettings)))
     }
-    loaded = true
+    if (!settings.value.modules) {
+      settings.value.modules = {}
+    }
   })
 }
 

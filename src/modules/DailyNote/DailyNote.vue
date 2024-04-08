@@ -1,7 +1,7 @@
 <template>
-  <EnSettingsTeleport name="DailyNote">
+  <!-- <EnSettingsTeleport name="DailyNote">
     <div>Test teleport</div>
-  </EnSettingsTeleport>
+  </EnSettingsTeleport> -->
 </template>
 
 
@@ -16,11 +16,7 @@ import { useEnhancer } from '@/modules/GlobalStatus';
 import { getDailyNote, openDoc, openDocById } from '@/utils/Note';
 import { jumpToProtyleBottom } from '@/utils';
 import { onMounted } from 'vue';
-import { settingsTestRef } from '../Settings/EnSettings.vue';
 import EnSettingsTeleport from '../Settings/EnSettingsTeleport.vue';
-
-settingsTestRef
-console.log('settingsTestRef is ', settingsTestRef.value)
 
 const plugin = usePlugin()
 onMounted(() => {

@@ -19,49 +19,61 @@
         {{plugin.i18n.pluginName}}
       </div>
     </template>
+
     <div class="flexColumn en_settings_list">
-      <div
-        v-for="refItem of Object.keys(settingsRefMap)"
-        :ref="(el) => settingsRefMap[refItem] = el"
-        :data-ref-name="refItem"
+      <template
+        v-for="(refItem, index) of settingRefKeys"
       >
-      </div>
-      <div ref="settingsTestRef"></div>
+        <div
+          :ref="(el) => settingsRefMap[refItem] = el"
+          :data-ref-name="refItem"
+        >
+        </div>
+        <EnDivider v-if="index != settingRefKeys.length - 1" />
+      </template>
     </div>
+
+    <template #footer>
+      <div class="enSettingsFooter">
+        <span>
+          使用说明：
+          <a href="https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse">{{plugin.version ? `v${plugin.version}` : ''}}</a>
+        </span>
+        <span>
+          作者：
+          <a href="https://wetoria.me">Wetoria</a>
+        </span>
+      </div>
+    </template>
   </a-drawer>
 </template>
 
 <script setup lang="ts">
+import EnDivider from '@/components/EnDivider.vue';
+import { loadSettings } from '@/logic/Settings';
 import { usePlugin } from '@/main';
-import { ref, watch, watchEffect } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 const plugin = usePlugin()
 
-console.log('en settings 1')
+
+onMounted(() => {
+  loadSettings()
+})
 </script>
 
 <script lang="ts">
-console.log('en settings 2')
 export const editingSettings = ref(false);
 
 const settingsRefMap = ref({})
-watchEffect(() => {
-  console.log('settingsRefMap is ', settingsRefMap.value)
-})
+const settingRefKeys = computed(() => Object.keys(settingsRefMap.value))
+
 export function registerSettingRef(refName: string) {
   const newRef = ref()
   settingsRefMap.value[refName] = newRef
-  console.log(`register setting, setting module name is: ${refName}`)
-  console.log(`ref is ${settingsRefMap.value[refName]}`)
-  watch(() => newRef, () => {
-    console.log(`newRef is ${newRef}`)
-  })
   return newRef
 }
 
-export const settingsTestRef = ref();
-
 export const openSettings = () => {
-  console.log('test')
   editingSettings.value = true;
 }
 
@@ -72,5 +84,11 @@ export const closeSettings = () => {
 
 <style lang="scss" scoped>
 .en_settings_list {
+}
+
+.enSettingsFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--en-gap);
 }
 </style>

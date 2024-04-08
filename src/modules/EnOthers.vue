@@ -1,11 +1,10 @@
 <template>
-  <EnSettingsTeleport name="EnOthers">
-    <template #header>
-      <SettingItemAreaHeading>
-        其他设置
-      </SettingItemAreaHeading>
-    </template>
-    <SettingItem>
+  <EnSettingsTeleport
+    :name="moduleName"
+    :display="moduleDisplayName"
+    :module="module"
+  >
+    <EnSettingsItem>
       <div>
         启用样式效果
       </div>
@@ -16,13 +15,11 @@
         <div>开关该选项查看效果：<a data-type="a">示例</a>、<span data-type="block-ref">示例</span></div>
       </template>
       <template #opt>
-        <a-switch v-model="settings.useVipStyle" />
+        <a-switch v-model="moduleOptions.useVipStyle" />
       </template>
-    </SettingItem>
+    </EnSettingsItem>
 
-    <EnDivider />
-
-    <SettingItem>
+    <EnSettingsItem>
       <div>
         锁定段落块
       </div>
@@ -32,30 +29,46 @@
         </div>
       </template>
       <template #opt>
-        <a-switch v-model="settings.enableLockParagraph" />
+        <a-switch v-model="moduleOptions.enableLockParagraph" />
       </template>
-    </SettingItem>
+    </EnSettingsItem>
   </EnSettingsTeleport>
 </template>
 
 
 
 <script setup lang="ts">
-import SettingItem from '@/components/Settings/SettingItem.vue';
+import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue';
 import EnSettingsTeleport from './Settings/EnSettingsTeleport.vue';
-import SettingItemAreaHeading from '@/components/Settings/SettingItemAreaHeading.vue';
-import { useSettings } from '@/logic/Settings';
-import EnDivider from '@/components/EnDivider.vue';
-import { watch } from 'vue';
+import { useModule } from '@/logic/Settings';
+import { computed, watch } from 'vue';
 
-const settings = useSettings()
+interface ModuleOthersOptions {
+  useVipStyle: boolean
+  enableLockParagraph: boolean
+}
 
-watch(() => settings.value.useVipStyle, () => {
-  document.documentElement.dataset.enhancer = `${settings.value.useVipStyle}`
+const moduleName = 'EnOther'
+const moduleDisplayName = '其他设置'
+const defaultOptions = {
+  useVipStyle: false,
+  enableLockParagraph: false,
+}
+const module = useModule(moduleName, defaultOptions)
+const moduleOptions = computed(() => module.value.options as ModuleOthersOptions)
+
+watch(() => moduleOptions.value.useVipStyle, () => {
+  document.documentElement.dataset.enhancer = `${moduleOptions.value.useVipStyle}`
 })
 </script>
 
-
+<style lang="scss" scoped>
+.moduleHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+</style>
 
 <style lang="scss">
 html[data-enhancer="true"] {

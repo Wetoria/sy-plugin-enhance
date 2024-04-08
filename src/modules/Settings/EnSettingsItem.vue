@@ -71,7 +71,7 @@ defineProps<{
   display: flex;
   width: 100%;
   min-height: 32px;
-  align-items: center;
+  align-items: baseline;
   gap: var(--en-gap);
 
   .settingItemDescArea {

@@ -124,7 +124,7 @@ onMounted(() => {
   --sky-blue: #00bfff;
   --sky-blue-blur: #00bfff7F;
 
-  --en-gap: 6px;
+  --en-gap: 8px;
   // --b3-theme-background: #000;
 }
 
