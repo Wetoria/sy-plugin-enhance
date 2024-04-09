@@ -96,7 +96,7 @@ html[data-en_quick_note="true"] {
     position: fixed;
     top: 0;
     left: 0;
-    opacity: 0.9;
+    opacity: var(--en-opacity);
 
     display: flex;
 

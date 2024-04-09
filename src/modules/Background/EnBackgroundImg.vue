@@ -15,6 +15,24 @@
         <a-switch v-model="moduleOptions.enableBackgroundImg" />
       </template>
     </EnSettingsItem>
+    <EnSettingsItem>
+      <div>
+        背景透明度
+      </div>
+      <template #opt>
+        <a-input-number
+          class="input-demo"
+          placeholder="Please Enter"
+          mode="button"
+          :readOnly="plugin.isMobile"
+          :precision="2"
+          :step="0.01"
+          :max="1"
+          :min="0.1"
+          v-model="moduleOptions.opacity"
+        />
+      </template>
+    </EnSettingsItem>
   </EnSettingsTeleport>
 </template>
 
@@ -23,15 +41,20 @@ import { useModule } from '@/logic/Settings';
 import EnSettingsTeleport from '../Settings/EnSettingsTeleport.vue';
 import { computed, watch, watchEffect } from 'vue';
 import EnSettingsItem from '../Settings/EnSettingsItem.vue';
+import { usePlugin } from '@/main';
+
+const plugin = usePlugin()
 
 interface ModuleOptions {
   enableBackgroundImg: boolean
+  opacity: number
 }
 
 const moduleName = 'EnBackgroundImg'
 const moduleDisplayName = '背景图'
 const defaultOptions = {
   enableBackgroundImg: false,
+  opacity: 0.9
 }
 const module = useModule(moduleName, defaultOptions)
 const moduleOptions = computed(() => {
@@ -40,6 +63,7 @@ const moduleOptions = computed(() => {
 
 watchEffect(() => {
   document.documentElement.dataset.enBackground = `${moduleOptions.value.enableBackgroundImg}`
+  document.documentElement.style.setProperty('--en-opacity', `${moduleOptions.value.opacity}`)
 })
 </script>
 
@@ -61,7 +85,7 @@ html[data-en-background="true"] {
     display: flex;
   }
   body {
-    opacity: 0.9;
+    opacity: var(--en-opacity);
   }
 }
 </style>

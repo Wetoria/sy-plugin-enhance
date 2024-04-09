@@ -115,6 +115,10 @@ onMounted(() => {
 
 html[data-en-is-standalone="true"][data-en-pwa="true"] {
   height: 100vh;
+  // box-sizing: border-box;
+  // overflow: hidden;
+  // touch-action: pan-y;
+  overscroll-behavior: none;
 
   .enPWAContainer {
     width: 100%;
@@ -140,7 +144,7 @@ html[data-en-is-standalone="true"][data-en-pwa="true"] {
       width: 100%;
       height: var(--en-status-height);
       background-color: var(--b3-theme-background);
-      opacity: 0.9;
+      opacity: var(--en-opacity);
     }
   }
 
@@ -163,7 +167,7 @@ html[data-en-is-standalone="true"][data-en-pwa="true"] {
       width: var(--en-status-height);
       height: 100%;
       background-color: var(--b3-theme-background);
-      opacity: 0.9;
+      opacity: var(--en-opacity);
     }
     .enPWAMain {
       flex: 1;
@@ -172,7 +176,7 @@ html[data-en-is-standalone="true"][data-en-pwa="true"] {
       width: var(--en-toolbar-height);
       height: 100%;
       background-color: var(--b3-theme-background);
-      opacity: 0.9;
+      opacity: var(--en-opacity);
     }
 
     #menu,
@@ -202,7 +206,7 @@ html[data-en-is-standalone="true"][data-en-pwa="true"] {
       width: var(--en-status-height);
       height: 100%;
       background-color: var(--b3-theme-background);
-      opacity: 0.9;
+      opacity: var(--en-opacity);
     }
     .enPWAMain {
       flex: 1;
@@ -211,7 +215,7 @@ html[data-en-is-standalone="true"][data-en-pwa="true"] {
       width: var(--en-toolbar-height);
       height: 100%;
       background-color: var(--b3-theme-background);
-      opacity: 0.9;
+      opacity: var(--en-opacity);
     }
 
     #menu,
