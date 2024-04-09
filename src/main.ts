@@ -5,6 +5,7 @@ import { registerProtyleBottomArea } from './utils/DOM';
 
 import AppVue from './App.vue';
 import { reactive } from 'vue';
+import { loadSettings } from './logic/Settings';
 
 let pluginRef: VPlugin = null
 export function registerPlugin(plugin) {
@@ -18,8 +19,9 @@ const loadVueApp = () => {
   loadComponentAppendToBody(AppVue)
 }
 
-export function init(plugin: VPlugin) {
+export async function init(plugin: VPlugin) {
   registerPlugin(plugin);
+  await loadSettings()
   loadVueApp()
   registerProtyleBottomArea()
 }
