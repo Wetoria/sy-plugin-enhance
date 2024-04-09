@@ -1,7 +1,7 @@
 <template>
 
   <a-drawer
-    popup-container="#parentNode"
+    class="enSettingDrawer"
     :visible="editingSettings"
     :unmountOnClose="true"
     :drawer-style="{

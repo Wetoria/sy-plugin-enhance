@@ -39,6 +39,7 @@ const props = defineProps<{
   name: string
   display: string
   module: EnModule
+  disableAutoSwitchEnable?: boolean
 }>()
 
 const settingRef = registerSettingRef(props.name)
@@ -59,6 +60,9 @@ const onModuleSwitch = (enabled) => {
 }
 
 watch(() => module.value.options, () => {
+  if (props.disableAutoSwitchEnable) {
+    return
+  }
   const optionsKeys = Object.keys(module.value.options)
       .filter((key) => typeof module.value.options[key] == 'boolean')
   if (module.value.enabled) {

@@ -1,5 +1,5 @@
 <template>
-  <Teleport to="html">
+  <Teleport to="html" v-if="module.enabled">
     <div class="enPWAContainer" id="enPWAContainer">
       <div
         class="enPWAPadding1"
@@ -12,13 +12,75 @@
       ></div>
     </div>
   </Teleport>
+  <EnSettingsTeleport
+    :name="moduleName"
+    :display="moduleDisplayName"
+    :module="module"
+    :disableAutoSwitchEnable="true"
+  >
+    <EnSettingsItem mode="vertical">
+      <div>
+        顶部状态栏高度
+      </div>
+      <template #opt>
+        <a-input-number
+          class="input-demo"
+          placeholder="Please Enter"
+          mode="button"
+          read-only
+          v-model="moduleOptions.statusBarHeight"
+        />
+      </template>
+    </EnSettingsItem>
+    <EnSettingsItem mode="vertical">
+      <div>
+        底部工具栏高度
+      </div>
+      <template #opt>
+        <a-input-number
+          class="input-demo"
+          placeholder="Please Enter"
+          mode="button"
+          read-only
+          v-model="moduleOptions.toolBarHeight"
+        />
+      </template>
+    </EnSettingsItem>
+  </EnSettingsTeleport>
 </template>
 
 <script setup lang="ts">
+import { useModule } from '@/logic/Settings';
 import { useEnhancer } from '@/modules/GlobalStatus';
-import { onMounted } from 'vue';
+import { computed, onMounted, watchEffect } from 'vue';
+import EnSettingsTeleport from './Settings/EnSettingsTeleport.vue';
+import EnSettingsItem from './Settings/EnSettingsItem.vue';
 
 const EnhancerState = useEnhancer()
+
+interface ModuleOptions {
+  statusBarHeight: number;
+  toolBarHeight: number;
+}
+
+const moduleName = 'EnPWA'
+const moduleDisplayName = '移动端 PWA 适配'
+const defaultOptions: ModuleOptions = {
+  statusBarHeight: 56,
+  toolBarHeight: 30,
+}
+const module = useModule(moduleName, defaultOptions)
+const moduleOptions = computed(() => module.value.options as ModuleOptions)
+
+watchEffect(() => {
+  const root = document.documentElement;
+  root.style.setProperty('--en-status-height', moduleOptions.value.statusBarHeight + 'px')
+  root.style.setProperty('--en-toolbar-height', moduleOptions.value.toolBarHeight + 'px')
+})
+
+watchEffect(() => {
+  document.documentElement.dataset.enPwa = `${module.value.enabled}`
+})
 
 onMounted(() => {
   const metaDom = document.createElement('meta')
@@ -51,18 +113,19 @@ onMounted(() => {
   --en-toolbar-height: 30px;
 }
 
-.enPWAContainer {
-  width: 100%;
+html[data-en-is-standalone="true"][data-en-pwa="true"] {
   height: 100vh;
-  position: absolute;
-  z-index: -10000;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-  display: flex;
-}
-html[data-en-is-standalone="true"] {
-  height: 100vh;
+
+  .enPWAContainer {
+    width: 100%;
+    height: 100vh;
+    position: absolute;
+    z-index: -10000;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    display: flex;
+  }
 
   // 正常竖屏
   &[data-en-orientation="portrait-primary"] {
@@ -86,6 +149,14 @@ html[data-en-is-standalone="true"] {
     body {
       padding-left: var(--en-status-height);
       padding-right: var(--en-toolbar-height);
+    }
+
+    .enSettingDrawer {
+      .arco-drawer {
+        box-sizing: border-box;
+        padding-left: var(--en-status-height);
+        padding-right: var(--en-toolbar-height);
+      }
     }
 
     .enPWAPadding1 {
@@ -117,6 +188,14 @@ html[data-en-is-standalone="true"] {
     body {
       padding-right: var(--en-status-height);
       padding-left: var(--en-toolbar-height);
+    }
+
+    .enSettingDrawer {
+      .arco-drawer {
+        box-sizing: border-box;
+        padding-right: var(--en-status-height);
+        padding-left: var(--en-toolbar-height);
+      }
     }
 
     .enPWAPadding2 {
