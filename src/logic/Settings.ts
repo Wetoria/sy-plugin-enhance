@@ -88,37 +88,38 @@ export function useSettings() {
 }
 
 export function useModule(moduleName: string, defaultOptions: object) {
-  const module = computed<EnModule>(() => settings.value.modules[moduleName])
+  const module = ref<EnModule>(settings.value.modules[moduleName])
 
   if (!module.value) {
-    registerModule(moduleName, defaultOptions)
+    module.value = registerModule(moduleName, defaultOptions)
   }
   return module
 }
 
 export function registerModule(module: string, defaultOptions: object) {
   const isInSetting = module in settings.value.modules
-  if (!isInSetting) {
-    settings.value.modules[module] = {
-      enabled: false,
-      options: defaultOptions,
-      defaultOptions: defaultOptions,
-    }
+  const newModule = {
+    enabled: false,
+    options: defaultOptions,
+    defaultOptions: defaultOptions,
   }
+  if (!isInSetting) {
+    settings.value.modules[module] = newModule
+  }
+  return newModule
 }
 
-export function loadSettings() {
+export async function loadSettings() {
   const plugin = usePlugin()
-  plugin.loadData(STORAGE_KEY).then((res) => {
-    if (res) {
-      settings.value = Object.assign({}, defaultSettings, settings.value, res)
-    } else {
-      settings.value = Object.assign({}, settings.value, JSON.parse(JSON.stringify(defaultSettings)))
-    }
-    if (!settings.value.modules) {
-      settings.value.modules = {}
-    }
-  })
+  const res = await plugin.loadData(STORAGE_KEY)
+  if (res) {
+    settings.value = Object.assign({}, defaultSettings, settings.value, res)
+  } else {
+    settings.value = Object.assign({}, JSON.parse(JSON.stringify(defaultSettings)), settings.value)
+  }
+  if (!settings.value.modules) {
+    settings.value.modules = {}
+  }
 }
 
 /**
@@ -128,7 +129,6 @@ function reviseSettingsValue() {
   if (isNaN(settings.value.sqlLimit)) {
     settings.value.sqlLimit = defaultSettings.sqlLimit
   }
-
 }
 
 export const saveSettings = debounce(()=> {

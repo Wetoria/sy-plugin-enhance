@@ -54,11 +54,6 @@ import { loadSettings } from '@/logic/Settings';
 import { usePlugin } from '@/main';
 import { computed, onMounted, ref } from 'vue';
 const plugin = usePlugin()
-
-
-onMounted(() => {
-  loadSettings()
-})
 </script>
 
 <script lang="ts">

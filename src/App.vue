@@ -22,7 +22,7 @@
         <DailyNote />
         <EnSiyuanEntry />
         <LifeLog />
-        <HackBackground />
+        <EnBackgroundImg />
         <HackEditor />
         <ArcoDartkTheme />
       </template>
@@ -55,18 +55,14 @@ import HackUI from './components/HackSiyuan/HackUI.vue';
 import { syncLocalStorage, useSettings } from './logic/Settings.ts';
 import HackEditor from './components/HackEditor.vue';
 import { listenerViewport, useViewportInfo } from './logic/Viewport';
-import { useEnhancer } from './modules/GlobalStatus.ts';
-import HackBackground from './components/HackSiyuan/HackBackground.vue';
 import TestArco, { TestArcoType, testFunc } from './modules/Test/TestArco.vue';
 import ArcoDartkTheme from './modules/ArcoDartkTheme.vue';
 import EnPWA from './modules/EnPWA.vue';
 import DailyNote from './modules/DailyNote/DailyNote.vue';
 import EnSettings from './modules/Settings/EnSettings.vue';
 import EnOthers from './modules/EnOthers.vue';
+import EnBackgroundImg from './modules/Background/EnBackgroundImg.vue';
 const settings = useSettings()
-
-// registerShortcutKey();
-
 
 const plugin = usePlugin()
 

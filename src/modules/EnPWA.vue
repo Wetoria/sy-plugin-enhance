@@ -34,4 +34,3 @@ onMounted(() => {
 <style lang="scss">
 
 </style>
-@/modules/GlobalStatus

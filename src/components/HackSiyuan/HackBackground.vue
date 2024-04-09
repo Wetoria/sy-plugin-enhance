@@ -31,7 +31,7 @@
   top: 0;
   left: 0;
   pointer-events: none;
-  background-image: url('./bg.png');
+  // background-image: url('./bg.png');
   display: flex;
 }
 body {

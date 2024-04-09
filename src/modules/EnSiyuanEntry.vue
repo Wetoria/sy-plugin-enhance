@@ -15,6 +15,14 @@ const registerTopBar = () => {
     title: plugin.i18n.pluginName,
     position: "right",
     callback: () => {
+      openSetting()
+    },
+  });
+  plugin.addTopBar({
+    icon: "iconHeart",
+    title: plugin.i18n.pluginName,
+    position: "right",
+    callback: () => {
       openSettings()
     },
   });

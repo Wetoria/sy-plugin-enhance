@@ -41,9 +41,9 @@
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue';
 import EnSettingsTeleport from './Settings/EnSettingsTeleport.vue';
 import { useModule } from '@/logic/Settings';
-import { computed, watch } from 'vue';
+import { computed, watchEffect } from 'vue';
 
-interface ModuleOthersOptions {
+interface ModuleOptions {
   useVipStyle: boolean
   enableLockParagraph: boolean
 }
@@ -55,11 +55,12 @@ const defaultOptions = {
   enableLockParagraph: false,
 }
 const module = useModule(moduleName, defaultOptions)
-const moduleOptions = computed(() => module.value.options as ModuleOthersOptions)
+const moduleOptions = computed(() => module.value.options as ModuleOptions)
 
-watch(() => moduleOptions.value.useVipStyle, () => {
+watchEffect(() => {
   document.documentElement.dataset.enhancer = `${moduleOptions.value.useVipStyle}`
 })
+
 </script>
 
 <style lang="scss" scoped>
