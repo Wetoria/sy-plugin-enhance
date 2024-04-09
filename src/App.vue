@@ -18,12 +18,12 @@
       <!-- 全平台 -->
       <template>
         <EnSettings />
-        <EnOthers />
         <DailyNote />
         <EnSiyuanEntry />
         <LifeLog />
-        <EnBackgroundImg />
         <HackEditor />
+        <EnBackgroundImg />
+        <EnOthers />
         <ArcoDartkTheme />
       </template>
 

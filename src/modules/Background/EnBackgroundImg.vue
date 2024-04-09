@@ -2,7 +2,7 @@
   <Teleport to="html">
     <div class="enBackground"></div>
   </Teleport>
-  <!-- <EnSettingsTeleport
+  <EnSettingsTeleport
     :name="moduleName"
     :display="moduleDisplayName"
     :module="module"
@@ -15,36 +15,32 @@
         <a-switch v-model="moduleOptions.enableBackgroundImg" />
       </template>
     </EnSettingsItem>
-  </EnSettingsTeleport> -->
+  </EnSettingsTeleport>
 </template>
 
 <script setup lang="ts">
 import { useModule } from '@/logic/Settings';
 import EnSettingsTeleport from '../Settings/EnSettingsTeleport.vue';
-import { computed, watch } from 'vue';
+import { computed, watch, watchEffect } from 'vue';
+import EnSettingsItem from '../Settings/EnSettingsItem.vue';
 
-// interface ModuleOptions {
-//   enableBackgroundImg: boolean
-// }
+interface ModuleOptions {
+  enableBackgroundImg: boolean
+}
 
-// const moduleName = 'EnBackgroundImg'
-// const moduleDisplayName = '背景图'
-// const defaultOptions = {
-//   enableBackgroundImg: false,
-// }
-// const module = useModule(moduleName, defaultOptions)
+const moduleName = 'EnBackgroundImg'
+const moduleDisplayName = '背景图'
+const defaultOptions = {
+  enableBackgroundImg: false,
+}
+const module = useModule(moduleName, defaultOptions)
+const moduleOptions = computed(() => {
+  return module.value.options as ModuleOptions
+})
 
-// watch(() => module, () => {
-//   console.log('module is ', module.value)
-// })
-// const moduleOptions = computed(() => {
-//   console.log('module is ', module.value)
-//   return module.value.options as ModuleOptions
-// })
-
-// watch(() => moduleOptions.value.enableBackgroundImg, () => {
-//   document.documentElement.dataset.enBackground = `${moduleOptions.value.enableBackgroundImg}`
-// })
+watchEffect(() => {
+  document.documentElement.dataset.enBackground = `${moduleOptions.value.enableBackgroundImg}`
+})
 </script>
 
 <style lang="scss">
