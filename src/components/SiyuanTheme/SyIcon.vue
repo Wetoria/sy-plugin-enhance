@@ -6,6 +6,7 @@
       height: size,
       color: disabled ? 'var(--b3-empty-color)' : undefined
     }"
+    class="enSyIcon"
   >
     <use :xlink:href="`#${name}`"></use>
   </svg>

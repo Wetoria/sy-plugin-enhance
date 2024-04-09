@@ -24,6 +24,7 @@
         <HackEditor />
         <EnBackgroundImg />
         <EnOthers />
+        <EnQuickNote />
         <ArcoDartkTheme />
       </template>
 
@@ -62,6 +63,7 @@ import DailyNote from './modules/DailyNote/DailyNote.vue';
 import EnSettings from './modules/Settings/EnSettings.vue';
 import EnOthers from './modules/EnOthers.vue';
 import EnBackgroundImg from './modules/Background/EnBackgroundImg.vue';
+import EnQuickNote from './modules/QuickNote/EnQuickNote.vue';
 const settings = useSettings()
 
 const plugin = usePlugin()
