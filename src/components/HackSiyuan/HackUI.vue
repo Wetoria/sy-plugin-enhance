@@ -33,7 +33,7 @@ function enableSiyuanTouchMove() {
 }
 
 function hackSiyuanMobile() {
-  disableSiyuanTouchMove()
+  // disableSiyuanTouchMove()
 
   const statusDom = querySelectorByBody('#status')
   if (statusDom) {

@@ -13,6 +13,8 @@
     height="unset"
     placement="bottom"
     @cancel="closeSettings"
+    @open="onDrawerOpen"
+    @close="onDrawerCLose"
   >
     <template #title>
       <div class="SyEnhancerDialogTitle">
@@ -50,10 +52,46 @@
 
 <script setup lang="ts">
 import EnDivider from '@/components/EnDivider.vue';
-import { loadSettings } from '@/logic/Settings';
 import { usePlugin } from '@/main';
-import { computed, onMounted, ref } from 'vue';
+import { computed, ref } from 'vue';
+import AnyTouch from 'any-touch';
+
 const plugin = usePlugin()
+
+const getSettingDrawer = () => document.querySelector('.arco-drawer') as HTMLDivElement
+
+const onDrawerOpen = () => {
+  const el: HTMLDivElement = document.querySelector('.enSettingDrawer');
+  const settingDom = getSettingDrawer()
+  if (!el || !settingDom) {
+    return
+  }
+
+  const at = new AnyTouch(el, { preventDefault: false });
+  at.on('pan', (e) => {
+    if (!settingDom) {
+      return
+    }
+    const movableDis = e.displacementY > 0 ? e.displacementY : 0
+    settingDom.style.transform = `translateY(${movableDis}px)`
+  });
+  at.on('panend', (e) => {
+    if (!settingDom) {
+      return
+    }
+
+    if (e.displacementY > 200) {
+      settingDom.style.transform = `translateY(100%)`
+      editingSettings.value = false
+    } else {
+      settingDom.style.transform = 'unset'
+    }
+  })
+}
+
+const onDrawerCLose = () => {
+
+}
 </script>
 
 <script lang="ts">
