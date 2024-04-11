@@ -9,10 +9,11 @@
 
 <script setup lang="ts">
 import dayjs from 'dayjs';
-import { computed, ref } from 'vue';
+import { computed, ref, watchEffect } from 'vue';
 
 const props = defineProps<{
   pDom: HTMLDivElement
+  defaultBlockType: 'created' | 'updated'
 }>()
 
 const updated = ref(getUpdated(props.pDom))
@@ -26,7 +27,10 @@ const created = computed(() => {
 })
 const createdStr = computed(() => `created: ${created.value.format(FORMAT_TIME)}`)
 
-const showCreated = ref(true)
+const showCreated = ref(props.defaultBlockType === 'created')
+watchEffect(() => {
+  showCreated.value = props.defaultBlockType === 'created'
+})
 setInterval(() => {
     // 每秒更新段落更新时间
     const newUpdated = getUpdated(props.pDom)

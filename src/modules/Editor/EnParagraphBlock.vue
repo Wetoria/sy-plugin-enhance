@@ -23,10 +23,12 @@
         </div>
       </template>
       <template #opt>
-        <a-input-number
-          class="input-demo" placeholder="Please Enter" mode="button"
-          :readOnly="plugin.isMobile"
-          v-model="moduleOptions.blockTimeFontSize" />
+        <a-select
+          v-model="moduleOptions.defaultBlockType"
+        >
+          <a-option value="created">创建时间</a-option>
+          <a-option value="updated">更新时间</a-option>
+        </a-select>
       </template>
     </EnSettingsItem>
     <EnSettingsItem mode="vertical">
@@ -90,6 +92,7 @@
       />
       <EnParagraphBlockTime
         :pDom="paragraphBlock"
+        :defaultBlockType="moduleOptions.defaultBlockType"
         v-if="moduleOptions.enableBlockTime"
       />
     </EnParagraphBlockAttrContainer>
