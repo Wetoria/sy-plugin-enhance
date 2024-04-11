@@ -66,11 +66,17 @@
       </div>
       <template #desc>
         <div>
-          段落的更新时间如果早于设定的时间，将会被自动锁定。可点击 <icon-font type="en-lock" /> 进行解锁。单位：秒，最短 1 秒，最长 120 分钟（7200 秒）。
+          段落的更新时间如果早于设定的时间，将会被自动锁定。可点击 <icon-font type="en-lock" /> 进行解锁。
+        </div>
+        <div>
+          单位：秒，最短 1 秒，最长 120 分钟（7200 秒）。
         </div>
       </template>
       <template #opt>
-        <a-input-number class="input-demo" placeholder="Please Enter" mode="button"
+        <a-input-number
+          class="input-demo"
+          placeholder="Please Enter"
+          mode="button"
           :max="120 * 60"
           :min="1"
           :readOnly="plugin.isMobile"
