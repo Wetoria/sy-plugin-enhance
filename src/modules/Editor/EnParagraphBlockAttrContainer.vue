@@ -2,7 +2,6 @@
   <Teleport
     :to="pProtyleAttrRef"
     v-if="pProtyleAttrRef"
-    ref="teleportRef"
   >
     <slot></slot>
   </Teleport>
@@ -20,8 +19,6 @@ const pProtyleAttrRef = computed(() => {
   if (!protyleAttr) return
   return protyleAttr.querySelector('.enProtyleAttrContainer')
 })
-
-const teleportRef = ref()
 
 </script>
 

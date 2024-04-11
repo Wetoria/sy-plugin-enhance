@@ -227,6 +227,10 @@
   html[data-en-paragraph-block="true"] {
     --timeFontSize: 9px;
 
+    div[data-type="NodeParagraph"] {
+      margin-top: var(--timeFontSize);
+    }
+
     .enProtyleAttrContainer {
       width: max-content;
       display: flex;
