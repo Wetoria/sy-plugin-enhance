@@ -23,7 +23,9 @@
         </div>
       </template>
       <template #opt>
-        <a-input-number class="input-demo" placeholder="Please Enter" mode="button" read-only
+        <a-input-number
+          class="input-demo" placeholder="Please Enter" mode="button"
+          :readOnly="plugin.isMobile"
           v-model="moduleOptions.blockTimeFontSize" />
       </template>
     </EnSettingsItem>
@@ -37,7 +39,8 @@
         </div>
       </template>
       <template #opt>
-        <a-input-number class="input-demo" placeholder="Please Enter" mode="button" read-only
+        <a-input-number class="input-demo" placeholder="Please Enter" mode="button"
+          :readOnly="plugin.isMobile"
           v-model="moduleOptions.blockTimeFontSize" />
       </template>
     </EnSettingsItem>
@@ -57,16 +60,21 @@
     </EnSettingsItem>
     <EnSettingsItem mode="vertical">
       <div>
-        自动锁定的时间
+        段落锁定的时间
       </div>
       <template #desc>
         <div>
-          段落的更新时间如果早于设定的时间，将会被自动锁定。可点击 <icon-font type="en-lock" /> 进行解锁。单位：分钟
+          段落的更新时间如果早于设定的时间，将会被自动锁定。可点击 <icon-font type="en-lock" /> 进行解锁。单位：秒，最短 1 秒，最长 120 分钟（7200 秒）。
         </div>
       </template>
       <template #opt>
-        <a-input-number class="input-demo" placeholder="Please Enter" mode="button" read-only
-          v-model="moduleOptions.blockTimeFontSize" />
+        <a-input-number class="input-demo" placeholder="Please Enter" mode="button"
+          :max="120 * 60"
+          :min="1"
+          :readOnly="plugin.isMobile"
+          v-model="moduleOptions.autoLockTimeDiff"
+          @change="onAutoLockTimeDiff"
+        />
       </template>
     </EnSettingsItem>
   </EnSettingsTeleport>
@@ -97,9 +105,11 @@
   import { queryAllByDom } from '@/utils/DOM';
   import { SyDomNodeTypes } from '@/utils/Siyuan';
 
+
   import EnParagraphBlockAttrContainer from './EnParagraphBlockAttrContainer.vue';
   import EnParagraphBlockTime from './EnParagraphBlockTime.vue';
   import EnParagraphBlockLock from './EnParagraphBlockLock.vue';
+  import { usePlugin } from '@/main';
 
   interface ModuleOptions {
     enableBlockTime: boolean
@@ -110,6 +120,8 @@
     autoLockTimeDiff: number
   }
 
+  const plugin = usePlugin()
+
   const moduleName = 'EnParagraphBlock'
   const moduleDisplayName = '段落块相关功能'
   const defaultOptions: ModuleOptions = {
@@ -118,7 +130,7 @@
     defaultBlockType: 'created',
 
     enableBlockLock: false,
-    autoLockTimeDiff: 5,
+    autoLockTimeDiff: 5 * 60,
   }
   const module = useModule(moduleName, defaultOptions)
   const moduleOptions = computed(() => module.value.options as ModuleOptions)
@@ -190,6 +202,12 @@
   onMounted(() => {
     insertBlockTime();
   })
+
+  const onAutoLockTimeDiff = (value) => {
+    if (!value) {
+      moduleOptions.value.autoLockTimeDiff = 60
+    }
+  }
 
 </script>
 

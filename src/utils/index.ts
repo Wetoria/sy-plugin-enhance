@@ -2,7 +2,7 @@ import SettingsVue from '@/components/Settings/SettingDialogContent.vue';
 import { usePlugin } from '@/main';
 import { Dialog } from 'siyuan';
 import { App, createApp, onMounted, ref } from 'vue';
-import ArcoVue from '@arco-design/web-vue';
+import ArcoVue, { Icon } from '@arco-design/web-vue';
 
 let mountedVueDoms = []
 
@@ -24,9 +24,13 @@ export function loadComponentAppendToBody(component) {
   const div = document.createElement('div');
   div.id = 'enApp'
   const app = createApp(component);
-  document.body.appendChild(div);
   app.use(ArcoVue);
+  const IconFont = Icon.addFromIconFontCn({
+    src: '//at.alicdn.com/t/c/font_4500970_pbulxm7linf.js'
+  });
+  app.component('IconFont', IconFont)
   app.mount(div);
+  document.body.appendChild(div);
   saveDom(div, app)
   return div
 }

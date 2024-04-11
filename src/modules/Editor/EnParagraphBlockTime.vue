@@ -15,12 +15,8 @@ const props = defineProps<{
   pDom: HTMLDivElement
 }>()
 
-const FORMAT_TIME = 'YYYY/MM/DD HH:mm:ss'
+const updated = ref(getUpdated(props.pDom))
 
-const updated = computed(() => {
-  const updateTimeStr = props.pDom.getAttribute('updated')
-  return dayjs(updateTimeStr)
-})
 const updatedStr = computed(() => `updated: ${updated.value.format(FORMAT_TIME)}`)
 const created = computed(() => {
   const nodeId = props.pDom.dataset.nodeId
@@ -31,6 +27,20 @@ const created = computed(() => {
 const createdStr = computed(() => `created: ${created.value.format(FORMAT_TIME)}`)
 
 const showCreated = ref(true)
+setInterval(() => {
+    // 每秒更新段落更新时间
+    const newUpdated = getUpdated(props.pDom)
+    updated.value = newUpdated
+  }, 1000)
+</script>
+
+<script lang="ts">
+export const FORMAT_TIME = 'YYYY/MM/DD HH:mm:ss'
+
+export const getUpdated = (pDom) => {
+  const updateTimeStr = pDom.getAttribute('updated')
+  return dayjs(updateTimeStr)
+}
 </script>
 
 <style lang="scss" scoped>

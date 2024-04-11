@@ -11,7 +11,8 @@
 
 <script setup lang="ts">
 import dayjs from 'dayjs';
-import { computed, ref, watchEffect } from 'vue';
+import { ref, watchEffect } from 'vue';
+import { getUpdated } from './EnParagraphBlockTime.vue';
 
 const props = defineProps<{
   pDom: HTMLDivElement
@@ -19,10 +20,7 @@ const props = defineProps<{
   autoLockTimeDiff: number
 }>()
 
-const updated = computed(() => {
-  const updateTimeStr = props.pDom.getAttribute('updated')
-  return dayjs(updateTimeStr)
-})
+const updated = ref(getUpdated(props.pDom))
 
 const lock = (locked: boolean) => {
   const editableDiv = props.pDom.firstChild as HTMLDivElement
@@ -39,6 +37,7 @@ const LOCK_STATUS = {
 }
 const locked  = ref<typeof LOCK_STATUS[keyof typeof LOCK_STATUS]>(LOCK_STATUS.auto)
 const lockedTypes = [LOCK_STATUS.auto, LOCK_STATUS.locked]
+
 const manualSwitchLockStatus = () => {
   if (lockedTypes.includes(locked.value)) {
     locked.value = LOCK_STATUS.unlocked
@@ -48,7 +47,7 @@ const manualSwitchLockStatus = () => {
 }
 const judgeIsOverTime = () => {
   const currentTime = dayjs()
-  const isOverTime = currentTime.subtract(5, 'minute').isAfter(updated.value)
+  const isOverTime = currentTime.subtract(props.autoLockTimeDiff, 'seconds').isAfter(updated.value)
   return isOverTime
 }
 watchEffect(() => {
@@ -61,8 +60,29 @@ watchEffect(() => {
     }
   }
 })
+
+const listenerTimeChangeFlag = ref()
+const listenerTimeChange = () => {
+  if (listenerTimeChangeFlag.value) {
+    clearInterval(listenerTimeChangeFlag.value)
+  }
+  listenerTimeChangeFlag.value = setInterval(() => {
+    // 每秒更新段落更新时间
+    const newUpdated = getUpdated(props.pDom)
+    updated.value = newUpdated
+
+    const isOverTime =judgeIsOverTime()
+    if (isOverTime) {
+      locked.value = LOCK_STATUS.auto
+    } else {
+      locked.value = LOCK_STATUS.unlocked
+    }
+  }, 1000)
+}
+
 watchEffect(() => {
   if (props.enabled) {
+    listenerTimeChange()
     if (locked.value === LOCK_STATUS.auto) {
       if (judgeIsOverTime()) {
         lock(true)
@@ -75,6 +95,7 @@ watchEffect(() => {
       lock(false)
     }
   } else {
+    clearInterval(listenerTimeChangeFlag.value)
     lock(false)
   }
 })

@@ -27,7 +27,7 @@
           class="input-demo"
           placeholder="Please Enter"
           mode="button"
-          read-only
+          :readOnly="plugin.isMobile"
           v-model="moduleOptions.statusBarHeight"
         />
       </template>
@@ -41,7 +41,7 @@
           class="input-demo"
           placeholder="Please Enter"
           mode="button"
-          read-only
+          :readOnly="plugin.isMobile"
           v-model="moduleOptions.toolBarHeight"
         />
       </template>
@@ -55,7 +55,9 @@ import { useEnhancer } from '@/modules/GlobalStatus';
 import { computed, onMounted, watchEffect } from 'vue';
 import EnSettingsTeleport from './Settings/EnSettingsTeleport.vue';
 import EnSettingsItem from './Settings/EnSettingsItem.vue';
+import { usePlugin } from '@/main';
 
+const plugin = usePlugin()
 const EnhancerState = useEnhancer()
 
 interface ModuleOptions {
