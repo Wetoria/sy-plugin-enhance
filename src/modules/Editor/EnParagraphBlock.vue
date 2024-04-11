@@ -123,7 +123,7 @@
   }
   html[data-enhancer-enable-block-time="true"] {
     --timeFontSize: 9px;
-    --rightPos: 2px;
+    --rightPos: -2px;
 
     .enProtyleAttrContainer {
       width: max-content;

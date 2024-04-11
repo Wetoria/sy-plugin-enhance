@@ -1,5 +1,6 @@
 <template>
   <span
+    class="enBlockTimeContainer"
     @click="showCreated = !showCreated"
   >
     {{ showCreated ? createdStr : updatedStr }}
@@ -32,6 +33,20 @@ const createdStr = computed(() => `created: ${created.value.format(FORMAT_TIME)}
 const showCreated = ref(true)
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
+.enBlockTimeContainer {
+  font-family: monospace;
+  position: relative;
+  font-size: var(--timeFontSize);
 
+  &::before {
+    content: '             /  /     :  :  ';
+    white-space: pre;
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-size: var(--timeFontSize);
+    color: var(--sky-blue);
+  }
+}
 </style>
