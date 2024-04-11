@@ -16,7 +16,6 @@
     :name="moduleName"
     :display="moduleDisplayName"
     :module="module"
-    :disableAutoSwitchEnable="true"
   >
     <EnSettingsItem mode="vertical">
       <div>
