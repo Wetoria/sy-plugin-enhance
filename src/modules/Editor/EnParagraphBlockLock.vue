@@ -47,6 +47,9 @@ const manualSwitchLockStatus = () => {
 }
 const judgeIsOverTime = () => {
   const currentTime = dayjs()
+  if (!updated.value) {
+    return false
+  }
   const isOverTime = currentTime.subtract(props.autoLockTimeDiff, 'seconds').isAfter(updated.value)
   return isOverTime
 }
@@ -71,7 +74,7 @@ const listenerTimeChange = () => {
     const newUpdated = getUpdated(props.pDom)
     updated.value = newUpdated
 
-    const isOverTime =judgeIsOverTime()
+    const isOverTime = judgeIsOverTime()
     if (isOverTime) {
       locked.value = LOCK_STATUS.auto
     } else {

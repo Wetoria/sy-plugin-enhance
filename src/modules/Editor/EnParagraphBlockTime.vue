@@ -18,7 +18,7 @@ const props = defineProps<{
 
 const updated = ref(getUpdated(props.pDom))
 
-const updatedStr = computed(() => `updated: ${updated.value.format(FORMAT_TIME)}`)
+const updatedStr = computed(() => updated.value ? `updated: ${updated.value.format(FORMAT_TIME)}` : '')
 const created = computed(() => {
   const nodeId = props.pDom.dataset.nodeId
   const createdInId = nodeId.split('-')[0]
@@ -43,6 +43,9 @@ export const FORMAT_TIME = 'YYYY/MM/DD HH:mm:ss'
 
 export const getUpdated = (pDom) => {
   const updateTimeStr = pDom.getAttribute('updated')
+  if (!updateTimeStr) {
+    return
+  }
   return dayjs(updateTimeStr)
 }
 </script>
