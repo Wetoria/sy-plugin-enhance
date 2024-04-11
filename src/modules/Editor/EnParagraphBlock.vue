@@ -13,14 +13,55 @@
         <a-switch v-model="moduleOptions.enableBlockTime" />
       </template>
     </EnSettingsItem>
-
     <EnSettingsItem mode="vertical">
       <div>
-        编辑时间字体大小
+        时间类型
       </div>
       <template #desc>
         <div>
-          段落块编辑时间的字体大小。
+          默认展示的时间类型，更新时间或创建时间。
+        </div>
+      </template>
+      <template #opt>
+        <a-input-number class="input-demo" placeholder="Please Enter" mode="button" read-only
+          v-model="moduleOptions.blockTimeFontSize" />
+      </template>
+    </EnSettingsItem>
+    <EnSettingsItem mode="vertical">
+      <div>
+        内容字体大小
+      </div>
+      <template #desc>
+        <div>
+          段落块右上角内容的字体大小。（仅限插件内容，如段落时间、段落锁）
+        </div>
+      </template>
+      <template #opt>
+        <a-input-number class="input-demo" placeholder="Please Enter" mode="button" read-only
+          v-model="moduleOptions.blockTimeFontSize" />
+      </template>
+    </EnSettingsItem>
+
+    <EnSettingsItem>
+      <div>
+        段落锁
+      </div>
+      <template #desc>
+        <div>
+          是否启用段落锁 <icon-font type="en-lock" /> 功能。
+        </div>
+      </template>
+      <template #opt>
+        <a-switch v-model="moduleOptions.enableBlockLock" />
+      </template>
+    </EnSettingsItem>
+    <EnSettingsItem mode="vertical">
+      <div>
+        自动锁定的时间
+      </div>
+      <template #desc>
+        <div>
+          段落的更新时间如果早于设定的时间，将会被自动锁定。可点击 <icon-font type="en-lock" /> 进行解锁。单位：分钟
         </div>
       </template>
       <template #opt>
@@ -34,7 +75,15 @@
       v-for="paragraphBlock of paragraphListRef"
       :el="paragraphBlock"
     >
-      <EnParagraphBlockTime :pDom="paragraphBlock" />
+      <EnParagraphBlockLock
+        :pDom="paragraphBlock"
+        :enabled="moduleOptions.enableBlockLock"
+        :autoLockTimeDiff="moduleOptions.autoLockTimeDiff"
+      />
+      <EnParagraphBlockTime
+        :pDom="paragraphBlock"
+        v-if="moduleOptions.enableBlockTime"
+      />
     </EnParagraphBlockAttrContainer>
   </div>
 </template>
@@ -50,10 +99,15 @@
 
   import EnParagraphBlockAttrContainer from './EnParagraphBlockAttrContainer.vue';
   import EnParagraphBlockTime from './EnParagraphBlockTime.vue';
+  import EnParagraphBlockLock from './EnParagraphBlockLock.vue';
 
   interface ModuleOptions {
     enableBlockTime: boolean
     blockTimeFontSize: number
+    defaultBlockType: 'created' | 'updated'
+
+    enableBlockLock: boolean
+    autoLockTimeDiff: number
   }
 
   const moduleName = 'EnParagraphBlock'
@@ -61,6 +115,10 @@
   const defaultOptions: ModuleOptions = {
     enableBlockTime: false,
     blockTimeFontSize: 9,
+    defaultBlockType: 'created',
+
+    enableBlockLock: false,
+    autoLockTimeDiff: 5,
   }
   const module = useModule(moduleName, defaultOptions)
   const moduleOptions = computed(() => module.value.options as ModuleOptions)
@@ -86,11 +144,32 @@
     dom.dataset.enModified = 'true'
 
   }
+
+  const FOCUS_CLASS_NAME = 'block-focus'
+  const lasFocusDom = ref<HTMLDivElement>()
+  const bindClickFocusEvent = (dom: HTMLDivElement) => {
+    // @ts-ignore
+    if (dom.bindedFocusEvent) {
+      return
+    }
+    dom.addEventListener('click', () => {
+      if (lasFocusDom.value) {
+        lasFocusDom.value.classList.toggle(FOCUS_CLASS_NAME, false)
+      }
+      dom.classList.toggle(FOCUS_CLASS_NAME, true)
+      lasFocusDom.value = dom
+    })
+    // @ts-ignore
+    dom.bindedFocusEvent = true
+  }
+
   watchEffect(() => {
     const paragraphList = paragraphListRef.value
 
     paragraphList.forEach((dom: HTMLDivElement) => {
       appendEnProtyleAttrContainer(dom)
+
+      bindClickFocusEvent(dom)
     })
   })
 
@@ -124,6 +203,7 @@
     .enProtyleAttrContainer {
       width: max-content;
       display: flex;
+      gap: 4px;
       font-size: var(--timeFontSize);
     }
 
@@ -132,6 +212,11 @@
       .enProtyleAttrContainer {
         margin-right: -2px;
       }
+    }
+  }
+  html[data-en-paragraph-block-lock="true"] {
+    .block-focus {
+      border-right: 1px solid var(--sky-blue);
     }
   }
 </style>
