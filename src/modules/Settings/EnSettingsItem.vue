@@ -71,7 +71,7 @@ defineProps<{
   display: flex;
   width: 100%;
   min-height: 32px;
-  align-items: baseline;
+  align-items: flex-start;
   gap: var(--en-gap);
 
   .settingItemDescArea {
@@ -79,6 +79,9 @@ defineProps<{
 
     .settingTitle {
       font-weight: bold;
+      display: flex;
+      align-items: center;
+      height: 28px;
     }
 
     .settingDesc {
@@ -90,6 +93,8 @@ defineProps<{
   .settingItemOptionArea {
     display: flex;
     justify-content: flex-end;
+    align-items: center;
+    height: 28px;
 
     min-width: 20%;
   }

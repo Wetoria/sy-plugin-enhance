@@ -2,11 +2,11 @@
   <EnSettingsTeleport :name="moduleName" :display="moduleDisplayName" :module="module">
     <EnSettingsItem>
       <div>
-        显示编辑时间
+        显示段落块时间
       </div>
       <template #desc>
         <div>
-          是否显示块的编辑时间。
+          是否显示块的创建时间或编辑时间。（点击时间部分进行切换）
         </div>
       </template>
       <template #opt>
@@ -14,7 +14,7 @@
       </template>
     </EnSettingsItem>
 
-    <EnSettingsItem>
+    <EnSettingsItem mode="vertical">
       <div>
         编辑时间字体大小
       </div>
@@ -66,11 +66,8 @@
   const moduleOptions = computed(() => module.value.options as ModuleOptions)
 
   watchEffect(() => {
-    const isEnableBlockTime = moduleOptions.value.enableBlockTime
-    document.documentElement.dataset.enhancerEnableBlockTime = `${isEnableBlockTime}`
-    if (isEnableBlockTime) {
-      document.documentElement.style.setProperty('--timeFontSize', `${moduleOptions.value.blockTimeFontSize}px`)
-    }
+    document.documentElement.dataset.enParagraphBlock = `${module.value.enabled}`
+    document.documentElement.style.setProperty('--timeFontSize', `${moduleOptions.value.blockTimeFontSize}px`)
   })
 
   const paragraphListRef = ref([])
@@ -121,9 +118,8 @@
   .enProtyleAttrContainer {
     display: none;
   }
-  html[data-enhancer-enable-block-time="true"] {
+  html[data-en-paragraph-block="true"] {
     --timeFontSize: 9px;
-    --rightPos: -2px;
 
     .enProtyleAttrContainer {
       width: max-content;
@@ -134,7 +130,7 @@
     div[data-type="NodeListItem"] {
 
       .enProtyleAttrContainer {
-        margin-right: var(--rightPos);
+        margin-right: -2px;
       }
     }
   }

@@ -67,12 +67,26 @@ const onDrawerOpen = () => {
     return
   }
 
-  const at = new AnyTouch(el, { preventDefault: false });
+  const at = new AnyTouch(el, {
+    preventDefault: false,
+  });
+  const drawerBody: HTMLDivElement = el.querySelector('.arco-drawer-body')
+
+  const drawerBodyScrollTopOnStart = ref(0)
+  at.on('panstart', () => {
+    drawerBodyScrollTopOnStart.value = drawerBody.scrollTop
+  })
   at.on('pan', (e) => {
     if (!settingDom) {
       return
     }
-    const movableDis = e.displacementY > 0 ? e.displacementY : 0
+
+    if (drawerBody.scrollTop > 0) {
+      return
+    }
+
+    const dis = e.displacementY - drawerBodyScrollTopOnStart.value
+    const movableDis = dis > 0 ? dis : 0
     settingDom.style.transform = `translateY(${movableDis}px)`
   });
   at.on('panend', (e) => {
@@ -80,7 +94,8 @@ const onDrawerOpen = () => {
       return
     }
 
-    if (e.displacementY > 200) {
+    const dis = e.displacementY - drawerBodyScrollTopOnStart.value
+    if (dis > 200) {
       settingDom.style.transform = `translateY(100%)`
       editingSettings.value = false
     } else {
@@ -123,5 +138,13 @@ export const closeSettings = () => {
   display: flex;
   justify-content: flex-end;
   gap: var(--en-gap);
+}
+</style>
+
+<style lang="scss">
+.enSettingDrawer {
+  .arco-drawer-body {
+    overscroll-behavior: none;
+  }
 }
 </style>

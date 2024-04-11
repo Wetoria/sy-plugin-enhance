@@ -15,7 +15,7 @@
         <a-switch v-model="moduleOptions.enableBackgroundImg" />
       </template>
     </EnSettingsItem>
-    <EnSettingsItem>
+    <EnSettingsItem mode="vertical">
       <div>
         背景透明度
       </div>
