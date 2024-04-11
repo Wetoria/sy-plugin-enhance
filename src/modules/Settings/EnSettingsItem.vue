@@ -96,7 +96,7 @@ defineProps<{
     align-items: center;
     height: 28px;
 
-    min-width: 20%;
+    min-width: 240px;
   }
 
   &[data-isMobile="true"] {
