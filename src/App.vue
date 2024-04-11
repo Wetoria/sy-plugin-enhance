@@ -18,14 +18,15 @@
       <!-- 全平台 -->
       <template>
         <EnSettings />
-        <DailyNote />
         <EnSiyuanEntry />
-        <LifeLog />
-        <HackEditor />
+        <EnEditor />
         <EnBackgroundImg />
         <EnOthers />
         <EnQuickNote />
         <ArcoDartkTheme />
+
+        <DailyNote />
+        <LifeLog />
       </template>
 
       <!-- 仅移动端 -->
@@ -54,7 +55,7 @@ import LifeLog from './modules/LifeLog/LifeLog.vue';
 import FixedDocArea from './components/FixedDocArea.vue';
 import HackUI from './components/HackSiyuan/HackUI.vue';
 import { syncLocalStorage, useSettings } from './logic/Settings.ts';
-import HackEditor from './components/HackEditor.vue';
+// import HackEditor from './components/HackEditor.vue';
 import { listenerViewport, useViewportInfo } from './logic/Viewport';
 import TestArco, { TestArcoType, testFunc } from './modules/Test/TestArco.vue';
 import ArcoDartkTheme from './modules/ArcoDartkTheme.vue';
@@ -64,6 +65,7 @@ import EnSettings from './modules/Settings/EnSettings.vue';
 import EnOthers from './modules/EnOthers.vue';
 import EnBackgroundImg from './modules/Background/EnBackgroundImg.vue';
 import EnQuickNote from './modules/QuickNote/EnQuickNote.vue';
+import EnEditor from './modules/Editor/EnEditor.vue';
 const settings = useSettings()
 
 const plugin = usePlugin()

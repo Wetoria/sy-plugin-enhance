@@ -5,39 +5,6 @@
     <div
       class="SettingsScrollContent"
     >
-      <SettingItemAreaHeading>
-        其他
-      </SettingItemAreaHeading>
-      <SettingItem>
-        <div>
-          启用样式效果
-        </div>
-        <template #desc>
-          <div>
-            是否启用双链颜色、双链增加中括号等样式。
-          </div>
-        </template>
-        <template #opt>
-          <SyCheckbox v-model="settings.useVipStyle" />
-        </template>
-      </SettingItem>
-
-      <div class="sperator"></div>
-
-      <SettingItem>
-        <div>
-          锁定段落块
-        </div>
-        <template #desc>
-          <div>
-            是否开启锁定段落块为不可编辑。
-          </div>
-        </template>
-        <template #opt>
-          <SyCheckbox v-model="settings.enableLockParagraph" />
-        </template>
-      </SettingItem>
-
       <!-- <SettingItem>
         <div>
           编辑完自动同步
@@ -54,44 +21,6 @@
           <SyCheckbox v-model="settings.enableAutoSync" />
         </template>
       </SettingItem> -->
-
-      <div class="sperator"></div>
-
-      <SettingItemAreaHeading>
-        段落编辑时间
-      </SettingItemAreaHeading>
-      <SettingItem>
-        <div>
-          显示编辑时间
-        </div>
-        <template #desc>
-          <div>
-            是否显示块的编辑时间。
-          </div>
-        </template>
-        <template #opt>
-          <SyCheckbox v-model="settings.enableBlockTime" />
-        </template>
-      </SettingItem>
-
-      <SettingItem mode="vertical">
-        <div>
-          编辑时间字体大小
-        </div>
-        <template #desc>
-          <div>
-            块编辑时间的字体大小。
-          </div>
-        </template>
-        <template #opt>
-          <SyInput
-            v-model="settings.blockTimeFontSize"
-            type="number"
-          />
-        </template>
-      </SettingItem>
-
-      <div class="sperator"></div>
 
       <SettingItemAreaHeading>
         底部反链
@@ -277,23 +206,6 @@
 
       <div class="sperator"></div>
 
-    <SettingItemAreaHeading>
-      移动端
-    </SettingItemAreaHeading>
-    <SettingItem>
-      <div>
-        导航栏显示名称
-      </div>
-      <template #desc>
-        <div>
-          是否显示导航栏按钮的名称。
-        </div>
-      </template>
-      <template #opt>
-        <SyCheckbox v-model="settings.showMobileNavLabel" />
-      </template>
-    </SettingItem>
-
     <!-- <SettingItem mode="complex">
       <div>
         导航栏文档切换模式
@@ -320,18 +232,6 @@
         </template>
       </SettingItem> -->
     </div>
-  </div>
-  <div
-    class="aboutArea"
-  >
-    <span>
-      使用说明：
-      <a href="https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse">{{plugin.version ? `v${plugin.version}` : ''}}</a>
-    </span>
-    <span>
-      作者：
-      <a href="https://wetoria.me">Wetoria</a>
-    </span>
   </div>
 </template>
 

@@ -93,6 +93,9 @@ export function useModule(moduleName: string, defaultOptions: object) {
   if (!module.value) {
     module.value = registerModule(moduleName, defaultOptions)
   }
+  // 刷一次默认值设置，防止出现问题
+  // 比如 module 的数据已经保存过了，但是更新了代码。
+  module.value.defaultOptions = defaultOptions
   return module
 }
 
