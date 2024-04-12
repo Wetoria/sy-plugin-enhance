@@ -1,0 +1,113 @@
+<template>
+  <a-collapse-item
+    class="backlinkDocBlock"
+    header="底部反链"
+    :key="backlink.id"
+  >
+    <template #header>
+      <li class="b3-list-item b3-list-item--hide-action">
+        <span
+          class="b3-list-item__text backlinkDocTitle"
+          @click="jumpToDoc($event, backlink.id)"
+        >
+          {{ backlink.name }}
+        </span>
+      </li>
+    </template>
+    <div
+      ref="renderRef"
+      @mouseleave="onMouseLeave"
+    ></div>
+  </a-collapse-item>
+</template>
+
+<script setup lang="ts">
+import { usePlugin } from '@/main';
+import { hideGutterOnTarget } from '@/utils/DOM';
+import { openDocById } from '@/utils/Note';
+import { Protyle } from 'siyuan';
+import { computed, onBeforeUnmount, ref, watchEffect } from 'vue';
+import { IBacklink } from './EnProtyleBottomBackLink.vue';
+import { request } from '@/api';
+
+
+const props = defineProps<{
+  backlink: IBacklink
+  activedBacklinkKeys: (string | number)[]
+  currentDocId: string
+}>()
+
+const plugin = usePlugin()
+const isExpand = computed(() => {
+  return !!props.activedBacklinkKeys.find(i => i === props.backlink.id)
+})
+
+const jumpToDoc = (event: MouseEvent, docId) => {
+  event.preventDefault();
+  event.stopPropagation();
+
+  openDocById(docId)
+}
+
+const onMouseLeave = (event) => {
+  hideGutterOnTarget(event.target)
+}
+
+const renderRef = ref()
+const protyleRef = ref<Protyle>()
+
+// @ts-ignore
+const backlinks = ref([])
+
+watchEffect(() => {
+  console.log('isExpand is ', isExpand.value)
+  if (isExpand.value) {
+    protyleRef.value = new Protyle(plugin.app, renderRef.value, {
+      blockId: props.currentDocId,
+      // @ts-ignore
+      backlinkData: backlinks.value,
+      render: {
+          background: false,
+          title: false,
+          gutter: true,
+          scroll: false,
+          breadcrumb: false,
+      }
+    })
+  } else {
+    if (protyleRef.value) {
+      protyleRef.value.destroy()
+    }
+  }
+})
+
+watchEffect(async () => {
+  const { backlinks: backlinksRes } = await request('/api/ref/getBacklinkDoc', {
+    defID: props.currentDocId,
+    refTreeID: props.backlink.id,
+    keyword: '',
+  })
+  backlinks.value = backlinksRes
+})
+onBeforeUnmount(() => {
+  if (protyleRef.value) {
+    protyleRef.value.destroy()
+  }
+})
+</script>
+
+<style lang="scss" scoped>
+.backlinkDocBlock {
+  :deep(.arco-collapse-item-content) {
+    padding: unset;
+
+    .protyle {
+      min-height: unset;
+
+      .protyle-wysiwyg {
+        padding: 8px 16px;
+      }
+    }
+  }
+}
+</style>

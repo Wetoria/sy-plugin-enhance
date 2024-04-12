@@ -4,8 +4,10 @@
     <EnProtyleBottomIndicator
       :blockId="protyle.block.id"
     />
-    <!-- <EnProtyleBottomBackLink
-    /> -->
+    <EnProtyleBottomBackLink
+      :detail="protyleBottom.detail"
+      :element="protyleBottom.element"
+    />
   </div>
 </template>
 
@@ -73,9 +75,11 @@ watchEffect(() => {
 .enhanceProtyleBottomContainer {
   display: flex;
   flex-direction: column;
-  background-color: red;
 
   .ProtyleBottomContainer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--en-gap);
     padding-bottom: 30px;
   }
 }
