@@ -4,7 +4,6 @@
 import { onMounted, watchEffect } from 'vue';
 import { queryAllByDom } from '@/utils/DOM';
 import { usePlugin } from '@/main';
-import { useSettings } from '@/logic/Settings';
 
 const plugin = usePlugin()
 
@@ -71,6 +70,7 @@ import { EnhanceIOperation, SyDomNodeTypes, onEditorUpdate } from '../../utils/S
 import { getBlockAttrs, request, setBlockAttrs } from '@/api'
 import { getFrontend } from 'siyuan'
 import dayjs from 'dayjs'
+import { useSettings } from '../Settings/EnSettings.vue';
 
 const lifelogPrefix = 'custom-lifelog-'
 const lifelogAttrTime = `${lifelogPrefix}time`

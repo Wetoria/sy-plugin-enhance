@@ -31,14 +31,13 @@
 
 <script setup lang="ts">
 import { computed, useSlots, watch } from 'vue';
-import { registerSettingRef } from './EnSettings.vue';
+import { EnModuleType, registerSettingRef } from './EnSettings.vue';
 import EnSettingsItemAreaHeading from './EnSettingsItemAreaHeading.vue';
-import { EnModule } from '@/logic/Settings';
 
 const props = defineProps<{
   name: string
   display: string
-  module: EnModule
+  module: EnModuleType
 }>()
 
 const settingRef = registerSettingRef(props.name)

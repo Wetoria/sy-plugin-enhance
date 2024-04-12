@@ -37,11 +37,11 @@
 </template>
 
 <script setup lang="ts">
-import { useModule } from '@/logic/Settings';
 import EnSettingsTeleport from '../Settings/EnSettingsTeleport.vue';
 import { computed, watch, watchEffect } from 'vue';
 import EnSettingsItem from '../Settings/EnSettingsItem.vue';
 import { usePlugin } from '@/main';
+import { useModule } from '../Settings/EnSettings.vue';
 
 const plugin = usePlugin()
 

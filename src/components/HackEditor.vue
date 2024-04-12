@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import { useSettings } from '@/logic/Settings';
+import { useSettings } from '@/modules/Settings/EnSettings.vue';
 import { debounce } from '@/utils';
 import { queryAllByDom } from '@/utils/DOM';
 import { SyDomNodeTypes } from '@/utils/Siyuan';

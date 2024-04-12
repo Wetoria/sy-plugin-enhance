@@ -180,7 +180,8 @@ import {
 } from '@/utils';
 import { openDocById } from '@/utils/Note';
 import BacklinkFilterOptionTag from './Backlink/BacklinkFilterOptionTag.vue';
-import { useSettings } from '@/logic/Settings';
+import { useSettings } from '@/modules/Settings/EnSettings.vue';
+
 
 
 interface Node {

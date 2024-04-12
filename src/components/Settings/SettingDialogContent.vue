@@ -242,7 +242,7 @@ import SettingItem from '../../modules/Settings/EnSettingsItem.vue';
 import SyInput from '../SiyuanTheme/SyInput.vue';
 import { usePlugin } from '@/main';
 import SettingItemAreaHeading from '../../modules/Settings/EnSettingsItemAreaHeading.vue';
-import { useSettings } from '@/logic/Settings';
+import { useSettings } from '@/modules/Settings/EnSettings.vue';
 
 const settings = useSettings()
 

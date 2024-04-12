@@ -108,7 +108,6 @@
 <script setup lang="ts">
   import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue';
   import EnSettingsTeleport from '@/modules/Settings/EnSettingsTeleport.vue';
-  import { useModule } from '@/logic/Settings';
   import { computed, onMounted, ref, watchEffect } from 'vue';
   import { debounce } from '@/utils';
   import { queryAllByDom } from '@/utils/DOM';
@@ -119,6 +118,7 @@
   import EnParagraphBlockTime from './EnParagraphBlockTime.vue';
   import EnParagraphBlockLock from './EnParagraphBlockLock.vue';
   import { usePlugin } from '@/main';
+import { useModule } from '../Settings/EnSettings.vue';
 
   interface ModuleOptions {
     enableBlockTime: boolean

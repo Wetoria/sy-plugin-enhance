@@ -4,6 +4,8 @@
     <EnProtyleBottomIndicator
       :blockId="protyle.block.id"
     />
+    <!-- <EnProtyleBottomBackLink
+    /> -->
   </div>
 </template>
 
@@ -11,7 +13,8 @@
 import { computed, watchEffect } from 'vue';
 import EnProtyleBottomIndicator from './EnProtyleBottomIndicator.vue';
 import { IProtyle } from 'siyuan/types';
-import { useSettings } from '@/logic/Settings';
+import EnProtyleBottomBackLink from './BackLink/EnProtyleBottomBackLink.vue';
+import { useSettings } from '@/modules/Settings/EnSettings.vue';
 
 const settings = useSettings()
 

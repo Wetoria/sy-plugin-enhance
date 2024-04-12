@@ -72,7 +72,8 @@ import { computed, ref, watchEffect } from 'vue';
 import SyIcon from './SiyuanTheme/SyIcon.vue';
 import { usePlugin } from '@/main';
 import { openDocById } from '@/utils/Note';
-import { useSettings } from '@/logic/Settings';
+import { useSettings } from '@/modules/Settings/EnSettings.vue';
+
 
 const plugin = usePlugin()
 

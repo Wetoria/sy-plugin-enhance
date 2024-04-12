@@ -40,9 +40,8 @@
 <script setup lang="ts">
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue';
 import EnSettingsTeleport from './Settings/EnSettingsTeleport.vue';
-import { useModule } from '@/logic/Settings';
 import { computed, watchEffect } from 'vue';
-import { switchState } from './Settings/EnSettings.vue';
+import { switchState, useModule } from './Settings/EnSettings.vue';
 
 interface ModuleOptions {
   useVipStyle: boolean

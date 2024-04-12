@@ -5,7 +5,7 @@ import { registerProtyleBottomArea } from './utils/DOM';
 
 import AppVue from './App.vue';
 import { reactive } from 'vue';
-import { loadSettings } from './logic/Settings';
+import { loadSettings } from './modules/Settings/EnSettings.vue';
 
 let pluginRef: VPlugin = null
 export function registerPlugin(plugin) {

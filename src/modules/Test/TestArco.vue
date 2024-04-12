@@ -11,8 +11,8 @@ const settings = useSettings()
 
 
 <script lang="ts">
-import { useSettings } from '@/logic/Settings';
 import { ref } from 'vue';
+import { useSettings } from '../Settings/EnSettings.vue';
 
 export interface TestArcoType {
   test: boolean;

@@ -41,8 +41,7 @@ import { ref, watchEffect } from 'vue';
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import { computed } from 'vue';
 import { useDocHistory } from '@/utils/History'
-import { useSettings } from '@/logic/Settings';
-import { openSettings } from '@/modules/Settings/EnSettings.vue';
+import { openSettings, useSettings } from '@/modules/Settings/EnSettings.vue';
 import { createTodayDailyNote, jumpToNextDailyNote, jumpToPrevDailyNote } from '@/modules/DailyNote/DailyNote.vue';
 import { openSetting } from '@/utils';
 
