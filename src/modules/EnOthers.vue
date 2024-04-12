@@ -42,6 +42,7 @@ import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue';
 import EnSettingsTeleport from './Settings/EnSettingsTeleport.vue';
 import { useModule } from '@/logic/Settings';
 import { computed, watchEffect } from 'vue';
+import { switchState } from './Settings/EnSettings.vue';
 
 interface ModuleOptions {
   useVipStyle: boolean
@@ -58,7 +59,7 @@ const module = useModule(moduleName, defaultOptions)
 const moduleOptions = computed(() => module.value.options as ModuleOptions)
 
 watchEffect(() => {
-  document.documentElement.dataset.enhancer = `${moduleOptions.value.useVipStyle}`
+  switchState('enhancer', moduleOptions.value.useVipStyle)
 })
 
 </script>

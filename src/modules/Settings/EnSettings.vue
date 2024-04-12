@@ -53,7 +53,7 @@
 <script setup lang="ts">
 import EnDivider from '@/components/EnDivider.vue';
 import { usePlugin } from '@/main';
-import { computed, ref } from 'vue';
+import { computed, ref, watchEffect } from 'vue';
 import AnyTouch from 'any-touch';
 import { useSettings } from '@/logic/Settings';
 
@@ -73,6 +73,10 @@ const onTitleClicked = () => {
     clickNum.value = 0
   }, 1000)
 }
+
+watchEffect(() => {
+  switchState('enDebugging', settings.value.isDebugging)
+})
 
 const getSettingDrawer = () => document.querySelector('.arco-drawer') as HTMLDivElement
 
@@ -143,6 +147,10 @@ export const openSettings = () => {
 
 export const closeSettings = () => {
   editingSettings.value = false;
+}
+
+export const switchState = (key, value) => {
+  document.documentElement.dataset[key] = `${value}`
 }
 </script>
 
