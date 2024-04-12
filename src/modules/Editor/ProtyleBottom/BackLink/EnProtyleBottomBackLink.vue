@@ -7,7 +7,7 @@
   >
     <a-collapse-item
       class="backlinkAreaCollapse"
-      header="反链"
+      :header="`反链 (${backlinkRes.linkRefsCount})`"
       key="bottomBackLinkArea"
     >
       <template #extra>
