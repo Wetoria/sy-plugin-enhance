@@ -12,12 +12,12 @@
     >
       <template #extra>
         <div>
-          <a-button @click.stop type="text" size="mini">
+          <!-- <a-button @click.stop type="text" size="mini">
             <SyIcon name="iconExpand" />
           </a-button>
           <a-button @click.stop type="text" size="mini">
             <SyIcon name="iconContract" />
-          </a-button>
+          </a-button> -->
           <a-button
             @click.stop="switchFilterShown" type="text" size="mini"
             v-if="enableBacklinkFilter"
@@ -163,7 +163,8 @@ const activedBacklinkKeys = ref([])
 watchEffect(() => {
   const keys = []
   // TODO 改成可配置
-  for (let i = 0; i < 10; i++) {
+  const len = backlinks.value.length
+  for (let i = 0; i < len; i++) {
     const item = backlinks.value[i]
     keys.push(item.id)
   }
