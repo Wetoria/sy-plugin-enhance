@@ -1,6 +1,6 @@
 <template>
   <span
-    class="enBlockTimeContainer"
+    :class="`enBlockTimeContainer ${updatedStr ? 'updated' : ''}`"
     @click="showCreated = !showCreated"
   >
     {{ showCreated ? createdStr : updatedStr }}
@@ -56,14 +56,16 @@ export const getUpdated = (pDom) => {
   position: relative;
   font-size: var(--timeFontSize);
 
-  &::before {
-    content: '             /  /     :  :  ';
-    white-space: pre;
-    position: absolute;
-    left: 0;
-    top: 0;
-    font-size: var(--timeFontSize);
-    color: var(--sky-blue);
+  &.updated {
+    &::before {
+      content: '             /  /     :  :  ';
+      white-space: pre;
+      position: absolute;
+      left: 0;
+      top: 0;
+      font-size: var(--timeFontSize);
+      color: var(--sky-blue);
+    }
   }
 }
 </style>
