@@ -21,6 +21,7 @@
     "@vue/eslint-config-typescript": "^12.0.0",
     "@vue/tsconfig": "^0.4.0",
     "eslint": "^8.42.0",
+    "eslint-plugin-vue": "^9.24.1",
     "fast-glob": "^3.2.12",
     "glob": "^7.2.3",
     "minimist": "^1.2.8",
@@ -37,9 +38,9 @@
   "dependencies": {
     "@arco-design/web-vue": "^2.53.3",
     "@arco-plugins/vite-vue": "^1.4.5",
+    "any-touch": "2.2.0",
     "dayjs": "^1.11.10",
     "vconsole": "^3.15.1",
-    "any-touch": "2.2.0",
     "vue": "^3.3.8"
   }
 }

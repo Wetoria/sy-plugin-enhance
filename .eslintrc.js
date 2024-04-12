@@ -1,7 +1,8 @@
 module.exports = {
+  root: true,
   extends: [
-    'plugin:vue/vue3-essential',
     "eslint:recommended",
+    'plugin:vue/vue3-essential',
     "plugin:@typescript-eslint/recommended",
     '@vue/eslint-config-typescript',
     '@vue/eslint-config-prettier/skip-formatting',
@@ -12,17 +13,13 @@ module.exports = {
   parser: "@typescript-eslint/parser",
 
   overrides: [
-    {
-      files: ["*.svelte"],
-      parser: "svelte-eslint-parser",
-      // Parse the script in `.svelte` as TypeScript by adding the following configuration.
-      parserOptions: {
-        parser: "@typescript-eslint/parser",
-      },
-    },
   ],
 
-  plugins: ["@typescript-eslint", "prettier"],
+  plugins: [
+    "vue",
+    "@typescript-eslint",
+    // "prettier",
+  ],
 
   rules: {
     // Note: you must disable the base rule as it can report incorrect errors
@@ -36,5 +33,12 @@ module.exports = {
     "@typescript-eslint/no-explicit-any": "off",
     "turbo/no-undeclared-env-vars": "off",
     "prettier/prettier": "error",
+    "vue/max-attributes-per-line": ["error", {
+      "singleline": 1, // 单行元素每个属性都要放在新行
+      "multiline": {
+        "max": 1, // 多行元素每个属性都要放在新行
+        "allowFirstLine": false // 不允许在第一行写属性
+      }
+    }]
   },
 }
