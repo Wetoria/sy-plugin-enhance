@@ -1,5 +1,5 @@
 <template>
-  <EnSettingsTeleport
+  <EnSettingsTeleportModule
     :name="moduleName"
     :display="moduleDisplayName"
     :module="module"
@@ -32,14 +32,14 @@
         <a-switch v-model="moduleOptions.enableLockParagraph" />
       </template>
     </EnSettingsItem>
-  </EnSettingsTeleport>
+  </EnSettingsTeleportModule>
 </template>
 
 
 
 <script setup lang="ts">
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue';
-import EnSettingsTeleport from './Settings/EnSettingsTeleport.vue';
+import EnSettingsTeleportModule from './Settings/EnSettingsTeleportModule.vue';
 import { computed, watchEffect } from 'vue';
 import { switchState, useModule } from './Settings/EnSettings.vue';
 

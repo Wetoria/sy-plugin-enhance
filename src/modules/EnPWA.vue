@@ -12,7 +12,7 @@
       ></div>
     </div>
   </Teleport>
-  <EnSettingsTeleport
+  <EnSettingsTeleportModule
     :name="moduleName"
     :display="moduleDisplayName"
     :module="module"
@@ -45,13 +45,13 @@
         />
       </template>
     </EnSettingsItem>
-  </EnSettingsTeleport>
+  </EnSettingsTeleportModule>
 </template>
 
 <script setup lang="ts">
 import { useEnhancer } from '@/modules/GlobalStatus';
 import { computed, onMounted, watchEffect } from 'vue';
-import EnSettingsTeleport from './Settings/EnSettingsTeleport.vue';
+import EnSettingsTeleportModule from './Settings/EnSettingsTeleportModule.vue';
 import EnSettingsItem from './Settings/EnSettingsItem.vue';
 import { usePlugin } from '@/main';
 import { useModule } from './Settings/EnSettings.vue';

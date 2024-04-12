@@ -2,7 +2,7 @@
   <Teleport to="html">
     <div class="enBackground"></div>
   </Teleport>
-  <EnSettingsTeleport
+  <EnSettingsTeleportModule
     :name="moduleName"
     :display="moduleDisplayName"
     :module="module"
@@ -33,11 +33,11 @@
         />
       </template>
     </EnSettingsItem>
-  </EnSettingsTeleport>
+  </EnSettingsTeleportModule>
 </template>
 
 <script setup lang="ts">
-import EnSettingsTeleport from '../Settings/EnSettingsTeleport.vue';
+import EnSettingsTeleportModule from '../Settings/EnSettingsTeleportModule.vue';
 import { computed, watch, watchEffect } from 'vue';
 import EnSettingsItem from '../Settings/EnSettingsItem.vue';
 import { usePlugin } from '@/main';

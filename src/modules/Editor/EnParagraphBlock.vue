@@ -1,5 +1,5 @@
 <template>
-  <EnSettingsTeleport :name="moduleName" :display="moduleDisplayName" :module="module">
+  <EnSettingsTeleportModule :name="moduleName" :display="moduleDisplayName" :module="module">
     <EnSettingsItem>
       <div>
         显示段落块时间
@@ -85,7 +85,7 @@
         />
       </template>
     </EnSettingsItem>
-  </EnSettingsTeleport>
+  </EnSettingsTeleportModule>
   <div>
     <EnParagraphBlockAttrContainer
       v-for="paragraphBlock of paragraphListRef"
@@ -107,7 +107,7 @@
 
 <script setup lang="ts">
   import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue';
-  import EnSettingsTeleport from '@/modules/Settings/EnSettingsTeleport.vue';
+  import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue';
   import { computed, onMounted, ref, watchEffect } from 'vue';
   import { debounce } from '@/utils';
   import { queryAllByDom } from '@/utils/DOM';
