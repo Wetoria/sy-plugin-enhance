@@ -35,10 +35,10 @@ function enableSiyuanTouchMove() {
 function hackSiyuanMobile() {
   // disableSiyuanTouchMove()
 
-  const statusDom = querySelectorByBody('#status')
-  if (statusDom) {
-    hideDom(statusDom)
-  }
+  // const statusDom = querySelectorByBody('#status')
+  // if (statusDom) {
+  //   hideDom(statusDom)
+  // }
 }
 
 onMounted(() => {
