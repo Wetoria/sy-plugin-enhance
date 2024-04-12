@@ -14,9 +14,9 @@ import {
 import { createDailyNote, lsNotebooks, request } from '@/api';
 import { useEnhancer } from '@/modules/GlobalStatus';
 import { getDailyNote, openDoc, openDocById } from '@/utils/Note';
-import { jumpToProtyleBottom } from '@/utils';
 import { onMounted } from 'vue';
 import EnSettingsTeleport from '../Settings/EnSettingsTeleport.vue';
+import { jumpToProtyleBottom } from '../Editor/ProtyleBottom/EnProtyleBottomIndicator.vue';
 
 const plugin = usePlugin()
 onMounted(() => {

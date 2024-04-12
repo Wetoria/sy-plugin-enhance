@@ -164,24 +164,3 @@ export function debounce(fn, time = 500) {
     }, time)
   }
 }
-
-export function jumpToProtyleBottom(docId) {
-  if (!docId) {
-    return
-  }
-
-  const plugin = usePlugin()
-  let docTargetDom = document.querySelector(`.enhanceToBottomIndicator[data-node-id="${docId}"]`)
-
-  if (!docTargetDom) {
-    return
-  }
-
-  docTargetDom.scrollIntoView(false)
-
-  const enhanceProtyleBottomContainer = docTargetDom.parentElement
-  if (enhanceProtyleBottomContainer) {
-    console.log('enhanceProtyleBottomContainer.parentElement is ', enhanceProtyleBottomContainer.parentElement)
-    enhanceProtyleBottomContainer.parentElement.scrollTop += 80
-  }
-}
