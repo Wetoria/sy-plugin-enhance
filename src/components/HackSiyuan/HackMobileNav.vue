@@ -48,13 +48,8 @@ import { openSetting } from '@/utils';
 const settings = useSettings()
 const isJumpDoc = computed(() => settings.value.mobileSwitchDocMode === 'doc')
 
-// TODO 找时间删掉相关逻辑
-const showLabel = computed(() => settings.value.showMobileNavLabel)
 
 const containerHeight = computed(() => {
-  if (showLabel.value) {
-    return 45
-  }
   return 24
 })
 const containerHeightCss = computed(() => `${containerHeight.value}px`)

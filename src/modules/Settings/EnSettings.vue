@@ -142,13 +142,8 @@ interface EnSettings {
   useVipStyle: boolean;
   boxId: string;
 
-  floatingBallPlatform: 'all' | 'only-mobile' | 'none';
 
-  showMobileNavLabel: boolean;
   mobileSwitchDocMode: 'doc' | 'dailyNote';
-
-  enableBlockTime: boolean;
-  blockTimeFontSize: number;
 
   enableBottomBacklink: boolean;
   enableBacklinkFilter: boolean;
@@ -159,12 +154,10 @@ interface EnSettings {
   lifelogEnableBlockTag: boolean;
   lifelogTriggerTime: number;
 
-  enableAutoSync: boolean;
 
   enableFixedDocArea: boolean;
   fixedDocIds: string[];
 
-  enableLockParagraph: boolean;
 
   modules: {
     [module: string]: EnModuleType
@@ -177,25 +170,20 @@ const defaultSettings: EnSettings = {
   useVipStyle: true,
   boxId: '',
   sqlLimit: 999999999,
-  floatingBallPlatform: 'all',
-  showMobileNavLabel: false,
+
   mobileSwitchDocMode: 'doc',
   enableBottomBacklink: true,
   enableBacklinkFilter: true,
-  enableBlockTime: true,
-  blockTimeFontSize: 9,
+
   defaultShowBacklinkFilter: false,
 
   lifelogPostUrl: '',
   lifelogEnableBlockTag: true,
   lifelogTriggerTime: 5,
 
-  enableAutoSync: false,
-
   enableFixedDocArea: true,
   fixedDocIds: [],
 
-  enableLockParagraph: true,
   modules: {},
 }
 

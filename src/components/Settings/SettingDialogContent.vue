@@ -5,22 +5,6 @@
     <div
       class="SettingsScrollContent"
     >
-      <!-- <SettingItem>
-        <div>
-          编辑完自动同步
-        </div>
-        <template #desc>
-          <div>
-            是否在编辑完以后自动同步。<br />
-            开启后，将会在停止编辑的2秒后，或敲击回车时自动同步。<br />
-            配合思源的「同步感知」功能，能做到一定程度的多端实时同步。<br />
-            注意：该功能会有一定的性能影响，请按需开启。
-          </div>
-        </template>
-        <template #opt>
-          <SyCheckbox v-model="settings.enableAutoSync" />
-        </template>
-      </SettingItem> -->
 
       <SettingItemAreaHeading>
         底部反链
@@ -86,38 +70,6 @@
 
       <div class="sperator"></div>
 
-      <SettingItemAreaHeading>
-        悬浮球
-      </SettingItemAreaHeading>
-      <SettingItem mode="vertical">
-        <div>
-          悬浮球开启平台
-        </div>
-        <template #desc>
-          <div>
-            选择悬浮球启用的平台。全部、仅移动端、关闭悬浮球。
-          </div>
-        </template>
-        <template #opt>
-          <SySelect
-            v-model="settings.floatingBallPlatform"
-            :options="[
-              {
-                value: 'all',
-                text: '全部'
-              },
-              {
-                value: 'only-mobile',
-                text: '仅移动端'
-              },
-              {
-                value: 'none',
-                text: '关闭悬浮球'
-              },
-            ]"
-          ></SySelect>
-        </template>
-      </SettingItem>
 
       <div class="sperator"></div>
 

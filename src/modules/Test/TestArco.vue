@@ -1,5 +1,5 @@
 <template>
-  <div class="test" v-if="settings.enableLockParagraph">
+  <div class="test">
     <!-- <AButton>Test</AButton> -->
   </div>
 </template>
