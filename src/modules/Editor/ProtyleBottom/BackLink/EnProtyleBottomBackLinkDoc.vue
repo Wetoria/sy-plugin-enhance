@@ -29,12 +29,14 @@ import { Protyle } from 'siyuan';
 import { computed, onBeforeUnmount, ref, watchEffect } from 'vue';
 import { IBacklink } from './EnProtyleBottomBackLink.vue';
 import { request } from '@/api';
+import { debounce } from '@/utils';
 
 
 const props = defineProps<{
   backlink: IBacklink
   activedBacklinkKeys: (string | number)[]
   currentDocId: string
+  element: HTMLDivElement
 }>()
 
 const plugin = usePlugin()
@@ -49,6 +51,12 @@ const jumpToDoc = (event: MouseEvent, docId) => {
   openDocById(docId)
 }
 
+
+watchEffect(() => {
+  props.element.addEventListener('scroll', debounce(() => {
+    hideGutterOnTarget(renderRef.value)
+  }, 50))
+})
 const onMouseLeave = (event) => {
   hideGutterOnTarget(event.target)
 }
