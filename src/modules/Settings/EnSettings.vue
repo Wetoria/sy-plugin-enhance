@@ -17,7 +17,7 @@
     @close="onDrawerCLose"
   >
     <template #title>
-      <div class="SyEnhancerDialogTitle">
+      <div class="SyEnhancerDialogTitle" @click="onTitleClicked">
         {{plugin.i18n.pluginName}}
       </div>
     </template>
@@ -55,8 +55,24 @@ import EnDivider from '@/components/EnDivider.vue';
 import { usePlugin } from '@/main';
 import { computed, ref } from 'vue';
 import AnyTouch from 'any-touch';
+import { useSettings } from '@/logic/Settings';
 
 const plugin = usePlugin()
+
+const settings = useSettings()
+
+const clickNum = ref(0)
+let flag
+const onTitleClicked = () => {
+  clickNum.value += 1
+  clearTimeout(flag)
+  if (clickNum.value >= 5) {
+    settings.value.isDebugging = !settings.value.isDebugging
+  }
+  flag = setTimeout(() => {
+    clickNum.value = 0
+  }, 1000)
+}
 
 const getSettingDrawer = () => document.querySelector('.arco-drawer') as HTMLDivElement
 

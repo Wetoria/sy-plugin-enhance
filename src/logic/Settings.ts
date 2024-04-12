@@ -9,6 +9,7 @@ export interface EnModule {
 }
 
 interface EnSettings {
+  isDebugging: boolean
   useVipStyle: boolean;
   boxId: string;
 
@@ -42,6 +43,8 @@ interface EnSettings {
 }
 
 const defaultSettings: EnSettings = {
+  isDebugging: false,
+
   useVipStyle: true,
   boxId: '',
   sqlLimit: 999999999,
