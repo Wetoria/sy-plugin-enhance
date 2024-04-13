@@ -41,7 +41,17 @@ const pProtyleAttrRef = computed(() => {
 const watchParagraphAttrChange = () => {
   if (props.el) {
     const handler = () => {
-      updated.value = getUpdated(props.el)
+      const newUpdated = getUpdated(props.el)
+      if (!newUpdated) {
+        return
+      }
+      if (!updated.value) {
+        updated.value = newUpdated
+        return
+      }
+      if (!newUpdated.isSame(updated.value)) {
+        updated.value = newUpdated
+      }
     }
     handler()
     const ob = new MutationObserver(debounce(handler, 300))
@@ -53,7 +63,7 @@ const watchParagraphAttrChange = () => {
 
 watch(() => props.el, () => {
   watchParagraphAttrChange()
-})
+}, { immediate: true })
 
 </script>
 
