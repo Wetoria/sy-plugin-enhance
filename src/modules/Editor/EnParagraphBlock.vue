@@ -81,7 +81,7 @@
           :min="1"
           :readOnly="plugin.isMobile"
           v-model="moduleOptions.autoLockTimeDiff"
-          @change="onAutoLockTimeDiff"
+          @change="onAutoLockTimeDiffChange"
         />
       </template>
     </EnSettingsItem>
@@ -105,7 +105,7 @@
           :min="10"
           :readOnly="plugin.isMobile"
           v-model="moduleOptions.autoCheckTime"
-          @change="onAutoLockTimeDiff"
+          @change="onAutoCheckTimeChange"
         />
       </template>
     </EnSettingsItem>
@@ -255,9 +255,14 @@ import SyIcon from '@/components/SiyuanTheme/SyIcon.vue';
     insertBlockTime();
   })
 
-  const onAutoLockTimeDiff = (value) => {
+  const onAutoLockTimeDiffChange = (value) => {
     if (!value) {
-      moduleOptions.value.autoLockTimeDiff = 60
+      moduleOptions.value.autoLockTimeDiff = defaultOptions.autoLockTimeDiff
+    }
+  }
+  const onAutoCheckTimeChange = (value) => {
+    if (!value) {
+      moduleOptions.value.autoCheckTime = defaultOptions.autoCheckTime
     }
   }
 
