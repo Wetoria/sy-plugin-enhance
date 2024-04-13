@@ -53,7 +53,7 @@
       </div>
       <template #desc>
         <div>
-          是否启用段落锁功能。点击 <icon-font type="en-lock" /> 进行解锁。
+          是否启用段落锁功能。点击 <SyIcon name="iconLock" /> 进行解锁。
         </div>
       </template>
       <template #opt>
@@ -141,6 +141,7 @@
   import EnParagraphBlockLock from './EnParagraphBlockLock.vue';
   import { usePlugin } from '@/main';
 import { useModule } from '../Settings/EnSettings.vue';
+import SyIcon from '@/components/SiyuanTheme/SyIcon.vue';
 
   interface ModuleOptions {
     enableBlockTime: boolean

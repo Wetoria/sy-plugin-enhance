@@ -4,8 +4,14 @@
     v-if="enabled"
     @click="() => manualSwitchLockStatus()"
   >
-    <icon-font type="en-lock"  v-if="lockedTypes.includes(locked)" />
-    <icon-font type="en-unlock" v-else />
+    <SyIcon
+      v-if="lockedTypes.includes(locked)"
+      name="iconLock"
+    />
+    <SyIcon
+      v-else
+      name="iconUnlock"
+    />
   </span>
 </template>
 
@@ -13,6 +19,7 @@
 import dayjs from 'dayjs';
 import { onMounted, ref, watch, watchEffect } from 'vue';
 import { getUpdated } from './EnParagraphBlockTime.vue';
+import SyIcon from '@/components/SiyuanTheme/SyIcon.vue';
 
 const props = defineProps<{
   pDom: HTMLDivElement
