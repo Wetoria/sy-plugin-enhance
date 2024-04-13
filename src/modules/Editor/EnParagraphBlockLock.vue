@@ -107,5 +107,8 @@ watchEffect(() => {
 <style lang="scss" scoped>
 .enBlockLockContainer {
   cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 </style>
