@@ -217,6 +217,7 @@ watchEffect(() => {
       .arco-collapse-item-header {
         padding: 2px 0px 2px 22px;
         border-bottom: unset;
+        border-radius: 4px;
 
         .arco-icon-hover {
           left: 4px;
@@ -227,7 +228,14 @@ watchEffect(() => {
     .backlinkList {
       background: var(--v-backlink-area-bg-color);
       padding: 6px 8px;
-      border-radius: var(--v-backlink-area-border-radius);
+    }
+
+    .protyle-breadcrumb__bar:not(:first-child) {
+      margin-top: 8px;
+    }
+
+    .arco-collapse-item-header:hover {
+      background-color: var(--color-fill-1);
     }
   }
 }
