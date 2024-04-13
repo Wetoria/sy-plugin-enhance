@@ -1,6 +1,3 @@
-import SettingsVue from '@/components/Settings/SettingDialogContent.vue';
-import { usePlugin } from '@/main';
-import { Dialog } from 'siyuan';
 import { App, createApp, onMounted, ref } from 'vue';
 import ArcoVue from '@arco-design/web-vue';
 
@@ -124,29 +121,6 @@ export function reomveDuplicated(list, compare = (cur, itemInResult) => (cur.id 
     }
   })
   return result
-}
-
-export const openSetting = () => {
-  const plugin = usePlugin()
-  const div = getDomByVueComponent(SettingsVue)
-  const dialog = new Dialog({
-    title: `
-      <div class="SyEnhancerDialogTitle">
-        ${plugin.i18n.pluginName}
-      </div>
-    `,
-    content: `
-      <div class="SyEnhancerSettingsContainer">
-      </div>
-    `,
-    width: '80%',
-    destroyCallback: () => {
-      unmout(div)
-    }
-  })
-  const container = dialog.element.querySelector('.SyEnhancerSettingsContainer')
-  container.innerHTML = ''
-  container.append(div)
 }
 
 export function debounce(fn, time = 500) {

@@ -127,12 +127,12 @@
 </template>
 
 <script setup lang="ts">
-import SyCheckbox from '../SiyuanTheme/SyCheckbox.vue';
-import SySelect from '../SiyuanTheme/SySelect.vue';
-import SettingItem from '../../modules/Settings/EnSettingsItem.vue';
-import SyInput from '../SiyuanTheme/SyInput.vue';
+import SyCheckbox from '../components/SiyuanTheme/SyCheckbox.vue';
+import SySelect from '../components/SiyuanTheme/SySelect.vue';
+import SettingItem from '../modules/Settings/EnSettingsItem.vue';
+import SyInput from '../components/SiyuanTheme/SyInput.vue';
 import { usePlugin } from '@/main';
-import SettingItemAreaHeading from '../../modules/Settings/EnSettingsItemAreaHeading.vue';
+import SettingItemAreaHeading from '../modules/Settings/EnSettingsItemAreaHeading.vue';
 import { useSettings } from '@/modules/Settings/EnSettings.vue';
 
 const settings = useSettings()

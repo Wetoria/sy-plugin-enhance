@@ -214,15 +214,6 @@ const navList = ref<Array<{
     icon: 'iconSuper',
     label: '插件设置',
     onClick: () => {
-      openSetting()
-      // openSettings()
-    }
-  },
-  {
-    icon: 'iconSuper',
-    label: '插件设置',
-    onClick: () => {
-      // openSetting()
       openSettings()
     }
   },
