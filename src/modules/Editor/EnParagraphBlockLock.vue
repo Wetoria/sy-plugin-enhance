@@ -33,20 +33,28 @@ onMounted(() => {
 })
 
 const timeChangeListenerFlag = ref()
-const timeChangeListener = () => {
+const clearTimeChangeListener = () => {
   clearInterval(timeChangeListenerFlag.value)
+}
+const timeChangeListener = () => {
+  clearTimeChangeListener()
   timeChangeListenerFlag.value = setInterval(() => {
     checkLockedStatus()
   }, props.autoCheckTime * 1000)
 }
 
-watch(() => props.autoCheckTime, () => {
+watch([props.autoCheckTime], () => {
   timeChangeListener()
-})
+}, { immediate: true })
 
 const lock = (locked: boolean) => {
   const editableDiv = props.pDom.firstChild as HTMLDivElement
   editableDiv.contentEditable = `${!locked}`
+  if (locked) {
+    props.pDom.contentEditable = `${!locked}`
+  } else {
+    props.pDom.removeAttribute('contentEditable')
+  }
 }
 
 const LOCK_STATUS = {
@@ -83,7 +91,7 @@ watchEffect(() => {
   document.documentElement.dataset.enParagraphBlockLock = `${props.enabled}`
 })
 
-watch(props, () => {
+watch(() => props.enabled, () => {
   if (props.enabled) {
     checkLockedStatus()
   } else {
@@ -91,14 +99,14 @@ watch(props, () => {
   }
 }, { immediate: true })
 
-watchEffect(() => {
+watch(locked, () => {
   props.pDom.dataset.enBlockLocked = locked.value
   if (locked.value === LOCK_STATUS.locked) {
     lock(true)
   } else {
     lock(false)
   }
-})
+}, { immediate: true })
 </script>
 
 <style lang="scss" scoped>
