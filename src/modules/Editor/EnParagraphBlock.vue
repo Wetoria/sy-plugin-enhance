@@ -265,7 +265,7 @@ import { useModule } from '../Settings/EnSettings.vue';
     div[data-type="NodeListItem"] {
 
       .enProtyleAttrContainer {
-        margin-right: -2px;
+        margin-right: -4px;
       }
     }
   }
