@@ -2,7 +2,7 @@
   <span
     class="enBlockLockContainer"
     v-if="enabled"
-    @click="manualSwitchLockStatus"
+    @click="() => manualSwitchLockStatus()"
   >
     <icon-font type="en-lock"  v-if="lockedTypes.includes(locked)" />
     <icon-font type="en-unlock" v-else />
@@ -11,36 +11,51 @@
 
 <script setup lang="ts">
 import dayjs from 'dayjs';
-import { ref, watchEffect } from 'vue';
+import { onMounted, ref, watch, watchEffect } from 'vue';
 import { getUpdated } from './EnParagraphBlockTime.vue';
 
 const props = defineProps<{
   pDom: HTMLDivElement
   enabled: boolean
   autoLockTimeDiff: number
+  autoCheckTime: number
 }>()
 
 const updated = ref(getUpdated(props.pDom))
+onMounted(() => {
+  timeChangeListener()
+})
+
+const timeChangeListenerFlag = ref()
+const timeChangeListener = () => {
+  clearInterval(timeChangeListenerFlag.value)
+  timeChangeListenerFlag.value = setInterval(() => {
+    updated.value = getUpdated(props.pDom)
+    checkLockedStatus()
+  }, props.autoCheckTime * 1000)
+}
+
+watch(() => props.autoCheckTime, () => {
+  console.log('props.autoCheckTime is ', props.autoCheckTime)
+  timeChangeListener()
+})
 
 const lock = (locked: boolean) => {
   const editableDiv = props.pDom.firstChild as HTMLDivElement
-  if (!editableDiv) {
-    return
-  }
   editableDiv.contentEditable = `${!locked}`
 }
 
 const LOCK_STATUS = {
-  auto: 'auto',
   locked: 'locked',
   unlocked: 'unlocked',
 }
-const locked  = ref<typeof LOCK_STATUS[keyof typeof LOCK_STATUS]>(LOCK_STATUS.auto)
-const lockedTypes = [LOCK_STATUS.auto, LOCK_STATUS.locked]
+const locked  = ref<typeof LOCK_STATUS[keyof typeof LOCK_STATUS]>(LOCK_STATUS.unlocked)
+const lockedTypes = [LOCK_STATUS.locked]
 
 const manualSwitchLockStatus = () => {
   if (lockedTypes.includes(locked.value)) {
     locked.value = LOCK_STATUS.unlocked
+    timeChangeListener()
   } else {
     locked.value = LOCK_STATUS.locked
   }
@@ -53,57 +68,37 @@ const judgeIsOverTime = () => {
   const isOverTime = currentTime.subtract(props.autoLockTimeDiff, 'seconds').isAfter(updated.value)
   return isOverTime
 }
+const checkLockedStatus = () => {
+  if (judgeIsOverTime()) {
+    locked.value = LOCK_STATUS.locked
+  } else {
+    locked.value = LOCK_STATUS.unlocked
+  }
+}
 watchEffect(() => {
   document.documentElement.dataset.enParagraphBlockLock = `${props.enabled}`
-  if (props.enabled) {
-    if (judgeIsOverTime()) {
-      locked.value = LOCK_STATUS.auto
-    } else {
-      locked.value = LOCK_STATUS.unlocked
-    }
-  }
 })
 
-const listenerTimeChangeFlag = ref()
-const listenerTimeChange = () => {
-  if (listenerTimeChangeFlag.value) {
-    clearInterval(listenerTimeChangeFlag.value)
+watch(props, () => {
+  if (props.enabled) {
+    checkLockedStatus()
+  } else {
+    locked.value = LOCK_STATUS.unlocked
   }
-  listenerTimeChangeFlag.value = setInterval(() => {
-    // 每秒更新段落更新时间
-    const newUpdated = getUpdated(props.pDom)
-    updated.value = newUpdated
-
-    const isOverTime = judgeIsOverTime()
-    if (isOverTime) {
-      locked.value = LOCK_STATUS.auto
-    } else {
-      locked.value = LOCK_STATUS.unlocked
-    }
-  }, 1000)
-}
+}, { immediate: true })
 
 watchEffect(() => {
-  if (props.enabled) {
-    listenerTimeChange()
-    if (locked.value === LOCK_STATUS.auto) {
-      if (judgeIsOverTime()) {
-        lock(true)
-      } else {
-        lock(false)
-      }
-    } else if (locked.value === LOCK_STATUS.locked) {
-      lock(true)
-    } else {
-      lock(false)
-    }
+  props.pDom.dataset.enBlockLocked = locked.value
+  if (locked.value === LOCK_STATUS.locked) {
+    lock(true)
   } else {
-    clearInterval(listenerTimeChangeFlag.value)
     lock(false)
   }
 })
 </script>
 
-<style lang="scss">
-
+<style lang="scss" scoped>
+.enBlockLockContainer {
+  cursor: pointer;
+}
 </style>

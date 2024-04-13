@@ -53,7 +53,7 @@
       </div>
       <template #desc>
         <div>
-          是否启用段落锁 <icon-font type="en-lock" /> 功能。
+          是否启用段落锁功能。点击 <icon-font type="en-lock" /> 进行解锁。
         </div>
       </template>
       <template #opt>
@@ -62,14 +62,14 @@
     </EnSettingsItem>
     <EnSettingsItem mode="vertical">
       <div>
-        段落锁定的时间
+        段落锁定的时间（秒）
       </div>
       <template #desc>
         <div>
-          段落的更新时间如果早于设定的时间，将会被自动锁定。可点击 <icon-font type="en-lock" /> 进行解锁。
+          段落的更新时间，如果超过该时间，将会被锁定。
         </div>
         <div>
-          单位：秒，最短 1 秒，最长 120 分钟（7200 秒）。
+          最短 1 秒，最长 120 分钟（7200 秒）。
         </div>
       </template>
       <template #opt>
@@ -85,6 +85,27 @@
         />
       </template>
     </EnSettingsItem>
+    <EnSettingsItem mode="vertical">
+      <div>
+        自动检测的时间（秒）
+      </div>
+      <template #desc>
+        <div>
+          更新段落锁状态的自动检测的时间。检测新增加或修改的的段落，是否需要被锁定。最短 10 秒。
+        </div>
+      </template>
+      <template #opt>
+        <a-input-number
+          class="input-demo"
+          placeholder="Please Enter"
+          mode="button"
+          :min="10"
+          :readOnly="plugin.isMobile"
+          v-model="moduleOptions.autoCheckTime"
+          @change="onAutoLockTimeDiff"
+        />
+      </template>
+    </EnSettingsItem>
   </EnSettingsTeleportModule>
   <div>
     <EnParagraphBlockAttrContainer
@@ -95,6 +116,7 @@
         :pDom="paragraphBlock"
         :enabled="moduleOptions.enableBlockLock"
         :autoLockTimeDiff="moduleOptions.autoLockTimeDiff"
+        :autoCheckTime="moduleOptions.autoCheckTime"
       />
       <EnParagraphBlockTime
         :pDom="paragraphBlock"
@@ -127,6 +149,7 @@ import { useModule } from '../Settings/EnSettings.vue';
 
     enableBlockLock: boolean
     autoLockTimeDiff: number
+    autoCheckTime: number
   }
 
   const plugin = usePlugin()
@@ -140,6 +163,7 @@ import { useModule } from '../Settings/EnSettings.vue';
 
     enableBlockLock: false,
     autoLockTimeDiff: 5 * 60,
+    autoCheckTime: 10,
   }
   const module = useModule(moduleName, defaultOptions)
   const moduleOptions = computed(() => module.value.options as ModuleOptions)
