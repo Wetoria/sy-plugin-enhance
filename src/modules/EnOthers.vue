@@ -18,20 +18,6 @@
         <a-switch v-model="moduleOptions.useVipStyle" />
       </template>
     </EnSettingsItem>
-
-    <EnSettingsItem>
-      <div>
-        锁定段落块
-      </div>
-      <template #desc>
-        <div>
-          是否开启锁定段落块为不可编辑。
-        </div>
-      </template>
-      <template #opt>
-        <a-switch v-model="moduleOptions.enableLockParagraph" />
-      </template>
-    </EnSettingsItem>
   </EnSettingsTeleportModule>
 </template>
 
@@ -45,14 +31,12 @@ import { switchState, useModule } from './Settings/EnSettings.vue';
 
 interface ModuleOptions {
   useVipStyle: boolean
-  enableLockParagraph: boolean
 }
 
 const moduleName = 'EnOther'
 const moduleDisplayName = '其他设置'
 const defaultOptions = {
   useVipStyle: false,
-  enableLockParagraph: false,
 }
 const module = useModule(moduleName, defaultOptions)
 const moduleOptions = computed(() => module.value.options as ModuleOptions)

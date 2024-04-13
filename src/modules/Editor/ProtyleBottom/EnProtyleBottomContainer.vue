@@ -5,7 +5,6 @@
       :blockId="protyle.block.id"
     />
     <EnProtyleBottomBackLink
-      v-if="enableBottomBacklink"
       :detail="protyleBottom.detail"
       :element="protyleBottom.element"
     />
@@ -32,9 +31,6 @@ const props = defineProps<{
 
 const protyleBottom = computed(() => props.protyleBottom)
 const protyle = computed(() => protyleBottom.value.detail.protyle as IProtyle)
-const enableBottomBacklink = computed(
-  () => settings.value.enableBottomBacklink,
-);
 
 const checkProtyleContentPadding = () => {
   const {
