@@ -139,21 +139,7 @@ export interface EnModuleType {
 
 interface EnSettings {
   isDebugging: boolean
-  useVipStyle: boolean;
   boxId: string;
-
-
-  mobileSwitchDocMode: 'doc' | 'dailyNote';
-
-  enableBottomBacklink: boolean;
-  enableBacklinkFilter: boolean;
-  defaultShowBacklinkFilter: boolean;
-  sqlLimit: number;
-
-  lifelogPostUrl: string;
-  lifelogEnableBlockTag: boolean;
-  lifelogTriggerTime: number;
-
 
   enableFixedDocArea: boolean;
   fixedDocIds: string[];
@@ -167,19 +153,7 @@ interface EnSettings {
 const defaultSettings: EnSettings = {
   isDebugging: false,
 
-  useVipStyle: true,
   boxId: '',
-  sqlLimit: 999999999,
-
-  mobileSwitchDocMode: 'doc',
-  enableBottomBacklink: true,
-  enableBacklinkFilter: true,
-
-  defaultShowBacklinkFilter: false,
-
-  lifelogPostUrl: '',
-  lifelogEnableBlockTag: true,
-  lifelogTriggerTime: 5,
 
   enableFixedDocArea: true,
   fixedDocIds: [],
@@ -263,9 +237,7 @@ export async function loadSettings() {
  * 修正设置中，错误的值
  */
 function reviseSettingsValue() {
-  if (isNaN(settings.value.sqlLimit)) {
-    settings.value.sqlLimit = defaultSettings.sqlLimit
-  }
+
 }
 
 const saveSettings = debounce(()=> {
