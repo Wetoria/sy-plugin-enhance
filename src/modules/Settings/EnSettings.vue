@@ -288,9 +288,12 @@ const settingsRefMap = ref({})
 const settingRefKeys = computed(() => Object.keys(settingsRefMap.value))
 
 export function registerSettingRef(refName: string) {
-  const newRef = ref()
-  settingsRefMap.value[refName] = newRef
-  return newRef
+  let settingRef = settingsRefMap.value[refName]
+  if (!settingRef) {
+    settingRef = ref()
+    settingsRefMap.value[refName] = settingRef
+  }
+  return settingRef
 }
 
 export const openSettings = () => {
