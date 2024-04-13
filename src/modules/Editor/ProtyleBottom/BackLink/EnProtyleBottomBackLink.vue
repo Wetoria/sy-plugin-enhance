@@ -28,6 +28,7 @@
       <EnProtyleBottomBackLinkFilterArea
         v-if="enableBacklinkFilter"
         v-show="showFilterArea"
+        :backlinks="backlinkRes.backlinks"
       />
       <a-collapse
         class="backlinkDocsArea backlinkList"
@@ -50,6 +51,33 @@
                 :backlink="backlink"
                 :element="element"
                 :activedBacklinkKeys="activedBacklinkKeys"
+                :currentDocId="currentDocId"
+              />
+            </template>
+          </ul>
+        </template>
+      </a-collapse>
+    </a-collapse-item>
+    <a-collapse-item
+      class="backlinkAreaCollapse"
+      :header="`提及 (${backlinkRes.mentionsCount})`"
+      key="bottomBackMentionsArea"
+    >
+      <a-collapse
+        class="backlinkDocsArea backlinkList"
+        ref="mentionListDomRef"
+        :bordered="false"
+        v-model:activeKey="activedMentionsKeys"
+      >
+        <template v-if="backmentions.length">
+          <ul class="b3-list b3-list--background">
+            <template
+              v-for="backmention of backlinkRes.backmentions"
+            >
+              <EnProtyleBottomBackMention
+                :backmention="backmention"
+                :element="element"
+                :activedBacklinkKeys="activedMentionsKeys"
                 :currentDocId="currentDocId"
               />
             </template>
@@ -80,6 +108,7 @@ export interface IBacklink {
 import { useSettings } from "@/modules/Settings/EnSettings.vue";
 import EnProtyleBottomBackLinkFilterArea from './EnProtyleBottomBackLinkFilterArea.vue';
 import EnProtyleBottomBackLinkDoc from './EnProtyleBottomBackLinkDoc.vue';
+import EnProtyleBottomBackMention from './EnProtyleBottomBackMention.vue';
 import { request } from '@/api';
 import { IProtyle } from 'siyuan';
 import { computed, ref, watch, watchEffect } from 'vue';
@@ -169,7 +198,7 @@ watchEffect(() => {
   }
   activedBacklinkKeys.value = keys
 })
-
+const activedMentionsKeys = ref([])
 // ====================================================
 </script>
 
@@ -188,7 +217,7 @@ watchEffect(() => {
         padding: 4px 8px 4px 22px;
         position: sticky;
         top: 0px;
-        z-index: 1;
+        z-index: 2;
         background-color: var(--b3-theme-background);
 
         .arco-icon-hover {
