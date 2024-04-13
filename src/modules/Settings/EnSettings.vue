@@ -5,7 +5,7 @@
     :visible="editingSettings"
     :unmountOnClose="true"
     :drawer-style="{
-      maxHeight: '90vh',
+      maxHeight: '80vh',
       height: 'unset',
       borderTopLeftRadius: '8px',
       borderTopRightRadius: '8px',
