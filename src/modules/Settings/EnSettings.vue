@@ -207,7 +207,7 @@ export function useSettings() {
   return settings
 }
 
-export function useModule(moduleName: string, defaultOptions: object) {
+export function useModule(moduleName: string, defaultOptions: object = {}) {
   const module = ref<EnModuleType>(settings.value.modules[moduleName])
 
   if (!module.value) {
