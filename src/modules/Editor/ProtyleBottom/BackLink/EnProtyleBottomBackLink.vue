@@ -26,7 +26,8 @@
         </div>
       </template>
       <EnProtyleBottomBackLinkFilterArea
-        v-if="enableBacklinkFilter && showFilterArea"
+        v-if="enableBacklinkFilter"
+        v-show="showFilterArea"
       />
       <a-collapse
         class="backlinkDocsArea backlinkList"

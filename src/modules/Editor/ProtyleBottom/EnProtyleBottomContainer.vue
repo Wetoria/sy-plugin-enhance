@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watchEffect } from 'vue';
+import { computed, onMounted } from 'vue';
 import EnProtyleBottomIndicator from './EnProtyleBottomIndicator.vue';
 import { IProtyle } from 'siyuan/types';
 import EnProtyleBottomBackLink from './BackLink/EnProtyleBottomBackLink.vue';
@@ -69,8 +69,7 @@ const checkProtyleContentPadding = () => {
   }
 }
 
-watchEffect(() => {
-  console.log('el is ', props.protyleBottom.element)
+onMounted(() => {
   checkProtyleContentPadding()
 })
 </script>
