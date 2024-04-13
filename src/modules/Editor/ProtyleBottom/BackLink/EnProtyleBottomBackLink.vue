@@ -35,13 +35,13 @@
         :bordered="false"
         v-model:activeKey="activedBacklinkKeys"
       >
-        <a-empty v-if="!backlinks.length">
+        <!-- <a-empty v-if="!backlinks.length">
           <template #image>
             <icon-exclamation-circle-fill size="24" />
           </template>
-          No data, please reload!
-        </a-empty>
-        <template v-else>
+          No data
+        </a-empty> -->
+        <template v-if="backlinks.length">
           <ul class="b3-list b3-list--background">
             <template
               v-for="backlink of backlinkRes.backlinks"
