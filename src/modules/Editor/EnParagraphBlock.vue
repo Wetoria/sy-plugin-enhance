@@ -112,17 +112,31 @@
       v-for="paragraphBlock of paragraphListRef"
       :el="paragraphBlock"
     >
-      <EnParagraphBlockLock
-        :pDom="paragraphBlock"
-        :enabled="moduleOptions.enableBlockLock"
-        :autoLockTimeDiff="moduleOptions.autoLockTimeDiff"
-        :autoCheckTime="moduleOptions.autoCheckTime"
-      />
-      <EnParagraphBlockTime
-        :pDom="paragraphBlock"
-        :defaultBlockType="moduleOptions.defaultBlockType"
-        v-if="moduleOptions.enableBlockTime"
-      />
+      <template
+        #default="{
+          created,
+          createdFormatted,
+          updated,
+          updatedFormatted,
+        }"
+      >
+        <EnParagraphBlockLock
+          :pDom="paragraphBlock"
+          :updated="updated"
+          :enabled="moduleOptions.enableBlockLock"
+          :autoLockTimeDiff="moduleOptions.autoLockTimeDiff"
+          :autoCheckTime="moduleOptions.autoCheckTime"
+        />
+        <EnParagraphBlockTime
+          v-if="moduleOptions.enableBlockTime"
+          :created="created"
+          :createdFormatted="createdFormatted"
+          :updated="updated"
+          :updatedFormatted="updatedFormatted"
+          :pDom="paragraphBlock"
+          :defaultBlockType="moduleOptions.defaultBlockType"
+        />
+      </template>
     </EnParagraphBlockAttrContainer>
   </div>
 </template>

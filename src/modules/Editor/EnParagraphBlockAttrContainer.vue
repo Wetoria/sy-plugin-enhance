@@ -3,16 +3,34 @@
     :to="pProtyleAttrRef"
     v-if="pProtyleAttrRef"
   >
-    <slot></slot>
+    <slot
+      :created="created"
+      :createdFormatted="createdFormatted"
+      :updated="updated"
+      :updatedFormatted="updatedFormatted"
+    ></slot>
   </Teleport>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
+import dayjs from 'dayjs';
+import { debounce } from '@/utils';
 
 const props = defineProps<{
   el: HTMLSpanElement
 }>()
+const updated = ref(getUpdated(props.el))
+const updatedFormatted = computed(() => updated.value ? `updated: ${updated.value.format(FORMAT_TIME)}` : '')
+
+const created = computed(() => {
+  const nodeId = props.el.dataset.nodeId
+  const createdInId = nodeId.split('-')[0]
+  props.el.setAttribute('created', createdInId)
+  return dayjs(createdInId)
+})
+const createdFormatted = computed(() => `created: ${created.value.format(FORMAT_TIME)}`)
+
 const pProtyleAttrRef = computed(() => {
   if (!props.el) return
   const protyleAttr = props.el.querySelector('.protyle-attr')
@@ -20,6 +38,35 @@ const pProtyleAttrRef = computed(() => {
   return protyleAttr.querySelector('.enProtyleAttrContainer')
 })
 
+const watchParagraphAttrChange = () => {
+  if (props.el) {
+    const handler = () => {
+      updated.value = getUpdated(props.el)
+    }
+    handler()
+    const ob = new MutationObserver(debounce(handler, 300))
+    ob.observe(props.el, {
+      attributes: true,
+    })
+  }
+}
+
+watch(() => props.el, () => {
+  watchParagraphAttrChange()
+})
+
+</script>
+
+<script lang="ts">
+export const FORMAT_TIME = 'YYYY/MM/DD HH:mm:ss'
+
+export const getUpdated = (pDom) => {
+  const updateTimeStr = pDom.getAttribute('updated')
+  if (!updateTimeStr) {
+    return
+  }
+  return dayjs(updateTimeStr)
+}
 </script>
 
 <style lang="scss">

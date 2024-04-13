@@ -18,17 +18,16 @@
 <script setup lang="ts">
 import dayjs from 'dayjs';
 import { onMounted, ref, watch, watchEffect } from 'vue';
-import { getUpdated } from './EnParagraphBlockTime.vue';
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue';
 
 const props = defineProps<{
   pDom: HTMLDivElement
   enabled: boolean
+  updated: undefined | dayjs.Dayjs
   autoLockTimeDiff: number
   autoCheckTime: number
 }>()
 
-const updated = ref(getUpdated(props.pDom))
 onMounted(() => {
   timeChangeListener()
 })
@@ -37,13 +36,11 @@ const timeChangeListenerFlag = ref()
 const timeChangeListener = () => {
   clearInterval(timeChangeListenerFlag.value)
   timeChangeListenerFlag.value = setInterval(() => {
-    updated.value = getUpdated(props.pDom)
     checkLockedStatus()
   }, props.autoCheckTime * 1000)
 }
 
 watch(() => props.autoCheckTime, () => {
-  console.log('props.autoCheckTime is ', props.autoCheckTime)
   timeChangeListener()
 })
 
@@ -69,10 +66,10 @@ const manualSwitchLockStatus = () => {
 }
 const judgeIsOverTime = () => {
   const currentTime = dayjs()
-  if (!updated.value) {
+  if (!props.updated) {
     return false
   }
-  const isOverTime = currentTime.subtract(props.autoLockTimeDiff, 'seconds').isAfter(updated.value)
+  const isOverTime = currentTime.subtract(props.autoLockTimeDiff, 'seconds').isAfter(props.updated)
   return isOverTime
 }
 const checkLockedStatus = () => {
