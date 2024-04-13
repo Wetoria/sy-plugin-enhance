@@ -1,5 +1,6 @@
 <template>
   <a-collapse
+    v-if="moduleOptions.enableBottomBacklink"
     class="backlinkArea"
     :defaultActiveKey="['bottomBackLinkArea']"
     :bordered="false"
@@ -86,6 +87,73 @@
       </a-collapse>
     </a-collapse-item>
   </a-collapse>
+
+  <EnSettingsTeleportModule
+    :name="BottomBacklinkModuleName"
+    :display="moduleDisplayName"
+    :module="module"
+  >
+    <EnSettingsItem>
+      <div>
+        启用底部反链
+      </div>
+      <template #desc>
+        <div>
+          是否启用底部反链功能
+        </div>
+      </template>
+      <template #opt>
+        <a-switch v-model="moduleOptions.enableBottomBacklink" />
+      </template>
+    </EnSettingsItem>
+    <EnSettingsItem>
+      <div>
+        启用反链过滤
+      </div>
+      <template #desc>
+        <div>
+          是否启用底部反链的过滤功能
+        </div>
+      </template>
+      <template #opt>
+        <a-switch v-model="moduleOptions.enableBacklinkFilter" />
+      </template>
+    </EnSettingsItem>
+    <EnSettingsItem>
+      <div>
+        默认展开过滤区域
+      </div>
+      <template #desc>
+        <div>
+          是否默认展开底部反链的过滤区域。
+        </div>
+      </template>
+      <template #opt>
+        <a-switch v-model="moduleOptions.defaultShowBacklinkFilter" />
+      </template>
+    </EnSettingsItem>
+    <EnSettingsItem mode="vertical">
+      <div>
+        反链筛选 SQL 查询上限
+      </div>
+      <template #desc>
+        <div>
+          与反链筛选功能有关。如果设置的太小，可能会导致数据不正确。<br />
+          请输入正确的数字，否则会重置为默认的 999999999.
+        </div>
+      </template>
+      <template #opt>
+        <a-input-number
+          class="input-demo"
+          placeholder="Please Enter"
+          mode="button"
+          :min="1"
+          :readOnly="plugin.isMobile"
+          v-model="moduleOptions.sqlLimit"
+        />
+      </template>
+    </EnSettingsItem>
+  </EnSettingsTeleportModule>
 </template>
 
 <script lang="ts">
@@ -102,10 +170,30 @@ export interface IBacklink {
   updated: string
   created: string
 }
+
+export interface BottomBacklinkModuleOptions {
+  enableBottomBacklink: boolean
+
+
+  enableBacklinkFilter: boolean
+  defaultShowBacklinkFilter: boolean
+  sqlLimit: number
+}
+
+export const BottomBacklinkModuleName = 'EnBottomBacklink'
+const moduleDisplayName = '底部反链'
+
+const defaultOptions: BottomBacklinkModuleOptions = {
+  enableBottomBacklink: false,
+
+  enableBacklinkFilter: false,
+  defaultShowBacklinkFilter: false,
+  sqlLimit: 999999999,
+}
 </script>
 
 <script setup lang="ts">
-import { useSettings } from "@/modules/Settings/EnSettings.vue";
+import { useModule, useSettings } from "@/modules/Settings/EnSettings.vue";
 import EnProtyleBottomBackLinkFilterArea from './EnProtyleBottomBackLinkFilterArea.vue';
 import EnProtyleBottomBackLinkDoc from './EnProtyleBottomBackLinkDoc.vue';
 import EnProtyleBottomBackMention from './EnProtyleBottomBackMention.vue';
@@ -113,7 +201,20 @@ import { request } from '@/api';
 import { IProtyle } from 'siyuan';
 import { computed, ref, watch, watchEffect } from 'vue';
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
+import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue';
+import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue';
+import { usePlugin } from '@/main';
 
+const plugin = usePlugin()
+
+const module = useModule(BottomBacklinkModuleName, defaultOptions)
+const moduleOptions = computed(() => module.value.options as BottomBacklinkModuleOptions)
+
+watch(() => moduleOptions.value.sqlLimit, () => {
+  if (!moduleOptions.value.sqlLimit) {
+    moduleOptions.value.sqlLimit = defaultOptions.sqlLimit
+  }
+}, { immediate: true })
 
 interface Node {
   id: string;
