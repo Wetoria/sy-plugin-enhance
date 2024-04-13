@@ -90,6 +90,7 @@ watchEffect(() => {
 })
 
 watchEffect(async () => {
+  backlinks.value = []
   const { backlinks: backlinksRes } = await request('/api/ref/getBacklinkDoc', {
     defID: props.currentDocId,
     refTreeID: props.backlink.id,

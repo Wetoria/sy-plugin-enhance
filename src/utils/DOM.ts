@@ -1,6 +1,4 @@
-import { ref } from 'vue'
-import { getDomByVueComponent } from '.';
-import ProtyleBottomContainerVue from '@/components/ProtyleBottomContainer.vue';
+import { reactive, ref } from 'vue'
 import { usePlugin } from '@/main';
 
 
@@ -39,49 +37,17 @@ export function registerProtyleBottomArea() {
     }
     if (protyleBottomMap.value.has(element)) {
       const detailRef = protyleBottomMap.value.get(element)
-      detailRef.value = detail
+      detailRef.detail = detail
+      detailRef.element = element
       return
     }
-    const detailRef = ref(detail)
-    // const div = getDomByVueComponent(ProtyleBottomContainerVue, {
-    //   props: {
-    //     detail: detailRef,
-    //     element,
-    //   }
-    // })
     const div = document.createElement('div')
-    protyleBottomMap.value.set(element, {
+    protyleBottomMap.value.set(element, reactive({
       detail: detail,
       element,
       enArea: div,
-    })
+    }))
     div.className = 'enhanceProtyleBottomContainer'
-    // const wysiwyg: HTMLDivElement = element.querySelector('.protyle-wysiwyg')
-    // if (wysiwyg) {
-    //   const bindPadding = () => {
-    //     const leftPadding = Number(wysiwyg.style.paddingLeft.replace('px', ''))
-    //     const rightPadding = Number(wysiwyg.style.paddingRight.replace('px', ''))
-    //     div.style.paddingLeft = (leftPadding - 8) + 'px'
-    //     div.style.paddingRight = (rightPadding - 8) + 'px'
-    //     // IMP 改成可以配置的
-    //     wysiwyg.style.paddingBottom = '68px'
-    //   }
-    //   bindPadding()
-    //   let flag = null
-    //   const ob = new MutationObserver(() => {
-    //     if (flag) {
-    //       clearTimeout(flag)
-    //     }
-    //     flag = setTimeout(() => {
-    //       bindPadding()
-    //     }, 0)
-    //   })
-    //   ob.observe(wysiwyg, {
-    //     childList: true, // 观察目标子节点的变化，是否有添加或者删除
-    //     subtree: true,
-    //     attributes: true,
-    //   })
-    // }
     element.appendChild(div)
   })
 

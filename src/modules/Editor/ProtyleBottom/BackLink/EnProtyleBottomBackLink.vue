@@ -125,6 +125,19 @@ const searchParams = ref({
   mSort: '3',
 })
 
+watchEffect(() => {
+  searchParams.value.id = currentDocId.value
+})
+
+const defaultRes = {
+  backlinks: [],
+  backmentions: [],
+  box: '',
+  k: '',
+  mk: '',
+  linkRefsCount: 0,
+  mentionsCount: 0
+}
 const backlinkRes = ref<{
   backlinks: IBacklink[]
   backmentions: IBacklink[]
@@ -133,29 +146,15 @@ const backlinkRes = ref<{
   mk: string
   linkRefsCount: number
   mentionsCount: number
-}>({
-  backlinks: [],
-  backmentions: [],
-  box: '',
-  k: '',
-  mk: '',
-  linkRefsCount: 0,
-  mentionsCount: 0
-})
+}>(Object.assign({}, defaultRes))
 
 const backlinks = computed(() => backlinkRes.value.backlinks)
 const backmentions = computed(() => backlinkRes.value.backmentions)
 
-const getBacklinkData = async () => {
+watchEffect(async () => {
+  backlinkRes.value = Object.assign({}, defaultRes)
   const res = await request('/api/ref/getBacklink2', searchParams.value)
   backlinkRes.value = res;
-}
-watchEffect(() => {
-  const currentDocId = protyle.value?.block?.id;
-  if (!currentDocId) {
-    return
-  }
-  getBacklinkData()
 })
 
 const activedBacklinkKeys = ref([])
@@ -169,9 +168,6 @@ watchEffect(() => {
     keys.push(item.id)
   }
   activedBacklinkKeys.value = keys
-})
-watchEffect(() => {
-  console.log('activedBacklinkKeys is ', activedBacklinkKeys.value)
 })
 
 // ====================================================
