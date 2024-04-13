@@ -1,6 +1,5 @@
 <template>
   <a-collapse
-    v-if="enableBottomBacklink"
     class="backlinkArea"
     :defaultActiveKey="['bottomBackLinkArea']"
     :bordered="false"
@@ -82,7 +81,7 @@ import EnProtyleBottomBackLinkFilterArea from './EnProtyleBottomBackLinkFilterAr
 import EnProtyleBottomBackLinkDoc from './EnProtyleBottomBackLinkDoc.vue';
 import { request } from '@/api';
 import { IProtyle } from 'siyuan';
-import { computed, ref, watchEffect } from 'vue';
+import { computed, ref, watch, watchEffect } from 'vue';
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 
 
@@ -107,9 +106,6 @@ const currentDocId = computed(() => protyle.value?.block?.id)
 const enableBacklinkFilter = computed(() => settings.value.enableBacklinkFilter)
 
 const settings = useSettings();
-const enableBottomBacklink = computed(
-  () => settings.value.enableBottomBacklink,
-);
 
 // TODO 需要调整设置逻辑
 const showFilterArea = ref(settings.value.defaultShowBacklinkFilter || settings.value.isDebugging)
@@ -151,10 +147,13 @@ const backlinkRes = ref<{
 const backlinks = computed(() => backlinkRes.value.backlinks)
 const backmentions = computed(() => backlinkRes.value.backmentions)
 
-watchEffect(async () => {
+watch(searchParams, async () => {
   backlinkRes.value = Object.assign({}, defaultRes)
   const res = await request('/api/ref/getBacklink2', searchParams.value)
   backlinkRes.value = res;
+}, {
+  immediate: true,
+  deep: true,
 })
 
 const activedBacklinkKeys = ref([])
