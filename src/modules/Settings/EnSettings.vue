@@ -228,6 +228,11 @@ export function useModule(moduleName: string, defaultOptions: object = {}) {
   return module
 }
 
+export function useModuleOptions(moduleName: string) {
+  const module = useModule(moduleName)
+  return module.value.options
+}
+
 function registerModule(module: string, defaultOptions: object) {
   const isInSetting = module in settings.value.modules
   const newModule = {
