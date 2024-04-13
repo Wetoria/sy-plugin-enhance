@@ -111,6 +111,7 @@
     <EnParagraphBlockAttrContainer
       v-for="paragraphBlock of paragraphListRef"
       :el="paragraphBlock"
+      :key="paragraphBlock.dataset.nodeId"
     >
       <template
         #default="{
@@ -188,7 +189,7 @@ import SyIcon from '@/components/SiyuanTheme/SyIcon.vue';
     document.documentElement.style.setProperty('--timeFontSize', `${moduleOptions.value.blockTimeFontSize}px`)
   })
 
-  const paragraphListRef = ref([])
+  const paragraphListRef = ref<HTMLDivElement[]>([])
 
   const appendEnProtyleAttrContainer = (dom: HTMLDivElement) => {
     if (dom.dataset.enModified) {
@@ -235,7 +236,7 @@ import SyIcon from '@/components/SiyuanTheme/SyIcon.vue';
 
   function insertBlockTime() {
     const handler = () => {
-      const paragraphList = queryAllByDom(document.body, `[data-type="${SyDomNodeTypes.NodeParagraph}"]`)
+      const paragraphList = queryAllByDom(document.body, `[data-type="${SyDomNodeTypes.NodeParagraph}"]`) as HTMLDivElement[]
       paragraphListRef.value = paragraphList
     }
 
