@@ -26,7 +26,7 @@ import { usePlugin } from '@/main';
 import { hideGutterOnTarget } from '@/utils/DOM';
 import { openDocById } from '@/utils/Note';
 import { Protyle } from 'siyuan';
-import { computed, onBeforeUnmount, ref, watchEffect } from 'vue';
+import { computed, onBeforeUnmount, ref, watch, watchEffect } from 'vue';
 import { IBacklink } from './EnProtyleBottomBackLink.vue';
 import { request } from '@/api';
 import { debounce } from '@/utils';
@@ -67,8 +67,7 @@ const protyleRef = ref<Protyle>()
 // @ts-ignore
 const backmentions = ref([])
 
-watchEffect(() => {
-  console.log('isExpand is ', isExpand.value)
+watch([isExpand, renderRef, backmentions], () => {
   if (isExpand.value && renderRef.value) {
     protyleRef.value = new Protyle(plugin.app, renderRef.value, {
       blockId: props.currentDocId,
@@ -87,17 +86,19 @@ watchEffect(() => {
       protyleRef.value.destroy()
     }
   }
-})
+}, {immediate: true, deep: true})
 
-watchEffect(async () => {
+watch([isExpand, props.currentDocId, props.backmention.id], async () => {
   backmentions.value = []
-  const { backmentions: backmentionsRes } = await request('/api/ref/getBackmentionDoc', {
-    defID: props.currentDocId,
-    refTreeID: props.backmention.id,
-    keyword: '',
-  })
-  backmentions.value = backmentionsRes
-})
+  if (isExpand.value) {
+    const { backmentions: backmentionsRes } = await request('/api/ref/getBackmentionDoc', {
+      defID: props.currentDocId,
+      refTreeID: props.backmention.id,
+      keyword: '',
+    })
+    backmentions.value = backmentionsRes
+  }
+}, {immediate: true})
 onBeforeUnmount(() => {
   if (protyleRef.value) {
     protyleRef.value.destroy()

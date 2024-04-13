@@ -8,7 +8,6 @@
       ref="SyEnhancerAppRef"
     >
       <div class="displayArea">
-        <HackUI />
         <TestArco />
       </div>
       <div class="hiddenArea">
@@ -32,6 +31,7 @@
       <!-- 仅移动端 -->
       <template v-if="plugin.isMobile">
         <EnPWA />
+        <EnMobileNav />
 
       </template>
 
@@ -46,30 +46,26 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch, ref, watchEffect } from 'vue';
+import { onMounted, watchEffect } from 'vue';
 import { usePlugin } from './main';
 import EnSiyuanEntry from './modules/EnSiyuanEntry.vue';
 
 
 import LifeLog from './modules/LifeLog/LifeLog.vue';
 import FixedDocArea from './components/FixedDocArea.vue';
-import HackUI from './components/HackSiyuan/HackUI.vue';
-// import HackEditor from './components/HackEditor.vue';
-import { listenerViewport, useViewportInfo } from './logic/Viewport';
-import TestArco, { TestArcoType, testFunc } from './modules/Test/TestArco.vue';
+import TestArco from './modules/Test/TestArco.vue';
 import ArcoDartkTheme from './modules/ArcoDartkTheme.vue';
 import EnPWA from './modules/EnPWA.vue';
 import DailyNote from './modules/DailyNote/DailyNote.vue';
-import EnSettings, { syncLocalStorage, useSettings } from './modules/Settings/EnSettings.vue';
+import EnSettings, { syncLocalStorage } from './modules/Settings/EnSettings.vue';
 import EnOthers from './modules/EnOthers.vue';
 import EnBackgroundImg from './modules/Background/EnBackgroundImg.vue';
 import EnQuickNote from './modules/QuickNote/EnQuickNote.vue';
 import EnEditor from './modules/Editor/EnEditor.vue';
-const settings = useSettings()
+import EnMobileNav from './modules/EnMobileNav.vue';
 
 const plugin = usePlugin()
 
-const isMobile = computed(() => plugin.isMobile)
 // const SyEnhancerAppRef = ref<HTMLDivElement>(null)
 
 // const showFloatingBall = computed(() => {

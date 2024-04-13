@@ -147,7 +147,6 @@
                 </div>
                 <div
                   ref="renderRef"
-                  @mouseleave="onMouseLeave"
                   :style="{
                     height: docBacklinkFoldStatusMap[docBacklink.id] ? '0px' : 'max-content',
                     overflow: 'hidden',
@@ -165,7 +164,7 @@
 <script setup lang="ts">
 import { request, sql } from '@/api';
 import { usePlugin } from '@/main';
-import { hideGutterOnTarget, queryAllByDom } from '@/utils/DOM';
+import { queryAllByDom } from '@/utils/DOM';
 import { IProtyle, Protyle } from 'siyuan';
 import { computed, ref, watch, watchEffect } from 'vue';
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
@@ -270,6 +269,7 @@ const getData = async () => {
     if (useV.value) {
       new Protyle(plugin.app, renderRef.value[index], {
         blockId: currentDocId,
+        // @ts-ignore
         backlinkData: blockBacklinksTemp.backlinks,
         render: {
             background: false,
@@ -630,26 +630,6 @@ const hideDomByBlockRefTree = () => {
 
 // #endregion 根据树结构处理页面元素
 
-
-// #region 处理gutter显示问题
-watchEffect(() => {
-  let flag
-  props.element.addEventListener('scroll', () => {
-    if (flag) {
-      clearTimeout(flag)
-    }
-    setTimeout(() => {
-      renderRef.value.forEach((item) => {
-        hideGutterOnTarget(item)
-      })
-    }, 50)
-  })
-})
-
-const onMouseLeave = (event) => {
-  hideGutterOnTarget(event.target)
-}
-// #endregion 处理gutter显示问题
 
 const linkNumMap = computed(() => {
   const map = {}

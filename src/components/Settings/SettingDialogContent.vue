@@ -6,67 +6,6 @@
       class="SettingsScrollContent"
     >
 
-      <SettingItemAreaHeading>
-        底部反链
-      </SettingItemAreaHeading>
-      <SettingItem>
-        <div>
-          启用底部反链
-        </div>
-        <template #desc>
-          <div>
-            是否启用底部反链。
-          </div>
-        </template>
-        <template #opt>
-          <SyCheckbox v-model="settings.enableBottomBacklink" />
-        </template>
-      </SettingItem>
-
-      <SettingItem>
-        <div>
-          默认展开反链筛选区域
-        </div>
-        <template #desc>
-          <div>
-            是否默认展开底部反链的筛选区域。
-          </div>
-        </template>
-        <template #opt>
-          <SyCheckbox v-model="settings.defaultShowBacklinkFilter" />
-        </template>
-      </SettingItem>
-
-      <SettingItem>
-        <div>
-          启用底部反链筛选功能
-        </div>
-        <template #desc>
-          <div>
-            是否启用底部反链筛选功能。
-          </div>
-        </template>
-        <template #opt>
-          <SyCheckbox v-model="settings.enableBacklinkFilter" />
-        </template>
-      </SettingItem>
-
-      <SettingItem mode="vertical">
-        <div>
-          反链筛选 SQL 查询上限
-        </div>
-        <template #desc>
-          <div>
-            与反链筛选功能有关。如果设置的太小，可能会导致数据不正确。<br />
-            请输入正确的数字，否则会重置为默认的 999999999.
-          </div>
-        </template>
-        <template #opt>
-          <SyInput
-            v-model="settings.sqlLimit"
-          />
-        </template>
-      </SettingItem>
 
       <div class="sperator"></div>
 
