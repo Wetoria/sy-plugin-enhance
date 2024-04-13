@@ -52,8 +52,8 @@
         段落锁
       </div>
       <template #desc>
-        <div>
-          是否启用段落锁功能。点击 <SyIcon name="iconLock" /> 进行解锁。
+        <div style="display: flex; align-items: center;">
+          是否启用段落锁功能。点击 <span><SyIcon name="iconLock" /></span> 进行解锁。
         </div>
       </template>
       <template #opt>
@@ -91,7 +91,10 @@
       </div>
       <template #desc>
         <div>
-          更新段落锁状态的自动检测的时间。检测新增加或修改的的段落，是否需要被锁定。最短 10 秒。
+          更新段落锁状态的自动检测的时间。检测新增加或修改的的段落，是否需要被锁定。
+        </div>
+        <div>
+          最短 10 秒。
         </div>
       </template>
       <template #opt>
