@@ -1,11 +1,111 @@
-<template></template>
+<template>
+  <EnSettingsTeleportModule
+    :name="moduleName"
+    :display="moduleDisplayName"
+    :module="module"
+  >
+    <EnSettingsItem>
+      <div>
+        启用 LifeLog 相关功能
+      </div>
+      <template #desc>
+        <div>
+          是否启动 LifeLog 功能。
+        </div>
+      </template>
+      <template #opt>
+        <a-switch v-model="moduleOptions.enableLifeLog" />
+      </template>
+    </EnSettingsItem>
+    <EnSettingsItem>
+      <div>
+        显示 LifeLog 段落标记
+      </div>
+      <template #desc>
+        <div>
+          是否显示 LifeLog 的标记。
+        </div>
+      </template>
+      <template #opt>
+        <a-switch v-model="moduleOptions.showLifeLogFlag" />
+      </template>
+    </EnSettingsItem>
+    <EnSettingsItem mode="vertical">
+      <div>
+        数据同步地址
+      </div>
+      <template #desc>
+        <div>
+          LifeLog 数据同步用的地址。<br />
+          <span style="word-wrap: break-word;">
+            当前地址：{{ moduleOptions.lifelogPostUrl }}
+          </span>
+        </div>
+      </template>
+      <template #opt>
+        <a-input
+          :style="{width:'238px'}"
+          placeholder=""
+          v-model="moduleOptions.lifelogPostUrl"
+        />
+      </template>
+    </EnSettingsItem>
+    <EnSettingsItem mode="vertical">
+      <div>
+        LifeLog 触发时间（秒）
+      </div>
+      <template #desc>
+        <div>
+          停止编辑以后，触发 LifeLog 标记逻辑的等待时间。单位：秒。
+        </div>
+      </template>
+      <template #opt>
+        <a-input-number
+          class="input-demo"
+          placeholder="Please Enter"
+          mode="button"
+          :min="1"
+          :readOnly="plugin.isMobile"
+          v-model="moduleOptions.lifelogTriggerTime"
+        />
+      </template>
+    </EnSettingsItem>
+
+  </EnSettingsTeleportModule>
+</template>
 
 <script setup lang="ts">
-import { onMounted, watchEffect } from 'vue';
+import { computed, onMounted, watchEffect } from 'vue';
 import { queryAllByDom } from '@/utils/DOM';
 import { usePlugin } from '@/main';
+import { EnhanceIOperation, SyDomNodeTypes, onEditorUpdate } from '../../utils/Siyuan'
+import { getBlockAttrs, request, setBlockAttrs } from '@/api'
+import { getFrontend } from 'siyuan'
+import dayjs from 'dayjs'
+import { useModule } from '../Settings/EnSettings.vue';
+import EnSettingsTeleportModule from '../Settings/EnSettingsTeleportModule.vue';
+import EnSettingsItem from '../Settings/EnSettingsItem.vue';
 
 const plugin = usePlugin()
+
+interface ModuleOptions {
+  enableLifeLog: boolean
+  showLifeLogFlag: boolean
+  lifelogPostUrl: string
+  lifelogTriggerTime: number
+}
+
+const moduleName = 'EnLifeLog'
+const moduleDisplayName = 'LifeLog'
+const defaultOptions = {
+  enableLifeLog: false,
+  showLifeLogFlag: false,
+  lifelogPostUrl: '',
+  lifelogTriggerTime: 5,
+}
+const module = useModule(moduleName, defaultOptions)
+const moduleOptions = computed(() => module.value.options as ModuleOptions)
+
 
 const listenerSticky = () => {
   const map = new WeakMap()
@@ -56,21 +156,12 @@ onMounted(() => {
   listenerSticky();
 })
 
-const settings = useSettings()
+
 watchEffect(() => {
-  document.documentElement.dataset.enhancerEnableLifelogTag = `${settings.value.lifelogEnableBlockTag}`
+  document.documentElement.dataset.enhancerEnableLifelogTag = `${moduleOptions.value.showLifeLogFlag}`
   document.documentElement.dataset.enhancerIsMobile = `${plugin.isMobile}`
 })
-</script>
 
-
-<script lang="ts">
-
-import { EnhanceIOperation, SyDomNodeTypes, onEditorUpdate } from '../../utils/Siyuan'
-import { getBlockAttrs, request, setBlockAttrs } from '@/api'
-import { getFrontend } from 'siyuan'
-import dayjs from 'dayjs'
-import { useSettings } from '../Settings/EnSettings.vue';
 
 const lifelogPrefix = 'custom-lifelog-'
 const lifelogAttrTime = `${lifelogPrefix}time`
@@ -79,8 +170,7 @@ const lifelogAttrContent = `${lifelogPrefix}content`
 const lifelogAttrCreated = `${lifelogPrefix}created`
 const lifelogAttrUpdated = `${lifelogPrefix}updated`
 
-export function markLifeLogBlock() {
-  const settings = useSettings()
+function markLifeLogBlock() {
 
   const plugin = usePlugin()
 
@@ -150,8 +240,7 @@ export function markLifeLogBlock() {
       })
     }
 
-    const settings = useSettings()
-    const lifelogPostUrl = settings.value.lifelogPostUrl
+    const lifelogPostUrl = moduleOptions.value.lifelogPostUrl
     if (!lifelogPostUrl) {
       return
     }
@@ -173,7 +262,7 @@ export function markLifeLogBlock() {
       })
     }
 
-  }, settings.value.lifelogTriggerTime * 1000)
+  }, moduleOptions.value.lifelogTriggerTime * 1000)
 }
 
 </script>
