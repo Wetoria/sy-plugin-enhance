@@ -55,6 +55,12 @@
         <div style="display: flex; align-items: center;">
           是否启用段落锁功能。点击 <span><SyIcon name="iconLock" /></span> 进行解锁。
         </div>
+        <div>
+          如果要进行整理，比如拖拽移动内容，在操作前，记得关闭段落锁，否则思源将会把内容转换成 HTML 块。
+        </div>
+        <div>
+          因为这个原因导致的内容变更，请自行负责。
+        </div>
       </template>
       <template #opt>
         <a-switch v-model="moduleOptions.enableBlockLock" />
