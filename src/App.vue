@@ -128,6 +128,15 @@ onMounted(() => {
   gap: var(--en-gap);
 }
 
+.flexCenter {
+  display: flex;
+  align-items: center;
+}
+.enGap {
+  display: flex;
+  gap: var(--en-gap);
+}
+
 #enApp {
   width: 100vw;
   height: 100dvh;
