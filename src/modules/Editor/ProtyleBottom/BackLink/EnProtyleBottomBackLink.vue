@@ -234,12 +234,12 @@ const props = defineProps<{
 const protyle = computed(() => props.detail.protyle as IProtyle)
 const currentDocId = computed(() => protyle.value?.block?.id)
 
-const enableBacklinkFilter = computed(() => settings.value.enableBacklinkFilter)
+const enableBacklinkFilter = computed(() => moduleOptions.value.enableBacklinkFilter)
 
 const settings = useSettings();
 
 // TODO 需要调整设置逻辑
-const showFilterArea = ref(settings.value.defaultShowBacklinkFilter || settings.value.isDebugging)
+const showFilterArea = ref(moduleOptions.value.defaultShowBacklinkFilter || settings.value.isDebugging)
 const switchFilterShown = () => {
   showFilterArea.value = !showFilterArea.value
 }
