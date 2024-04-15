@@ -30,6 +30,8 @@
         v-if="enableBacklinkFilter"
         v-show="showFilterArea"
         :backlinks="backlinkRes.backlinks"
+        :blockBacklinks="blockBacklinks"
+        :currentDocId="currentDocId"
       />
       <a-collapse
         class="backlinkDocsArea backlinkList"
@@ -50,6 +52,7 @@
             >
               <EnProtyleBottomBackLinkDoc
                 :backlink="backlink"
+                :blockBacklinks="blockBacklinks"
                 :element="element"
                 :activedBacklinkKeys="activedBacklinkKeys"
                 :currentDocId="currentDocId"
@@ -275,8 +278,15 @@ const backlinkRes = ref<{
   mentionsCount: number
 }>(Object.assign({}, defaultRes))
 
+
 const backlinks = computed(() => backlinkRes.value.backlinks)
 const backmentions = computed(() => backlinkRes.value.backmentions)
+const blockBacklinks = ref({})
+watch(backlinks, () => {
+  backlinks.value.forEach((item) => {
+    blockBacklinks.value[item.id] = undefined
+  })
+}, { immediate: true })
 
 watch(searchParams, async () => {
   backlinkRes.value = Object.assign({}, defaultRes)
@@ -308,6 +318,11 @@ const activedMentionsKeys = ref([])
   :deep(.arco-collapse-item-header),
   :deep(.arco-collapse-item-content) {
     background-color: unset;
+  }
+
+  :deep(.arco-collapse-item),
+  :deep(.arco-collapse-item-header) {
+    border-bottom: unset;
   }
 
   &.arco-collapse {

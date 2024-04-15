@@ -34,6 +34,7 @@ import { debounce } from '@/utils';
 
 const props = defineProps<{
   backlink: IBacklink
+  blockBacklinks: any
   activedBacklinkKeys: (string | number)[]
   currentDocId: string
   element: HTMLDivElement
@@ -96,6 +97,7 @@ watchEffect(async () => {
     refTreeID: props.backlink.id,
     keyword: '',
   })
+  props.blockBacklinks[props.backlink.id] = backlinksRes
   backlinks.value = backlinksRes
 })
 onBeforeUnmount(() => {
