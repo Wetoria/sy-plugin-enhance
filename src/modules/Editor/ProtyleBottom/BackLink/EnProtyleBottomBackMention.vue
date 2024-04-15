@@ -1,6 +1,6 @@
 <template>
   <a-collapse-item
-    class="backlinkDocBlock"
+    class="backlinkMentionBlock"
     header="底部反链"
     :key="backmention.id"
   >
@@ -107,7 +107,7 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="scss" scoped>
-.backlinkDocBlock {
+.backlinkMentionBlock {
   :deep(.arco-collapse-item-content) {
     padding: unset;
 
