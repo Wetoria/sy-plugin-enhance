@@ -201,7 +201,8 @@ import SyIcon from '@/components/SiyuanTheme/SyIcon.vue';
   const paragraphListRef = ref<HTMLDivElement[]>([])
 
   const appendEnProtyleAttrContainer = (dom: HTMLDivElement) => {
-    if (dom.dataset.enModified) {
+    const exist = !!dom.querySelector('.enProtyleAttrContainer')
+    if (exist) {
       return
     }
     const span = document.createElement('span')
@@ -211,8 +212,6 @@ import SyIcon from '@/components/SiyuanTheme/SyIcon.vue';
     if (!protyleAttr) return
 
     protyleAttr.appendChild(span)
-    dom.dataset.enModified = 'true'
-
   }
 
   const FOCUS_CLASS_NAME = 'block-focus'
