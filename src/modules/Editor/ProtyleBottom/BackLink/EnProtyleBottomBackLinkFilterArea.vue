@@ -19,12 +19,12 @@
               </template>
             </a-popover>
           </div>
-          <EnTagsContainer className="blockRefList">
+          <EnTagsContainer class="blockRefList">
             <a-tag
               v-for="item of sortedRemainRefs"
               :key="item.id"
               :title="item.name"
-              class="blockRefTag"
+              @click="event => handleClickFilterTag(event, item)"
             >
               <span class="optionName">
                 {{ item.name }}
@@ -38,6 +38,40 @@
               </sup>
             </a-tag>
           </EnTagsContainer>
+          <template v-if="includeRefs.length">
+            <div>
+              包括以下链接:
+            </div>
+            <EnTagsContainer class="blockRefList">
+              <a-tag
+                v-for="item of includeRefs"
+                :key="`in-${item.id}`"
+                :title="item.name"
+                @click="event => handleClickFilterTag(event, item)"
+              >
+                <span class="optionName">
+                  {{ item.name }}
+                </span>
+              </a-tag>
+            </EnTagsContainer>
+          </template>
+          <template v-if="excludeRefs.length">
+            <div>
+              不包括以下链接:
+            </div>
+            <EnTagsContainer class="blockRefList">
+              <a-tag
+                v-for="item of excludeRefs"
+                :key="'ex-' + item.id"
+                :title="item.name"
+                @click="event => handleClickFilterTag(event, item)"
+              >
+                <span class="optionName">
+                  {{ item.name }}
+                </span>
+              </a-tag>
+            </EnTagsContainer>
+          </template>
         </div>
       </div>
     </a-card>
@@ -45,13 +79,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, watchEffect } from 'vue';
+import { computed, Ref, ref, watch } from 'vue';
 import { BottomBacklinkModuleName, BottomBacklinkModuleOptions, IBacklink } from './EnProtyleBottomBackLink.vue';
 import { sql } from '@/api';
 import { useModule } from '@/modules/Settings/EnSettings.vue';
-import { chainHasRefNode, chainHasTargetBlockRefId, getTreeChainPathOfDoc, hasTargetBlockRef, isSyContainerNode, isSyDocNode, isSyHeadingNode, isSyNodeCanContainerBlockRef } from '@/utils/Siyuan';
-import { debounce } from '@/utils';
+import { chainHasRefNode, chainHasTargetBlockRefId, getTreeChainPathOfDoc, hasTargetBlockRef, hideDom, isSyBreadCrumbDom, isSyContainerNode, isSyDocNode, isSyHeadingNode, isSyListItemNode, isSyNodeCanContainerBlockRef, showDom } from '@/utils/Siyuan';
+import { debounce, recursionTree } from '@/utils';
 import EnTagsContainer from '@/components/EnTagsContainer.vue';
+import { onCountClick, queryAllByDom } from '@/utils/DOM';
+import { usePlugin } from '@/main';
 
 interface Node {
   id: string;
@@ -65,6 +101,7 @@ const props = defineProps<{
   backlinks: IBacklink[]
   blockBacklinks: any
   currentDocId: string
+  backlinkListDomRef: any
 }>()
 
 const module = useModule(BottomBacklinkModuleName)
@@ -228,6 +265,33 @@ const properties = ref<{
   }
 }>({})
 
+const plugin = usePlugin()
+const handleClickFilterTag = onCountClick((time, event, item) => {
+  const {
+    shiftKey,
+  } = event
+  const exist = properties.value[item.id]
+
+  let checkValue = true
+  if (plugin.isMobile) {
+    if (time === 2) {
+      checkValue = false
+    }
+  } else {
+    if (shiftKey) {
+      checkValue = false
+    }
+  }
+
+  if (exist) {
+    delete properties.value[item.id]
+  } else {
+    properties.value[item.id] = {
+      include: checkValue,
+      origin: item,
+    }
+  }
+})
 
 const validBacklinkTreePathChain = computed(() => {
   return [...backlinkTreePathChains.value].filter((chain) => {
@@ -266,8 +330,6 @@ const remainRefs = computed<Array<Node>>(() => {
 const sortedRemainRefs = computed(() => {
   const list = remainRefs.value
   list.sort((a, b) => {
-    console.log('Number(linkNumMap[a.id]) is ', linkNumMap.value[a.id])
-    console.log('Number(linkNumMap[b.id]) is ', linkNumMap.value[b.id])
     return Number(linkNumMap.value[b.id]) - Number(linkNumMap.value[a.id])
   })
   return list
@@ -332,6 +394,92 @@ const linkNumMap = computed(() => {
   })
   return map
 })
+
+
+const dealedDomList = ref<Array<HTMLElement>>([])
+const storeDom = (dom) => {
+  dealedDomList.value.push(dom)
+}
+const storeAndHidDom = (dom) => {
+  hideDom(dom)
+  storeDom(dom)
+}
+const recoverDom = (dom) => {
+  showDom(dom)
+  dealedDomList.value = dealedDomList.value.filter(i => i != dom)
+}
+const recoverAllDealedDoms = () => {
+  dealedDomList.value.forEach((node) => {
+    recoverDom(node)
+  })
+  dealedDomList.value = []
+}
+
+const hideDomByBlockRefTree = () => {
+  recoverAllDealedDoms()
+
+  if (!props.backlinkListDomRef) {
+    return
+  }
+
+  if (!excludeRefs.value.length && !includeRefs.value.length) {
+    return
+  }
+
+  const getDomAndDeal = (curNode, hide) => {
+    const doms = queryAllByDom(props.backlinkListDomRef, `[data-node-id="${curNode.id}"]`)
+    const hideOrShowDom = (dom) => {
+      if (hide) {
+        storeAndHidDom(dom)
+      } else {
+        recoverDom(dom)
+      }
+    }
+    if (doms.length) {
+      doms.forEach((dom) => {
+        hideOrShowDom(dom)
+
+        const prevDom = dom.previousElementSibling as HTMLElement
+        if (prevDom && isSyBreadCrumbDom(prevDom)) {
+          hideOrShowDom(prevDom)
+        }
+        // const isTitleLine = dom.classList.contains('backlinkDocBlock')
+        // if (isTitleLine) {
+        //   const protyleDom = dom.nextElementSibling as HTMLElement
+        //   hideOrShowDom(protyleDom)
+        // }
+      })
+    }
+  }
+
+  console.log('backlinkDocTreeStruct is ', backlinkDocTreeStruct.value)
+  const needDealChildContent = []
+  recursionTree(backlinkDocTreeStruct.value, null, (curNode) => {
+    const targetChain = validBacklinkTreePathChain.value.find((chain) => chain.some(i => i.id == curNode.id))
+    const inChain = !!targetChain
+    if (!inChain) {
+      getDomAndDeal(curNode, true)
+    } else {
+      if (isSyListItemNode(curNode)) {
+        needDealChildContent.push(curNode)
+      }
+    }
+  })
+
+  needDealChildContent.forEach((listItemNode) => {
+    const childContent = backlinkFlatTree.value.filter(i => i.parent_id == listItemNode.id && !isSyContainerNode(i))
+    childContent.forEach((childContentNode) => {
+      getDomAndDeal(childContentNode, false)
+    })
+  })
+}
+
+watch(validBacklinkTreePathChain, () => {
+  hideDomByBlockRefTree()
+}, {
+  immediate: true,
+  deep: true,
+})
 </script>
 
 <style lang="scss" scoped>
@@ -357,10 +505,13 @@ const linkNumMap = computed(() => {
   }
 
   .blockRefList {
-
     :deep(.arco-tag) {
       max-width: 150px;
       cursor: pointer;
+
+      &:not(:last-child) {
+        margin-right: 8px;
+      }
 
       .optionName {
         overflow: hidden;

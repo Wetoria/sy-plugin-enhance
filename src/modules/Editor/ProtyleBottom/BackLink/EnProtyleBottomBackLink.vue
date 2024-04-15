@@ -29,13 +29,13 @@
       <EnProtyleBottomBackLinkFilterArea
         v-if="enableBacklinkFilter"
         v-show="showFilterArea"
+        :backlinkListDomRef="backlinkListDomRef"
         :backlinks="backlinkRes.backlinks"
         :blockBacklinks="blockBacklinks"
         :currentDocId="currentDocId"
       />
       <a-collapse
         class="backlinkDocsArea backlinkList"
-        ref="backlinkListDomRef"
         :bordered="false"
         v-model:activeKey="activedBacklinkKeys"
       >
@@ -46,7 +46,7 @@
           No data
         </a-empty> -->
         <template v-if="backlinks.length">
-          <ul class="b3-list b3-list--background">
+          <ul class="b3-list b3-list--background" ref="backlinkListDomRef">
             <template
               v-for="backlink of backlinkRes.backlinks"
             >
@@ -310,7 +310,11 @@ watchEffect(() => {
   activedBacklinkKeys.value = keys
 })
 const activedMentionsKeys = ref([])
-// ====================================================
+
+const backlinkListDomRef = ref()
+watchEffect(() => {
+  console.log('backlinkListDomRef is ', backlinkListDomRef.value)
+})
 </script>
 
 <style lang="scss" scoped>

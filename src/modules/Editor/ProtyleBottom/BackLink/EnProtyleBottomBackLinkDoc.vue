@@ -3,6 +3,7 @@
     class="backlinkDocBlock"
     header="底部反链"
     :key="backlink.id"
+    :data-node-id="backlink.id"
   >
     <template #header>
       <li class="b3-list-item b3-list-item--hide-action">

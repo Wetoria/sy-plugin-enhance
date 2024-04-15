@@ -61,3 +61,16 @@ export function registerProtyleBottomArea() {
     }
   })
 }
+
+export const onCountClick = (fn) => {
+  const countTime = ref(0)
+  const countTimeTimeoutFlag = ref()
+  return (...args) => {
+    clearTimeout(countTimeTimeoutFlag.value)
+    countTime.value += 1
+    countTimeTimeoutFlag.value = setTimeout(() => {
+      fn(countTime.value, ...args)
+      countTime.value = 0
+    }, 300)
+  }
+}
