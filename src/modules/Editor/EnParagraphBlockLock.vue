@@ -17,7 +17,7 @@
 
 <script setup lang="ts">
 import dayjs from 'dayjs';
-import { onBeforeMount, onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue';
+import { onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue';
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue';
 
 const props = defineProps<{
