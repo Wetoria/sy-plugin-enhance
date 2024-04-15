@@ -55,11 +55,20 @@
         <div style="display: flex; align-items: center;">
           是否启用段落锁功能。点击 <span><SyIcon name="iconLock" /></span> 进行解锁。
         </div>
-        <div>
-          如果要进行整理，比如拖拽移动内容，在操作前，记得关闭段落锁，否则思源将会把内容转换成 HTML 块。
+        <div style="color: red">
+          <b>注意：不要过分依赖于该功能。</b>
         </div>
         <div>
-          因为这个原因导致的内容变更，请自行负责。
+          在一些特定的场景下，因为思源内部的逻辑，将会导致你的内容变成 HTML 块。
+        </div>
+        <div>
+          比如，拖拽（重复）移动内容时，如果未关闭段落锁，生成的内容将会是一个 HTML 块，而不是原格式。
+        </div>
+        <div>
+          如果主要是新增内容而不是修改，你可以开启该功能。
+        </div>
+        <div>
+          因为这个导致的内容变更，请自行负责。
         </div>
       </template>
       <template #opt>
