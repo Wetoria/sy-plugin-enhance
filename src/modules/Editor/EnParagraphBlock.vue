@@ -234,7 +234,9 @@ import SyIcon from '@/components/SiyuanTheme/SyIcon.vue';
       if (lasFocusDom.value) {
         lasFocusDom.value.classList.toggle(FOCUS_CLASS_NAME, false)
       }
-      dom.classList.toggle(FOCUS_CLASS_NAME, true)
+      if (dom.dataset.enBlockLocked == 'locked') {
+        dom.classList.toggle(FOCUS_CLASS_NAME, true)
+      }
       lasFocusDom.value = dom
     })
     // @ts-ignore
