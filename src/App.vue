@@ -88,6 +88,9 @@ const plugin = usePlugin()
 //   height: undefined,
 // })
 watchEffect(() => {
+  document.documentElement.dataset.enhancerIsMobile = `${plugin.isMobile}`
+})
+watchEffect(() => {
   // if (!SyEnhancerAppRef.value) {
   //   return
   // }
