@@ -31,16 +31,19 @@ const created = computed(() => {
 })
 const createdFormatted = computed(() => `created: ${created.value.format(FORMAT_TIME)}`)
 
-const pProtyleAttrRef = computed(() => {
+const getRef = () => {
   if (!props.el) return
   const protyleAttr = props.el.querySelector('.protyle-attr')
   if (!protyleAttr) return
   return protyleAttr.querySelector('.enProtyleAttrContainer')
-})
+}
+
+const pProtyleAttrRef = ref(getRef())
 
 const watchParagraphAttrChange = () => {
   if (props.el) {
     const handler = () => {
+      pProtyleAttrRef.value = getRef()
       const newUpdated = getUpdated(props.el)
       if (!newUpdated) {
         return
@@ -56,6 +59,8 @@ const watchParagraphAttrChange = () => {
     handler()
     const ob = new MutationObserver(debounce(handler, 300))
     ob.observe(props.el, {
+      childList: true,
+      subtree: true,
       attributes: true,
     })
   }
