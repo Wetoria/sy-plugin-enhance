@@ -79,7 +79,7 @@ onMounted(() => {
     display: flex;
     flex-direction: column;
     gap: var(--en-gap);
-    padding-bottom: 30px;
+    padding-bottom: 120px;
   }
 }
 </style>
