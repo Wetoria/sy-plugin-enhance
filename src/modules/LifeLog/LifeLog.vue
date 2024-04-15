@@ -23,7 +23,10 @@
       </div>
       <template #desc>
         <div>
-          是否显示 LifeLog 的标记。
+          是否显示 LifeLog 的标记，并自动吸顶。
+        </div>
+        <div>
+          吸顶：在编辑区顶部，最新一条 LifeLog 会在顶部吸附。当 DailyNote 内容较多时，可以方便地知道，上一条记录是什么时候、做了什么事。
         </div>
       </template>
       <template #opt>
