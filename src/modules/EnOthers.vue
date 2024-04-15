@@ -57,6 +57,11 @@ watchEffect(() => {
 
 <style lang="scss">
 html[data-enhancer="true"] {
+  &[data-enhancer-is-mobile="true"] {
+    .toolbar {
+      border-bottom: unset;
+    }
+  }
   [data-type="block-ref"],
   [data-type="a"] {
     color: var(--sky-blue) !important;
