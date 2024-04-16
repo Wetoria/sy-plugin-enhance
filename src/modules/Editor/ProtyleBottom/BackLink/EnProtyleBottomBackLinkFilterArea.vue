@@ -24,58 +24,60 @@
               </template>
             </a-popover>
           </div>
-          <EnTagsContainer class="blockRefList" v-if="sortedRemainRefs.length">
-            <a-tag
-              v-for="item of sortedRemainRefs"
-              :key="item.id"
-              :title="item.name"
-              @click="event => handleClickFilterTag(event, item)"
-            >
-              <span class="optionName">
-                {{ item.name }}
-              </span>
-              <sup
-                style="
-                  margin-left: 2px
-                "
-              >
-                {{ linkNumMap[item.id] }}
-              </sup>
-            </a-tag>
-          </EnTagsContainer>
-          <template v-if="includeRefs.length">
-            <div>
-              包括以下链接:
-            </div>
-            <EnTagsContainer class="blockRefList">
+          <template v-if="sortedRemainRefs.length">
+            <EnTagsContainer class="blockRefList" v-if="sortedRemainRefs.length">
               <a-tag
-                v-for="item of includeRefs"
-                :key="`in-${item.id}`"
+                v-for="item of sortedRemainRefs"
+                :key="item.id"
                 :title="item.name"
                 @click="event => handleClickFilterTag(event, item)"
               >
                 <span class="optionName">
                   {{ item.name }}
                 </span>
+                <sup
+                  style="
+                    margin-left: 2px
+                  "
+                >
+                  {{ linkNumMap[item.id] }}
+                </sup>
               </a-tag>
             </EnTagsContainer>
-          </template>
-          <template v-if="excludeRefs.length">
-            <div>
-              不包括以下链接:
-            </div>
-            <EnTagsContainer class="blockRefList">
-              <a-tag
-                v-for="item of excludeRefs"
-                :key="'ex-' + item.id"
-                :title="item.name"
-                @click="event => handleClickFilterTag(event, item)"
-              >
-                <span class="optionName">
-                  {{ item.name }}
-                </span>
-              </a-tag>
-            </EnTagsContainer>
+            <template v-if="includeRefs.length">
+              <div>
+                包括以下链接:
+              </div>
+              <EnTagsContainer class="blockRefList">
+                <a-tag
+                  v-for="item of includeRefs"
+                  :key="`in-${item.id}`"
+                  :title="item.name"
+                  @click="event => handleClickFilterTag(event, item)"
+                >
+                  <span class="optionName">
+                    {{ item.name }}
+                  </span>
+                </a-tag>
+              </EnTagsContainer>
+            </template>
+            <template v-if="excludeRefs.length">
+              <div>
+                不包括以下链接:
+              </div>
+              <EnTagsContainer class="blockRefList">
+                <a-tag
+                  v-for="item of excludeRefs"
+                  :key="'ex-' + item.id"
+                  :title="item.name"
+                  @click="event => handleClickFilterTag(event, item)"
+                >
+                  <span class="optionName">
+                    {{ item.name }}
+                  </span>
+                </a-tag>
+              </EnTagsContainer>
+            </template>
           </template>
         </div>
       </div>
@@ -83,8 +85,17 @@
   </div>
 </template>
 
+<script lang="ts">
+export interface FilterProperties {
+  [key: string]: {
+    include: boolean;
+    origin: Node;
+  }
+}
+</script>
+
 <script setup lang="ts">
-import { computed, Ref, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { BottomBacklinkModuleName, BottomBacklinkModuleOptions, IBacklink } from './EnProtyleBottomBackLink.vue';
 import { sql } from '@/api';
 import { useModule } from '@/modules/Settings/EnSettings.vue';
@@ -153,7 +164,7 @@ const getTreeStruct = async () => {
   for (let index = 0; index < docBacklinks.value.length; index++) {
     const item = docBacklinks.value[index]
     const blockBacklinksTemp = blockBackLinks.value[item.id]
-    blockBacklinksTemp.forEach((b) => {
+    blockBacklinksTemp?.forEach((b) => {
       childNodeIds.push(b.blockPaths[b.blockPaths.length - 1].id)
     })
 
@@ -263,12 +274,13 @@ watch([props.backlinks, props.blockBacklinks], debounce(() => {
 }, 10), { immediate: true })
 
 
-const properties = ref<{
-  [key: string]: {
-    include: boolean;
-    origin: Node;
-  }
-}>({})
+const properties = ref<FilterProperties>(moduleOptions.value.docFilterProperties[props.currentDocId] || {})
+watch(properties, () => {
+  moduleOptions.value.docFilterProperties[props.currentDocId] = properties
+}, {
+  deep: true,
+  immediate: true,
+})
 
 const plugin = usePlugin()
 const handleClickFilterTag = onCountClick((time, event, item) => {

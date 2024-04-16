@@ -181,6 +181,9 @@ export interface BottomBacklinkModuleOptions {
   enableBacklinkFilter: boolean
   defaultShowBacklinkFilter: boolean
   sqlLimit: number
+  docFilterProperties: {
+    id?: FilterProperties
+  }
 }
 
 export const BottomBacklinkModuleName = 'EnBottomBacklink'
@@ -192,12 +195,13 @@ const defaultOptions: BottomBacklinkModuleOptions = {
   enableBacklinkFilter: false,
   defaultShowBacklinkFilter: false,
   sqlLimit: 999999999,
+  docFilterProperties: {},
 }
 </script>
 
 <script setup lang="ts">
 import { useModule, useSettings } from "@/modules/Settings/EnSettings.vue";
-import EnProtyleBottomBackLinkFilterArea from './EnProtyleBottomBackLinkFilterArea.vue';
+import EnProtyleBottomBackLinkFilterArea, { FilterProperties } from './EnProtyleBottomBackLinkFilterArea.vue';
 import EnProtyleBottomBackLinkDoc from './EnProtyleBottomBackLinkDoc.vue';
 import EnProtyleBottomBackMention from './EnProtyleBottomBackMention.vue';
 import { request } from '@/api';
