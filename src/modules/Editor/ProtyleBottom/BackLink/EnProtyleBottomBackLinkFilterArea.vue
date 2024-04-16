@@ -3,6 +3,8 @@
     <a-card :bordered="false" hoverable>
       <div class="searchMain">
         <div class="flexColumn" style="flex: 1; overflow: hidden;">
+
+
           <div style="display: flex; gap: 2px; align-items: center;">
             <b>过滤</b>
             <a-popover
@@ -24,7 +26,10 @@
               </template>
             </a-popover>
           </div>
+
+
           <template v-if="sortedRemainRefs.length">
+
             <EnTagsContainer class="blockRefList" v-if="sortedRemainRefs.length">
               <a-tag
                 v-for="item of sortedRemainRefs"
@@ -78,7 +83,59 @@
                 </a-tag>
               </EnTagsContainer>
             </template>
+
+            <div>
+              其他操作：
+            </div>
+            <EnTagsContainer class="blockRefList">
+              <a-popconfirm
+                position="tl"
+                @ok="saveCurrentProperties"
+                @popupVisibleChange="onSavePopconfirmVisibleChange"
+              >
+                <a-tag class="filterBtn">保存当前条件</a-tag>
+                <template #icon><div></div></template>
+                <template #content>
+                  <a-space>
+                    <div>名称</div>
+                    <a-input
+                      ref="filterNameInputRef"
+                      v-model="currentFilterName"
+                      @keyup.enter="saveCurrentProperties"
+                    />
+                  </a-space>
+                </template>
+              </a-popconfirm>
+              <!-- <a-tag class="filterBtn">动态锚文本</a-tag>
+              <a-tag class="filterBtn">静态锚文本</a-tag> -->
+
+            </EnTagsContainer>
+
+            <template v-if="savedNames.length">
+              <div>
+                已保存的条件:
+              </div>
+              <EnTagsContainer class="blockRefList">
+                <a-tag
+                  v-for="item of savedNames"
+                  :key="'saved-' + item"
+                  @click="(event) => onSavedPropertiesClick(event, item)"
+                >
+                  <a-space>
+                    <span class="optionName">
+                      {{ item }}
+                    </span>
+                    <span @click.stop="() => deleteSavedProperties(item)">
+                      <icon-minus style="color: red" class="removeSavedProperties" />
+                    </span>
+                  </a-space>
+                </a-tag>
+              </EnTagsContainer>
+            </template>
+
           </template>
+
+
         </div>
       </div>
     </a-card>
@@ -122,6 +179,8 @@ const props = defineProps<{
 
 const module = useModule(BottomBacklinkModuleName)
 const moduleOptions = computed(() => module.value.options as BottomBacklinkModuleOptions)
+const docFilterPropertiesSaved = computed(() => moduleOptions.value.docFilterPropertiesSaved[props.currentDocId] || {})
+const savedNames = computed(() => Object.keys(docFilterPropertiesSaved.value))
 
 const docBacklinks = computed(() => props.backlinks)
 const blockBackLinks = computed(() => props.blockBacklinks)
@@ -276,10 +335,42 @@ watch([props.backlinks, props.blockBacklinks], debounce(() => {
 
 const properties = ref<FilterProperties>(moduleOptions.value.docFilterProperties[props.currentDocId] || {})
 watch(properties, () => {
-  moduleOptions.value.docFilterProperties[props.currentDocId] = properties
+  moduleOptions.value.docFilterProperties[props.currentDocId] = properties.value
 }, {
   deep: true,
   immediate: true,
+})
+
+
+const currentFilterName = ref('')
+const saveCurrentProperties = () => {
+  if (!currentFilterName.value) {
+    return
+  }
+
+  let savedProperties = moduleOptions.value.docFilterPropertiesSaved[props.currentDocId]
+  if (!savedProperties) {
+    savedProperties = moduleOptions.value.docFilterPropertiesSaved[props.currentDocId] = {}
+  }
+  savedProperties[currentFilterName.value] = properties.value
+}
+
+const filterNameInputRef = ref()
+const onSavePopconfirmVisibleChange = (visible) => {
+  setTimeout(() => {
+    if (visible && filterNameInputRef.value) {
+      filterNameInputRef.value.focus()
+    }
+  }, 300)
+}
+
+const deleteSavedProperties = (name) => {
+  delete docFilterPropertiesSaved.value[name]
+}
+
+const onSavedPropertiesClick = onCountClick((time, event, name) => {
+
+  properties.value = docFilterPropertiesSaved.value[name];
 })
 
 const plugin = usePlugin()
@@ -534,6 +625,10 @@ watch(validBacklinkTreePathChain, () => {
         overflow: hidden;
         text-overflow: ellipsis;
       }
+    }
+
+    .filterBtn {
+      color: var(--sky-blue);
     }
   }
 }

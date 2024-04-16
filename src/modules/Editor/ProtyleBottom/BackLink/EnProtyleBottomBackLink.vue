@@ -182,7 +182,12 @@ export interface BottomBacklinkModuleOptions {
   defaultShowBacklinkFilter: boolean
   sqlLimit: number
   docFilterProperties: {
-    id?: FilterProperties
+    [id: string]: FilterProperties
+  }
+  docFilterPropertiesSaved: {
+    [id: string]: {
+      [name: string]: FilterProperties
+    }
   }
 }
 
@@ -196,6 +201,7 @@ const defaultOptions: BottomBacklinkModuleOptions = {
   defaultShowBacklinkFilter: false,
   sqlLimit: 999999999,
   docFilterProperties: {},
+  docFilterPropertiesSaved: {},
 }
 </script>
 
