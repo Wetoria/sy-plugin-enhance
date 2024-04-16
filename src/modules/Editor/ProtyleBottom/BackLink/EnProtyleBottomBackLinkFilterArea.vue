@@ -24,7 +24,7 @@
               </template>
             </a-popover>
           </div>
-          <EnTagsContainer class="blockRefList">
+          <EnTagsContainer class="blockRefList" v-if="sortedRemainRefs.length">
             <a-tag
               v-for="item of sortedRemainRefs"
               :key="item.id"
