@@ -427,7 +427,7 @@ const notSelectedRefs = computed<Array<Node>>(() => {
 })
 const remainRefs = computed<Array<Node>>(() => {
   let list = notSelectedRefs.value
-  list.filter((blockRef) => {
+  list = list.filter((blockRef) => {
     return validBacklinkTreePathChain.value.some((chain) => {
       return chainHasRefNode(chain, blockRef)
     })
