@@ -52,7 +52,6 @@ import EnSiyuanEntry from './modules/EnSiyuanEntry.vue';
 
 
 import LifeLog from './modules/LifeLog/LifeLog.vue';
-import FixedDocArea from './components/FixedDocArea.vue';
 import TestArco from './modules/Test/TestArco.vue';
 import ArcoDartkTheme from './modules/ArcoDartkTheme.vue';
 import EnPWA from './modules/EnPWA.vue';
@@ -66,53 +65,12 @@ import EnMobileNav from './modules/EnMobileNav.vue';
 
 const plugin = usePlugin()
 
-// const SyEnhancerAppRef = ref<HTMLDivElement>(null)
-
-// const showFloatingBall = computed(() => {
-//   const floatingBallPlatform = settings.value.floatingBallPlatform
-//   if (floatingBallPlatform === 'none') {
-//     return false;
-//   }
-//   if (floatingBallPlatform === 'all') {
-//     return true
-//   }
-//   if (!isMobile.value) {
-//     return false
-//   }
-//   return true
-// })
-
-// const ViewportInfo = useViewportInfo()
-// const position = ref({
-//   top: 0,
-//   height: undefined,
-// })
 watchEffect(() => {
   document.documentElement.dataset.enhancerIsMobile = `${plugin.isMobile}`
-})
-watchEffect(() => {
-  // if (!SyEnhancerAppRef.value) {
-  //   return
-  // }
-  // const {
-  //   top,
-  //   height,
-  // } = ViewportInfo.value
-  // if (position.value.top !== top) {
-  //   SyEnhancerAppRef.value.style.top = ViewportInfo.value.top + 'px'
-  //   position.value.top = top
-  // }
-  // if (ViewportInfo.value.height) {
-  //   if (position.value.height !== height) {
-  //     SyEnhancerAppRef.value.style.height = ViewportInfo.value.height + 'px'
-  //     position.value.height = height
-  //   }
-  // }
 })
 
 onMounted(() => {
   addEventListener("storage", syncLocalStorage);
-  // listenerViewport()
 })
 </script>
 
