@@ -33,7 +33,7 @@
             <EnTagsContainer class="blockRefList" v-if="sortedRemainRefs.length">
               <a-tag
                 v-for="item of sortedRemainRefs"
-                :key="item.id"
+                :key="`${item.id}_${item.name}`"
                 :title="item.name"
                 @click="event => handleClickFilterTag(event, item)"
               >
@@ -45,7 +45,7 @@
                     margin-left: 2px
                   "
                 >
-                  {{ linkNumMap[item.id] }}
+                  {{ linkNumMap[`${item.id}_${item.name}`] }}
                 </sup>
               </a-tag>
             </EnTagsContainer>
@@ -56,7 +56,7 @@
               <EnTagsContainer class="blockRefList">
                 <a-tag
                   v-for="item of includeRefs"
-                  :key="`in-${item.id}`"
+                  :key="`in_${item.id}_${item.name}`"
                   :title="item.name"
                   @click="event => handleClickFilterTag(event, item)"
                 >
@@ -73,7 +73,7 @@
               <EnTagsContainer class="blockRefList">
                 <a-tag
                   v-for="item of excludeRefs"
-                  :key="'ex-' + item.id"
+                  :key="`ex_${item.id}_${item.name}`"
                   :title="item.name"
                   @click="event => handleClickFilterTag(event, item)"
                 >
@@ -156,7 +156,7 @@ import { computed, ref, watch } from 'vue';
 import { BottomBacklinkModuleName, BottomBacklinkModuleOptions, IBacklink } from './EnProtyleBottomBackLink.vue';
 import { sql } from '@/api';
 import { useModule } from '@/modules/Settings/EnSettings.vue';
-import { chainHasRefNode, chainHasTargetBlockRefId, getTreeChainPathOfDoc, hasTargetBlockRef, hideDom, isSyBreadCrumbDom, isSyContainerNode, isSyDocNode, isSyHeadingNode, isSyListItemNode, isSyNodeCanContainerBlockRef, showDom } from '@/utils/Siyuan';
+import { chainHasRefNode, chainHasTargetBlockRefIdAndName, getTreeChainPathOfDoc, hasTargetBlockRef, hasTargetBlockRefIdAndName, hideDom, isSyBreadCrumbDom, isSyContainerNode, isSyDocNode, isSyHeadingNode, isSyListItemNode, isSyNodeCanContainerBlockRef, showDom } from '@/utils/Siyuan';
 import { debounce, recursionTree } from '@/utils';
 import EnTagsContainer from '@/components/EnTagsContainer.vue';
 import { onCountClick, queryAllByDom } from '@/utils/DOM';
@@ -206,7 +206,7 @@ const getBlockRefsInDoc = async (ids: string[]) => {
       content as name
     from refs where block_id in (
       ${ids.map(i => `'${i}'`).join(', ')}
-    ) group by def_block_id
+    ) group by def_block_id, content
     limit ${moduleOptions.value.sqlLimit}
   `
   return sql(sqlStmt)
@@ -313,7 +313,10 @@ const getTreeStruct = async () => {
     if (blockRef.id === currentDocId.value) {
       return false
     }
-    return backlinkTreePathChains.value.some(chain => chain.some(i => hasTargetBlockRef(i._markdown, blockRef.id)))
+    return backlinkTreePathChains.value.some(chain => chain.some(i => {
+      const result = hasTargetBlockRefIdAndName(i._markdown, blockRef.id, blockRef.name)
+      return result
+    }))
   })
   backlinkBlockRefNodes.value = [
     ...blockRefsOptions.map(i => ({
@@ -438,7 +441,7 @@ const remainRefs = computed<Array<Node>>(() => {
 const sortedRemainRefs = computed(() => {
   const list = remainRefs.value
   list.sort((a, b) => {
-    return Number(linkNumMap.value[b.id]) - Number(linkNumMap.value[a.id])
+    return Number(linkNumMap.value[`${b.id}_${b.name}`]) - Number(linkNumMap.value[`${a.id}_${a.name}`])
   })
   return list
 })
@@ -493,12 +496,11 @@ const linkNumMap = computed(() => {
     } else {
       let validChainList = chainList.filter((chain) => {
         const lastInChain = chain[chain.length - 1]
-        return chainHasTargetBlockRefId(chain, node.id) && hasTargetBlockRef(lastInChain._markdown, node.id)
+        return chainHasTargetBlockRefIdAndName(chain, node.id, node.name) && hasTargetBlockRefIdAndName(lastInChain._markdown, node.id, node.name)
       })
-
       num = validChainList.length
     }
-    map[node.id] = num || ''
+    map[`${node.id}_${node.name}`] = num || ''
   })
   return map
 })

@@ -166,16 +166,36 @@ export function isSyContainerNode(node) {
 export function hasTargetBlockRef(markdown, defBlockId) {
   return markdown.includes(`((${defBlockId}`)
 }
+export function hasTargetBlockRefIdAndName(markdown, defBlockId, content) {
+  const blockRefsInMarkdown = markdown.match(/\(\(.*?\)\)/g)
+  if (!blockRefsInMarkdown) {
+    return false
+  }
+  const hasBlockRef = !!blockRefsInMarkdown.find((item: string) => {
+    const idTemp = `((${defBlockId}`
+    const hasBlockRefId = item.startsWith(idTemp)
+    if (!hasBlockRefId) {
+      return false
+    }
+    let removedId = item.replace(idTemp, '').trim().substring(1)
+    removedId = removedId.substring(0, removedId.length - 3)
+    if (removedId !== content) {
+      return false
+    }
+    return true
+  })
+  return hasBlockRef
+}
 
-export function chainHasTargetBlockRefId(chain, defBlockId) {
-  return chain.some(i => hasTargetBlockRef(i._markdown, defBlockId))
+export function chainHasTargetBlockRefIdAndName(chain, defBlockId, content?) {
+  return chain.some(i => hasTargetBlockRefIdAndName(i._markdown, defBlockId, content))
 }
 
 export function chainHasRefNode(chain, node) {
   if (node._type === 'doc') {
     return chain.some(i => i.id === node.id)
   } else {
-    return chainHasTargetBlockRefId(chain, node.id)
+    return chainHasTargetBlockRefIdAndName(chain, node.id, node.name)
   }
 }
 
@@ -190,7 +210,7 @@ export function getTreeChainPathOfDoc(chainList) {
           return
         }
       }
-      path += `/${chainNode.id}|[${chainNode._markdown}]`
+      path += `/((${chainNode.id} '${chainNode.name}'))|[${chainNode._markdown}]`
     })
     chainPaths.push(path)
   })
