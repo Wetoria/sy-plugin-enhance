@@ -1,5 +1,25 @@
 <template>
   <EnSettingsTeleportModule :name="moduleName" :display="moduleDisplayName" :module="module">
+    <div style="color: var(--b3-theme-on-surface);">
+      <div style="color: red">
+        <b>注意：不要过分依赖于该模块的功能。</b>
+      </div>
+      <div>
+        在一些特定的场景下，因为思源内部的逻辑，将会导致你的内容变成 HTML 块。
+      </div>
+      <div>
+        比如，拖拽（重复）移动内容时，如果未关闭段落锁，生成的内容将会是一个 HTML 块，而不是原格式。
+      </div>
+      <div>
+        在反链面板（包括底部反链）中，更新锚文本也会变为 HTML 块。（原文档里编辑，未遇到该问题）。
+      </div>
+      <div>
+        如果主要是新增内容而不是修改，你可以开启该功能。
+      </div>
+      <div>
+        因为这个导致的内容变更，请自行负责。
+      </div>
+    </div>
     <EnSettingsItem>
       <div>
         显示段落块时间
@@ -54,21 +74,6 @@
       <template #desc>
         <div style="display: flex; align-items: center;">
           是否启用段落锁功能。点击 <span><SyIcon name="iconLock" /></span> 进行解锁。
-        </div>
-        <div style="color: red">
-          <b>注意：不要过分依赖于该功能。</b>
-        </div>
-        <div>
-          在一些特定的场景下，因为思源内部的逻辑，将会导致你的内容变成 HTML 块。
-        </div>
-        <div>
-          比如，拖拽（重复）移动内容时，如果未关闭段落锁，生成的内容将会是一个 HTML 块，而不是原格式。
-        </div>
-        <div>
-          如果主要是新增内容而不是修改，你可以开启该功能。
-        </div>
-        <div>
-          因为这个导致的内容变更，请自行负责。
         </div>
       </template>
       <template #opt>
