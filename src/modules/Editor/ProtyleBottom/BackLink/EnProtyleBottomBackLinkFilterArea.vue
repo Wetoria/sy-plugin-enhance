@@ -360,6 +360,9 @@ const saveCurrentProperties = () => {
 
 const filterNameInputRef = ref()
 const onSavePopconfirmVisibleChange = (visible) => {
+  if (visible) {
+    currentFilterName.value = ''
+  }
   setTimeout(() => {
     if (visible && filterNameInputRef.value) {
       filterNameInputRef.value.focus()
