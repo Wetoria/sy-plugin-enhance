@@ -66,7 +66,7 @@ let flag
 const onTitleClicked = () => {
   clickNum.value += 1
   clearTimeout(flag)
-  if (clickNum.value >= 5) {
+  if (clickNum.value >= 10) {
     settings.value.isDebugging = !settings.value.isDebugging
   }
   flag = setTimeout(() => {
