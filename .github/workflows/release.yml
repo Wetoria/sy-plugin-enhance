@@ -90,16 +90,5 @@ jobs:
               draft: false,
               prerelease: false
             });
-            for (const asset of assets) {
-              const asset_url = asset.browser_download_url;
-              const asset_name = asset_url.split('/').pop();
-              const response = await github.rest.repos.uploadReleaseAsset({
-                owner,
-                repo,
-                release_id: release.data.id,
-                name: asset_name,
-                data: await (await fetch(asset_url)).blob()
-              });
-              console.log(response);
-            }
+            console.log('release is ', release);
 
