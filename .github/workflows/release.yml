@@ -101,6 +101,9 @@ jobs:
               const response = await github.rest.repos.uploadReleaseAsset({
                 owner,
                 repo,
+                headers: {
+                  'content-type': `application/zip`,
+                },
                 release_id: release.id,
                 name: asset_name,
                 data: fileData
