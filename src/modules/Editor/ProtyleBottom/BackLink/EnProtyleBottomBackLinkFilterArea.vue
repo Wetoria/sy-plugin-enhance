@@ -368,12 +368,21 @@ const onSavePopconfirmVisibleChange = (visible) => {
 }
 
 const deleteSavedProperties = (name) => {
-  delete docFilterPropertiesSaved.value[name]
+  const saved = Object.keys(docFilterPropertiesSaved.value)
+  const temp = {}
+  saved.filter(i => i != name)
+    .forEach((name) => {
+      temp[name] = docFilterPropertiesSaved.value[name]
+    })
+  moduleOptions.value.docFilterPropertiesSaved[props.currentDocId] = temp
 }
 
 const onSavedPropertiesClick = onCountClick((time, event, name) => {
-
-  properties.value = docFilterPropertiesSaved.value[name];
+  const savedProperties = docFilterPropertiesSaved.value[name]
+  if (!savedProperties) {
+    return
+  }
+  properties.value = savedProperties[name] as any as FilterProperties;
 })
 
 const plugin = usePlugin()
