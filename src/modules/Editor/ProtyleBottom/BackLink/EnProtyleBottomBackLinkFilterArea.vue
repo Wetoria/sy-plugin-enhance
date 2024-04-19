@@ -90,6 +90,7 @@
             <EnTagsContainer class="blockRefList">
               <a-popconfirm
                 position="tl"
+                v-model:popupVisible="saveFilterPopVisible"
                 @ok="saveCurrentProperties"
                 @popupVisibleChange="onSavePopconfirmVisibleChange"
               >
@@ -344,6 +345,7 @@ watch(properties, () => {
   immediate: true,
 })
 
+const saveFilterPopVisible = ref(false)
 
 const currentFilterName = ref('')
 const saveCurrentProperties = () => {
@@ -356,6 +358,7 @@ const saveCurrentProperties = () => {
     savedProperties = moduleOptions.value.docFilterPropertiesSaved[props.currentDocId] = {}
   }
   savedProperties[currentFilterName.value] = Object.assign({}, properties.value)
+  saveFilterPopVisible.value = false
 }
 
 const filterNameInputRef = ref()
