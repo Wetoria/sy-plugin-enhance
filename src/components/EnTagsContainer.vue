@@ -11,7 +11,7 @@
         <slot></slot>
         <template #overflow="{ number }">
           <a-tag @click="fold = false">
-            <div class="flexCenter enGap EnTagsController">
+            <div class="flexAlignCenter enGap EnTagsController">
               <SyIcon name="iconDown" />
               <span>+{{ number }}</span>
             </div>
@@ -22,7 +22,7 @@
     <a-space :wrap="true" v-else>
       <slot></slot>
       <a-tag @click="fold = true">
-        <div class="flexCenter enGap EnTagsController">
+        <div class="flexAlignCenter enGap EnTagsController">
           <SyIcon name="iconUp" />
           <span>收起</span>
         </div>

@@ -91,6 +91,17 @@ onMounted(() => {
 
 .flexCenter {
   display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.flexJustifyCenter {
+  display: flex;
+  justify-content: center;
+}
+
+.flexAlignCenter {
+  display: flex;
   align-items: center;
 }
 .enGap {
