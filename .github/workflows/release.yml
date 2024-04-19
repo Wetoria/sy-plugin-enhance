@@ -69,8 +69,17 @@ jobs:
           script: |
             const owner = 'wetoria';
             const originRepo = 'sy-plugin-enhance-codes';
-            const res = await github.rest.repos.getLatestRelease({
+            const repo = 'sy-plugin-enhance';
+            const {
+              data: {
+                tag_name,
+                name: release_name,
+                body: release_body,
+                assets,
+              }
+            } = await github.rest.repos.getLatestRelease({
               owner,
               repo: originRepo,
             });
-            console.log('tag_name is ', res);
+            console.log('assets is ', assets)
+
