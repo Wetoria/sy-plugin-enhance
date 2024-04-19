@@ -21,7 +21,7 @@
                   桌面端：单击左键来包含，或则 shift-单击左键来排除，再次点击取消选中。
                 </div>
                 <div>
-                  移动端：单击包含，双击排除。
+                  全平台：单击包含，双击排除。
                 </div>
               </template>
             </a-popover>
@@ -406,6 +406,10 @@ const handleClickFilterTag = onCountClick((time, event, item) => {
   } else {
     if (shiftKey) {
       checkValue = false
+    } else {
+      if (time === 2) {
+        checkValue = false
+      }
     }
   }
 
