@@ -1,5 +1,5 @@
 <template>
-  <div class="backlinkSearchArea">
+  <div class="backlinkSearchArea" v-if="sortedRemainRefs.length">
     <a-card :bordered="false" hoverable>
       <div class="searchMain">
         <div class="flexColumn" style="flex: 1; overflow: hidden;">
@@ -84,61 +84,60 @@
               </EnTagsContainer>
             </template>
 
-
-          </template>
-
-          <div>
-            其他操作：
-          </div>
-          <EnTagsContainer class="blockRefList">
-            <a-popconfirm
-              position="tl"
-              v-model:popupVisible="saveFilterPopVisible"
-              @ok="saveCurrentProperties"
-              @popupVisibleChange="onSavePopconfirmVisibleChange"
-            >
-              <a-tag class="filterBtn">保存当前条件</a-tag>
-              <template #icon><div></div></template>
-              <template #content>
-                <a-space>
-                  <div>名称</div>
-                  <a-input
-                    ref="filterNameInputRef"
-                    v-model="currentFilterName"
-                    @keyup.enter="saveCurrentProperties"
-                  />
-                </a-space>
-              </template>
-            </a-popconfirm>
-            <a-tag
-              class="filterBtn"
-              @click="() => switchDisplayType()"
-            >
-              {{ displayTypeMap[displayType] }}
-            </a-tag>
-
-          </EnTagsContainer>
-
-          <template v-if="savedNames.length">
             <div>
-              已保存的条件:
+              其他操作：
             </div>
             <EnTagsContainer class="blockRefList">
-              <a-tag
-                v-for="item of savedNames"
-                :key="'saved-' + item"
-                @click="(event) => onSavedPropertiesClick(event, item)"
+              <a-popconfirm
+                position="tl"
+                v-model:popupVisible="saveFilterPopVisible"
+                @ok="saveCurrentProperties"
+                @popupVisibleChange="onSavePopconfirmVisibleChange"
               >
-                <a-space>
-                  <span class="optionName">
-                    {{ item }}
-                  </span>
-                  <span @click.stop="() => deleteSavedProperties(item)">
-                    <icon-minus style="color: red" class="removeSavedProperties" />
-                  </span>
-                </a-space>
+                <a-tag class="filterBtn">保存当前条件</a-tag>
+                <template #icon><div></div></template>
+                <template #content>
+                  <a-space>
+                    <div>名称</div>
+                    <a-input
+                      ref="filterNameInputRef"
+                      v-model="currentFilterName"
+                      @keyup.enter="saveCurrentProperties"
+                    />
+                  </a-space>
+                </template>
+              </a-popconfirm>
+              <a-tag
+                class="filterBtn"
+                @click="() => switchDisplayType()"
+              >
+                {{ displayTypeMap[displayType] }}
               </a-tag>
+
             </EnTagsContainer>
+
+            <template v-if="savedNames.length">
+              <div>
+                已保存的条件:
+              </div>
+              <EnTagsContainer class="blockRefList">
+                <a-tag
+                  v-for="item of savedNames"
+                  :key="'saved-' + item"
+                  @click="(event) => onSavedPropertiesClick(event, item)"
+                >
+                  <a-space>
+                    <span class="optionName">
+                      {{ item }}
+                    </span>
+                    <span @click.stop="() => deleteSavedProperties(item)">
+                      <icon-minus style="color: red" class="removeSavedProperties" />
+                    </span>
+                  </a-space>
+                </a-tag>
+              </EnTagsContainer>
+            </template>
+
           </template>
 
         </div>
