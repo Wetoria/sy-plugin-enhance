@@ -104,7 +104,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.uploadUrl }}
-          asset_path: ${{ steps.create_release.outputs.browser_download_url }}
+          asset_path: ./my-artifact.zip
           asset_name: package.zip
           asset_content_type: application/zip
 
