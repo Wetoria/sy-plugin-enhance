@@ -92,11 +92,11 @@ jobs:
               prerelease: false
             });
             console.log('release is ', release);
-            const package = assets[0]
-            const browser_download_url = package.browser_download_url
-            const uploadUrl = release.upload_url
-            echo "{uploadUrl}={uploadUrl}" >> $GITHUB_OUTPUT
-            echo "{browser_download_url}={browser_download_url}" >> $GITHUB_OUTPUT
+            const package = assets[0];
+            const browser_download_url = package.browser_download_url;
+            const uploadUrl = release.upload_url;
+            console.log(`::set-output name=uploadUrl::${uploadUrl}`);
+            console.log(`::set-output name=browser_download_url::${browser_download_url}`);
       - name: Upload Release Asset
         id: upload-release-asset
         uses: actions/upload-release-asset@v1
