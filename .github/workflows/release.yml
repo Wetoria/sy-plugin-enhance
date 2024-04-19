@@ -98,7 +98,6 @@ jobs:
               const fileResponse = await fetch(asset_url);
               const fileBuffer = await fileResponse.arrayBuffer();
               const fileData = Buffer.from(fileBuffer);
-              console.log('file is ', file);
               const response = await github.rest.repos.uploadReleaseAsset({
                 owner,
                 repo,
