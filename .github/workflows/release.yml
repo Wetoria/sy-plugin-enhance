@@ -90,7 +90,6 @@ jobs:
               draft: false,
               prerelease: false
             });
-            const assets = "${{ steps.get_release.outputs.assets }}".split("\n");
             for (const asset of assets) {
               const asset_url = asset.browser_download_url;
               const asset_name = asset_url.split('/').pop();
