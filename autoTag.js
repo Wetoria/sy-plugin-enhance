@@ -7,6 +7,7 @@ const {
 
 exec(`git tag v${version}`, (err, stdout) => {
   if (!err) {
+    console.log('tag successed. ready to push.')
     exec(`git push origin v${version}`)
   } else {
     console.log()
