@@ -81,5 +81,26 @@ jobs:
               owner,
               repo: originRepo,
             });
-            console.log('assets is ', assets)
+            const { data: release } = await github.rest.repos.createRelease({
+              owner,
+              repo,
+              tag_name,
+              name: release_name,
+              body: release_body,
+              draft: false,
+              prerelease: false
+            });
+            const assets = "${{ steps.get_release.outputs.assets }}".split("\n");
+            for (const asset of assets) {
+              const asset_url = asset.browser_download_url;
+              const asset_name = asset_url.split('/').pop();
+              const response = await github.rest.repos.uploadReleaseAsset({
+                owner,
+                repo,
+                release_id: release.data.id,
+                name: asset_name,
+                data: await (await fetch(asset_url)).blob()
+              });
+              console.log(response);
+            }
 
