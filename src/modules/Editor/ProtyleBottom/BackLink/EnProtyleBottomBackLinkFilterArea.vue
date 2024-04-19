@@ -84,58 +84,62 @@
               </EnTagsContainer>
             </template>
 
-            <div>
-              其他操作：
-            </div>
-            <EnTagsContainer class="blockRefList">
-              <a-popconfirm
-                position="tl"
-                v-model:popupVisible="saveFilterPopVisible"
-                @ok="saveCurrentProperties"
-                @popupVisibleChange="onSavePopconfirmVisibleChange"
-              >
-                <a-tag class="filterBtn">保存当前条件</a-tag>
-                <template #icon><div></div></template>
-                <template #content>
-                  <a-space>
-                    <div>名称</div>
-                    <a-input
-                      ref="filterNameInputRef"
-                      v-model="currentFilterName"
-                      @keyup.enter="saveCurrentProperties"
-                    />
-                  </a-space>
-                </template>
-              </a-popconfirm>
-              <!-- <a-tag class="filterBtn">动态锚文本</a-tag>
-              <a-tag class="filterBtn">静态锚文本</a-tag> -->
-
-            </EnTagsContainer>
-
-            <template v-if="savedNames.length">
-              <div>
-                已保存的条件:
-              </div>
-              <EnTagsContainer class="blockRefList">
-                <a-tag
-                  v-for="item of savedNames"
-                  :key="'saved-' + item"
-                  @click="(event) => onSavedPropertiesClick(event, item)"
-                >
-                  <a-space>
-                    <span class="optionName">
-                      {{ item }}
-                    </span>
-                    <span @click.stop="() => deleteSavedProperties(item)">
-                      <icon-minus style="color: red" class="removeSavedProperties" />
-                    </span>
-                  </a-space>
-                </a-tag>
-              </EnTagsContainer>
-            </template>
 
           </template>
 
+          <div>
+            其他操作：
+          </div>
+          <EnTagsContainer class="blockRefList">
+            <a-popconfirm
+              position="tl"
+              v-model:popupVisible="saveFilterPopVisible"
+              @ok="saveCurrentProperties"
+              @popupVisibleChange="onSavePopconfirmVisibleChange"
+            >
+              <a-tag class="filterBtn">保存当前条件</a-tag>
+              <template #icon><div></div></template>
+              <template #content>
+                <a-space>
+                  <div>名称</div>
+                  <a-input
+                    ref="filterNameInputRef"
+                    v-model="currentFilterName"
+                    @keyup.enter="saveCurrentProperties"
+                  />
+                </a-space>
+              </template>
+            </a-popconfirm>
+            <a-tag
+              class="filterBtn"
+              @click="() => switchDisplayType()"
+            >
+              {{ displayTypeMap[displayType] }}
+            </a-tag>
+
+          </EnTagsContainer>
+
+          <template v-if="savedNames.length">
+            <div>
+              已保存的条件:
+            </div>
+            <EnTagsContainer class="blockRefList">
+              <a-tag
+                v-for="item of savedNames"
+                :key="'saved-' + item"
+                @click="(event) => onSavedPropertiesClick(event, item)"
+              >
+                <a-space>
+                  <span class="optionName">
+                    {{ item }}
+                  </span>
+                  <span @click.stop="() => deleteSavedProperties(item)">
+                    <icon-minus style="color: red" class="removeSavedProperties" />
+                  </span>
+                </a-space>
+              </a-tag>
+            </EnTagsContainer>
+          </template>
 
         </div>
       </div>
@@ -165,10 +169,11 @@ import { usePlugin } from '@/main';
 
 interface Node {
   id: string;
+  blockRefId: string;
   parent_id: string;
   name: string;
   treePath: string;
-  _type: 'doc' | 'block_Ref';
+  _type: 'doc' | 'blockRef';
 }
 
 const props = defineProps<{
@@ -191,7 +196,64 @@ const backlinkDocTreeStruct = ref([])
 const backlinkFlatTree = ref([])
 const backlinkTreePathChains = ref([])
 
+// 当前文档的块引列表
 const backlinkBlockRefNodes = ref<Node[]>([])
+const dynamicBlockRefNodes = ref<Node[]>([])
+const staticBlockRefNodes = ref<Node[]>([])
+
+const getDynamicAndStaticBlockRefs = async () => {
+  const blockRefs = backlinkBlockRefNodes.value.filter(i => i._type == 'blockRef')
+  const blockRefDefIds = blockRefs.map(i => i.id)
+  const blockRefIds = blockRefs.map(i => i.blockRefId)
+
+  const getSql = (isStatic: boolean) => {
+    return `
+      SELECT
+        refs.id as blockRefId,
+        refs.def_block_id as id,
+        refs.content as name
+      FROM
+        refs
+        JOIN blocks ON refs.def_block_id = blocks.id
+      WHERE
+        refs.def_block_id in (${blockRefDefIds.map(i => `'${i}'`).join(', ')})
+        AND refs.content ${isStatic ? '!=' : '='} blocks.content
+        AND refs.id in (${blockRefIds.map(i => `'${i}'`).join(', ')})
+      limit ${moduleOptions.value.sqlLimit}
+    `
+  }
+
+  const staticBlockRefsRes = await sql(getSql(true))
+  staticBlockRefNodes.value = staticBlockRefsRes.map((i) => ({
+    ...i,
+    _type: 'blockRef',
+  }))
+  const dynamicBlockRefsRes = await sql(getSql(false))
+  dynamicBlockRefNodes.value = dynamicBlockRefsRes.map((i) => ({
+    ...i,
+    _type: 'blockRef',
+  }))
+}
+
+const nextValueMap = {
+  all: 'd',
+  d: 's',
+  s: 'all',
+}
+const displayType = ref<keyof typeof nextValueMap>('all')
+const displayTypeMap = {
+  all: '展示全部块引',
+  d: '只展示动态锚文本',
+  s: '只展示静态锚文本',
+}
+const switchDisplayType = () => {
+  const nextValue = nextValueMap[displayType.value] as keyof typeof nextValueMap
+  displayType.value = nextValue
+}
+
+watch(backlinkBlockRefNodes, () => {
+  getDynamicAndStaticBlockRefs()
+})
 
 watch(currentDocId, () => {
   backlinkDocTreeStruct.value = []
@@ -203,6 +265,7 @@ watch(currentDocId, () => {
 const getBlockRefsInDoc = async (ids: string[]) => {
   let sqlStmt = `
     select
+      id as blockRefId,
       def_block_id as id,
       content as name
     from refs where block_id in (
@@ -454,6 +517,12 @@ const remainRefs = computed<Array<Node>>(() => {
       return chainHasRefNode(chain, blockRef)
     })
   })
+
+  if (displayType.value == 'd') {
+    list = list.filter((node) => dynamicBlockRefNodes.value.find(i => i.id == node.id && i.name == node.name))
+  } else if (displayType.value == 's') {
+    list = list.filter((node) => staticBlockRefNodes.value.find(i => i.id == node.id && i.name == node.name))
+  }
 
   return list
 })

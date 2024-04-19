@@ -201,7 +201,9 @@ const defaultOptions: BottomBacklinkModuleOptions = {
   defaultShowBacklinkFilter: false,
   sqlLimit: 999999999,
   docFilterProperties: {},
-  docFilterPropertiesSaved: {},
+  docFilterPropertiesSaved: {
+    一键清空: {},
+  },
 }
 </script>
 
