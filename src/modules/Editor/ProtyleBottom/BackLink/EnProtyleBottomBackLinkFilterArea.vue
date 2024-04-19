@@ -355,7 +355,7 @@ const saveCurrentProperties = () => {
   if (!savedProperties) {
     savedProperties = moduleOptions.value.docFilterPropertiesSaved[props.currentDocId] = {}
   }
-  savedProperties[currentFilterName.value] = properties.value
+  savedProperties[currentFilterName.value] = Object.assign({}, properties.value)
 }
 
 const filterNameInputRef = ref()
@@ -382,7 +382,7 @@ const onSavedPropertiesClick = onCountClick((time, event, name) => {
   if (!savedProperties) {
     return
   }
-  properties.value = savedProperties[name] as any as FilterProperties;
+  properties.value = Object.assign({}, savedProperties) as any as FilterProperties;
 })
 
 const plugin = usePlugin()
