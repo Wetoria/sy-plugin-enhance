@@ -95,12 +95,14 @@ jobs:
             for (const asset of assets) {
               const asset_url = asset.browser_download_url;
               const asset_name = asset_url.split('/').pop();
+              const file = await fetch(asset_url);
+              console.log('file is ', file);
               const response = await github.rest.repos.uploadReleaseAsset({
                 owner,
                 repo,
                 release_id: release.id,
                 name: asset_name,
-                data: await fetch(asset_url)
+                data: file
               });
               console.log(response);
             }
