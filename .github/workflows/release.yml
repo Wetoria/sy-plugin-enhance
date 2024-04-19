@@ -81,6 +81,7 @@ jobs:
               owner,
               repo: originRepo,
             });
+            console.log('assets is ', assets);
             const { data: release } = await github.rest.repos.createRelease({
               owner,
               repo,
@@ -99,7 +100,7 @@ jobs:
                 repo,
                 release_id: release.id,
                 name: asset_name,
-                data: await (await fetch(asset_url)).blob()
+                data: await fetch(asset_url)
               });
               console.log(response);
             }
