@@ -1,37 +1,19 @@
 name: Create Release By Private Repo
-
 on:
-  release:
-    types: [published]
-    # 可以指定 repoA 的 repository，确保只有在 repoA 发布 release 时触发
-    repository:
-      # 填入 repoA 的拥有者和仓库名称
-      - owner: Wetoria
-        repo: sy-plugin-enhance-codes
+  workflow_dispatch:
 
 jobs:
-  create_release:
+  download:
     runs-on: ubuntu-latest
-    
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-      
-    - name: Get latest release information from sy-plugin-enhance-codes
-      id: get_release
+    - name: "Download artifact"
       run: |
-        release_info=$(curl -sSL https://api.github.com/repos/wetoria/sy-plugin-enhance-codes/releases/latest)
-        echo "::set-output name=tag_name::$(echo $release_info | jq -r '.tag_name')"
-        echo "::set-output name=release_name::$(echo $release_info | jq -r '.name')"
-        echo "::set-output name=release_body::$(echo $release_info | jq -r '.body')"
-      
-    - name: Create release on sy-plugin-enhance
-      uses: actions/create-release@v1
-      with:
-        tag_name: ${{ steps.get_release.outputs.tag_name }}
-        release_name: ${{ steps.get_release.outputs.release_name }}
-        body: ${{ steps.get_release.outputs.release_body }}
-        draft: false
-        prerelease: false
+        OTHER_REPO="wetoria/sy-plugin-enhance-codes"
+        WF_NAME="release.yml"
+        ARTIFACT_NAME="package.zip"
+        RUN_ID=`gh run --repo ${OTHER_REPO} list --workflow ${WF_NAME} --json databaseId --jq .[0].databaseId`
+        gh run --repo ${OTHER_REPO} download ${RUN_ID} -n ${ARTIFACT_NAME}
+        # List the artifiact directory/files
+        ls -lR
       env:
         GITHUB_TOKEN: ${{ secrets.CUSTOM_TOKEN }}
