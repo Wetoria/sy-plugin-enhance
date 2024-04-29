@@ -6,7 +6,6 @@ A plugin to enhance [siyuan](https://b3log.org/siyuan/?utm_source=ld246.com).
 **If you do not know about this plugin. Please don't use it!**  
 **If you do not know about this plugin. Please don't use it!**  
 
-
 ## 📌 Instructions 
 
 There is no English version of README. You can see the 中文版本 in [here](./README_zh_CN.md)
