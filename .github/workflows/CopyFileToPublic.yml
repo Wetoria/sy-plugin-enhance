@@ -3,59 +3,19 @@ name: Copy File to Public Repo
 on: push
 
 jobs:
-  copy-file:
+  copy-files:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v3
 
-    - name: Pushes README.md
-      uses: dmnemec/copy_file_to_another_repo_action@main
-      env:
-        API_TOKEN_GITHUB: ${{ secrets.CUSTOM_TOKEN }}
-      with:
-        source_file: 'README.md'
-        destination_repo: 'wetoria/sy-plugin-enhance'
-        user_email: 'bot@wetoria.me'
-        user_name: 'GithubActions'
-        commit_message: 'copy private file to public - README.md'
-    - name: Pushes README_zh_CN.md
-      uses: dmnemec/copy_file_to_another_repo_action@main
-      env:
-        API_TOKEN_GITHUB: ${{ secrets.CUSTOM_TOKEN }}
-      with:
-        source_file: 'README_zh_CN.md'
-        destination_repo: 'wetoria/sy-plugin-enhance'
-        user_email: 'bot@wetoria.me'
-        user_name: 'GithubActions'
-        commit_message: 'copy private file to public - README_zh_CN.md'
-    - name: Pushes icon.png
-      uses: dmnemec/copy_file_to_another_repo_action@main
-      env:
-        API_TOKEN_GITHUB: ${{ secrets.CUSTOM_TOKEN }}
-      with:
-        source_file: 'icon.png'
-        destination_repo: 'wetoria/sy-plugin-enhance'
-        user_email: 'bot@wetoria.me'
-        user_name: 'GithubActions'
-        commit_message: 'copy private file to public - icon.png'
-    - name: Pushes plugin.json
-      uses: dmnemec/copy_file_to_another_repo_action@main
-      env:
-        API_TOKEN_GITHUB: ${{ secrets.CUSTOM_TOKEN }}
-      with:
-        source_file: 'plugin.json'
-        destination_repo: 'wetoria/sy-plugin-enhance'
-        user_email: 'bot@wetoria.me'
-        user_name: 'GithubActions'
-        commit_message: 'copy private file to public - plugin.json'
-    - name: Pushes preview.png
-      uses: dmnemec/copy_file_to_another_repo_action@main
-      env:
-        API_TOKEN_GITHUB: ${{ secrets.CUSTOM_TOKEN }}
-      with:
-        source_file: 'preview.png'
-        destination_repo: 'wetoria/sy-plugin-enhance'
-        user_email: 'bot@wetoria.me'
-        user_name: 'GithubActions'
-        commit_message: 'copy private file to public - preview.png'
+      - name: Push Private files
+        uses: dobbelina/multi_file_bandit@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+        with:
+          source_file: "README.md,README_zh_CN.md,icon.png,preview.png,plugin.json"
+          destination_repo: "wetoria/sy-plugin-enhance"
+          user_email: "bot@wetoria.me"
+          user_name: "GithubActions"
+          commit_message: "copy private file to public"
