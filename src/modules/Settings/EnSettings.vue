@@ -37,12 +37,15 @@
 
     <template #footer>
       <div class="enSettingsFooter">
+        <span v-if="settings.isPro" class="flexCenter">
+          <SyIcon name="iconVIP" />
+        </span>
         <span>
           使用说明：
           <a href="https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse">{{plugin.version ? `v${plugin.version}` : ''}}</a>
         </span>
         <span>
-          作者：
+          <span @click="handleClickAuthor">作者：</span>
           <a href="https://wetoria.me">Wetoria</a>
         </span>
       </div>
@@ -56,6 +59,8 @@ import { usePlugin } from '@/main';
 import { computed, ref, watchEffect, watch } from 'vue';
 import AnyTouch from 'any-touch';
 import { debounce } from '@/utils';
+import { onCountClick } from '@/utils/DOM';
+import SyIcon from '@/components/SiyuanTheme/SyIcon.vue';
 
 const plugin = usePlugin()
 
@@ -127,6 +132,12 @@ const onDrawerOpen = () => {
 const onDrawerCLose = () => {
 
 }
+
+const handleClickAuthor = onCountClick((time) => {
+  if (time >= 11) {
+    settings.value.isPro = !settings.value.isPro
+  }
+})
 </script>
 
 <script lang="ts">
@@ -139,6 +150,8 @@ export interface EnModuleType {
 
 interface EnSettings {
   isDebugging: boolean
+  isPro: boolean
+
   boxId: string;
 
   enableFixedDocArea: boolean;
@@ -152,6 +165,7 @@ interface EnSettings {
 
 const defaultSettings: EnSettings = {
   isDebugging: false,
+  isPro: false,
 
   boxId: '',
 
