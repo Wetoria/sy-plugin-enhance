@@ -46,7 +46,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, watchEffect } from 'vue';
+import { onBeforeUnmount, onMounted, watchEffect } from 'vue';
 import { usePlugin } from './main';
 import EnSiyuanEntry from './modules/EnSiyuanEntry.vue';
 
@@ -71,6 +71,9 @@ watchEffect(() => {
 
 onMounted(() => {
   addEventListener("storage", syncLocalStorage);
+})
+onBeforeUnmount(() => {
+  removeEventListener('storage', syncLocalStorage)
 })
 </script>
 
