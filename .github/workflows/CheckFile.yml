@@ -1,0 +1,25 @@
+name: Check File Update
+
+on:
+  pull_request:
+    paths:
+      - 'README.md' # 替换成你要检查的文件路径
+  push:
+    paths:
+      - 'README.md' # 替换成你要检查的文件路径
+
+jobs:
+  check-update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Check for file update
+        run: |
+          if [[ $(git diff --name-only ${{ github.event.before }} ${{ github.sha }}) == *"README.md"* ]]; then
+            echo "File has been updated"
+          else
+            echo "File has not been updated"
+          fi
