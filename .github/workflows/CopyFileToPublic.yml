@@ -12,7 +12,7 @@ jobs:
       - name: Push Private files
         uses: dobbelina/multi_file_bandit@main
         env:
-          API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+          API_TOKEN_GITHUB: ${{ secrets.CUSTOM_TOKEN }}
         with:
           source_file: "README.md,README_zh_CN.md,icon.png,preview.png,plugin.json"
           destination_repo: "wetoria/sy-plugin-enhance"
