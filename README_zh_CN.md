@@ -3,6 +3,10 @@
 
 一个用来增强[思源笔记](https://b3log.org/siyuan/?utm_source=ld246.com)的插件。
 
+**如果你不了解本插件，请不要使用！**  
+**如果你不了解本插件，请不要使用！**  
+**如果你不了解本插件，请不要使用！**  
+
 ## 介绍
 
 你可以把这个插件当作一个试验田，由本人 [𝓦𝓮𝓽𝓸𝓻𝓲𝓪](https://simplest-frontend.feishu.cn/docx/R1UxdUYPtoWVi2xapQXclJd2nUh#H5N9dK061o6R4sxUWTiccgvYnAc) 开发和维护。
