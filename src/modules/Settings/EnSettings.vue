@@ -56,7 +56,7 @@
 <script setup lang="ts">
 import EnDivider from '@/components/EnDivider.vue';
 import { usePlugin } from '@/main';
-import { computed, ref, watchEffect, watch } from 'vue';
+import { computed, ref, watchEffect, watch, onMounted, onBeforeUnmount } from 'vue';
 import AnyTouch from 'any-touch';
 import { debounce } from '@/utils';
 import { onCountClick } from '@/utils/DOM';
@@ -137,6 +137,25 @@ const handleClickAuthor = onCountClick((time) => {
   if (time >= 11) {
     settings.value.isPro = !settings.value.isPro
   }
+})
+
+const loadSettingsOnWS = ({ detail }) => {
+  if (detail.cmd === 'backgroundtask') {
+    loadSettingsWithoutSave()
+  }
+}
+const loadSettingsOnSyncEnd = () => {
+  loadSettingsWithoutSave()
+}
+
+onMounted(() => {
+  const plugin = usePlugin()
+  // plugin.eventBus.on('ws-main', loadSettingsOnWS)
+  // plugin.eventBus.on('sync-end', loadSettingsOnSyncEnd)
+})
+onBeforeUnmount(() => {
+  // plugin.eventBus.off('ws-main', loadSettingsOnWS)
+  // plugin.eventBus.off('sync-end', loadSettingsOnSyncEnd)
 })
 </script>
 
@@ -245,6 +264,11 @@ export async function loadSettings() {
   if (!settings.value.modules) {
     settings.value.modules = {}
   }
+}
+
+const loadSettingsWithoutSave = () => {
+  doNotSave = true
+  loadSettings()
 }
 
 /**
