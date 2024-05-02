@@ -8,7 +8,7 @@
       ref="SyEnhancerAppRef"
     >
       <div class="displayArea">
-        <!-- <TestArco /> -->
+        <TestArco />
       </div>
       <div class="hiddenArea">
 
@@ -19,18 +19,18 @@
         <EnSettings />
         <EnSiyuanEntry />
         <EnEditor />
-        <!-- <EnBackgroundImg /> -->
+        <EnBackgroundImg />
         <EnOthers />
-        <!-- <EnQuickNote /> -->
+        <EnQuickNote />
         <ArcoDartkTheme />
 
         <DailyNote />
-        <!-- <LifeLog /> -->
+        <LifeLog />
       </template>
 
       <!-- 仅移动端 -->
       <template v-if="plugin.isMobile">
-        <!-- <EnPWA /> -->
+        <EnPWA />
         <EnMobileNav />
 
       </template>
@@ -46,7 +46,7 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, watchEffect } from 'vue';
+import { onMounted, watchEffect } from 'vue';
 import { usePlugin } from './main';
 import EnSiyuanEntry from './modules/EnSiyuanEntry.vue';
 
@@ -71,9 +71,6 @@ watchEffect(() => {
 
 onMounted(() => {
   addEventListener("storage", syncLocalStorage);
-})
-onBeforeUnmount(() => {
-  removeEventListener('storage', syncLocalStorage)
 })
 </script>
 

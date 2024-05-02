@@ -1,5 +1,5 @@
 <template>
-  <!-- <EnParagraphBlock /> -->
+  <EnParagraphBlock />
   <Teleport
     v-for="protyleBottom of protyleBottomMap.values()"
     :to="protyleBottom.enArea"
