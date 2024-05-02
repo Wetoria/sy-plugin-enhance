@@ -8,7 +8,7 @@
       ref="SyEnhancerAppRef"
     >
       <div class="displayArea">
-        <TestArco />
+        <!-- <TestArco /> -->
       </div>
       <div class="hiddenArea">
 
@@ -19,18 +19,18 @@
         <EnSettings />
         <EnSiyuanEntry />
         <EnEditor />
-        <EnBackgroundImg />
+        <!-- <EnBackgroundImg /> -->
         <EnOthers />
-        <EnQuickNote />
+        <!-- <EnQuickNote /> -->
         <ArcoDartkTheme />
 
         <DailyNote />
-        <LifeLog />
+        <!-- <LifeLog /> -->
       </template>
 
       <!-- 仅移动端 -->
       <template v-if="plugin.isMobile">
-        <EnPWA />
+        <!-- <EnPWA /> -->
         <EnMobileNav />
 
       </template>
