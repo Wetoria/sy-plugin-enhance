@@ -170,7 +170,7 @@ import { computed, ref, watch, watchEffect } from 'vue';
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import {
 chainHasRefNode,
-  chainHasTargetBlockRefId,
+  chainHasTargetBlockRefIdAndName,
   getTreeChainPathOfDoc,
   hasTargetBlockRef,
   hideDom, isSyBreadCrumbDom, isSyContainerNode, isSyDocNode, isSyHeadingNode, isSyListItemNode, isSyNodeCanContainerBlockRef, showDom } from '@/utils/Siyuan';
@@ -660,7 +660,7 @@ const linkNumMap = computed(() => {
     } else {
       let validChainList = chainList.filter((chain) => {
         const lastInChain = chain[chain.length - 1]
-        return chainHasTargetBlockRefId(chain, node.id) && hasTargetBlockRef(lastInChain._markdown, node.id)
+        return chainHasTargetBlockRefIdAndName(chain, node.id) && hasTargetBlockRef(lastInChain._markdown, node.id)
       })
 
       num = validChainList.length
