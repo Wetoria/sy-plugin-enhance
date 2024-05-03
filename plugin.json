@@ -2,7 +2,7 @@
   "name": "sy-plugin-enhance",
   "author": "Wetoria",
   "url": "https://github.com/Wetoria/sy-plugin-enhance",
-  "version": "0.16.1",
+  "version": "0.16.2",
   "minAppVersion": "3.0.10",
   "备注": "如果你能看到这段内容，证明你正在并且有能力 hack enhance。如果你能成功理解混淆后的代码，你可以随意使用，但请不要公开宣传，否则作者会考虑进一步提高权限判断。",
   "NOTE": "If you can see this, it proves that you are and have the ablity to hack enhance. If you can successfully understand the confused code, you can use it freely, but please do not publicize it publicly, or the author will consider further improving the permission judgment.",
@@ -19,8 +19,8 @@
   },
   "description": {
     "default": "zh_CN",
-    "en_US": "sy-plugin-enhance",
-    "zh_CN": "增强思源笔记"
+    "en_US": "A plugin to enhance Siyuan, let us write LifeLog in Siyuan without any pressure.",
+    "zh_CN": "增强思源笔记，在思源笔记中实现无压记录 LifeLog。"
   },
   "readme": {
     "default": "zh_CN",
