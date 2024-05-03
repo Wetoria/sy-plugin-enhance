@@ -206,12 +206,12 @@ export function useSettings() {
 
 export const switchID = (time) => {
   let v = settings.value.v
-  if (11 <= time && time <= 20) {
-    v += 1
-  } else if (time > 20) {
-    v += 2
+  if (11 <= time && time < 20) {
+    v = v > 0 ? 0 : 1
+  } else if (time >= 20) {
+    v = 2
   }
-  settings.value.v = v % 3 as 0 | 1 | 2
+  settings.value.v = v
 }
 
 export function useModule(moduleName: string, defaultOptions: object = {}) {
