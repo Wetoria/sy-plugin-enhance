@@ -25,6 +25,7 @@
         <ArcoDartkTheme />
 
         <DailyNote />
+        <EnVideoAndAudio v-if="isPro()" />
         <!-- <LifeLog /> -->
       </template>
 
@@ -56,12 +57,13 @@ import TestArco from './modules/Test/TestArco.vue';
 import ArcoDartkTheme from './modules/ArcoDartkTheme.vue';
 import EnPWA from './modules/EnPWA.vue';
 import DailyNote from './modules/DailyNote/DailyNote.vue';
-import EnSettings, { syncLocalStorage } from './modules/Settings/EnSettings.vue';
+import EnSettings, { isPro, syncLocalStorage } from './modules/Settings/EnSettings.vue';
 import EnOthers from './modules/EnOthers.vue';
 import EnBackgroundImg from './modules/Background/EnBackgroundImg.vue';
 import EnQuickNote from './modules/QuickNote/EnQuickNote.vue';
 import EnEditor from './modules/Editor/EnEditor.vue';
 import EnMobileNav from './modules/EnMobileNav.vue';
+import EnVideoAndAudio from './modules/EnVideoAndAudio.vue';
 
 const plugin = usePlugin()
 
