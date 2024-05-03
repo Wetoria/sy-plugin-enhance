@@ -24,6 +24,13 @@
 - 移动端底部导航栏
 
 
+Pro 功能：
+
+- 音视频时间戳
+
+> 开启 Pro 功能参见 [这里](https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse#ARFTdaYaooOg45xhM8Xc5F0jngd)。
+
+
 ## 如何反馈
 
 参见 [这里](https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse#Ah7nd5EAxowrfUxKj1ucTAuUn6b)
