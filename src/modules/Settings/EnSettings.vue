@@ -45,7 +45,7 @@
           <a href="https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse">{{plugin.version ? `v${plugin.version}` : ''}}</a>
         </span>
         <span>
-          <span @click="handleClickAuthor">作者：</span>
+          <span>作者：</span>
           <a href="https://wetoria.me">Wetoria</a>
         </span>
       </div>
@@ -59,7 +59,6 @@ import { usePlugin } from '@/main';
 import { computed, ref, watchEffect, watch, onMounted, onBeforeUnmount } from 'vue';
 import AnyTouch from 'any-touch';
 import { debounce } from '@/utils';
-import { onCountClick } from '@/utils/DOM';
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue';
 
 const plugin = usePlugin()
@@ -132,12 +131,6 @@ const onDrawerOpen = () => {
 const onDrawerCLose = () => {
 
 }
-
-const handleClickAuthor = onCountClick((time) => {
-  if (time >= 11) {
-    settings.value.isPro = !settings.value.isPro
-  }
-})
 
 const loadSettingsOnWS = ({ detail }) => {
   if (detail.cmd === 'backgroundtask') {
@@ -212,6 +205,10 @@ let STORAGE_KEY = 'SyEnhancerSettings'
 
 export function useSettings() {
   return settings
+}
+
+export const switchProStatus = () => {
+  settings.value.isPro = !settings.value.isPro
 }
 
 export function useModule(moduleName: string, defaultOptions: object = {}) {
@@ -322,6 +319,42 @@ export const closeSettings = () => {
 export const switchState = (key, value) => {
   document.documentElement.dataset[key] = `${value}`
 }
+
+let eventListOfPro: Array<(isPro: boolean) => void> = []
+export const watchProEnable = (callback) => {
+  eventListOfPro.push(callback)
+  callback(settings.value.isPro)
+}
+export const unwatchProEnable = (callback)  => {
+  eventListOfPro = eventListOfPro.filter(i => i != callback)
+}
+
+export const useProWatcher = (props: {
+  onChange?: (enabled: boolean) => void,
+  onEnabled?: () => void,
+  onDisabled?: () => void,
+}) => {
+  const {
+    onChange = () => {},
+    onEnabled = () => {},
+    onDisabled = () => {},
+  } = props
+  watchProEnable((enabled) => {
+    onChange(enabled)
+    if (enabled) {
+      onEnabled()
+    } else {
+      onDisabled()
+    }
+  })
+}
+
+watchEffect(() => {
+  const enbaled = settings.value.isPro
+  eventListOfPro.forEach((cb) => {
+    cb(enbaled)
+  })
+})
 </script>
 
 <style lang="scss" scoped>
