@@ -4,15 +4,14 @@
     v-if="entryRef"
   >
     <svg>
-      <use :xlink:href="`#${!settings.isPro ? 'iconHeart' : 'iconVIP'}`"></use>
+      <use :xlink:href="`#${['iconHeart', 'iconVIP', 'iconSuper'][settings.v]}`"></use>
     </svg>
   </Teleport>
 </template>
 
 <script setup lang="ts">
 import { usePlugin } from '@/main';
-import { openSettings, switchProStatus, useSettings } from '@/modules/Settings/EnSettings.vue';
-import { onCountClick } from '@/utils/DOM';
+import { entryOpenSettings, useSettings } from '@/modules/Settings/EnSettings.vue';
 import { onMounted, ref } from 'vue';
 
 const settings = useSettings()
@@ -25,13 +24,7 @@ const registerTopBar = () => {
     icon: "iconHeart",
     title: plugin.i18n.pluginName,
     position: "right",
-    callback: onCountClick((time) => {
-      if (time >= 11) {
-        switchProStatus()
-      } else {
-        openSettings()
-      }
-    }),
+    callback: entryOpenSettings,
   }) as HTMLDivElement;
   el.innerHTML = ''
   entryRef.value = el

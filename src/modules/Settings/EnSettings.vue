@@ -37,9 +37,6 @@
 
     <template #footer>
       <div class="enSettingsFooter">
-        <span v-if="settings.isPro" class="flexCenter">
-          <SyIcon name="iconVIP" />
-        </span>
         <span>
           使用说明：
           <a href="https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse">{{plugin.version ? `v${plugin.version}` : ''}}</a>
@@ -59,7 +56,7 @@ import { usePlugin } from '@/main';
 import { computed, ref, watchEffect, watch, onMounted, onBeforeUnmount } from 'vue';
 import AnyTouch from 'any-touch';
 import { debounce } from '@/utils';
-import SyIcon from '@/components/SiyuanTheme/SyIcon.vue';
+import { onCountClick } from '@/utils/DOM';
 
 const plugin = usePlugin()
 
@@ -162,7 +159,7 @@ export interface EnModuleType {
 
 interface EnSettings {
   isDebugging: boolean
-  isPro: boolean
+  v: 0 | 1 | 2
 
   boxId: string;
 
@@ -177,7 +174,7 @@ interface EnSettings {
 
 const defaultSettings: EnSettings = {
   isDebugging: false,
-  isPro: false,
+  v: 0,
 
   boxId: '',
 
@@ -207,8 +204,14 @@ export function useSettings() {
   return settings
 }
 
-export const switchProStatus = () => {
-  settings.value.isPro = !settings.value.isPro
+export const switchID = (time) => {
+  let v = settings.value.v
+  if (11 <= time && time <= 20) {
+    v += 1
+  } else if (time > 20) {
+    v += 2
+  }
+  settings.value.v = v % 3 as 0 | 1 | 2
 }
 
 export function useModule(moduleName: string, defaultOptions: object = {}) {
@@ -312,6 +315,14 @@ export const openSettings = () => {
   editingSettings.value = true;
 }
 
+export const entryOpenSettings = onCountClick((time) => {
+  if (time >= 11) {
+    switchID(time)
+  } else {
+    openSettings()
+  }
+})
+
 export const closeSettings = () => {
   editingSettings.value = false;
 }
@@ -323,7 +334,7 @@ export const switchState = (key, value) => {
 let eventListOfPro: Array<(isPro: boolean) => void> = []
 export const watchProEnable = (callback) => {
   eventListOfPro.push(callback)
-  callback(settings.value.isPro)
+  callback(settings.value.v >= 1)
 }
 export const unwatchProEnable = (callback)  => {
   eventListOfPro = eventListOfPro.filter(i => i != callback)
@@ -350,7 +361,7 @@ export const useProWatcher = (props: {
 }
 
 watchEffect(() => {
-  const enbaled = settings.value.isPro
+  const enbaled = settings.value.v >= 1
   eventListOfPro.forEach((cb) => {
     cb(enbaled)
   })
