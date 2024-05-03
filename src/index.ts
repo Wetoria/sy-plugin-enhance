@@ -16,6 +16,7 @@ const {
 } = PluginInfo
 
 import { destroy, init } from './main';
+import { openSettings } from './modules/Settings/EnSettings.vue';
 
 export default class VPlugin extends Plugin {
   public isMobile: boolean;
@@ -32,5 +33,9 @@ export default class VPlugin extends Plugin {
 
   onunload() {
     destroy()
+  }
+
+  openSetting() {
+    openSettings()
   }
 }
