@@ -17,15 +17,16 @@ const {
 
 import { destroy, init } from './main';
 import { openSettings } from './modules/Settings/EnSettings.vue';
+import { SyFrontendTypes } from './utils/Siyuan';
 
 export default class VPlugin extends Plugin {
   public isMobile: boolean;
-  public platform: string;
+  public platform: SyFrontendTypes;
   public readonly version = version;
 
   async onload() {
     const frontEnd = getFrontend();
-    this.platform = frontEnd
+    this.platform = frontEnd as SyFrontendTypes
     this.isMobile = frontEnd === "mobile" || frontEnd === "browser-mobile";
 
     init(this);

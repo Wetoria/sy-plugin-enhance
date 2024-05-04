@@ -3,6 +3,14 @@ import { queryAllByDom } from './DOM'
 import { debounce } from '.'
 import { IOperation } from 'siyuan'
 
+export enum SyFrontendTypes {
+  'desktop' = 'desktop',
+  'desktop-window' = 'desktop-window',
+  'mobile' = 'mobile',
+  'browser-desktop' = 'browser-desktop',
+  'browser-mobile' = 'browser-mobile',
+}
+
 export enum SyDomNodeTypes {
   NodeParagraph = 'NodeParagraph',
   NodeHeading = 'NodeHeading',
