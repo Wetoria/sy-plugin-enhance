@@ -6,8 +6,9 @@
 import { usePlugin } from '@/main';
 import { debounce } from '@/utils';
 import { queryAllByDom } from '@/utils/DOM';
-import { Protyle, showMessage } from 'siyuan';
+import { openWindow, Protyle, showMessage } from 'siyuan';
 import { useProWatcher } from './Settings/EnSettings.vue';
+import { SyFrontendTypes } from '@/utils/Siyuan';
 
 const plugin = usePlugin()
 
@@ -46,6 +47,53 @@ const recordVideoAndAudio = (video: HTMLVideoElement | HTMLAudioElement) => {
   }
 }
 
+const desktopTypes = [SyFrontendTypes.desktop, SyFrontendTypes['desktop-window']]
+const waitKey = 'enWaitToSetTime'
+let waitToSetTime = localStorage.getItem(waitKey)
+plugin.eventBus.once('loaded-protyle-static', () => {
+  if (waitToSetTime) {
+    setVideoTime(JSON.parse(waitToSetTime))
+    localStorage.removeItem(waitKey)
+  }
+})
+const envLinkClickHandler = (href, event) => {
+  event.preventDefault()
+  event.stopPropagation()
+
+  const {
+    bid,
+    time,
+  } = getEVAParamsByUrl(href)
+  if (desktopTypes.includes(plugin.platform)) {
+    localStorage.setItem(waitKey, JSON.stringify({
+      bid,
+      time,
+    }))
+    openWindow({
+      width: 800,
+      height: 600,
+      doc: {
+        id: bid,
+      }
+    })
+  } else {
+    jumpToBlock(href)
+  }
+}
+const hackLink = (link: HTMLLinkElement) => {
+  const href = link.dataset.href
+  const isEVALink = href.startsWith(basePluginUrl)
+  if (isEVALink) {
+    if (link.dataset.enBindLinkClick) {
+      return
+    }
+    link.addEventListener('click', (event) => {
+      envLinkClickHandler(href, event)
+    })
+    link.dataset.enBindLinkClick = 'true'
+  }
+}
+
 const handler = () => {
   const videos = queryAllByDom(document.body, `video`)
   const audios = queryAllByDom(document.body, `audio`)
@@ -56,24 +104,24 @@ const handler = () => {
   audios.forEach((item) => {
     recordVideoAndAudio(item as HTMLAudioElement)
   })
+
+  const links = queryAllByDom(document.body, `span[data-type="a"]`) as HTMLLinkElement[]
+  links.forEach((link) => {
+    hackLink(link)
+  })
 }
 
 
 const basePluginUrl = 'siyuan://plugins/sy-plugin-enhance'
-const typeMap = {
-  NodeVideo: 'v',
-  NodeAudio: 'a',
-}
+
 const getVideoTimeLink = (videoNode, siyuanVideoNode) => {
   const time = videoNode.currentTime
   const blockId = siyuanVideoNode.dataset.nodeId
-  const type = typeMap[siyuanVideoNode.dataset.type]
-  const link = `${basePluginUrl}?t=${time}&bid=${blockId}&type=${type}`
+  const link = `${basePluginUrl}?t=${time}&bid=${blockId}`
   return {
     time,
     blockId,
     link,
-    type,
   }
 }
 
@@ -196,63 +244,94 @@ const onOpenContextMenu = ({ detail }) => {
   });
 }
 
-const onOpenUrlScheme = (event) => {
-  const plugin = usePlugin()
-  const { url } = event.detail
+const getEVAParamsByUrl = (url) => {
   const urlObj = new URL(url)
   const urlSP = urlObj.searchParams
   const time = urlSP.get('t')
   const bid = urlSP.get('bid')
-  const type = urlSP.get('type') || 'v'
-  const nodeType = Object.keys(typeMap).find(key => typeMap[key] === type)
+  return {
+    time,
+    bid,
+  }
+}
+
+let flag
+const setVideoTime = ({
+  bid,
+  time,
+}) => {
+  const node = document.body.querySelector(`div[data-node-id="${bid}"]`)
+
+  if (!node) {
+    return
+  }
+  if (flag) {
+    clearInterval(flag)
+  }
+  const videoNode = node.querySelector('video')
+  const audioNode = node.querySelector('audio')
+  if (!videoNode && !audioNode) {
+    return
+  }
+
+  const validTimeStrReg = /^(\d+(\.\d+)?(:\d+(\.\d+)?)?(:\d+(\.\d+)?)?)$/
+  const isValidTimeStr = validTimeStrReg.test(time)
+
+  if (!isValidTimeStr) {
+    showMessage('时间格式有误，将不会设置视频时间。（只支持 0、0.00、0:0、0:0.00、0:0:0、0:0:0.00 格式）')
+    return
+  }
+
+  const parts = time.split('.')
+  const msPart = parts[1] || 0
+  const hmsParts = parts[0].split(':').reverse()
+  const secondPart = Number(hmsParts[0] || 0)
+  const minutePart = Number(hmsParts[1] || 0)
+  const hourPart = Number(hmsParts[2] || 0)
+
+  const currentTimeValue = `${(hourPart * 60 + minutePart) * 60 + secondPart}.${msPart}`
+
+  if (videoNode) {
+    videoNode.currentTime = Number(currentTimeValue)
+    return
+  }
+  if (audioNode) {
+    audioNode.currentTime = Number(currentTimeValue)
+    return
+  }
+}
+
+const jumpToBlock = (url) => {
+  const plugin = usePlugin()
+
+  const {
+    bid,
+    time,
+  } = getEVAParamsByUrl(url)
   if (!bid || !time) {
     return
   }
-  window.openFileByURL(`siyuan://blocks/${bid}`)
-  let flag
-  const setVideoTime = () => {
-    const node = document.body.querySelector(`div[data-type="${nodeType}"][data-node-id="${bid}"]`)
-
-    if (!node) {
-      return
-    }
-    if (flag) {
-      clearInterval(flag)
-    }
-    const videoNode = node.querySelector('video')
-    const audioNode = node.querySelector('audio')
-    if (!videoNode && !audioNode) {
-      return
-    }
-
-    const validTimeStrReg = /^(\d+(\.\d+)?(:\d+(\.\d+)?)?(:\d+(\.\d+)?)?)$/
-    const isValidTimeStr = validTimeStrReg.test(time)
-
-    if (!isValidTimeStr) {
-      showMessage('时间格式有误，将不会设置视频时间。（只支持 0、0.00、0:0、0:0.00、0:0:0、0:0:0.00 格式）')
-      return
-    }
-
-    const parts = time.split('.')
-    const msPart = parts[1] || 0
-    const hmsParts = parts[0].split(':').reverse()
-    const secondPart = Number(hmsParts[0] || 0)
-    const minutePart = Number(hmsParts[1] || 0)
-    const hourPart = Number(hmsParts[2] || 0)
-
-    const currentTimeValue = `${(hourPart * 60 + minutePart) * 60 + secondPart}.${msPart}`
-
-    if (videoNode) {
-      videoNode.currentTime = Number(currentTimeValue)
-    }
-    if (audioNode) {
-      audioNode.currentTime = Number(currentTimeValue)
-    }
-  }
-  plugin.eventBus.once('loaded-protyle-static', setVideoTime)
+  plugin.eventBus.on('loaded-protyle-static', () => {
+    setVideoTime({
+      bid,
+      time
+    })
+  })
   flag = setInterval(() => {
-    setVideoTime()
+    setVideoTime({
+      bid,
+      time,
+    })
   }, 100)
+
+  // @ts-ignore
+  window.openFileByURL(`siyuan://blocks/${bid}`)
+
+}
+
+const onOpenUrlScheme = (event) => {
+  const { url } = event.detail
+  jumpToBlock(url)
 }
 
 
