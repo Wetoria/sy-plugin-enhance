@@ -22,6 +22,7 @@ const plugin = usePlugin()
 onMounted(() => {
   plugin.addCommand({
     langKey: "goPrevDailyNote",
+    langText: "前一篇日记",
     hotkey: "⌥⌘↑",
     callback: () => {
       jumpToPrevDailyNote();
@@ -29,6 +30,7 @@ onMounted(() => {
   });
   plugin.addCommand({
     langKey: "goNextDailyNote",
+    langText: "后一篇日记",
     hotkey: "⌥⌘↓",
     callback: () => {
       jumpToNextDailyNote();

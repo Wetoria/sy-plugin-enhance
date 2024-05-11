@@ -75,7 +75,7 @@
             >
               <div class="flexAlignCenter enGap">
                 <icon-backward size="18" />
-                上一篇日记
+                前一篇日记
               </div>
             </a-doption>
             <a-doption
@@ -83,7 +83,7 @@
             >
               <div class="flexAlignCenter enGap">
                 <icon-forward size="18" />
-                下一篇日记
+                后一篇日记
               </div>
             </a-doption>
           </template>
