@@ -183,6 +183,15 @@ onMounted(() => {
   window.addEventListener('beforeunload', () => {
     socketRef.value?.close()
   })
+
+  plugin.addCommand({
+    langKey: "openEnhanceSettings",
+    langText: "打开设置",
+    hotkey: "",
+    callback: () => {
+      openSettings();
+    },
+  });
 })
 onBeforeUnmount(() => {
   socketRef.value?.close()
