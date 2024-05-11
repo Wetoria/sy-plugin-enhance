@@ -42,7 +42,7 @@
             />
           </div>
         </div>
-        <div class="NavItem" @click="openSettings">
+        <div class="NavItem" @click="entryOpenSettings">
           <div class="NavItemIcon">
             <SyIcon
               :name="['iconHeart', 'iconVIP', 'iconSuper'][settings.v]"
@@ -120,7 +120,7 @@ import { ref, watchEffect, onMounted } from 'vue';
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import { computed } from 'vue';
 import { useDocHistory } from '@/utils/History'
-import { openSettings, useSettings } from '@/modules/Settings/EnSettings.vue';
+import { entryOpenSettings, useSettings } from '@/modules/Settings/EnSettings.vue';
 import { createTodayDailyNote, jumpToNextDailyNote, jumpToPrevDailyNote } from '@/modules/DailyNote/DailyNote.vue';
 
 const touchmoveDisableFunc = (event) => {
