@@ -11,9 +11,6 @@
         比如，拖拽（重复）移动内容时，如果未关闭段落锁，生成的内容将会是一个 HTML 块，而不是原格式。
       </div>
       <div>
-        在反链面板（包括底部反链）中，更新锚文本也会变为 HTML 块。（原文档里编辑，未遇到该问题）。
-      </div>
-      <div>
         如果主要是新增内容而不是修改，你可以开启该功能。
       </div>
       <div>
@@ -73,7 +70,10 @@
       </div>
       <template #desc>
         <div style="display: flex; align-items: center;">
-          是否启用段落锁功能。点击 <span><SyIcon name="iconLock" /></span> 进行解锁。
+          是否启用段落锁功能。点击 <span><SyIcon name="iconLock" /></span> 进行解锁，用来临时编辑。
+        </div>
+        <div>
+          开启段落锁功能，会高亮 HTML 块的背景色，用于及时提醒。
         </div>
       </template>
       <template #opt>
