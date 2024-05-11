@@ -25,6 +25,12 @@
       >
         <slot name="footer"></slot>
       </div>
+      <a-button
+        size="mini"
+        @click="resetModuleOptions"
+      >
+        设为默认
+      </a-button>
     </div>
   </EnSettingsTeleport>
 </template>
@@ -54,6 +60,10 @@ const onModuleSwitch = (enabled) => {
       module.value.options[key] = enabled
     }
   })
+}
+
+const resetModuleOptions = () => {
+  module.value.options = JSON.parse(JSON.stringify(module.value.defaultOptions))
 }
 
 watch(() => module.value.options, () => {
