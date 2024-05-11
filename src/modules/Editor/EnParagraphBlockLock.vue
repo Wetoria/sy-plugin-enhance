@@ -28,10 +28,6 @@ const props = defineProps<{
   autoCheckTime: number
 }>()
 
-onMounted(() => {
-  timeChangeListener()
-})
-
 const timeChangeListenerFlag = ref()
 const clearTimeChangeListener = () => {
   clearInterval(timeChangeListenerFlag.value)
@@ -109,6 +105,11 @@ watch(locked, () => {
     lock(false)
   }
 }, { immediate: true })
+onMounted(() => {
+  if (props.enabled) {
+    checkLockedStatus()
+  }
+})
 onBeforeUnmount(() => {
   lock(false)
   clearTimeChangeListener()
