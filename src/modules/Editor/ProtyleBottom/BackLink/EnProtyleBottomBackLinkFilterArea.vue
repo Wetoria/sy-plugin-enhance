@@ -1,5 +1,5 @@
 <template>
-  <div class="backlinkSearchArea" v-if="sortedRemainRefs.length">
+  <div class="backlinkSearchArea">
     <a-card :bordered="false" hoverable>
       <div class="searchMain">
         <div class="flexColumn" style="flex: 1; overflow: hidden;">
@@ -27,8 +27,6 @@
             </a-popover>
           </div>
 
-
-          <template v-if="sortedRemainRefs.length">
 
             <EnTagsContainer class="blockRefList" v-if="sortedRemainRefs.length">
               <a-tag
@@ -137,8 +135,6 @@
                 </a-tag>
               </EnTagsContainer>
             </template>
-
-          </template>
 
         </div>
       </div>
