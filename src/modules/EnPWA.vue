@@ -125,7 +125,7 @@ html[data-en-is-standalone="true"][data-en-pwa="true"] {
     width: 100%;
     height: 100vh;
     position: absolute;
-    z-index: -10000;
+    z-index: -9999;
     top: 0;
     left: 0;
     pointer-events: none;
