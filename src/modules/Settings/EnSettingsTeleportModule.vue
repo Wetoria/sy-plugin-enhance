@@ -26,6 +26,7 @@
         <slot name="footer"></slot>
       </div>
       <a-button
+        type="outline"
         size="mini"
         @click="resetModule"
       >
