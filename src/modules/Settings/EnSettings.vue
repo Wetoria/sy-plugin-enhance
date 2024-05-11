@@ -142,23 +142,50 @@ const onDrawerCLose = () => {
 
 }
 
-const loadSettingsOnWS = ({ detail }) => {
-  if (detail.cmd === 'backgroundtask') {
-    loadSettingsWithoutSave()
+const getWebSocketMessage = (event) => {
+  try {
+    const msg = JSON.parse(event.data)
+
+    if (msg.appId == window.siyuan.ws.app.appId) {
+      return
+    }
+    if (!msg.settings) {
+      return
+    }
+
+    doNotSave = true
+    changedByWebsocket = true
+    settings.value = msg.settings
+  } catch(err) {
+    console.error('[Enhance Error]: ', err)
   }
 }
-const loadSettingsOnSyncEnd = () => {
-  loadSettingsWithoutSave()
+
+const initWebsocket = () => {
+  const wsUrl = `ws://${location.host}/ws/broadcast?channel=EnhancePlugin`
+  let socket = new WebSocket(wsUrl)
+  socketRef.value = socket
+
+  socket.onopen = () => {
+    console.log('[Enhance - Plugin] websocket connected.')
+  }
+
+  socket.onmessage = getWebSocketMessage
+
+  socket.onerror = function() {
+    initWebsocket()
+  }
 }
 
 onMounted(() => {
-  const plugin = usePlugin()
-  // plugin.eventBus.on('ws-main', loadSettingsOnWS)
-  // plugin.eventBus.on('sync-end', loadSettingsOnSyncEnd)
+  initWebsocket()
+
+  window.addEventListener('beforeunload', () => {
+    socketRef.value?.close()
+  })
 })
 onBeforeUnmount(() => {
-  // plugin.eventBus.off('ws-main', loadSettingsOnWS)
-  // plugin.eventBus.off('sync-end', loadSettingsOnSyncEnd)
+  socketRef.value?.close()
 })
 </script>
 
@@ -202,14 +229,32 @@ const defaultSettings: EnSettings = {
 }
 
 let doNotSave = false
+let changedByWebsocket = false
 let settings = ref<EnSettings>({
   modules: {},
 } as EnSettings)
-watch(settings, () => {
-  if (doNotSave) {
-    doNotSave = false
+
+const socketRef = ref()
+const socketOpenning = computed(() => socketRef.value && socketRef.value.readyState == WebSocket.OPEN)
+
+const syncWsSettings = () => {
+  if (!socketOpenning.value) {
     return
   }
+
+  if (changedByWebsocket) {
+    changedByWebsocket = false
+    return
+  }
+
+  const msgData = {
+    appId: window.siyuan.ws.app.appId,
+    settings: settings.value
+  }
+  socketRef.value.send(JSON.stringify(msgData))
+}
+watch(settings, () => {
+  syncWsSettings()
   saveSettings()
 }, {
   deep: true,
@@ -241,6 +286,9 @@ export function useModule(moduleName: string, defaultOptions: object = {}) {
   if (!module.value) {
     module.value = registerModule(moduleName, defaultOptions)
   }
+  watch(() => settings.value.modules[moduleName], () => {
+    module.value = settings.value.modules[moduleName]
+  })
   // 刷一次 options，防止新增参数不生效
   const options = module.value.options
   module.value.options = {
@@ -287,11 +335,6 @@ export async function loadSettings() {
   }
 }
 
-const loadSettingsWithoutSave = () => {
-  doNotSave = true
-  loadSettings()
-}
-
 /**
  * 修正设置中，错误的值
  */
@@ -300,6 +343,11 @@ function reviseSettingsValue() {
 }
 
 const saveSettings = debounce(()=> {
+  if (doNotSave) {
+    doNotSave = false
+    return
+  }
+
   const plugin = usePlugin()
 
   // 保存前对值进行校验和修正。
