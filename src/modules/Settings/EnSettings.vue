@@ -33,17 +33,23 @@
         </div>
         <EnDivider v-if="index != settingRefKeys.length - 1" />
       </template>
+      <a-button
+        size="mini"
+        @click="resetAllModule"
+      >
+        重置所有配置
+      </a-button>
     </div>
 
     <template #footer>
       <div class="enSettingsFooter">
         <span>
-          使用说明：
-          <a href="https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse">{{plugin.version ? `v${plugin.version}` : ''}}</a>
-        </span>
-        <span>
           <span>作者：</span>
           <a href="https://wetoria.me">Wetoria</a>
+        </span>
+        <span>
+          使用说明：
+          <a href="https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse">{{plugin.version ? `v${plugin.version}` : ''}}</a>
         </span>
       </div>
     </template>
@@ -125,6 +131,13 @@ const onDrawerOpen = () => {
   })
 }
 
+const resetAllModule = () => {
+  const moduleValues = Object.values(settings.value.modules)
+  moduleValues.forEach((eachModule) => {
+    resetModuleOptions(eachModule)
+  })
+}
+
 const onDrawerCLose = () => {
 
 }
@@ -155,6 +168,10 @@ export interface EnModuleType {
   enabled: boolean
   options: object
   defaultOptions: object
+}
+
+export function resetModuleOptions(aModule: EnModuleType) {
+  aModule.options = JSON.parse(JSON.stringify(aModule.defaultOptions))
 }
 
 interface EnSettings {
@@ -378,7 +395,7 @@ watchEffect(() => {
 
 .enSettingsFooter {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
   gap: var(--en-gap);
 }
 </style>

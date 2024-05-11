@@ -27,7 +27,7 @@
       </div>
       <a-button
         size="mini"
-        @click="resetModuleOptions"
+        @click="resetModule"
       >
         设为默认
       </a-button>
@@ -37,7 +37,7 @@
 
 <script setup lang="ts">
 import { computed, useSlots, watch } from 'vue';
-import { EnModuleType } from './EnSettings.vue';
+import { EnModuleType, resetModuleOptions } from './EnSettings.vue';
 import EnSettingsItemAreaHeading from './EnSettingsItemAreaHeading.vue';
 import EnSettingsTeleport from './EnSettingsTeleport.vue';
 
@@ -62,8 +62,8 @@ const onModuleSwitch = (enabled) => {
   })
 }
 
-const resetModuleOptions = () => {
-  module.value.options = JSON.parse(JSON.stringify(module.value.defaultOptions))
+const resetModule = () => {
+  resetModuleOptions(module.value)
 }
 
 watch(() => module.value.options, () => {
