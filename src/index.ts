@@ -19,7 +19,7 @@ import { destroy, init } from './main';
 import { openSettings } from './modules/Settings/EnSettings.vue';
 import { SyFrontendTypes } from './utils/Siyuan';
 
-export default class VPlugin extends Plugin {
+export default class EnhancePlugin extends Plugin {
   public isMobile: boolean;
   public platform: SyFrontendTypes;
   public readonly version = version;
