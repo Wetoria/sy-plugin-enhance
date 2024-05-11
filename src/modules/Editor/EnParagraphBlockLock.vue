@@ -124,3 +124,11 @@ onBeforeUnmount(() => {
   align-items: center;
 }
 </style>
+
+<style lang="scss">
+html[data-en-paragraph-block-lock="true"] {
+  [data-type="NodeHTMLBlock"] {
+    background-color: rgba(255, 109, 109, 0.1);
+  }
+}
+</style>
