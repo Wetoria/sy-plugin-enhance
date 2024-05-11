@@ -35,6 +35,7 @@
       </template>
       <a-button
         size="mini"
+        status="danger"
         @click="resetAllModule"
       >
         重置所有配置
