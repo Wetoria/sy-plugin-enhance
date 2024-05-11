@@ -1,7 +1,6 @@
 <template>
   <Teleport
     to="html"
-    v-if="moduleOptions.enableBackgroundImg"
   >
     <div class="enBackground"></div>
   </Teleport>
