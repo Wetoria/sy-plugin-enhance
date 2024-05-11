@@ -19,14 +19,14 @@
         <EnSettings />
         <EnSiyuanEntry />
         <EnEditor />
-        <EnBackgroundImg />
+        <EnBackgroundImg v-if="isVip" />
         <EnOthers />
         <EnQuickNote />
         <ArcoDartkTheme />
 
         <DailyNote />
         <LifeLog />
-        <EnVideoAndAudio v-if="isPro()" />
+        <EnVideoAndAudio v-if="isPro" />
       </template>
 
       <!-- 仅移动端 -->
@@ -47,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, watchEffect } from 'vue';
+import { watchEffect } from 'vue';
 import { usePlugin } from './main';
 import EnSiyuanEntry from './modules/EnSiyuanEntry.vue';
 
@@ -57,7 +57,7 @@ import TestArco from './modules/Test/TestArco.vue';
 import ArcoDartkTheme from './modules/ArcoDartkTheme.vue';
 import EnPWA from './modules/EnPWA.vue';
 import DailyNote from './modules/DailyNote/DailyNote.vue';
-import EnSettings, { isPro, syncLocalStorage } from './modules/Settings/EnSettings.vue';
+import EnSettings, { isPro, isVip } from './modules/Settings/EnSettings.vue';
 import EnOthers from './modules/EnOthers.vue';
 import EnBackgroundImg from './modules/Background/EnBackgroundImg.vue';
 import EnQuickNote from './modules/QuickNote/EnQuickNote.vue';
@@ -69,10 +69,6 @@ const plugin = usePlugin()
 
 watchEffect(() => {
   document.documentElement.dataset.enhancerIsMobile = `${plugin.isMobile}`
-})
-
-onMounted(() => {
-  addEventListener("storage", syncLocalStorage);
 })
 </script>
 
