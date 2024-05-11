@@ -15,6 +15,79 @@
         class="NavList"
         ref="navListRef"
       >
+        <div class="NavItem" @click="goBack">
+          <div class="NavItemIcon">
+            <SyIcon
+              name="iconBack"
+              :disabled="isOldest"
+              size="18"
+            />
+          </div>
+        </div>
+        <div class="NavItem" @click="goForward">
+          <div class="NavItemIcon">
+            <SyIcon
+              name="iconForward"
+              :disabled="isNewset"
+              size="18"
+            />
+          </div>
+        </div>
+        <div class="NavItem" @click="createTodayDailyNote">
+          <div class="NavItemIcon">
+            <SyIcon
+              name="iconAdd"
+              :disabled="isNewset"
+              size="18"
+            />
+          </div>
+        </div>
+        <div class="NavItem" @click="openSettings">
+          <div class="NavItemIcon">
+            <SyIcon
+              :name="['iconHeart', 'iconVIP', 'iconSuper'][settings.v]"
+              :disabled="isNewset"
+              size="18"
+            />
+          </div>
+        </div>
+        <a-dropdown position="tr">
+          <div class="NavItem">
+            <div class="NavItemIcon">
+              <icon-menu size="18" />
+            </div>
+          </div>
+
+          <template #content>
+            <a-doption
+              @click="openSiyuanSettings"
+            >
+              <div class="flexAlignCenter enGap">
+                <SyIcon
+                  name="iconSiYuan"
+                  size="18"
+                />
+                思源设置
+              </div>
+            </a-doption>
+            <a-doption
+              @click="jumpToPrevDailyNote()"
+            >
+              <div class="flexAlignCenter enGap">
+                <icon-backward size="18" />
+                上一篇日记
+              </div>
+            </a-doption>
+            <a-doption
+              @click="jumpToNextDailyNote()"
+            >
+              <div class="flexAlignCenter enGap">
+                <icon-forward size="18" />
+                下一篇日记
+              </div>
+            </a-doption>
+          </template>
+        </a-dropdown>
         <div
           v-for="item of navList"
           class="NavItem"
@@ -31,14 +104,6 @@
               :disabled="item.disabled"
               size="18"
             />
-            <a-dropdown v-else position="tr">
-              <icon-apps size="18" />
-              <template #content>
-                <a-doption>Option 1</a-doption>
-                <a-doption disabled>Option 2</a-doption>
-                <a-doption :value="{ value: 'Option3' }">Option 3</a-doption>
-              </template>
-            </a-dropdown>
           </div>
         </div>
       </div>
@@ -57,7 +122,6 @@ import { computed } from 'vue';
 import { useDocHistory } from '@/utils/History'
 import { openSettings, useSettings } from '@/modules/Settings/EnSettings.vue';
 import { createTodayDailyNote, jumpToNextDailyNote, jumpToPrevDailyNote } from '@/modules/DailyNote/DailyNote.vue';
-import { openSetting } from '@/utils';
 
 const touchmoveDisableFunc = (event) => {
     event.stopPropagation()
@@ -140,10 +204,6 @@ plugin.eventBus.on('mobile-keyboard-hide', () => {
   showToolBar.value = true
 })
 
-const settings = useSettings()
-const isJumpDoc = computed(() => settings.value.mobileSwitchDocMode === 'doc')
-
-
 const containerHeight = computed(() => {
   return 24
 })
@@ -156,87 +216,28 @@ const {
   isOldest,
 } = useDocHistory()
 
+const settings = useSettings()
+
 const navListRef = ref(null)
-let clickNum = ref(0)
-let timeoutFlag = ref(null)
 const navList = ref<Array<{
   icon: string;
   label: string;
   disabled?: boolean;
   onClick?: () => void;
 }>>([
-  {
-    icon: 'iconBack',
-    label: '前一篇',
-    disabled: isJumpDoc.value ? isOldest.value : false,
-    onClick: () => {
-      if (timeoutFlag.value) {
-        clearTimeout(timeoutFlag.value)
-      }
-      clickNum.value += 1
-      timeoutFlag.value = setTimeout(() => {
-        if (clickNum.value == 1) {
-          goBack()
-        } else {
-          jumpToPrevDailyNote()
-        }
-        clickNum.value = 0
-      }, 500)
-    },
-  },
-  {
-    icon: 'iconForward',
-    label: '后一篇',
-    disabled: isJumpDoc.value ? isNewset.value : false,
-    onClick: () => {
-      if (timeoutFlag.value) {
-        clearTimeout(timeoutFlag.value)
-      }
-      clickNum.value += 1
-      timeoutFlag.value = setTimeout(() => {
-        if (clickNum.value == 1) {
-          goForward()
-        } else {
-          jumpToNextDailyNote()
-        }
-        clickNum.value = 0
-      }, 500)
-    },
-  },
-  {
-    icon: 'iconAdd',
-    label: '新建日记',
-    onClick: () => {
-      createTodayDailyNote()
-    }
-  },
-  {
-    icon: 'iconSuper',
-    label: '插件设置',
-    onClick: () => {
-      openSettings()
-    }
-  },
-  {
-    icon: 'iconSiYuan',
-    label: '思源设置',
-    onClick: () => {
-      const toolbarMore = document.body.querySelector('#toolbarMore')
-      if (toolbarMore) {
-        toolbarMore.dispatchEvent(new MouseEvent('click'))
-      }
-    }
-  },
-  {
-    icon: 'iconMore',
-    label: '新建日记',
-  },
 ])
+
+const openSiyuanSettings = () => {
+  const toolbarMore = document.body.querySelector('#toolbarMore')
+  if (toolbarMore) {
+    toolbarMore.dispatchEvent(new MouseEvent('click'))
+  }
+}
 
 
 watchEffect(() => {
-  navList.value[0].disabled = isJumpDoc.value ? isOldest.value : false
-  navList.value[1].disabled = isJumpDoc.value ? isNewset.value : false
+  navList.value[0].disabled = isOldest.value
+  navList.value[1].disabled = isNewset.value
 })
 </script>
 
