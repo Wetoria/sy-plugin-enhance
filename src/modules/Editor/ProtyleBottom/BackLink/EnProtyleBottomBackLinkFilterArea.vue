@@ -114,27 +114,34 @@
 
             </EnTagsContainer>
 
-            <template v-if="savedNames.length">
-              <div>
-                已保存的条件:
-              </div>
-              <EnTagsContainer class="blockRefList">
-                <a-tag
-                  v-for="item of savedNames"
-                  :key="'saved-' + item"
-                  @click="(event) => onSavedPropertiesClick(event, item)"
-                >
-                  <a-space>
-                    <span class="optionName">
-                      {{ item }}
-                    </span>
-                    <span @click.stop="() => deleteSavedProperties(item)">
-                      <icon-minus style="color: red" class="removeSavedProperties" />
-                    </span>
-                  </a-space>
-                </a-tag>
-              </EnTagsContainer>
-            </template>
+            <div>
+              已保存的条件:
+            </div>
+            <EnTagsContainer class="blockRefList">
+              <a-tag
+                @click="() => properties = {}"
+              >
+                <a-space>
+                  <span class="optionName">
+                    一键清空
+                  </span>
+                </a-space>
+              </a-tag>
+              <a-tag
+                v-for="item of savedNames"
+                :key="'saved-' + item"
+                @click="(event) => onSavedPropertiesClick(event, item)"
+              >
+                <a-space>
+                  <span class="optionName">
+                    {{ item }}
+                  </span>
+                  <span @click.stop="() => deleteSavedProperties(item)">
+                    <icon-minus style="color: red" class="removeSavedProperties" />
+                  </span>
+                </a-space>
+              </a-tag>
+            </EnTagsContainer>
 
         </div>
       </div>
