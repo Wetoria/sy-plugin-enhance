@@ -25,6 +25,9 @@ const registerTopBar = () => {
     callback: entryOpenSettings,
   }) as HTMLDivElement;
   const svgEl = el.querySelector('svg')
+  if (!svgEl) {
+    return
+  }
   svgEl.innerHTML = ''
   entryRef.value = svgEl
 }
