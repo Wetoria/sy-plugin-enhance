@@ -1,5 +1,5 @@
 <template>
-  <div class="ProtyleBottomContainer">
+  <div class="ProtyleBottomContainer" v-if="!disabled">
     <div v-if="settings.isDebugging">Protyle Bottom Area</div>
     <EnProtyleBottomIndicator
       :blockId="protyle.block.id"
@@ -31,6 +31,7 @@ const props = defineProps<{
 
 const protyleBottom = computed(() => props.protyleBottom)
 const protyle = computed(() => protyleBottom.value.detail.protyle as IProtyle)
+const disabled = computed(() => protyleBottom.value.element.classList.contains('EnDisableProtyleEnhance'))
 
 const checkProtyleContentPadding = () => {
   const {
