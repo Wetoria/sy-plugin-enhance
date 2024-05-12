@@ -1,35 +1,32 @@
 <template>
-  <Teleport to="html" v-if="isInQuickNoteWindow">
-    <div class="enQuickNoteContainer flexColumn" v-if="isInQuickNoteWindow">
-      <div class="windowToolBarArea">
-        <div
-          class="windowDraggerArea"
-        >
-
-        </div>
-        <div class="btns">
-          <div class="toolBarItem" @click="switchPinStatus">
-            <SyIcon v-if="pinned" name="iconUnpin" size="16" />
-            <SyIcon v-else name="iconPin" size="16" />
-          </div>
-          <div
-            class="toolBarItem"
-            @click="closeQuickNoteWindow"
-          >
-            <icon-close class="closeIcon" />
-          </div>
-        </div>
+  <EnWindow
+    v-model:inWindow="inWindow"
+    createImmediate
+    windowTitle="QuickNote"
+    ref="enWinRef"
+  >
+    <!-- 这里写组件A里需要展示的内容 -->
+    <div
+      class="EnQuickNoteContainer flexColumn"
+      v-if="inWindow"
+    >
+      <div>
+        toolbar
+      </div>
+      <div>
+        input area
       </div>
     </div>
-  </Teleport>
+  </EnWindow>
 </template>
 
 <script setup lang="ts">
-  import SyIcon from '@/components/SiyuanTheme/SyIcon.vue';
   import { usePlugin } from '@/main';
-  import { ref } from 'vue';
-  import { getWindow, initWindow, quickNoteWindow, urlSearchFlag } from './QuickNote';
+  import EnWindow from '@/modules/EnWindow.vue';
+  import { onMounted, ref } from 'vue';
 
+  const inWindow = ref(false)
+  const enWinRef = ref()
 
   const plugin = usePlugin()
   plugin.addIcons(`
@@ -38,111 +35,41 @@
     </symbol>
   `)
 
+  const openWindow = () => {
+    enWinRef.value?.openWindow()
+  }
+
   plugin.addTopBar({
     icon: "iconEnQuickNote",
     title: '一键记事',
     position: "right",
     callback: () => {
-      showQuickNoteWindow()
+      openWindow()
     },
   });
 
-  const isInSiyuanApp = location.pathname == '/stage/build/app/'
-  console.log('isInSiyuanApp is ', isInSiyuanApp)
-  if (isInSiyuanApp) {
-    initWindow()
-  }
-
-  const urlSearchParams = new URLSearchParams(location.search)
-  const isInQuickNoteWindow = urlSearchParams.has(urlSearchFlag)
-  if (isInQuickNoteWindow) {
-    document.documentElement.dataset.en_quick_note = 'true'
-  }
-
-  const showQuickNoteWindow = () => {
-    quickNoteWindow.show()
-  }
-
-  const quickNoteWindowRemote = getWindow()
-
-  const pinned = ref(false)
-  const switchPinStatus = () => {
-    pinned.value = !pinned.value
-    quickNoteWindowRemote.setAlwaysOnTop(pinned.value)
-  }
-
-  const closeQuickNoteWindow = () => {
-    quickNoteWindowRemote.hide()
-  }
-  window.addEventListener('beforeunload', () => {
-    console.log('bu flag')
-    quickNoteWindowRemote.hide()
-    quickNoteWindowRemote.destroy()
+  onMounted(() => {
+    plugin.addCommand({
+      langKey: "enOpenQuickNote",
+      langText: "一键记事",
+      hotkey: "",
+      globalCallback: () => {
+        const winRef = enWinRef.value
+        if (winRef?.isVisible()) {
+          winRef?.hideWindow()
+        } else {
+          winRef?.pinWindow(true)
+          winRef?.openWindow()
+        }
+      },
+    });
   })
 </script>
 
-<style lang="scss">
-html[data-en_quick_note="true"] {
-
-  .toolbar__window,
-  #status {
-    display: none;
-  }
-
-  .enQuickNoteContainer {
-    width: 100vw;
-    height: 100vh;
-    background-color: var(--b3-theme-background);
-    position: fixed;
-    top: 0;
-    left: 0;
-    opacity: var(--en-opacity);
-
-    display: flex;
-
-    .windowToolBarArea {
-      width: 100%;
-      display: flex;
-      justify-content: flex-end;
-
-      .windowDraggerArea {
-        flex: 1;
-        -webkit-app-region: drag;
-      }
-
-      .btns {
-        display: flex;
-        box-sizing: border-box;
-        padding: 12px;
-        gap: var(--en-gap);
-
-        .toolBarItem {
-          width: 24px;
-          height: 24px;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          cursor: pointer;
-
-          .arco-icon,
-          .enSyIcon {
-            color: var(--b3-toolbar-color);
-            font-size: 16px;
-          }
-
-          &:hover {
-            background-color: var(--b3-toolbar-hover);
-
-            .arco-icon,
-            .enSyIcon {
-              color: var(--b3-theme-on-background);
-              font-size: 16px;
-            }
-          }
-        }
-      }
-
-    }
-  }
+<style lang="scss" scoped>
+.EnQuickNoteContainer {
+  flex: 1;
+  display: flex;
+  color: var(--b3-theme-on-background);
 }
 </style>
