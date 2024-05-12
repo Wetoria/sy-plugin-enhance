@@ -288,7 +288,7 @@ export const switchID = (time) => {
 export const isFree = computed(() => settings.value.v === 0)
 export const isPro = computed(() => settings.value.v === 1)
 export const isVip = computed(() => settings.value.v === 2)
-export const isNotFree = computed(() => settings.value.v > 1)
+export const isNotFree = computed(() => settings.value.v >= 1)
 
 export function useModule(moduleName: string, defaultOptions: object = {}) {
   const module = ref<EnModuleType>(settings.value.modules[moduleName])
