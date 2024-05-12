@@ -26,7 +26,8 @@
 
 Pro 功能：
 
-- 音视频时间戳
+- 音视频时间戳  
+- 一键记事快捷入口
 
 > 开启 Pro 功能参见 [这里](https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse#ARFTdaYaooOg45xhM8Xc5F0jngd)。
 
