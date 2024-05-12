@@ -21,12 +21,12 @@
         <EnEditor />
         <EnBackgroundImg v-if="isVip" />
         <EnOthers />
-        <EnQuickNote />
+        <EnQuickNote v-if="isNotFree" />
         <ArcoDartkTheme />
 
         <DailyNote />
         <LifeLog />
-        <EnVideoAndAudio v-if="isPro" />
+        <EnVideoAndAudio v-if="isNotFree" />
       </template>
 
       <!-- 仅移动端 -->
@@ -57,7 +57,7 @@ import TestArco from './modules/Test/TestArco.vue';
 import ArcoDartkTheme from './modules/ArcoDartkTheme.vue';
 import EnPWA from './modules/EnPWA.vue';
 import DailyNote from './modules/DailyNote/DailyNote.vue';
-import EnSettings, { isPro, isVip } from './modules/Settings/EnSettings.vue';
+import EnSettings, { isPro, isVip, isNotFree } from './modules/Settings/EnSettings.vue';
 import EnOthers from './modules/EnOthers.vue';
 import EnBackgroundImg from './modules/Background/EnBackgroundImg.vue';
 import EnQuickNote from './modules/QuickNote/EnQuickNote.vue';
