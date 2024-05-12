@@ -4,8 +4,8 @@
   >
     <div
       class="enWindowContainer flexColumn"
-      :data-in-window="isInWindow"
-      v-if="isInWindow"
+      :data-in-window="currentInWindow"
+      v-if="currentInWindow"
     >
       <div class="windowToolBarArea">
         <div
@@ -16,7 +16,7 @@
         <div class="btns">
           <div
             class="toolBarItem" @click="switchPinStatus"
-            v-if="isInWindow"
+            v-if="currentInWindow"
           >
             <SyIcon v-if="pinned" name="iconUnpin" size="16" />
             <SyIcon v-else name="iconPin" size="16" />
@@ -46,21 +46,17 @@ import { useModule } from './Settings/EnSettings.vue'
 
 const props = defineProps<{
   visible: boolean;
-  inWindow: boolean;
   windowTitle: string;
   createImmediate?: boolean;
 }>()
 
 const emit = defineEmits([
   'update:visible',
-  'update:inWindow',
 ])
 
 const enWindowKey = `enWindow-${props.windowTitle}`
 
-const urlSearchParams = new URLSearchParams(location.search)
-const isInWindow = urlSearchParams.has('enhance') && urlSearchParams.get('enhance') === 'true'
-  && urlSearchParams.has('enWindowTitle') && urlSearchParams.get('enWindowTitle') === props.windowTitle
+const currentInWindow = isInWindow(props.windowTitle)
 
 let winRef = null
 
@@ -70,8 +66,8 @@ const createEnWindow = () => {
 }
 const getEnWinRef = () => {
   if (!winRef) {
-    if (isInWindow) {
-      winRef = getWindow(props.windowTitle, isInWindow)
+    if (currentInWindow) {
+      winRef = getWindow(props.windowTitle, currentInWindow)
     } else {
       winRef = createEnWindow()
     }
@@ -155,11 +151,10 @@ defineExpose({
 });
 
 onMounted(() => {
-  if (isInWindow) {
+  if (currentInWindow) {
     document.documentElement.dataset.enWindow = "true"
 
-    winRef = getWindow(props.windowTitle, isInWindow)
-    emit('update:inWindow', isInWindow)
+    winRef = getWindow(props.windowTitle, currentInWindow)
     loadInitData()
   } else {
     if (props.createImmediate) {
@@ -182,6 +177,12 @@ interface IEnWindow {
   height: number;
   x: number;
   y: number;
+}
+
+export const isInWindow = (title) => {
+  const urlSearchParams = new URLSearchParams(location.search)
+  return urlSearchParams.has('enhance') && urlSearchParams.get('enhance') === 'true'
+    && urlSearchParams.has('enWindowTitle') && urlSearchParams.get('enWindowTitle') === title
 }
 
 export const createWindow = (title, queryStr?) => {
@@ -247,8 +248,8 @@ export const createWindow = (title, queryStr?) => {
   return electronWindow
 }
 
-export function getWindow(title, isInWindow = false) {
-  if (cannot() && !isInWindow) {
+export function getWindow(title, currentInWindow = false) {
+  if (cannot() && !currentInWindow) {
     return
   }
   require('@electron/remote/main').enable(window);

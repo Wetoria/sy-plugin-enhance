@@ -1,9 +1,8 @@
 <template>
   <EnWindow
     v-model:visible="visible"
-    v-model:inWindow="inWindow"
     createImmediate
-    windowTitle="QuickNote"
+    :windowTitle="winTitle"
     ref="enWinRef"
   >
     <!-- 这里写组件A里需要展示的内容 -->
@@ -44,11 +43,12 @@
 <script setup lang="ts">
   import { appendDailyNoteBlock, deleteBlock } from '@/api';
 import { usePlugin } from '@/main';
-  import EnWindow from '@/modules/EnWindow.vue';
+  import EnWindow, { isInWindow } from '@/modules/EnWindow.vue';
 import { Protyle } from 'siyuan';
   import { onMounted, ref, watchEffect } from 'vue';
 
-  const inWindow = ref(false)
+  const winTitle = 'QuickNote'
+  const inWindow = ref(isInWindow(winTitle))
   const enWinRef = ref()
 
   const visible = ref(false)
