@@ -221,6 +221,19 @@ export async function appendBlock(
   let url = "/api/block/appendBlock";
   return request(url, payload);
 }
+export async function appendDailyNoteBlock(
+  dataType: DataType,
+  data: string,
+  notebook: string,
+): Promise<IResdoOperations[]> {
+  let payload = {
+    dataType,
+    data,
+    notebook,
+  };
+  let url = "/api/block/appendDailyNoteBlock";
+  return request(url, payload);
+}
 
 export async function updateBlock(
   dataType: DataType,
