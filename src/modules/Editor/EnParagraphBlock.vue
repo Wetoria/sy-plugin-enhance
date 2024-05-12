@@ -260,7 +260,7 @@ import SyIcon from '@/components/SiyuanTheme/SyIcon.vue';
 
   function insertBlockTime() {
     const handler = () => {
-      const paragraphList = queryAllByDom(document.body, `[data-type="${SyDomNodeTypes.NodeParagraph}"]`) as HTMLDivElement[]
+      const paragraphList = queryAllByDom(document.body, `.protyle:not(.EnDisableProtyleEnhance) [data-type="${SyDomNodeTypes.NodeParagraph}"]`) as HTMLDivElement[]
       paragraphListRef.value = paragraphList
     }
 
