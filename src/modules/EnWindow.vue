@@ -45,6 +45,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useModule } from './Settings/EnSettings.vue'
 
 const props = defineProps<{
+  visible: boolean;
   inWindow: boolean;
   windowTitle: string;
   createImmediate?: boolean;
@@ -108,10 +109,12 @@ const openWindow = () => {
   saveInitData()
   const win = getEnWinRef()
   win.show()
+  emit('update:visible', true)
 }
 
 const hideWindow = () => {
-  getEnWinRef()?.hide();
+  getEnWinRef()?.hide()
+  emit('update:visible', false)
 }
 
 const switchWindowVisible = (pin: boolean) => {
