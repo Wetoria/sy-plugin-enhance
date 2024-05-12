@@ -1,5 +1,6 @@
 <template>
   <EnWindow
+    v-model:visible="visible"
     v-model:inWindow="inWindow"
     createImmediate
     windowTitle="QuickNote"
@@ -10,23 +11,97 @@
       class="EnQuickNoteContainer flexColumn"
       v-if="inWindow"
     >
-      <div>
-        toolbar
+      <div class="EnQuickNoteToolBarLine">
+        <div class="flexAlignCenter enGap">
+          <div class="flexAlignCenter">笔记本：</div>
+          <div>
+            <a-select
+              placeholder="选择笔记本"
+              v-model="selectedNotebookId"
+            >
+              <a-option
+                v-for="notebook of openedNotebookList"
+                :value="notebook.id"
+                :label="notebook.name"
+              >
+              </a-option>
+            </a-select>
+          </div>
+        </div>
       </div>
-      <div>
-        input area
+      <div
+        class="inputArea"
+        >
+        <div
+          ref="inputAreaRef"
+        >
+        </div>
       </div>
     </div>
   </EnWindow>
 </template>
 
 <script setup lang="ts">
-  import { usePlugin } from '@/main';
+  import { appendDailyNoteBlock, deleteBlock } from '@/api';
+import { usePlugin } from '@/main';
   import EnWindow from '@/modules/EnWindow.vue';
-  import { onMounted, ref } from 'vue';
+import { Protyle } from 'siyuan';
+  import { onMounted, ref, watchEffect } from 'vue';
 
   const inWindow = ref(false)
   const enWinRef = ref()
+
+  const visible = ref(false)
+
+  const protyleRef = ref<Protyle>()
+  const currentBlockId = ref()
+  const initProtyle = async () => {
+    if (!inWindow.value) {
+      return
+    }
+    const res = await appendDailyNoteBlock(
+      'markdown',
+      ``,
+      selectedNotebookId.value,
+    )
+    const {
+      doOperations = [],
+    } = res[0]
+    const transaction = doOperations[0]
+    const {
+      id,
+    } = transaction;
+    currentBlockId.value = id
+    protyleRef.value = new Protyle(plugin.app, inputAreaRef.value, {
+      blockId: id,
+      action: ['cb-get-focus'],
+      render: {
+        breadcrumb: false,
+      }
+    })
+    protyleRef.value.protyle.element.classList.toggle('EnQuickNoteProtyle', true)
+    protyleRef.value.protyle.element.classList.toggle('EnDisableProtyleEnhance', true)
+    protyleRef.value.protyle.contentElement.classList.toggle('EnDisableProtyleEnhance', true)
+  }
+
+  const destoryProtyle = () => {
+    if (!protyleRef.value) {
+      return
+    }
+    const protyle = protyleRef.value.protyle
+    if (!protyle.updated && currentBlockId.value) {
+      deleteBlock(currentBlockId.value)
+    }
+    protyleRef.value?.destroy()
+  }
+
+  watchEffect(() => {
+    if (visible.value) {
+      initProtyle()
+    } else {
+      destoryProtyle()
+    }
+  })
 
   const plugin = usePlugin()
   plugin.addIcons(`
@@ -47,6 +122,13 @@
       openWindow()
     },
   });
+
+
+  const openedNotebookList = ref(window.siyuan.notebooks.filter(i => !i.closed))
+  const selectedNotebookId = ref(openedNotebookList.value[0]?.id)
+
+
+  const inputAreaRef = ref()
 
   onMounted(() => {
     plugin.addCommand({
@@ -69,7 +151,34 @@
 <style lang="scss" scoped>
 .EnQuickNoteContainer {
   flex: 1;
+  width: 0;
   display: flex;
   color: var(--b3-theme-on-background);
+
+  .EnQuickNoteToolBarLine {
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+    overflow-x: auto;
+    z-index: 2;
+  }
+
+  .inputArea {
+    padding: 8px 0px;
+    flex: 1;
+    overflow: auto;
+
+
+    :deep(.EnQuickNoteProtyle) {
+      height: 100%;
+
+      .protyle-wysiwyg {
+        width: 100%;
+        height: 100%;
+        box-sizing: border-box;
+        padding: 0px 16px !important;
+      }
+    }
+  }
 }
 </style>
