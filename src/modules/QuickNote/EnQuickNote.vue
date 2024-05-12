@@ -110,18 +110,18 @@ import { Protyle } from 'siyuan';
     </symbol>
   `)
 
-  const openWindow = () => {
-    enWinRef.value?.openWindow()
-  }
+  // const openWindow = () => {
+  //   enWinRef.value?.openWindow()
+  // }
 
-  plugin.addTopBar({
-    icon: "iconEnQuickNote",
-    title: '一键记事',
-    position: "right",
-    callback: () => {
-      openWindow()
-    },
-  });
+  // plugin.addTopBar({
+  //   icon: "iconEnQuickNote",
+  //   title: '一键记事',
+  //   position: "right",
+  //   callback: () => {
+  //     openWindow()
+  //   },
+  // });
 
 
   const openedNotebookList = ref(window.siyuan.notebooks.filter(i => !i.closed))

@@ -21,7 +21,7 @@
         <EnEditor />
         <EnBackgroundImg v-if="isVip" />
         <EnOthers />
-        <EnQuickNote v-if="isNotFree" />
+        <EnQuickNote />
         <ArcoDartkTheme />
 
         <DailyNote />
