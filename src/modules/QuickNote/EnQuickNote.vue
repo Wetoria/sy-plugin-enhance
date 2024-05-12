@@ -170,13 +170,18 @@ import { Protyle } from 'siyuan';
 
 
     :deep(.EnQuickNoteProtyle) {
-      height: 100%;
+      min-height: 100%;
+
+      .protyle-content {
+        padding-bottom: 16px;
+      }
 
       .protyle-wysiwyg {
         width: 100%;
-        height: 100%;
+        min-height: 100%;
         box-sizing: border-box;
-        padding: 0px 16px !important;
+        padding: 16px 16px !important;
+        padding-bottom: 64px !important;
       }
     }
   }

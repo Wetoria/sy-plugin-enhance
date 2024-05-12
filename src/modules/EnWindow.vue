@@ -326,6 +326,7 @@ export function getWindow(title, isInWindow = false) {
   .displayArea {
     flex: 1;
     display: flex;
+    max-height: 100%;
   }
 }
 </style>
