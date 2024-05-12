@@ -1,6 +1,6 @@
 <template>
   <Teleport
-    to="html"
+    to="body"
   >
     <div
       class="enWindowContainer flexColumn"
