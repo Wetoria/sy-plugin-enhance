@@ -156,7 +156,7 @@ onMounted(() => {
     document.documentElement.dataset.enWindow = "true"
 
     winRef = getWindow(props.windowTitle, isInWindow)
-
+    emit('update:inWindow', isInWindow)
     loadInitData()
   } else {
     if (props.createImmediate) {
