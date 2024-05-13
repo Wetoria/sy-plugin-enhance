@@ -102,7 +102,9 @@ onMounted(() => {
     document.documentElement.dataset.enWindow = "true"
 
     winRef = getWindow(props.windowTitle, currentInWindow)
-    pinned.value = winRef.isAlwaysOnTop()
+    winRef.on('always-on-top-changed', (event, isAlwaysOnTop) => {
+      pinned.value = isAlwaysOnTop
+    })
   } else {
     if (props.createImmediate) {
       createEnWindow()
