@@ -45,16 +45,12 @@ import { computed, onMounted, ref } from 'vue'
 import { useModule } from './Settings/EnSettings.vue'
 
 const props = defineProps<{
-  visible: boolean;
   windowTitle: string;
   createImmediate?: boolean;
 }>()
 
 const emit = defineEmits([
-  'update:visible',
 ])
-
-const enWindowKey = `enWindow-${props.windowTitle}`
 
 const currentInWindow = isInWindow(props.windowTitle)
 
@@ -75,61 +71,13 @@ const getEnWinRef = () => {
   return winRef
 }
 
-const saveInitData = () => {
-  localStorage.setItem(enWindowKey, JSON.stringify({
-    pinned: pinned.value,
-  }))
-}
-
-const loadInitData = () => {
-  const str = localStorage.getItem(enWindowKey)
-  try {
-    const obj = JSON.parse(str)
-    updateDataByStorage(obj)
-  } catch(err) {}
-}
-const updateDataByStorage = (obj) => {
-  pinned.value = obj.pinned
-  emit('update:visible', obj.visible)
-}
-onMounted(() => {
-  // addEventListener('storage', (event) => {
-  //   if (event.key === enWindowKey) {
-  //     const obj = JSON.parse(event.newValue)
-  //     updateDataByStorage(obj)
-  //   }
-  // })
-})
-
 const openWindow = () => {
-  saveInitData()
   const win = getEnWinRef()
   win.show()
-  emit('update:visible', true)
 }
-
 const hideWindow = () => {
   getEnWinRef()?.hide()
-  emit('update:visible', false)
 }
-
-const switchWindowVisible = (pin: boolean) => {
-  const win = getEnWinRef()
-  if (win.isVisible()) {
-    hideWindow()
-  } else {
-    win.setAlwaysOnTop(pin)
-    openWindow()
-  }
-}
-
-
-window.addEventListener('beforeunload', () => {
-  if (winRef) {
-    winRef.hide()
-    winRef.destroy()
-  }
-})
 
 const pinned = ref(false)
 const switchPinStatus = () => {
@@ -143,7 +91,6 @@ defineExpose({
   pinWindow,
   openWindow,
   hideWindow,
-  switchWindowVisible,
   isVisible: () => getEnWinRef().isVisible(),
   getWin: () => {
     return getEnWinRef()
@@ -155,11 +102,18 @@ onMounted(() => {
     document.documentElement.dataset.enWindow = "true"
 
     winRef = getWindow(props.windowTitle, currentInWindow)
-    loadInitData()
+    pinned.value = winRef.isAlwaysOnTop()
   } else {
     if (props.createImmediate) {
       createEnWindow()
     }
+  }
+})
+
+window.addEventListener('beforeunload', () => {
+  if (winRef) {
+    winRef.hide()
+    winRef.destroy()
   }
 })
 </script>
