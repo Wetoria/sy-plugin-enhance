@@ -83,7 +83,7 @@ import { queryAllByDom } from '@/utils/DOM';
 import { usePlugin } from '@/main';
 import { EnhanceIOperation, SyDomNodeTypes, onEditorUpdate } from '../../utils/Siyuan'
 import { getBlockAttrs, request, setBlockAttrs } from '@/api'
-import { getFrontend } from 'siyuan'
+import { getFrontend, Protyle } from 'siyuan'
 import dayjs from 'dayjs'
 import { useModule } from '../Settings/EnSettings.vue';
 import EnSettingsTeleportModule from '../Settings/EnSettingsTeleportModule.vue';
@@ -157,6 +157,22 @@ const listenerSticky = () => {
 onMounted(() => {
   markLifeLogBlock()
   listenerSticky();
+  plugin.protyleSlash.push({
+    filter: [
+      "add current time",
+      'insert current time',
+      "插入当前时间",
+      'adt',
+      'df now',
+      'now',
+    ],
+    html: `<div class="b3-list-item__first"><span class="b3-list-item__text">${'插入当前时间'}</span></div>`,
+    id: "enInsertCurrentTime",
+    callback(protyle: Protyle) {
+      const timestamp = dayjs().format('HH:mm')
+      protyle.insert(timestamp);
+    }
+  })
 })
 
 
