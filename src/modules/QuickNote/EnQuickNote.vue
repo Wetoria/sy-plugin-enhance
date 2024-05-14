@@ -96,6 +96,18 @@ import { Protyle } from 'siyuan';
       action: ['cb-get-focus'],
       render: {
         breadcrumb: false,
+      },
+      after(protyle) {
+        const contentElement = protyle.protyle.contentElement
+        const wysiwyg: HTMLDivElement = contentElement.querySelector('.protyle-wysiwyg')
+        const clickEvent = new MouseEvent('click', {
+          view: window,
+          bubbles: true,
+          cancelable: true
+        })
+        // 直接focus不行，需要先dispatchEvent
+        wysiwyg.dispatchEvent(clickEvent)
+        wysiwyg.focus()
       }
     })
     protyleRef.value.protyle.element.classList.toggle('EnQuickNoteProtyle', true)
