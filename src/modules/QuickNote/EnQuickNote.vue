@@ -145,6 +145,7 @@ import { Protyle } from 'siyuan';
             winRef.getWin().setVisibleOnAllWorkspaces(true, {visibleOnFullScreen: true});
             winRef?.pinWindow(true)
             winRef?.openWindow()
+            winRef.getWin().focus()
           }
         },
       });
