@@ -1,5 +1,21 @@
 <template>
+  <div>
+    <EnWindow
+      :windowTitle="winTitle"
+      createImmediate
+      ref="enWinRef"
+    >
+      <div
+        class="EnEVAWindowContainer"
+      >
+        <div
+          ref="EnEVAWinRef"
+        >
 
+        </div>
+      </div>
+    </EnWindow>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -9,6 +25,8 @@ import { queryAllByDom } from '@/utils/DOM';
 import { openWindow, Protyle, showMessage } from 'siyuan';
 import { useProWatcher } from './Settings/EnSettings.vue';
 import { SyFrontendTypes } from '@/utils/Siyuan';
+import EnWindow, { isInWindow } from './EnWindow.vue';
+import { onMounted, ref } from 'vue';
 
 const plugin = usePlugin()
 
@@ -50,12 +68,6 @@ const recordVideoAndAudio = (video: HTMLVideoElement | HTMLAudioElement) => {
 const desktopTypes = [SyFrontendTypes.desktop, SyFrontendTypes['desktop-window']]
 const waitKey = 'enWaitToSetTime'
 let waitToSetTime = localStorage.getItem(waitKey)
-plugin.eventBus.once('loaded-protyle-static', () => {
-  if (waitToSetTime) {
-    setVideoTime(JSON.parse(waitToSetTime))
-    localStorage.removeItem(waitKey)
-  }
-})
 const envLinkClickHandler = (href, event) => {
   event.preventDefault()
   event.stopPropagation()
@@ -69,13 +81,11 @@ const envLinkClickHandler = (href, event) => {
       bid,
       time,
     }))
-    openWindow({
-      width: 800,
-      height: 600,
-      doc: {
-        id: bid,
-      }
-    })
+    const winRef = enWinRef.value
+    if (winRef?.isVisible()) {
+      winRef?.hideWindow()
+    }
+    winRef?.openWindow()
   } else {
     jumpToBlock(href)
   }
@@ -392,6 +402,42 @@ const disable = () => {
   plugin.eventBus.off('open-siyuan-url-plugin', onOpenUrlScheme)
 }
 
+
+const winTitle = 'EnVideoAndVudio'
+const inWindow = ref(isInWindow(winTitle))
+const enWinRef = ref()
+
+const protyleRef = ref<Protyle>()
+const EnEVAWinRef = ref()
+const initProtyle = async () => {
+  if (!inWindow.value) {
+    return
+  }
+  waitToSetTime = localStorage.getItem(waitKey)
+  if (!waitToSetTime) {
+    return
+  }
+
+  const data = JSON.parse(waitToSetTime)
+
+  if (protyleRef.value) {
+    protyleRef.value.destroy()
+  }
+
+  protyleRef.value = new Protyle(plugin.app, EnEVAWinRef.value, {
+    blockId: data.bid,
+    render: {
+      breadcrumb: false,
+    },
+    after(protyle) {
+      setVideoTime(data)
+      localStorage.removeItem(waitKey)
+      const contentElement = protyle.protyle.contentElement
+      contentElement.classList.toggle('EnDisableProtyleEnhance', true)
+      protyle.protyle.element.classList.toggle('EnEVAProtyle', true)
+    }
+  })
+}
 useProWatcher({
   onEnabled: () => {
     enable()
@@ -400,7 +446,44 @@ useProWatcher({
     disable()
   },
 })
+onMounted(() => {
+  if (inWindow.value) {
+    const winRef = enWinRef.value.getWin()
+    winRef.on('show', () => {
+      initProtyle()
+    })
+  } else {
+  }
+})
 </script>
+
+<style lang="scss" scoped>
+.EnEVAWindowContainer {
+  flex: 1;
+  width: 0;
+  display: flex;
+  padding: 8px 0px;
+  flex: 1;
+  overflow: auto;
+
+  :deep(.EnEVAProtyle) {
+    width: 100%;
+    min-height: 100%;
+
+    .protyle-content {
+      padding-bottom: 16px;
+    }
+
+    .protyle-wysiwyg {
+      width: 100%;
+      min-height: 100%;
+      box-sizing: border-box;
+      padding: 16px 16px !important;
+      padding-bottom: 64px !important;
+    }
+  }
+}
+</style>
 
 <style lang="scss">
 html[data-envp] {
