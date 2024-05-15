@@ -73,7 +73,9 @@ watch(() => props.el, () => {
 </script>
 
 <script lang="ts">
-export const FORMAT_TIME = 'YYYY/MM/DD HH:mm:ss'
+export const FORMAT_DATE = 'YYYY/MM/DD'
+export const FORMAT_TIME = 'HH:mm:ss'
+export const FORMAT_DATE_TIME = `${FORMAT_DATE} ${FORMAT_TIME}`
 
 export const getUpdated = (pDom) => {
   const updateTimeStr = pDom.getAttribute('updated')

@@ -2,14 +2,14 @@
   <span
     :class="`enBlockTimeContainer ${updatedFormatted ? 'updated' : ''}`"
     @click="showCreated = !showCreated"
+    v-html="styledFormatted"
   >
-    {{ showCreated ? createdFormatted : updatedFormatted }}
   </span>
 </template>
 
 <script setup lang="ts">
 import dayjs from 'dayjs';
-import { ref, watchEffect } from 'vue';
+import { computed, ref, watchEffect } from 'vue';
 
 const props = defineProps<{
   pDom: HTMLDivElement
@@ -19,6 +19,16 @@ const props = defineProps<{
   createdFormatted: string
   defaultBlockType: 'created' | 'updated'
 }>()
+
+const replaceColon = (value) => {
+  return value.replace(/\d:/g, '<span class="EnBlockTimeDivider">:</span>')
+}
+
+const styledFormatted = computed(() => {
+  let value = showCreated.value ? props.createdFormatted : props.updatedFormatted
+  value = replaceColon(value)
+  return value
+})
 
 const showCreated = ref(props.defaultBlockType === 'created')
 watchEffect(() => {
@@ -32,16 +42,9 @@ watchEffect(() => {
   position: relative;
   font-size: var(--timeFontSize);
 
-  &.updated {
-    &::before {
-      content: '             /  /     :  :  ';
-      white-space: pre;
-      position: absolute;
-      left: 0;
-      top: 0;
-      font-size: var(--timeFontSize);
-      color: var(--sky-blue);
-    }
+  :deep(.EnBlockTimeDivider) {
+    color: var(--sky-blue);
+    font-size: var(--timeFontSize);
   }
 }
 </style>
