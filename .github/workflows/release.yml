@@ -112,7 +112,7 @@ jobs:
         id: send-publish-notice
         run: |
           curl --request POST \
-            --url "${{ secrets.PUBILSH_NOTICE_URL }}" \
+            --url ${{ secrets.PUBILSH_NOTICE_URL }} \
             --header 'content-type: application/json' \
             --data '{ \"version\": \"${{ steps.create_release.outputs.en_version }}\"}'
 
