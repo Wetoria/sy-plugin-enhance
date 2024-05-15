@@ -81,11 +81,6 @@ watchEffect(() => {
   // --b3-theme-background: #000;
 }
 
-[type='checkbox'] {
-  box-sizing: content-box;
-  padding: 1px;
-}
-
 .flexColumn {
   display: flex;
   flex-direction: column;
