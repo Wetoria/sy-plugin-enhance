@@ -97,7 +97,7 @@ jobs:
             const uploadUrl = release.upload_url;
             core.setOutput('uploadUrl', uploadUrl);
             core.setOutput('browser_download_url', browser_download_url);
-            core.setOutput('version', tag_name);
+            core.setOutput('en_version', tag_name);
       - name: Upload Release Asset
         id: upload-release-asset
         uses: actions/upload-release-asset@v1
@@ -114,5 +114,5 @@ jobs:
           curl --request POST \
             --url "${{ secrets.PUBILSH_NOTICE_URL }}" \
             --header 'content-type: application/json' \
-            --data '{ \"version\": \"${{ steps.create_release.outputs.uploadUrl }}\"}'
+            --data '{ \"version\": \"${{ steps.create_release.outputs.en_version }}\"}'
 
