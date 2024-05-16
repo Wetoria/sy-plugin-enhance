@@ -10,6 +10,7 @@
 <script setup lang="ts">
 import dayjs from 'dayjs';
 import { computed, ref, watchEffect } from 'vue';
+import { FORMAT_DATE, FORMAT_TIME } from './EnParagraphBlockAttrContainer.vue';
 
 const props = defineProps<{
   pDom: HTMLDivElement
@@ -20,14 +21,18 @@ const props = defineProps<{
   defaultBlockType: 'created' | 'updated'
 }>()
 
-const replaceColon = (value) => {
-  return value.replace(/\d:/g, '<span class="EnBlockTimeDivider">:</span>')
-}
-
 const styledFormatted = computed(() => {
-  let value = showCreated.value ? props.createdFormatted : props.updatedFormatted
-  value = replaceColon(value)
-  return value
+  let value = showCreated.value ? props.created : props.updated
+  const ymd = value.format(FORMAT_DATE)
+    .replace(/\//g, `<span class="EnBlockTimeDivider ${showCreated.value ? 'showCreate' : 'showUpdated'}">/</span>`)
+  const hms = value.format(FORMAT_TIME)
+    .replace(/:/g, `<span class="EnBlockTimeDivider ${showCreated.value ? 'showCreate' : 'showUpdated'}">:</span>`)
+  return `
+    <span>
+      <span class="enBlockTimeYMD">${ymd}</span>
+      <span class="enBlockTimeHMS">${hms}</span>
+    </span>
+  `
 })
 
 const showCreated = ref(props.defaultBlockType === 'created')
@@ -43,8 +48,17 @@ watchEffect(() => {
   font-size: var(--timeFontSize);
 
   :deep(.EnBlockTimeDivider) {
-    color: var(--sky-blue);
     font-size: var(--timeFontSize);
+    &.showUpdated {
+      color: var(--sky-blue);
+    }
+  }
+}
+</style>
+<style lang="scss">
+.protyle-wysiwyg[data-en_is_dailynote] {
+  & .enBlockTimeYMD {
+    display: none;
   }
 }
 </style>
