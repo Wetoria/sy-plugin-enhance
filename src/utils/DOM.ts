@@ -35,6 +35,17 @@ export function registerProtyleBottomArea() {
     if (!element) {
       return
     }
+
+    // 标记是不是日记文档
+    const wysiwygEl: HTMLDivElement = element.querySelector('.protyle-wysiwyg')
+    if (wysiwygEl) {
+      const attrs = wysiwygEl.getAttributeNames()
+      const containsDailyNoteAttr = attrs.find(i => i.startsWith('custom-dailynote'))
+      if (containsDailyNoteAttr) {
+        wysiwygEl.dataset.en_is_dailynote = 'true'
+      }
+    }
+
     if (protyleBottomMap.value.has(element)) {
       const detailRef = protyleBottomMap.value.get(element)
       detailRef.detail = detail
