@@ -190,7 +190,7 @@ onMounted(() => {
     langText: "打开设置",
     hotkey: "",
     callback: () => {
-      openSettings();
+      switchSettingsDisplay();
     },
   });
 })
@@ -379,6 +379,14 @@ export function registerSettingRef(refName: string) {
     settingsRefMap.value[refName] = settingRef
   }
   return settingRef
+}
+
+const switchSettingsDisplay = () => {
+  if (editingSettings.value) {
+    closeSettings()
+  } else {
+    openSettings()
+  }
 }
 
 export const openSettings = () => {
