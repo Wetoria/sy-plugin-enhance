@@ -23,6 +23,9 @@ const props = defineProps<{
 
 const styledFormatted = computed(() => {
   let value = showCreated.value ? props.created : props.updated
+  if (!value) {
+    return
+  }
   const ymd = value.format(FORMAT_DATE)
     .replace(/\//g, `<span class="EnBlockTimeDivider ${showCreated.value ? 'showCreate' : 'showUpdated'}">/</span>`)
   const hms = value.format(FORMAT_TIME)
