@@ -289,3 +289,9 @@ export function onEditorUpdate(
     plugin.eventBus.off('ws-main', eventFunc)
   }
 }
+
+export function getCreatedByDataset(id: string) {
+  if (!id) return
+  const createdStr = id.split('-')[0]
+  return createdStr
+}
