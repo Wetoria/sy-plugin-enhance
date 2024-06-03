@@ -8,6 +8,7 @@
       :createdFormatted="createdFormatted"
       :updated="updated"
       :updatedFormatted="updatedFormatted"
+      :nodeId="nodeId"
     ></slot>
   </Teleport>
 </template>
@@ -20,6 +21,7 @@ import { debounce } from '@/utils';
 const props = defineProps<{
   el: HTMLSpanElement
 }>()
+const nodeId = ref(getNodeId(props.el))
 const updated = ref(getUpdated(props.el))
 const updatedFormatted = computed(() => updated.value ? `updated: ${updated.value.format(FORMAT_TIME)}` : '')
 
@@ -76,6 +78,10 @@ watch(() => props.el, () => {
 export const FORMAT_DATE = 'YYYY/MM/DD'
 export const FORMAT_TIME = 'HH:mm:ss'
 export const FORMAT_DATE_TIME = `${FORMAT_DATE} ${FORMAT_TIME}`
+
+export const getNodeId = (pDom) => {
+  return pDom.dataset.nodeId
+}
 
 export const getUpdated = (pDom) => {
   const updateTimeStr = pDom.getAttribute('updated')
