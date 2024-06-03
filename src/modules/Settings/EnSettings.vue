@@ -335,11 +335,7 @@ function registerModule(module: string, defaultOptions: object) {
 export async function loadSettings() {
   const plugin = usePlugin()
   const res = await plugin.loadData(STORAGE_KEY)
-  if (res) {
-    settings.value = Object.assign({}, defaultSettings, settings.value, res)
-  } else {
-    settings.value = Object.assign({}, JSON.parse(JSON.stringify(defaultSettings)), settings.value)
-  }
+  settings.value = Object.assign({}, JSON.parse(JSON.stringify(defaultSettings)), settings.value, res || {})
   if (!settings.value.modules) {
     settings.value.modules = {}
   }
