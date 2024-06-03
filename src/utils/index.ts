@@ -1,5 +1,6 @@
 import { App, createApp, onMounted, ref } from 'vue';
 import ArcoVue from '@arco-design/web-vue';
+import SyIcon from '@/components/SiyuanTheme/SyIcon.vue';
 
 let mountedVueDoms = []
 
@@ -23,6 +24,7 @@ export function loadComponentAppendToBody(component) {
   const app = createApp(component);
   app.use(ArcoVue);
   app.mount(div);
+  app.component('SyIcon', SyIcon)
   document.body.appendChild(div);
   saveDom(div, app)
   return div
