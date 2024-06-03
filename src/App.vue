@@ -81,6 +81,10 @@ watchEffect(() => {
   // --b3-theme-background: #000;
 }
 
+.row {
+  display: flex;
+  gap: var(--en-gap);
+}
 
 .flexColumn {
   display: flex;
