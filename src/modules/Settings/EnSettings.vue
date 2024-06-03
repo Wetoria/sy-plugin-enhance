@@ -217,12 +217,11 @@ interface EnSettings {
 
   boxId: string;
 
-  enableFixedDocArea: boolean;
-  fixedDocIds: string[];
-
-
   modules: {
     [module: string]: EnModuleType
+  }
+  timeDiff: {
+    [id: string]: string
   }
 }
 
@@ -232,10 +231,8 @@ const defaultSettings: EnSettings = {
 
   boxId: '',
 
-  enableFixedDocArea: true,
-  fixedDocIds: [],
-
   modules: {},
+  timeDiff: {},
 }
 
 let doNotSave = false

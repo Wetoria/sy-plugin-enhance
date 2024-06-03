@@ -142,8 +142,13 @@
           createdFormatted,
           updated,
           updatedFormatted,
+          nodeId,
         }"
       >
+        <EnParagraphBlockTimeDiff
+          :nodeId="nodeId"
+          v-if="isVip"
+        />
         <EnParagraphBlockLock
           :pDom="paragraphBlock"
           :updated="updated"
@@ -178,8 +183,9 @@
   import EnParagraphBlockTime from './EnParagraphBlockTime.vue';
   import EnParagraphBlockLock from './EnParagraphBlockLock.vue';
   import { usePlugin } from '@/main';
-import { useModule } from '../Settings/EnSettings.vue';
+import { isVip, useModule } from '../Settings/EnSettings.vue';
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue';
+import EnParagraphBlockTimeDiff from './EnParagraphBlockTimeDiff.vue';
 
   interface ModuleOptions {
     enableBlockTime: boolean
