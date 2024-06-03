@@ -5,13 +5,13 @@
     :unmount-on-close="false"
   >
     <div class="TimeDiffTriggerContainer">
+      <span class="TimeDiff">
+        {{ getDiffFormat(created, bindedCreated, '') }}
+      </span>
       <SyIcon
         :class="`${bindedId ? 'binded' : ''}`"
         name="iconClock"
       />
-      <span class="TimeDiff">
-        {{ getDiffFormat(created, bindedCreated, '') }}
-      </span>
     </div>
     <template #content>
       <div class="BlockTimeDiffContainer">
