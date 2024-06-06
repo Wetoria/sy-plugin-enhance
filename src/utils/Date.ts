@@ -16,11 +16,11 @@ export function getDiffFormat(day1: Dayjs, day2: Dayjs, gap = ' ') {
   const seconds = temp2.diff(temp1, 'second')
 
   const diffHour = Math.floor(seconds / 60 / 60);
-  const diffMinute = Math.floor(seconds / 60);
+  const diffMinute = Math.floor(seconds / 60 % 60);
   const diffSecond = Math.floor(seconds % 60);
 
   const formatted = [
-    diffHour ? `${diffHour}时 ` : '',
+    diffHour ? `${diffHour}时` : '',
     diffMinute ? `${diffMinute}分` : '',
     diffSecond ? `${diffSecond}秒` : '',
   ].filter(Boolean).join(gap)
