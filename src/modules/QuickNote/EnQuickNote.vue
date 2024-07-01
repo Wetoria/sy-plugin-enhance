@@ -131,7 +131,7 @@ import { Protyle } from 'siyuan';
 
 
   onMounted(() => {
-    if (!inWindow.value) {
+    if (!inWindow.value && location.pathname != '/stage/build/app/window.html') {
       plugin.addCommand({
         langKey: "enOpenQuickNote",
         langText: "一键记事",
