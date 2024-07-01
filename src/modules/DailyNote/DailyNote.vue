@@ -98,7 +98,7 @@ async function jumpTo(next = true) {
 
   const currentDocTitleDom: HTMLDivElement = plugin.isMobile
     ? document.querySelector(
-        "#editor:not(.fn__none) .protyle-background.protyle-background--enable"
+        "#editor:not(.fn__none) .protyle-background"
       )
     : document.querySelector(
         ".protyle:not(.fn__none) .protyle-title"
