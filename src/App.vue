@@ -153,4 +153,13 @@ watchEffect(() => {
     display: none;
   }
 }
+
+.body--window {
+
+  #layouts {
+    div[data-type="wnd"] {
+      background: var(--b3-theme-background);
+    }
+  }
+}
 </style>
