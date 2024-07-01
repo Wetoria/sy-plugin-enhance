@@ -35,26 +35,6 @@
     </EnSettingsItem>
     <EnSettingsItem mode="vertical">
       <div>
-        数据同步地址
-      </div>
-      <template #desc>
-        <div>
-          LifeLog 数据同步用的地址。<br />
-          <span style="word-wrap: break-word;">
-            当前地址：{{ moduleOptions.lifelogPostUrl }}
-          </span>
-        </div>
-      </template>
-      <template #opt>
-        <a-input
-          :style="{width:'238px'}"
-          placeholder=""
-          v-model="moduleOptions.lifelogPostUrl"
-        />
-      </template>
-    </EnSettingsItem>
-    <EnSettingsItem mode="vertical">
-      <div>
         LifeLog 触发时间（秒）
       </div>
       <template #desc>
@@ -82,8 +62,8 @@ import { computed, onMounted, watchEffect } from 'vue';
 import { queryAllByDom } from '@/utils/DOM';
 import { usePlugin } from '@/main';
 import { EnhanceIOperation, SyDomNodeTypes, onEditorUpdate } from '../../utils/Siyuan'
-import { getBlockAttrs, request, setBlockAttrs } from '@/api'
-import { getFrontend, Protyle } from 'siyuan'
+import { getBlockAttrs, setBlockAttrs } from '@/api'
+import { Protyle } from 'siyuan'
 import dayjs from 'dayjs'
 import { useModule } from '../Settings/EnSettings.vue';
 import EnSettingsTeleportModule from '../Settings/EnSettingsTeleportModule.vue';
@@ -94,7 +74,6 @@ const plugin = usePlugin()
 interface ModuleOptions {
   enableLifeLog: boolean
   showLifeLogFlag: boolean
-  lifelogPostUrl: string
   lifelogTriggerTime: number
 }
 
@@ -103,7 +82,6 @@ const moduleDisplayName = 'LifeLog'
 const defaultOptions = {
   enableLifeLog: false,
   showLifeLogFlag: false,
-  lifelogPostUrl: '',
   lifelogTriggerTime: 5,
 }
 const module = useModule(moduleName, defaultOptions)
@@ -191,8 +169,6 @@ const lifelogAttrUpdated = `${lifelogPrefix}updated`
 
 function markLifeLogBlock() {
 
-  const plugin = usePlugin()
-
   onEditorUpdate(async (operations: EnhanceIOperation[]) => {
     let optList = operations.filter(i => i.text)
     optList.sort((a, b) => a.timestamp - b.timestamp)
@@ -207,27 +183,25 @@ function markLifeLogBlock() {
     optList = optList.filter(i => i.nodeType === SyDomNodeTypes.NodeParagraph)
 
 
-    const records: LifeLogItem[] = []
     for (const opt of optList) {
       const blockAttrs = await getBlockAttrs(opt.id)
-
-      const synced = lifelogAttrType in blockAttrs
 
       const content = opt.text
 
       // const isLifeLogParagraph = /^\d{2}:\d{2}\s+/.test(content)
-      const isLifeLogParagraph = /^\d{2}:\d{2}\s+.*?🫧$/.test(content)
+      const isLifeLogParagraph = /^\d{2}:\d{2}(:\d{2})?\s+[^\n\r]*?$/.test(content)
       if (!isLifeLogParagraph) {
         return
       }
-      const time = (content.match(/^\d{2}:\d{2}/) || [])[0]
-      const elseContent = content.replace(/^\d{2}:\d{2}\s+/, '').replace('🫧', '')
+      const time = (content.match(/^\d{2}:\d{2}(:\d{2})?/) || [])[0]
+      const elseContent = content.replace(/^\d{2}:\d{2}(:\d{2})?\s+/, '')
 
       if (!elseContent) {
         return
       }
       let colonIndex = elseContent.indexOf('：')
       colonIndex = colonIndex < 0 ? elseContent.length : colonIndex
+
       const logType = elseContent.substring(0, colonIndex)
       const logContent = elseContent.substring(colonIndex + 1, elseContent.length)
 
@@ -238,18 +212,6 @@ function markLifeLogBlock() {
       }
       let updatedTime = dayjs().format('YYYY/MM/DD HH:mm:ss')
 
-      if (!synced) {
-        records.push({
-          time,
-          type: logType,
-          content: logContent,
-          syBlockId: opt.id,
-          isMobile: plugin.isMobile,
-          created: createdTime,
-          updated: updatedTime,
-        })
-      }
-
       setBlockAttrs(opt.id, {
         [lifelogAttrTime]: time,
         [lifelogAttrType]: logType,
@@ -258,29 +220,6 @@ function markLifeLogBlock() {
         [lifelogAttrUpdated]: updatedTime,
       })
     }
-
-    const lifelogPostUrl = moduleOptions.value.lifelogPostUrl
-    if (!lifelogPostUrl) {
-      return
-    }
-
-    if (!records.length) {
-      return
-    }
-
-    const frontEnd = getFrontend();
-
-    if (!plugin.isMobile || frontEnd === "mobile") {
-      request(
-        lifelogPostUrl + `?data=${encodeURIComponent(JSON.stringify(records))}`,
-        {
-          data: records,
-        }
-      ).catch((err) => {
-        console.error('[Enhance]| LifeLog Post Error: ', err)
-      })
-    }
-
   }, moduleOptions.value.lifelogTriggerTime * 1000)
 }
 
