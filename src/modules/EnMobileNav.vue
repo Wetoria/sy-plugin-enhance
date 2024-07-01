@@ -114,40 +114,19 @@
 <script setup lang="ts">
 import { debounce } from '@/utils';
 import { usePlugin } from '@/main';
-import { querySelectorByBody } from '@/utils/DOM';
-import { hideDom } from '@/utils/Siyuan';
-import { ref, watchEffect, onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import { computed } from 'vue';
 import { useDocHistory } from '@/utils/History'
 import { entryOpenSettings, useSettings } from '@/modules/Settings/EnSettings.vue';
 import { createTodayDailyNote, jumpToNextDailyNote, jumpToPrevDailyNote } from '@/modules/DailyNote/DailyNote.vue';
 
-const touchmoveDisableFunc = (event) => {
-    event.stopPropagation()
-  }
-
-function disableSiyuanTouchMove() {
-  document.documentElement.addEventListener('touchmove', touchmoveDisableFunc, true)
-}
-function enableSiyuanTouchMove() {
-  document.documentElement.removeEventListener('touchmove', touchmoveDisableFunc)
-}
-
-function hackSiyuanMobile() {
-  // disableSiyuanTouchMove()
-
-  // const statusDom = querySelectorByBody('#status')
-  // if (statusDom) {
-  //   hideDom(statusDom)
-  // }
-}
 
 onMounted(() => {
   if (!plugin.isMobile) {
     return
   }
-  hackSiyuanMobile()
+
   const editorDom = document.body.querySelector('#editor') as HTMLElement
   if (editorDom) {
     const handler = () => {
@@ -233,12 +212,6 @@ const openSiyuanSettings = () => {
     toolbarMore.dispatchEvent(new MouseEvent('click'))
   }
 }
-
-
-watchEffect(() => {
-  navList.value[0].disabled = isOldest.value
-  navList.value[1].disabled = isNewset.value
-})
 </script>
 
 <style lang="scss">
