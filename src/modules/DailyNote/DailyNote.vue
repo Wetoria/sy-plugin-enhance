@@ -104,7 +104,7 @@ async function jumpTo(next = true) {
         ".protyle:not(.fn__none) .protyle-title"
       );
   if (!currentDocTitleDom) {
-    showMessage("请先当开一篇文档");
+    showMessage("请先打开一篇文档");
     return;
   }
   const currentDocId = currentDocTitleDom.dataset.nodeId;
