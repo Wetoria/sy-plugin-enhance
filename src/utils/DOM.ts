@@ -43,7 +43,9 @@ export function registerProtyleBottomArea() {
       const containsDailyNoteAttr = attrs.find(i => i.startsWith('custom-dailynote'))
       if (containsDailyNoteAttr) {
         wysiwygEl.dataset.en_is_dailynote = 'true'
+        wysiwygEl.dataset.en_dailynote_date = wysiwygEl.getAttribute(containsDailyNoteAttr)
         element.dataset.en_is_dailynote = 'true'
+        element.dataset.en_dailynote_date = wysiwygEl.getAttribute(containsDailyNoteAttr)
       }
     }
 

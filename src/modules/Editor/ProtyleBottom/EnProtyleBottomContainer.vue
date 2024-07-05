@@ -1,6 +1,9 @@
 <template>
   <div class="ProtyleBottomContainer" v-if="!disabled">
     <div v-if="settings.isDebugging">Protyle Bottom Area</div>
+    <EnLifeLogProtyleGraph
+      :element="protyleBottom.element"
+    />
     <EnProtyleBottomIndicator
       :blockId="protyle.block.id"
     />
@@ -16,6 +19,7 @@ import { computed, onMounted } from 'vue';
 import EnProtyleBottomIndicator from './EnProtyleBottomIndicator.vue';
 import { IProtyle } from 'siyuan/types';
 import EnProtyleBottomBackLink from './BackLink/EnProtyleBottomBackLink.vue';
+import EnLifeLogProtyleGraph from "@/modules/LifeLog/EnLifeLogDailyNoteGraph.vue";
 import { useSettings } from '@/modules/Settings/EnSettings.vue';
 
 const settings = useSettings()

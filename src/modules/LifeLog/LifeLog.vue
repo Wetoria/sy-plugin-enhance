@@ -68,6 +68,7 @@ import dayjs from 'dayjs'
 import { useModule } from '../Settings/EnSettings.vue';
 import EnSettingsTeleportModule from '../Settings/EnSettingsTeleportModule.vue';
 import EnSettingsItem from '../Settings/EnSettingsItem.vue';
+import { reloadLifeLogData } from './EnLifeLogDailyNoteGraph.vue';
 
 const plugin = usePlugin()
 
@@ -159,14 +160,6 @@ watchEffect(() => {
   document.documentElement.dataset.enhancerIsMobile = `${plugin.isMobile}`
 })
 
-
-const lifelogPrefix = 'custom-lifelog-'
-const lifelogAttrTime = `${lifelogPrefix}time`
-const lifelogAttrType = `${lifelogPrefix}type`
-const lifelogAttrContent = `${lifelogPrefix}content`
-const lifelogAttrCreated = `${lifelogPrefix}created`
-const lifelogAttrUpdated = `${lifelogPrefix}updated`
-
 function markLifeLogBlock() {
 
   onEditorUpdate(async (operations: EnhanceIOperation[]) => {
@@ -210,7 +203,7 @@ function markLifeLogBlock() {
       if (isFirstCreate) {
         createdTime = dayjs().format('YYYY/MM/DD HH:mm:ss')
       }
-      let updatedTime = dayjs().format('YYYY/MM/DD HH:mm:ss')
+      const updatedTime = dayjs().format('YYYY/MM/DD HH:mm:ss')
 
       setBlockAttrs(opt.id, {
         [lifelogAttrTime]: time,
@@ -220,13 +213,54 @@ function markLifeLogBlock() {
         [lifelogAttrUpdated]: updatedTime,
       })
     }
+    setTimeout(() => {
+      reloadLifeLogData('reload')
+    }, 2000)
   }, moduleOptions.value.lifelogTriggerTime * 1000)
 }
 
 </script>
 
+<script lang="ts">
+const lifelogPrefix = 'custom-lifelog-'
+const lifelogAttrTime = `${lifelogPrefix}time`
+const lifelogAttrType = `${lifelogPrefix}type`
+const lifelogAttrContent = `${lifelogPrefix}content`
+const lifelogAttrCreated = `${lifelogPrefix}created`
+const lifelogAttrUpdated = `${lifelogPrefix}updated`
+
+export interface ILifeLog {
+  [lifelogAttrTime]: string;
+  [lifelogAttrType]: string;
+  [lifelogAttrContent]: string;
+  [lifelogAttrCreated]: string;
+  [lifelogAttrUpdated]: string;
+}
+</script>
+
 <style>
 html[data-enhancer-enable-lifelog-tag="true"] {
+  --en-lifelog-固: #D3D3D3;
+  --en-lifelog-固定: #D3D3D3;
+
+  --en-lifelog-增: #90EE90;
+  --en-lifelog-学习: #90EE90;
+  --en-lifelog-事业: #90EE90;
+
+  --en-lifelog-工作: #FFD700;
+
+  --en-lifelog-废: #FF0000;
+  --en-lifelog-娱乐: #FF0000;
+  --en-lifelog-荒废: #FF0000;
+  --en-lifelog-玩: #FF0000;
+
+  --en-lifelog-家: rgb(71, 255, 248);
+  --en-lifelog-家庭: rgb(71, 255, 248);
+
+  --en-lifelog-友: rgb(156, 123, 85);
+  --en-lifelog-朋友: rgb(156, 123, 85);
+
+
   .enLifeLogStickyContainer {
     position: absolute;
     top: 30px;
