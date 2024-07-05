@@ -14,7 +14,7 @@
         :data-en_lifelog_diff="record.diff"
         :data-en_lifelog_diff_format="diffFormat(record.diff)"
         :style="{
-          minHeight: `${(record.diff / secondsOfADay) * 100}%`
+          height: `${(record.diff / secondsOfADay) * 100}%`
         }"
       >
         <div
@@ -25,14 +25,49 @@
         >
 
         </div>
-        <div
-          class="time info"
-          v-if="(record.diff / secondsOfADay) > 0.01"
-        >
-          {{ record.endTime }}
+        <div class="infos">
+          <div
+            class="time info"
+            v-if="(record.diff / secondsOfADay) > 0.01"
+          >
+            {{ record.endTime }}
+          </div>
+          <div class="info">
+            {{
+              [
+                record.record['custom-lifelog-type'],
+                record.record['custom-lifelog-content']
+              ].filter(Boolean).join('：')
+            }}
+          </div>
         </div>
-        <div class="info">
-          {{ `${record.record['custom-lifelog-type']}：${record.record['custom-lifelog-content']}` }}
+      </div>
+      <div class="PromptArea">
+        <div
+          v-for="index of 24"
+          :key="index"
+          class="PromptItem"
+        >
+          <div class="PromptTimeItem">
+            <div class="divider"></div>
+            <span class="time">
+              {{ index }}:00
+            </span>
+          </div>
+        </div>
+      </div>
+      <div
+        class="PromptCurrent"
+        :style="{
+          top: `${((currentSecondDiff / secondsOfADay) * 100)}%`
+        }"
+        :data-test="currentSecondDiff"
+      >
+        <div class="PromptTimeItem">
+          <div class="divider"></div>
+          <span class="time">
+            {{ current.format('HH:mm') }}
+          </span>
         </div>
       </div>
     </div>
@@ -70,6 +105,15 @@ function checkHeight() {
       item.dataset.en_lifelog_show_info = 'false'
     }
   })
+
+  const promptItemList = queryAllByDom(EnLifeLogDailyNoteGraphRef.value, '.PromptItem')
+  promptItemList.forEach((item: HTMLDivElement) => {
+    if (item.offsetHeight > 20) {
+      item.dataset.en_lifelog_show_info = 'true'
+    } else {
+      item.dataset.en_lifelog_show_info = 'false'
+    }
+  })
 }
 
 onMounted(() => {
@@ -81,6 +125,16 @@ onBeforeUnmount(() => {
 })
 onUpdated(() => {
   checkHeight()
+})
+
+const current = ref(dayjs())
+setInterval(() => {
+  current.value = dayjs()
+}, 1000)
+const currentSecondDiff = computed(() => {
+  const startOfToday = current.value.startOf('day');
+  const secondsUntilMidnight = current.value.diff(startOfToday, 'second');
+  return secondsUntilMidnight
 })
 
 const lifelogRecords = ref<Array<{
@@ -182,37 +236,127 @@ export function reloadLifeLogData(newLifeLogParagraphId: string) {
   left: 0;
   top: 30px;
   width: 5px;
-  height: calc(100% - 30px);
+  height: calc(100% - 30px - 4px);
   background-color: rgba(109, 109, 109, 0.1);
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  z-index: 9;
+
+  --en-lifelog-graph-font-size: 8px;
 
 
   .EnLifeLogGraphItem {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    font-size: 8px;
+    font-size: var(--en-lifelog-graph-font-size, 8px);
     color: white;
     width: 100%;
     position: relative;
     justify-content: flex-end;
+    box-sizing: border-box;
 
     .EnLifeLogItemBg {
       width: 100%;
-      height: 100%;
+      height: calc(100% - 1px);
       position: absolute;
       top: 0;
       left: 0;
       z-index: 0;
-      opacity: 0.1;
+      opacity: 0.2;
+    }
+
+    .infos {
+      display: none;
+      width: 100%;
+      padding: 4px;
+      box-sizing: border-box;
     }
 
     .info {
-      display: none;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
+      white-space: nowrap;
     }
 
+  }
+
+  .PromptTimeItem {
+    width: 100%;
+
+    position: absolute;
+    // bottom: calc(var(--en-lifelog-graph-font-size, 8px));
+    bottom: 0;
+
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-end;
+
+    box-sizing: border-box;
+
+    .divider {
+      flex: 1;
+      border-top: 1px solid rgba(109, 109, 109, 0.1);
+      height: 0;
+    }
+
+    .time {
+      transform: translateY(4px);
+    }
+  }
+
+  .PromptArea {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    font-size: var(--en-lifelog-graph-font-size, 8px);
+    display: none;
+
+
+
+    .PromptItem {
+      height: calc(100% / 24);
+
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+
+      position: relative;
+
+      .divider {
+        border-top: 1px solid rgba(109, 109, 109, 0.1);
+      }
+
+      &[data-en_lifelog_show_info="false"] {
+        .time {
+          display: none;
+        }
+      }
+    }
+
+  }
+
+  .PromptCurrent {
+    position: absolute;
+    right: 0px;
+    color: red;
+
+    width: 100%;
+
+    font-size: var(--en-lifelog-graph-font-size, 8px);
+    font-weight: bold;
+
+    .divider {
+      border-top: 1px solid red;
+    }
+
+    .time {
+      display: none;
+    }
   }
 
   &:hover {
@@ -220,12 +364,28 @@ export function reloadLifeLogData(newLifeLogParagraphId: string) {
     max-width: 100px;
 
     .EnLifeLogGraphItem {
-      padding: 4px;
+      box-sizing: border-box;
 
       &[data-en_lifelog_show_info="true"] {
-        .info {
-          display: flex;
+        .infos {
+          display: inline-block;
         }
+      }
+    }
+
+    .PromptArea {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .PromptTimeItem {
+      gap: 4px;
+      padding-right: 2px;
+    }
+
+    .PromptCurrent {
+      .time {
+        display: inline-block;
       }
     }
   }
