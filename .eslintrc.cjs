@@ -4,11 +4,15 @@ module.exports = {
     "eslint:recommended",
     "plugin:vue/vue3-essential",
     "plugin:@typescript-eslint/recommended",
-    "@vue/eslint-config-typescript",
-    "@vue/eslint-config-prettier/skip-formatting",
+    "@vue/typescript/recommended",
   ],
 
-  parser: "@typescript-eslint/parser",
+  parserOptions: {
+    ecmaVersion: 2021,
+    sourceType: 'module',
+    parser: '@typescript-eslint/parser',
+    extraFileExtensions: ['.vue'],
+  },
 
   overrides: [],
 
@@ -29,6 +33,5 @@ module.exports = {
     "@typescript-eslint/no-unused-vars": "off",
     "@typescript-eslint/no-explicit-any": "off",
     "turbo/no-undeclared-env-vars": "off",
-    "prettier/prettier": "error",
   },
 };
