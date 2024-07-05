@@ -5,18 +5,35 @@
     <div
       class="EnLifeLogDailyNoteGraph"
       v-if="isDailyNote"
+      ref="EnLifeLogDailyNoteGraphRef"
     >
       <div
         v-for="record of lifelogRecords"
+        class="EnLifeLogGraphItem"
         :key="record.block_id"
         :data-en_lifelog_diff="record.diff"
         :data-en_lifelog_diff_format="diffFormat(record.diff)"
         :style="{
-          backgroundColor: `var(--en-lifelog-${record.record['custom-lifelog-type']})`,
-          height: `${(record.diff / secondsOfADay) * 100}%`
+          minHeight: `${(record.diff / secondsOfADay) * 100}%`
         }"
       >
-        <!-- {{ `${record.record['custom-lifelog-type']}：${record.record['custom-lifelog-content']}` }} -->
+        <div
+          class="EnLifeLogItemBg"
+          :style="{
+            backgroundColor: `var(--en-lifelog-${record.record['custom-lifelog-type']})`,
+          }"
+        >
+
+        </div>
+        <div
+          class="time info"
+          v-if="(record.diff / secondsOfADay) > 0.01"
+        >
+          {{ record.endTime }}
+        </div>
+        <div class="info">
+          {{ `${record.record['custom-lifelog-type']}：${record.record['custom-lifelog-content']}` }}
+        </div>
       </div>
     </div>
   </Teleport>
@@ -25,9 +42,10 @@
 <script setup lang="ts">
 import { sql } from '@/api';
 import dayjs from 'dayjs'
-import { computed, onMounted, ref, watchEffect } from 'vue';
+import { computed, onBeforeUnmount, onBeforeUpdate, onMounted, onUpdated, ref, watchEffect } from 'vue';
 import { ILifeLog } from './LifeLog.vue';
 import { diffFormat } from '@/utils/Date'
+import { queryAllByDom } from '@/utils/DOM';
 
 const props = defineProps<{
   element: HTMLDivElement
@@ -40,8 +58,29 @@ const isDailyNote = computed(() => {
 
 const secondsOfADay = 60 * 60 * 24
 
+
+const EnLifeLogDailyNoteGraphRef = ref()
+function checkHeight() {
+  const itemList = queryAllByDom(EnLifeLogDailyNoteGraphRef.value, '.EnLifeLogGraphItem')
+
+  itemList.forEach((item: HTMLDivElement) => {
+    if (item.offsetHeight > 20) {
+      item.dataset.en_lifelog_show_info = 'true'
+    } else {
+      item.dataset.en_lifelog_show_info = 'false'
+    }
+  })
+}
+
 onMounted(() => {
   load()
+  window.addEventListener('resize', checkHeight);
+})
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', checkHeight);
+})
+onUpdated(() => {
+  checkHeight()
 })
 
 const lifelogRecords = ref<Array<{
@@ -117,6 +156,7 @@ const load = () => {
     if (dailyNoteId.value) {
       dailyNoteId.value = ''
     }
+    checkHeight()
   })
 }
 
@@ -144,13 +184,50 @@ export function reloadLifeLogData(newLifeLogParagraphId: string) {
   width: 5px;
   height: calc(100% - 30px);
   background-color: rgba(109, 109, 109, 0.1);
-  opacity: 0.1;
   display: flex;
   flex-direction: column;
   gap: 1px;
 
-  // &:hover {
-  //   width: 10px;
-  // }
+
+  .EnLifeLogGraphItem {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    font-size: 8px;
+    color: white;
+    width: 100%;
+    position: relative;
+    justify-content: flex-end;
+
+    .EnLifeLogItemBg {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 0;
+      opacity: 0.1;
+    }
+
+    .info {
+      display: none;
+    }
+
+  }
+
+  &:hover {
+    width: fit-content;
+    max-width: 100px;
+
+    .EnLifeLogGraphItem {
+      padding: 4px;
+
+      &[data-en_lifelog_show_info="true"] {
+        .info {
+          display: flex;
+        }
+      }
+    }
+  }
 }
 </style>
