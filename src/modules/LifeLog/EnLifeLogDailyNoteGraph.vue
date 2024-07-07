@@ -328,7 +328,7 @@ export function reloadLifeLogData(newLifeLogParagraphId: string) {
       position: relative;
 
       .divider {
-        border-top: 1px solid rgba(109, 109, 109, 0.1);
+        border-top: 1px solid rgba(109, 109, 109);
       }
 
       &[data-en_lifelog_show_info="false"] {
@@ -360,11 +360,12 @@ export function reloadLifeLogData(newLifeLogParagraphId: string) {
   }
 
   &:hover {
-    width: fit-content;
-    max-width: 100px;
+    width: 100px;
+    background: var(--b3-theme-surface);
+    border-right: 1px solid rgba(109, 109, 109);
 
     .EnLifeLogGraphItem {
-      box-sizing: border-box;
+
 
       &[data-en_lifelog_show_info="true"] {
         .infos {
