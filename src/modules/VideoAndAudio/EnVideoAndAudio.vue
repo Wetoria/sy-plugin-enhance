@@ -17,10 +17,12 @@
     </EnWindow>
     <Teleport
       v-for="videoOrAudioAttrEl of videoAndAudioList"
-      :to="videoOrAudioAttrEl"
+      :key="videoOrAudioAttrEl.nodeId"
+      :to="videoOrAudioAttrEl.el"
     >
-      <span>
-      </span>
+      <EnVideoAndAudioBlockPlay
+        v-bind="videoOrAudioAttrEl"
+      />
     </Teleport>
   </div>
 </template>
@@ -34,6 +36,7 @@ import { useProWatcher } from '@/modules/Settings/EnSettings.vue';
 import { SyFrontendTypes } from '@/utils/Siyuan';
 import EnWindow, { isInWindow } from '@/modules/EnWindow.vue';
 import { onMounted, ref } from 'vue';
+import EnVideoAndAudioBlockPlay from './EnVideoAndAudioBlockPlay.vue';
 
 const plugin = usePlugin()
 
@@ -77,7 +80,7 @@ const recordVideoOrAudioRef = (videoOrAudioElement: HTMLVideoElement | HTMLAudio
     return
   }
 
-  videoAndAudioList.value = videoAndAudioList.value.filter(i => document.body.contains(i))
+  videoAndAudioList.value = videoAndAudioList.value.filter(i => document.body.contains(i.el))
 
 
   let existAttrContainer = attrEl.querySelector(`.${attrContainerClassName}`)
@@ -87,9 +90,13 @@ const recordVideoOrAudioRef = (videoOrAudioElement: HTMLVideoElement | HTMLAudio
     attrEl.insertBefore(existAttrContainer, attrEl.firstChild)
   }
 
-  const existInList = videoAndAudioList.value.find(i => i == existAttrContainer)
+  const existInList = videoAndAudioList.value.find(i => i.el == existAttrContainer)
   if (!existInList) {
-    videoAndAudioList.value.push(existAttrContainer)
+    videoAndAudioList.value.push({
+      el: existAttrContainer,
+      nodeId: parent.dataset.nodeId,
+      type: parent.dataset.type,
+    })
   }
 }
 const recordVideoAndAudio = (video: HTMLVideoElement | HTMLAudioElement) => {

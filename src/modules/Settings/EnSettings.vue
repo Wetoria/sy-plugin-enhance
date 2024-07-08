@@ -67,7 +67,6 @@ import { onCountClick } from '@/utils/DOM';
 
 const plugin = usePlugin()
 
-const settings = useSettings()
 
 const clickNum = ref(0)
 let flag
@@ -164,7 +163,7 @@ const getWebSocketMessage = (event) => {
 
 const initWebsocket = () => {
   const wsUrl = `ws://${location.host}/ws/broadcast?channel=EnhancePlugin`
-  let socket = new WebSocket(wsUrl)
+  const socket = new WebSocket(wsUrl)
   socketRef.value = socket
 
   socket.onopen = () => {
@@ -223,6 +222,16 @@ interface EnSettings {
   timeDiff: {
     [id: string]: string
   }
+
+  videoAndAudioBlockMap: {
+    [id: string]: any
+  }
+  videoAndAudioBlockPlayConfigMap: {
+    [id: string]: {
+      enabledBlockPlay: boolean
+      enabledLoopPlay: boolean
+    }
+  }
 }
 
 const defaultSettings: EnSettings = {
@@ -233,11 +242,13 @@ const defaultSettings: EnSettings = {
 
   modules: {},
   timeDiff: {},
+  videoAndAudioBlockMap: {},
+  videoAndAudioBlockPlayConfigMap: {},
 }
 
 let doNotSave = false
 let changedByWebsocket = false
-let settings = ref<EnSettings>({
+const settings = ref<EnSettings>({
   modules: {},
 } as EnSettings)
 
@@ -267,7 +278,7 @@ watch(settings, () => {
   deep: true,
 })
 
-let STORAGE_KEY = 'SyEnhancerSettings'
+const STORAGE_KEY = 'SyEnhancerSettings'
 
 export function useSettings() {
   return settings

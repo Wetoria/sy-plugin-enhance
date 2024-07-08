@@ -21,6 +21,9 @@ export enum SyDomNodeTypes {
   NodeBlockquote = 'NodeBlockquote',
   NodeSuperBlock = 'NodeSuperBlock',
 
+  NodeAudio = 'NodeAudio',
+  NodeVideo = 'NodeVideo',
+
   BreadCrumb = 'protyle-breadcrumb__bar',
 }
 
