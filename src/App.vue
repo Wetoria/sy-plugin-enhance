@@ -63,7 +63,7 @@ import EnBackgroundImg from './modules/Background/EnBackgroundImg.vue';
 import EnQuickNote from './modules/QuickNote/EnQuickNote.vue';
 import EnEditor from './modules/Editor/EnEditor.vue';
 import EnMobileNav from './modules/EnMobileNav.vue';
-import EnVideoAndAudio from './modules/EnVideoAndAudio.vue';
+import EnVideoAndAudio from './modules/VideoAndAudio/EnVideoAndAudio.vue';
 
 const plugin = usePlugin()
 

@@ -15,6 +15,13 @@
         </div>
       </div>
     </EnWindow>
+    <Teleport
+      v-for="videoOrAudioAttrEl of videoAndAudioList"
+      :to="videoOrAudioAttrEl"
+    >
+      <span>
+      </span>
+    </Teleport>
   </div>
 </template>
 
@@ -23,9 +30,9 @@ import { usePlugin } from '@/main';
 import { debounce } from '@/utils';
 import { queryAllByDom } from '@/utils/DOM';
 import { openWindow, Protyle, showMessage } from 'siyuan';
-import { useProWatcher } from './Settings/EnSettings.vue';
+import { useProWatcher } from '@/modules/Settings/EnSettings.vue';
 import { SyFrontendTypes } from '@/utils/Siyuan';
-import EnWindow, { isInWindow } from './EnWindow.vue';
+import EnWindow, { isInWindow } from '@/modules/EnWindow.vue';
 import { onMounted, ref } from 'vue';
 
 const plugin = usePlugin()
@@ -46,6 +53,45 @@ const recordCurrentSiyuanNode = (node) => {
   toggleCurrentNodeClass(currentSiyuanNode, true)
 }
 
+const getParentSiyuanNode = (videoOrAudioElement: HTMLVideoElement | HTMLAudioElement) => {
+  let parent = videoOrAudioElement.parentElement
+  while (parent) {
+    parent = parent.parentElement
+    if (isTargetSiyuanNode(parent.dataset.type)) {
+      break
+    }
+  }
+  return parent
+}
+
+
+const videoAndAudioList = ref([])
+const attrContainerClassName = 'EnVideoAndAudioAttrContainer'
+const recordVideoOrAudioRef = (videoOrAudioElement: HTMLVideoElement | HTMLAudioElement) => {
+  const parent = getParentSiyuanNode(videoOrAudioElement)
+  if (!parent) {
+    return
+  }
+  const attrEl = parent.querySelector('.protyle-attr')
+  if (!attrEl) {
+    return
+  }
+
+  videoAndAudioList.value = videoAndAudioList.value.filter(i => document.body.contains(i))
+
+
+  let existAttrContainer = attrEl.querySelector(`.${attrContainerClassName}`)
+  if (!existAttrContainer) {
+    existAttrContainer = document.createElement('span')
+    existAttrContainer.className = attrContainerClassName
+    attrEl.insertBefore(existAttrContainer, attrEl.firstChild)
+  }
+
+  const existInList = videoAndAudioList.value.find(i => i == existAttrContainer)
+  if (!existInList) {
+    videoAndAudioList.value.push(existAttrContainer)
+  }
+}
 const recordVideoAndAudio = (video: HTMLVideoElement | HTMLAudioElement) => {
   if (!('enred' in video.dataset)) {
     video.addEventListener('play', () => {
@@ -63,6 +109,7 @@ const recordVideoAndAudio = (video: HTMLVideoElement | HTMLAudioElement) => {
     })
     video.dataset.enred = ''
   }
+  recordVideoOrAudioRef(video)
 }
 
 const desktopTypes = [SyFrontendTypes.desktop, SyFrontendTypes['desktop-window']]
@@ -376,7 +423,7 @@ const commands = [
     },
   },
 ]
-const observer = new MutationObserver(debounce(handler, 100));
+const observer = new MutationObserver(debounce(handler, 500));
 const enable = () => {
   handler()
   observer.observe(document.body, {
