@@ -27,6 +27,7 @@
         <DailyNote />
         <LifeLog />
         <EnVideoAndAudio v-if="isNotFree" />
+        <EnFormatBrush v-if="isNotFree"  />
       </template>
 
       <!-- 仅移动端 -->
@@ -64,6 +65,7 @@ import EnQuickNote from './modules/QuickNote/EnQuickNote.vue';
 import EnEditor from './modules/Editor/EnEditor.vue';
 import EnMobileNav from './modules/EnMobileNav.vue';
 import EnVideoAndAudio from './modules/VideoAndAudio/EnVideoAndAudio.vue';
+import EnFormatBrush from './modules/EnFormatBrush.vue';
 
 const plugin = usePlugin()
 
