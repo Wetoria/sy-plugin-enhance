@@ -213,6 +213,7 @@ export function resetModuleOptions(aModule: EnModuleType) {
 interface EnSettings {
   isDebugging: boolean
   v: 0 | 1 | 2
+  l: 0 | 1 | 2
 
   boxId: string;
 
@@ -237,6 +238,7 @@ interface EnSettings {
 const defaultSettings: EnSettings = {
   isDebugging: false,
   v: 0,
+  l: 0,
 
   boxId: '',
 
@@ -291,6 +293,7 @@ export const switchID = (time) => {
   } else if (time >= 20) {
     v = 2
   }
+  settings.value.l = settings.value.v
   settings.value.v = v
 }
 export const isFree = computed(() => settings.value.v === 0)
@@ -413,15 +416,6 @@ export const switchState = (key, value) => {
   document.documentElement.dataset[key] = `${value}`
 }
 
-let eventListOfPro: Array<(isPro: boolean) => void> = []
-export const watchProEnable = (callback) => {
-  eventListOfPro.push(callback)
-  callback(settings.value.v >= 1)
-}
-export const unwatchProEnable = (callback)  => {
-  eventListOfPro = eventListOfPro.filter(i => i != callback)
-}
-
 export const useProWatcher = (props: {
   onChange?: (enabled: boolean) => void,
   onEnabled?: () => void,
@@ -432,7 +426,13 @@ export const useProWatcher = (props: {
     onEnabled = () => {},
     onDisabled = () => {},
   } = props
-  watchProEnable((enabled) => {
+
+  watchEffect(() => {
+    const lastEnabled = settings.value.l >= 1
+    const enabled = settings.value.v >= 1
+    if (lastEnabled === enabled) {
+      return
+    }
     onChange(enabled)
     if (enabled) {
       onEnabled()
@@ -442,12 +442,6 @@ export const useProWatcher = (props: {
   })
 }
 
-watchEffect(() => {
-  const enbaled = settings.value.v >= 1
-  eventListOfPro.forEach((cb) => {
-    cb(enbaled)
-  })
-})
 </script>
 
 <style lang="scss" scoped>
