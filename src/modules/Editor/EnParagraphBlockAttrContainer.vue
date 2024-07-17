@@ -93,5 +93,7 @@ export const getUpdated = (pDom) => {
 </script>
 
 <style lang="scss">
-
+.protyle-attr {
+  opacity: 1;
+}
 </style>
