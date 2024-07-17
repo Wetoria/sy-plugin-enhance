@@ -146,6 +146,7 @@ const envLinkClickHandler = (href, event) => {
 }
 const hackLink = (link: HTMLLinkElement) => {
   const href = link.dataset.href
+  // IMP 如果其他地方用了这个地址，也会被拦截，需要进一步判断是不是音视频的链接
   const isEVALink = href.startsWith(basePluginUrl)
   if (isEVALink) {
     if (link.dataset.enBindLinkClick) {
@@ -451,7 +452,7 @@ const enable = () => {
 const disable = () => {
   observer.disconnect()
   plugin.protyleSlash = plugin.protyleSlash.filter(i => !protyleSlashList.find(j => j != i))
-  plugin.commands = plugin.commands.filter(i => !commands.find(j => j != i))
+  plugin.commands = plugin.commands.filter(i => !commands.find(j => j.langKey == i.langKey))
   plugin.eventBus.off('click-blockicon', onOpenContextMenu)
   plugin.eventBus.off('open-siyuan-url-plugin', onOpenUrlScheme)
 }
