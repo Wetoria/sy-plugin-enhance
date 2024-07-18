@@ -5,8 +5,9 @@
 <script setup lang="ts">
 import { usePlugin } from '@/main';
 import { debounce } from '@/utils';
-import { IProtyle, Protyle } from 'siyuan';
+import { IProtyle } from 'siyuan';
 import { computed, onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue';
+import dayjs from 'dayjs'
 
 const INLINE_TYPE = [
   "block-ref",
@@ -179,6 +180,16 @@ const pasteCurrentStyle = (protyle: IProtyle) => {
   // if (!Object.keys(currentFontStyle.value.style).length && !currentFontStyle.value.dataType.length) {
   //   return
   // }
+  let range = protyle?.toolbar?.range
+  let startContainer = range.startContainer;
+  let element = (startContainer.nodeType === Node.ELEMENT_NODE ? startContainer : startContainer.parentElement) as HTMLElement;
+
+  let siyuanNode = element
+  while(siyuanNode != null && !siyuanNode.dataset.nodeId) {
+    siyuanNode = siyuanNode.parentElement
+  }
+
+  const oldElement = siyuanNode.outerHTML
 
   protyle?.toolbar?.setInlineMark(protyle, 'clear', "range");
   protyle?.toolbar?.setInlineMark(protyle, 'clear', "range");
@@ -186,16 +197,20 @@ const pasteCurrentStyle = (protyle: IProtyle) => {
   currentFontStyle.value.dataType.forEach((item) => {
     protyle?.toolbar?.setInlineMark(protyle, item, "range");
   })
-  //全新评论
-  // const selection = getSelection()
-  const range = protyle?.toolbar?.range
-  const startContainer = range.startContainer;
-  const element = (startContainer.nodeType === Node.ELEMENT_NODE ? startContainer : startContainer.parentElement) as HTMLElement;
+
+  range = protyle?.toolbar?.range
+  startContainer = range.startContainer;
+  element = (startContainer.nodeType === Node.ELEMENT_NODE ? startContainer : startContainer.parentElement) as HTMLElement;
   element.setAttribute('style', '')
 
   Object.keys(currentFontStyle.value.style).forEach((key) => {
     element.style[key] = currentFontStyle.value.style[key]
   })
+
+  siyuanNode.setAttribute("updated", dayjs().format("YYYYMMDDHHmmss"));
+
+  const protyleIns = protyle.getInstance()
+  protyleIns.updateTransaction(siyuanNode.getAttribute("data-node-id"), siyuanNode.outerHTML, oldElement);
 }
 
 const plugin = usePlugin()
