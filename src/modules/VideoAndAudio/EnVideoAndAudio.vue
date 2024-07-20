@@ -31,12 +31,13 @@
 import { usePlugin } from '@/main';
 import { debounce } from '@/utils';
 import { queryAllByDom } from '@/utils/DOM';
-import { openWindow, Protyle, showMessage } from 'siyuan';
+import { Protyle, showMessage } from 'siyuan';
 import { useProWatcher } from '@/modules/Settings/EnSettings.vue';
 import { SyFrontendTypes } from '@/utils/Siyuan';
 import EnWindow, { isInWindow } from '@/modules/EnWindow.vue';
 import { onMounted, ref } from 'vue';
 import EnVideoAndAudioBlockPlay from './EnVideoAndAudioBlockPlay.vue';
+import { EnVideoAndAudioUrlParams, urlSchemeCreator, URL_TYPE_MAP, isTargetPluginType } from '@/utils/url';
 
 const plugin = usePlugin()
 
@@ -146,8 +147,9 @@ const envLinkClickHandler = (href, event) => {
 }
 const hackLink = (link: HTMLLinkElement) => {
   const href = link.dataset.href
+
   // IMP 如果其他地方用了这个地址，也会被拦截，需要进一步判断是不是音视频的链接
-  const isEVALink = href.startsWith(basePluginUrl)
+  const isEVALink = isTargetPluginType(href, URL_TYPE_MAP.VideoAndAudio)
   if (isEVALink) {
     if (link.dataset.enBindLinkClick) {
       return
@@ -177,12 +179,15 @@ const handler = () => {
 }
 
 
-const basePluginUrl = 'siyuan://plugins/sy-plugin-enhance'
-
 const getVideoTimeLink = (videoNode, siyuanVideoNode) => {
   const time = videoNode.currentTime
   const blockId = siyuanVideoNode.dataset.nodeId
-  const link = `${basePluginUrl}?t=${time}&bid=${blockId}`
+  const params: EnVideoAndAudioUrlParams = {
+    type: URL_TYPE_MAP.VideoAndAudio,
+    t: time,
+    bid: blockId,
+  }
+  const link = urlSchemeCreator(params)
   return {
     time,
     blockId,
@@ -389,7 +394,7 @@ const jumpToBlock = (url) => {
     })
   }, 100)
 
-  // @ts-ignore
+  // @ts-expect-error openFileByURL
   window.openFileByURL(`siyuan://blocks/${bid}`)
 
 }
