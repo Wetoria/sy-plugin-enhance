@@ -49,19 +49,29 @@
         <div class="btns">
           <a-button
             size="mini"
-            @click="newBlock.startTime = currentTime"
+            @click="udpateNewBlockTime(currentTime)"
           >
             开始时间
           </a-button>
           <a-button
             size="mini"
-            @click="newBlock.endTime = currentTime"
+            @click="udpateNewBlockTime(currentTime, 'end')"
           >
             结束时间
           </a-button>
         </div>
         <div>
           区间：
+        </div>
+        <div class="SwitchArea">
+          <div>
+            播放当前区间
+          </div>
+          <div>
+            <a-switch
+              v-model="isTempBlockTime"
+            />
+          </div>
         </div>
         <div class="newBlockArea">
           <div class="newBlockTimeItem">
@@ -136,7 +146,7 @@
 
 <script setup lang="ts">
 import { SyDomNodeTypes } from '@/utils/Siyuan';
-import { onBeforeUnmount, onMounted, ref, watchEffect } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue';
 import { useSettings } from '../Settings/EnSettings.vue';
 import { showMessage } from 'siyuan';
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue';
@@ -174,8 +184,14 @@ const newBlock = ref<ATimeBlock>({
   endTime: 0,
 })
 
+const udpateNewBlockTime = (time: number, type: 'start' | 'end' = 'start') => {
+  newBlock.value[`${type}Time`] = time
+  isTempBlockTime.value = false
+}
+
 const setTargetTime = (newTimeBlock: ATimeBlock) => {
   target.value.currentTime = newTimeBlock.startTime
+  newBlock.value = JSON.parse(JSON.stringify(newTimeBlock))
 }
 
 const settings = useSettings()
@@ -194,14 +210,15 @@ watchEffect(() => {
 
 const target = ref<HTMLVideoElement | HTMLAudioElement>()
 
+const checkTimeBlockList = computed(() => isTempBlockTime.value ? [newBlock.value] : nodeTimeBlockList.value)
 const checkIsInValidBlock = () => {
   if (nodeBlockPlayConfig.value.enabledBlockPlay) {
     const currentTargetTime = target.value.currentTime;
 
-    if (nodeTimeBlockList.value.length) {
+    if (checkTimeBlockList.value.length) {
       // 检查当前时间是否在任何一个允许的播放区间内
       let inAllowedInterval = false;
-      for (const interval of nodeTimeBlockList.value) {
+      for (const interval of checkTimeBlockList.value) {
         if (currentTargetTime >= interval.startTime && currentTargetTime <= interval.endTime) {
           inAllowedInterval = true;
           break;
@@ -212,7 +229,7 @@ const checkIsInValidBlock = () => {
       if (!inAllowedInterval) {
         // 找到下一个播放区间
         let nextTime = null
-        for (const interval of nodeTimeBlockList.value) {
+        for (const interval of checkTimeBlockList.value) {
           if (currentTargetTime < interval.startTime) {
             nextTime = interval.startTime;
             break;
@@ -236,10 +253,10 @@ const checkIsInValidBlock = () => {
 
 const checkIsNeedLoop = () => {
   if (nodeBlockPlayConfig.value.enabledLoopPlay) {
-    if (nodeBlockPlayConfig.value.enabledBlockPlay && nodeTimeBlockList.value.length) {
-      const lastBlock = nodeTimeBlockList.value[nodeTimeBlockList.value.length - 1];
+    if (nodeBlockPlayConfig.value.enabledBlockPlay && checkTimeBlockList.value.length) {
+      const lastBlock = checkTimeBlockList.value[checkTimeBlockList.value.length - 1];
       if (target.value.currentTime >= lastBlock.endTime) {
-        target.value.currentTime = nodeTimeBlockList.value[0].startTime
+        target.value.currentTime = checkTimeBlockList.value[0].startTime
         target.value.play()
       }
     } else {
@@ -251,6 +268,20 @@ const checkIsNeedLoop = () => {
   }
 }
 
+const updateTempBlockTime = () => {
+  const hasBlockTimeFlag = target.value.dataset.en_isTimeBlock
+  if (hasBlockTimeFlag) {
+    isTempBlockTime.value = true
+    newBlock.value.startTime = Number(target.value.dataset.en_timeBlock_startTime) || 0
+    newBlock.value.endTime = Number(target.value.dataset.en_timeBlock_endTime) || 0
+
+    delete target.value.dataset.en_isTimeBlock
+    delete target.value.dataset.en_timeBlock_startTime
+    delete target.value.dataset.en_timeBlock_endTime
+  }
+}
+
+const isTempBlockTime = ref(false)
 onMounted(() => {
   const videoOrAudioDom = props.el.parentElement?.parentElement?.querySelector(typeMap[props.type]) as HTMLVideoElement | HTMLAudioElement
 
@@ -261,9 +292,11 @@ onMounted(() => {
   target.value = videoOrAudioDom
   updateCurrentTimeByTarget()
 
+
   videoOrAudioDom.addEventListener('seeking', updateCurrentTimeBySeek);
   videoOrAudioDom.addEventListener('seeked', updateCurrentTimeBySeek);
   videoOrAudioDom.addEventListener('timeupdate', updateCurrentTimeBySeek);
+  videoOrAudioDom.addEventListener('timeupdate', updateTempBlockTime);
   videoOrAudioDom.addEventListener('timeupdate', checkIsInValidBlock);
   videoOrAudioDom.addEventListener('ended', checkIsNeedLoop);
 })
@@ -271,6 +304,7 @@ onBeforeUnmount(() => {
   target.value.removeEventListener('seeking', updateCurrentTimeBySeek);
   target.value.removeEventListener('seeked', updateCurrentTimeBySeek);
   target.value.removeEventListener('timeupdate', updateCurrentTimeBySeek);
+  target.value.removeEventListener('timeupdate', updateTempBlockTime);
   target.value.removeEventListener('timeupdate', checkIsInValidBlock);
   target.value.removeEventListener('ended', checkIsNeedLoop);
 })
