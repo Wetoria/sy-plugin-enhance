@@ -9,7 +9,7 @@ import { usePlugin } from '@/main';
  * @returns
  */
 export function queryAllByDom(dom: HTMLElement, selector: string) {
-  return [...dom.querySelectorAll(selector)]
+  return dom ? [...dom.querySelectorAll(selector)] : []
 }
 
 export function querySelectorByBody(str) {
