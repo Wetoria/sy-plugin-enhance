@@ -385,6 +385,7 @@ export function reloadLifeLogData(newLifeLogParagraphId: string) {
     }
 
     .PromptCurrent {
+      z-index: 1;
       .time {
         display: inline-block;
       }
