@@ -41,3 +41,7 @@ export function isTargetPluginType(href: string, targetType: EnURLParams['type']
   }
   return result
 }
+
+export function convertSiyuanLinkIntoNormal(str: string) {
+  return str.replace(/&amp;/g, "&")
+}

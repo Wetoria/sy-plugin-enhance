@@ -37,7 +37,7 @@ import { SyFrontendTypes } from '@/utils/Siyuan';
 import EnWindow, { isInWindow } from '@/modules/EnWindow.vue';
 import { onMounted, ref } from 'vue';
 import EnVideoAndAudioBlockPlay from './EnVideoAndAudioBlockPlay.vue';
-import { EnVideoAndAudioUrlParams, urlSchemeCreator, URL_TYPE_MAP, isTargetPluginType } from '@/utils/url';
+import { EnVideoAndAudioUrlParams, urlSchemeCreator, URL_TYPE_MAP, isTargetPluginType, convertSiyuanLinkIntoNormal } from '@/utils/url';
 
 const plugin = usePlugin()
 
@@ -145,8 +145,8 @@ const envLinkClickHandler = (href, event) => {
     jumpToBlock(href)
   }
 }
-const hackLink = (link: HTMLLinkElement) => {
-  const href = link.dataset.href
+const hackLink = (link: HTMLSpanElement) => {
+  const href = convertSiyuanLinkIntoNormal(link.dataset.href)
 
   // IMP 如果其他地方用了这个地址，也会被拦截，需要进一步判断是不是音视频的链接
   const isEVALink = isTargetPluginType(href, URL_TYPE_MAP.VideoAndAudio)
@@ -155,7 +155,8 @@ const hackLink = (link: HTMLLinkElement) => {
       return
     }
     link.addEventListener('click', (event) => {
-      envLinkClickHandler(href, event)
+      const target = event.target as HTMLSpanElement
+      envLinkClickHandler(convertSiyuanLinkIntoNormal(target.dataset.href), event)
     })
     link.dataset.enBindLinkClick = 'true'
   }
@@ -325,6 +326,18 @@ const getEVAParamsByUrl = (url) => {
   }
 }
 
+const convertTimeStrToSeconds = (str: string = '') => {
+  const parts = str.split('.')
+  const msPart = parts[1] || 0
+  const hmsParts = parts[0].split(':').reverse()
+  const secondPart = Number(hmsParts[0] || 0)
+  const minutePart = Number(hmsParts[1] || 0)
+  const hourPart = Number(hmsParts[2] || 0)
+
+  const currentTimeValue = `${(hourPart * 60 + minutePart) * 60 + secondPart}.${msPart}`
+  return Number(currentTimeValue)
+}
+
 let flag
 const setVideoTime = ({
   bid,
@@ -344,31 +357,29 @@ const setVideoTime = ({
     return
   }
 
-  const validTimeStrReg = /^(\d+(\.\d+)?(:\d+(\.\d+)?)?(:\d+(\.\d+)?)?)$/
+  const videoOrAudioNode = videoNode || audioNode
+
+  const validTimeStrReg = /^(\d+(\.\d+)?(:\d+(\.\d+)?)?(:\d+(\.\d+)?)?)(~(\d+(\.\d+)?(:\d+(\.\d+)?)?(:\d+(\.\d+)?)?))?$/
   const isValidTimeStr = validTimeStrReg.test(time)
 
   if (!isValidTimeStr) {
-    showMessage('时间格式有误，将不会设置视频时间。（只支持 0、0.00、0:0、0:0.00、0:0:0、0:0:0.00 格式）')
+    showMessage('时间格式有误，将不会设置视频时间。支持的格式请看<a href="https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse#NHKddhyDqow7I8xSxsEcnKoAn8c">这里</a>')
     return
   }
 
-  const parts = time.split('.')
-  const msPart = parts[1] || 0
-  const hmsParts = parts[0].split(':').reverse()
-  const secondPart = Number(hmsParts[0] || 0)
-  const minutePart = Number(hmsParts[1] || 0)
-  const hourPart = Number(hmsParts[2] || 0)
+  const timeStrParts = time.split('~')
+  const isTimeBlock = timeStrParts.length > 1
+  const startTimeStr = timeStrParts[0]
+  const endTimeStr = timeStrParts[1]
 
-  const currentTimeValue = `${(hourPart * 60 + minutePart) * 60 + secondPart}.${msPart}`
+  const startTime = convertTimeStrToSeconds(startTimeStr)
+  const endTime = convertTimeStrToSeconds(endTimeStr)
 
-  if (videoNode) {
-    videoNode.currentTime = Number(currentTimeValue)
-    return
-  }
-  if (audioNode) {
-    audioNode.currentTime = Number(currentTimeValue)
-    return
-  }
+
+  videoOrAudioNode.currentTime = startTime
+  videoOrAudioNode.dataset.en_isTimeBlock = `${isTimeBlock}`
+  videoOrAudioNode.dataset.en_timeBlock_startTime = `${startTime}`
+  videoOrAudioNode.dataset.en_timeBlock_endTime = `${endTime}`
 }
 
 const jumpToBlock = (url) => {
