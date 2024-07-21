@@ -427,7 +427,7 @@ export const useProWatcher = (props: {
     onDisabled = () => {},
   } = props
 
-  watchEffect(() => {
+  watch(() => settings.value.v, () => {
     const lastEnabled = settings.value.l >= 1
     const enabled = settings.value.v >= 1
     if (lastEnabled === enabled) {
@@ -439,6 +439,8 @@ export const useProWatcher = (props: {
     } else {
       onDisabled()
     }
+  }, {
+    immediate: true,
   })
 }
 
