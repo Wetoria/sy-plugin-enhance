@@ -98,7 +98,7 @@
 <script setup lang="ts">
 import { usePlugin } from "@/main";
 import { addCommand, removeCommand } from '@/utils/Commands';
-import { showMessage } from 'siyuan';
+import { ICommandOption, showMessage } from 'siyuan';
 import { onBeforeUnmount, onMounted, ref, watchEffect } from "vue";
 import { isFree, useSettings } from '../Settings/EnSettings.vue';
 
@@ -144,10 +144,13 @@ const colorCommandHTML = `
   </div>
 `;
 
-const command = {
+const command: ICommandOption = {
   langKey: "enHighlight",
   langText: colorCommandHTML,
   hotkey: "",
+  editorCallback() {
+    switchModalVisibleStatus()
+  }
 };
 
 const modalVisible = ref(false)
@@ -243,12 +246,15 @@ const createCommand = () => {
   })
 }
 
+const switchModalVisibleStatus = () => {
+  modalVisible.value = !modalVisible.value
+}
 
 const handleClickStyle = (event) => {
   const target = event.target as HTMLElement;
   if (target?.parentElement) {
     if (parentDatasetKey in target.parentElement.dataset) {
-      modalVisible.value = !modalVisible.value
+      switchModalVisibleStatus()
     }
   }
 };
