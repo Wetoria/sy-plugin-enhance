@@ -64,6 +64,7 @@ import { computed, ref, watchEffect, watch, onMounted, onBeforeUnmount } from 'v
 import AnyTouch from 'any-touch';
 import { debounce } from '@/utils';
 import { onCountClick } from '@/utils/DOM';
+import { ICommandItem } from '../Editor/EnFont.vue';
 
 const plugin = usePlugin()
 
@@ -233,6 +234,8 @@ interface EnSettings {
       enabledLoopPlay: boolean
     }
   }
+
+  configgedFontStyleList: ICommandItem[]
 }
 
 const defaultSettings: EnSettings = {
@@ -246,6 +249,7 @@ const defaultSettings: EnSettings = {
   timeDiff: {},
   videoAndAudioBlockMap: {},
   videoAndAudioBlockPlayConfigMap: {},
+  configgedFontStyleList: [],
 }
 
 let doNotSave = false
