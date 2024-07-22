@@ -29,6 +29,7 @@
         <EnVideoAndAudio v-if="isNotFree" />
         <EnFormatBrush v-if="isNotFree"  />
         <EnFont />
+        <TemplateCornell />
       </template>
 
       <!-- 仅移动端 -->
@@ -68,6 +69,7 @@ import EnMobileNav from './modules/EnMobileNav.vue';
 import EnVideoAndAudio from './modules/VideoAndAudio/EnVideoAndAudio.vue';
 import EnFormatBrush from './modules/EnFormatBrush.vue';
 import EnFont from './modules/Editor/EnFont.vue';
+import TemplateCornell from './modules/Templates/TemplateCornell.vue';
 
 const plugin = usePlugin()
 
