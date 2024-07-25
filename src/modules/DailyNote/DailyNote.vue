@@ -93,6 +93,18 @@ export async function jumpToNextDailyNote() {
   jumpTo();
 }
 
+export function getCurrentDocTitleDomByDom(dom: HTMLElement) {
+  const plugin = usePlugin()
+  const currentDocTitleDom: HTMLDivElement = plugin.isMobile
+    ? dom.querySelector(
+        "#editor:not(.fn__none) .protyle-background"
+      )
+    : dom.querySelector(
+        ".protyle:not(.fn__none) .protyle-title"
+      );
+  return currentDocTitleDom
+}
+
 async function jumpTo(next = true) {
   const plugin = usePlugin()
 

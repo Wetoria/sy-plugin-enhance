@@ -50,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import { watchEffect } from 'vue';
+import { onMounted, watchEffect } from 'vue';
 import { usePlugin } from './main';
 import EnSiyuanEntry from './modules/EnSiyuanEntry.vue';
 
@@ -59,7 +59,7 @@ import LifeLog from './modules/LifeLog/LifeLog.vue';
 import TestArco from './modules/Test/TestArco.vue';
 import ArcoDartkTheme from './modules/ArcoDartkTheme.vue';
 import EnPWA from './modules/EnPWA.vue';
-import DailyNote from './modules/DailyNote/DailyNote.vue';
+import DailyNote, { getCurrentDocTitleDomByDom } from './modules/DailyNote/DailyNote.vue';
 import EnSettings, { isPro, isVip, isNotFree } from './modules/Settings/EnSettings.vue';
 import EnOthers from './modules/EnOthers.vue';
 import EnBackgroundImg from './modules/Background/EnBackgroundImg.vue';
@@ -70,11 +70,55 @@ import EnVideoAndAudio from './modules/VideoAndAudio/EnVideoAndAudio.vue';
 import EnFormatBrush from './modules/EnFormatBrush.vue';
 import EnFont from './modules/Editor/EnFont.vue';
 import TemplateCornell from './modules/Templates/TemplateCornell.vue';
+import { Protyle, showMessage } from 'siyuan';
+import { request } from './api';
 
 const plugin = usePlugin()
 
 watchEffect(() => {
   document.documentElement.dataset.enhancerIsMobile = `${plugin.isMobile}`
+})
+
+onMounted(() => {
+  const searchParams = {
+    id: '',
+    k: '',
+    sort: '3',
+    mk: '',
+    mSort: '3',
+  }
+  plugin.protyleSlash.push({
+    filter: [
+      "插入当前反链 MOC",
+      'insert current moc',
+    ],
+    html: `<div class="b3-list-item__first"><span class="b3-list-item__text">${'插入当前反链 MOC'}</span></div>`,
+    id: "enInsertMocCurrent",
+    callback(protyle: Protyle) {
+      const titleDom = getCurrentDocTitleDomByDom(protyle.protyle.contentElement)
+      if (!titleDom) {
+        return
+      }
+
+      searchParams.id = titleDom.dataset.nodeId
+      request('/api/ref/getBacklink2', searchParams).then((res) => {
+        const {
+          backlinks,
+        } = res
+        if (!backlinks.length) {
+          showMessage('当前文档暂无反链')
+          return
+        }
+
+        const insertMD = []
+        backlinks.forEach((backlink) => {
+          insertMD.push(`- [${backlink.name}](siyuan://blocks/${backlink.id})`)
+        })
+        const result = insertMD.join('\n')
+        protyle.insert(result)
+      })
+    }
+  })
 })
 </script>
 
