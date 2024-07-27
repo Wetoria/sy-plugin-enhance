@@ -15,6 +15,7 @@
     "build": "vite build"
   },
   "devDependencies": {
+    "@arco-plugins/vite-vue": "^1.4.5",
     "@types/node": "^20.2.0",
     "@typescript-eslint/eslint-plugin": "^7.15.0",
     "@typescript-eslint/parser": "^7.15.0",
@@ -30,7 +31,6 @@
     "rollup-plugin-livereload": "^2.0.5",
     "sass": "^1.62.1",
     "siyuan": "1.0.2",
-    "svelte": "^3.57.0",
     "ts-node": "^10.9.1",
     "typescript": "^5.0.4",
     "vite": "^4.3.7",
@@ -39,10 +39,8 @@
   },
   "dependencies": {
     "@arco-design/web-vue": "^2.53.3",
-    "@arco-plugins/vite-vue": "^1.4.5",
     "any-touch": "2.2.0",
     "dayjs": "^1.11.10",
-    "vconsole": "^3.15.1",
     "vue": "^3.4.27"
   }
 }

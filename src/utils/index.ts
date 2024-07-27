@@ -1,5 +1,4 @@
 import { App, createApp, onMounted, ref } from 'vue';
-import ArcoVue from '@arco-design/web-vue';
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue';
 
 let mountedVueDoms = []
@@ -22,7 +21,6 @@ export function loadComponentAppendToBody(component) {
   const div = document.createElement('div');
   div.id = 'enApp'
   const app = createApp(component);
-  app.use(ArcoVue);
   app.mount(div);
   app.component('SyIcon', SyIcon)
   document.body.appendChild(div);
@@ -59,7 +57,7 @@ export function getDomByVueComponent(component, options = {
 
 let flag
 let registered = false
-let keyboardShown = ref(false)
+const keyboardShown = ref(false)
 export function useMobileKeyBoardShown() {
   onMounted(() => {
     const ob = new MutationObserver(() => {
