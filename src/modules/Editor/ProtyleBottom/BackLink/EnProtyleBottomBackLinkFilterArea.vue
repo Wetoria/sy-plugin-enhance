@@ -163,11 +163,12 @@ import { computed, ref, watch } from 'vue';
 import { BottomBacklinkModuleName, BottomBacklinkModuleOptions, IBacklink } from './EnProtyleBottomBackLink.vue';
 import { sql } from '@/api';
 import { useModule } from '@/modules/Settings/EnSettings.vue';
-import { chainHasRefNode, chainHasTargetBlockRefIdAndName, getTreeChainPathOfDoc, hasTargetBlockRef, hasTargetBlockRefIdAndName, hideDom, isSyBreadCrumbDom, isSyContainerNode, isSyDocNode, isSyHeadingNode, isSyListItemNode, isSyNodeCanContainerBlockRef, showDom } from '@/utils/Siyuan';
+import { chainHasRefNode, chainHasTargetBlockRefIdAndName, getTreeChainPathOfDoc, hasTargetBlockRef, hasTargetBlockRefIdAndName, hideDom, isSyBreadCrumbDom, isSyContainerNode, isSyDocNode, isSyHeadingNode, isSyListItemNode, isSyNodeCanContainerBlockRef, showDom, SyDomNodeTypes } from '@/utils/Siyuan';
 import { debounce, recursionTree } from '@/utils';
 import EnTagsContainer from '@/components/EnTagsContainer.vue';
 import { onCountClick, queryAllByDom } from '@/utils/DOM';
 import { usePlugin } from '@/main';
+import { getChildNodesBySql, getParentNodesBySql } from './sql';
 
 interface Node {
   id: string;
@@ -265,7 +266,7 @@ watch(currentDocId, () => {
 }, { immediate: true })
 
 const getBlockRefsInDoc = async (ids: string[]) => {
-  let sqlStmt = `
+  const sqlStmt = `
     select
       id as blockRefId,
       def_block_id as id,
@@ -280,45 +281,63 @@ const getBlockRefsInDoc = async (ids: string[]) => {
 
 const getTreeStruct = async () => {
 
-  if (!props.backlinks.length || !Object.values(props.blockBacklinks).filter(i => i).length) {
+  if (!docBacklinks.value.length || !Object.values(blockBackLinks.value).filter(i => i).length) {
     return
   }
 
-
+  const parentNodeIds = []
   const childNodeIds = []
   for (let index = 0; index < docBacklinks.value.length; index++) {
     const item = docBacklinks.value[index]
     const blockBacklinksTemp = blockBackLinks.value[item.id]
     blockBacklinksTemp?.forEach((b) => {
-      childNodeIds.push(b.blockPaths[b.blockPaths.length - 1].id)
+      const lastOne = b.blockPaths[b.blockPaths.length - 1]
+      parentNodeIds.push(lastOne.id)
+
+      const containerBlockType = [
+        SyDomNodeTypes.NodeListItem,
+        SyDomNodeTypes.NodeBlockquote,
+        SyDomNodeTypes.NodeSuperBlock,
+        SyDomNodeTypes.NodeHeading,
+      ]
+
+      if (containerBlockType.includes(lastOne.type)) {
+        childNodeIds.push(lastOne.id)
+        return
+      }
+
+      const secondLast = b.blockPaths[b.blockPaths.length - 2]
+      if (!secondLast) {
+        return
+      }
+
+      if (containerBlockType.includes(secondLast.type)) {
+        childNodeIds.push(secondLast.id)
+      }
     })
 
   }
 
+  const parentNodeList = await getParentNodesBySql(parentNodeIds)
+  const childNodeList = await getChildNodesBySql(childNodeIds)
+
   // #region 获取并构建文档树结构
 
-  let sqlResult = await sql(`
-    WITH RECURSIVE parentList AS (
-        SELECT
-            id,
-            parent_id,
-            content,
-            fcontent,
-            markdown,
-            type,
-            subtype
-        FROM blocks
-        WHERE id in (
-            ${docBacklinks.value.map(i => `'${i.id}'`).join(',')}
-        )
-        UNION
-        SELECT c.id, c.parent_id, c.content, c.fcontent, c.markdown, c.type, c.subtype
-        FROM blocks c
-        JOIN parentList ct ON c.parent_id= ct.id
-    )
-    select * from parentList
-    limit ${moduleOptions.value.sqlLimit}
-  `)
+  const sqlResult = []
+
+  parentNodeList.forEach((item) => {
+    const exist = sqlResult.find(i => i.id == item.id)
+    if (!exist) {
+      sqlResult.push(item)
+    }
+  })
+  childNodeList.forEach((item) => {
+    const exist = sqlResult.find(i => i.id == item.id)
+    if (!exist) {
+      sqlResult.push(item)
+    }
+  })
+
   sqlResult.forEach((tempNode) => {
     const { id } = tempNode
     if (!isSyContainerNode(tempNode)) {
@@ -399,7 +418,7 @@ const getTreeStruct = async () => {
 
 watch([props.backlinks, props.blockBacklinks], debounce(() => {
   getTreeStruct()
-}, 10), { immediate: true })
+}, 300), { immediate: true })
 
 
 const properties = ref<FilterProperties>(moduleOptions.value.docFilterProperties[props.currentDocId] || {})
@@ -584,7 +603,7 @@ const linkNumMap = computed(() => {
 
       num = uniqueDocRefPath.size
     } else {
-      let validChainList = chainList.filter((chain) => {
+      const validChainList = chainList.filter((chain) => {
         const lastInChain = chain[chain.length - 1]
         return chainHasTargetBlockRefIdAndName(chain, node.id, node.name) && hasTargetBlockRefIdAndName(lastInChain._markdown, node.id, node.name)
       })
