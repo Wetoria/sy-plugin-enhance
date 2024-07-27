@@ -9,10 +9,11 @@
   "license": "MIT",
   "scripts": {
     "make-link": "node  --no-warnings ./scripts/make_dev_link.js",
-    "dev": "vite build --watch",
+    "clear-normalize": "echo > node_modules/@arco-design/web-vue/es/style/normalize.less && echo > node_modules/@arco-design/web-vue/lib/style/normalize.less",
+    "dev": "npm run clear-normalize && vite build --watch",
     "tag": "node ./autoTag.js",
     "commitAndTag": "git add ./plugin.json && git commit -m 'update version' && git push && node ./autoTag.js",
-    "build": "vite build"
+    "build": "npm run clear-normalize && vite build"
   },
   "devDependencies": {
     "@arco-plugins/vite-vue": "^1.4.5",
