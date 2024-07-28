@@ -118,6 +118,32 @@ onBeforeUnmount(() => {
 
       .protyle-wysiwyg {
         padding: 8px 16px;
+
+        .protyle-breadcrumb__bar {
+          min-height: unset;
+          margin-bottom: unset !important;
+          flex-wrap: wrap;
+
+          .protyle-breadcrumb__item.protyle-breadcrumb__item--active {
+            // display: none;
+
+            .protyle-breadcrumb__text {
+              display: none;
+            }
+
+            & ~ .protyle-breadcrumb__item .protyle-breadcrumb__text{
+              display: none;
+            }
+          }
+        }
+
+        .protyle-breadcrumb__bar:not(:first-child) {
+          border-top: 1px solid var(--v-border-color);
+        }
+
+        .protyle-breadcrumb__text {
+          max-width: 100px;
+        }
       }
     }
   }
