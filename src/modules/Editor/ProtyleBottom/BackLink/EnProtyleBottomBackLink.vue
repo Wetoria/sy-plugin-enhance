@@ -19,6 +19,13 @@
             <SyIcon name="iconContract" />
           </a-button> -->
           <a-button
+            @click.stop="refresh"
+            type="text"
+            size="mini"
+          >
+            <SyIcon name="iconRefresh" />
+          </a-button>
+          <a-button
             @click.stop="switchFilterShown" type="text" size="mini"
             v-if="enableBacklinkFilter"
           >
@@ -299,10 +306,15 @@ watch(backlinks, () => {
   })
 }, { immediate: true })
 
-watch(searchParams, async () => {
+const getData = async () => {
   backlinkRes.value = Object.assign({}, defaultRes)
   const res = await request('/api/ref/getBacklink2', searchParams.value)
+  // IMP 如果性能有问题了，考虑在 id 相同的情况下，不进行更新
   backlinkRes.value = res;
+}
+
+watch(searchParams, async () => {
+  getData()
 }, {
   immediate: true,
   deep: true,
@@ -323,9 +335,10 @@ watchEffect(() => {
 const activedMentionsKeys = ref([])
 
 const backlinkListDomRef = ref()
-watchEffect(() => {
-  console.log('backlinkListDomRef is ', backlinkListDomRef.value)
-})
+
+const refresh = () => {
+  getData()
+}
 </script>
 
 <style lang="scss" scoped>
