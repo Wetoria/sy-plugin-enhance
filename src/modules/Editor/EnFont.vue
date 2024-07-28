@@ -303,8 +303,8 @@ const createCommand = () => {
     return
   }
   const newLen = configgedFontStyleList.value.length + 1
-  if (isFree.value && newLen > 3) {
-    showMessage('免费版最多添加三个样式快捷键')
+  if (isFree.value && newLen > 1) {
+    showMessage('免费版最多添加一个样式快捷键')
     return
   }
   configgedFontStyleList.value.push({
