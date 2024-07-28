@@ -27,6 +27,9 @@ export default defineConfig({
     vue(),
     vitePluginForArco({
       style: true,
+      modifyVars: {
+        'font-family': 'var(--b3-font-family)',
+      }
     }),
     viteStaticCopy({
       targets: [
