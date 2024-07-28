@@ -168,7 +168,7 @@ import { debounce, recursionTree } from '@/utils';
 import EnTagsContainer from '@/components/EnTagsContainer.vue';
 import { onCountClick, queryAllByDom } from '@/utils/DOM';
 import { usePlugin } from '@/main';
-import { getChildNodesBySql, getParentNodesBySql } from './sql';
+import { getChildNodesBySqlWithAnyLevelIds, getParentNodesBySql } from './sql';
 
 interface Node {
   id: string;
@@ -294,32 +294,13 @@ const getTreeStruct = async () => {
       const lastOne = b.blockPaths[b.blockPaths.length - 1]
       parentNodeIds.push(lastOne.id)
 
-      const containerBlockType = [
-        SyDomNodeTypes.NodeListItem,
-        SyDomNodeTypes.NodeBlockquote,
-        SyDomNodeTypes.NodeSuperBlock,
-        SyDomNodeTypes.NodeHeading,
-      ]
-
-      if (containerBlockType.includes(lastOne.type)) {
-        childNodeIds.push(lastOne.id)
-        return
-      }
-
-      const secondLast = b.blockPaths[b.blockPaths.length - 2]
-      if (!secondLast) {
-        return
-      }
-
-      if (containerBlockType.includes(secondLast.type)) {
-        childNodeIds.push(secondLast.id)
-      }
+      childNodeIds.push(lastOne.id)
     })
 
   }
 
   const parentNodeList = await getParentNodesBySql(parentNodeIds)
-  const childNodeList = await getChildNodesBySql(childNodeIds)
+  const childNodeList = await getChildNodesBySqlWithAnyLevelIds(childNodeIds, true)
 
   // #region 获取并构建文档树结构
 
