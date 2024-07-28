@@ -140,52 +140,6 @@ import { isFree, useSettings } from '../Settings/EnSettings.vue';
 
 const plugin = usePlugin();
 
-const siyuanColorList = [
-  "var(--b3-font-color1)",
-  "var(--b3-font-color2)",
-  "var(--b3-font-color3)",
-  "var(--b3-font-color4)",
-  "var(--b3-font-color5)",
-  "var(--b3-font-color6)",
-  "var(--b3-font-color7)",
-  "var(--b3-font-color8)",
-  "var(--b3-font-color9)",
-  "var(--b3-font-color10)",
-  "var(--b3-font-color11)",
-  "var(--b3-font-color12)",
-  "var(--b3-font-color13)",
-];
-
-const siyuanBgColorList = [
-  "var(--b3-font-background1)",
-  "var(--b3-font-background2)",
-  "var(--b3-font-background3)",
-  "var(--b3-font-background4)",
-  "var(--b3-font-background5)",
-  "var(--b3-font-background6)",
-  "var(--b3-font-background7)",
-  "var(--b3-font-background8)",
-  "var(--b3-font-background9)",
-  "var(--b3-font-background10)",
-  "var(--b3-font-background11)",
-  "var(--b3-font-background12)",
-  "var(--b3-font-background13)",
-];
-
-const fontSizeList = [
-  '12px',
-  '13px',
-  '14px',
-  '15px',
-  '16px',
-  '19px',
-  '22px',
-  '24px',
-  '29px',
-  '32px',
-  '40px',
-  '48px',
-]
 
 const parentDatasetKey = 'en_cmd_font_style'
 
@@ -345,6 +299,53 @@ export interface ICommandItem {
   bgColor: string
   fontSize: string
 }
+
+export const siyuanColorList = [
+  "var(--b3-font-color1)",
+  "var(--b3-font-color2)",
+  "var(--b3-font-color3)",
+  "var(--b3-font-color4)",
+  "var(--b3-font-color5)",
+  "var(--b3-font-color6)",
+  "var(--b3-font-color7)",
+  "var(--b3-font-color8)",
+  "var(--b3-font-color9)",
+  "var(--b3-font-color10)",
+  "var(--b3-font-color11)",
+  "var(--b3-font-color12)",
+  "var(--b3-font-color13)",
+];
+
+export const siyuanBgColorList = [
+  "var(--b3-font-background1)",
+  "var(--b3-font-background2)",
+  "var(--b3-font-background3)",
+  "var(--b3-font-background4)",
+  "var(--b3-font-background5)",
+  "var(--b3-font-background6)",
+  "var(--b3-font-background7)",
+  "var(--b3-font-background8)",
+  "var(--b3-font-background9)",
+  "var(--b3-font-background10)",
+  "var(--b3-font-background11)",
+  "var(--b3-font-background12)",
+  "var(--b3-font-background13)",
+];
+
+export const fontSizeList = [
+  '12px',
+  '13px',
+  '14px',
+  '15px',
+  '16px',
+  '19px',
+  '22px',
+  '24px',
+  '29px',
+  '32px',
+  '40px',
+  '48px',
+]
 </script>
 
 <style lang="scss" scoped>

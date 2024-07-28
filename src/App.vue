@@ -29,7 +29,7 @@
         <EnVideoAndAudio v-if="isNotFree" />
         <EnFormatBrush v-if="isNotFree"  />
         <EnFont />
-        <TemplateCornell />
+        <TemplateEntry />
       </template>
 
       <!-- 仅移动端 -->
@@ -69,9 +69,9 @@ import EnMobileNav from './modules/EnMobileNav.vue';
 import EnVideoAndAudio from './modules/VideoAndAudio/EnVideoAndAudio.vue';
 import EnFormatBrush from './modules/EnFormatBrush.vue';
 import EnFont from './modules/Editor/EnFont.vue';
-import TemplateCornell from './modules/Templates/TemplateCornell.vue';
 import { Protyle, showMessage } from 'siyuan';
 import { request } from './api';
+import TemplateEntry from './modules/Templates/TemplateEntry.vue';
 
 const plugin = usePlugin()
 
