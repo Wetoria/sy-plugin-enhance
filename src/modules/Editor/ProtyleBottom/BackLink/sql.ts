@@ -23,7 +23,7 @@ export function sqlOfGetContainerBlockIds(nodeIds: string[], needHeading = false
 
   const sqlStmt = `
     SELECT CASE
-        WHEN type IN (${containerBlockTypes.join(',')}) THEN id
+        WHEN type IN (${containerBlockTypes.map(i => `'${i}'`).join(',')}) THEN id
         ELSE parent_id
     END AS ref_id
     FROM blocks
@@ -65,7 +65,7 @@ export async function getParentNodesBySql(nodeIds: string[]) {
 // 根据容器块 id 列表，查询所有的子级
 export async function getChildNodesBySql(nodeIds: string[]) {
   const sqlStmt = `
-  WITH RECURSIVE parentList AS (
+  WITH RECURSIVE childList AS (
     SELECT
       id,
       parent_id,
@@ -82,9 +82,9 @@ export async function getChildNodesBySql(nodeIds: string[]) {
     UNION
     SELECT c.id, c.parent_id, c.root_id, c.content, c.fcontent, c.markdown, c.type, c.subtype
     FROM blocks c
-    JOIN parentList ct ON c.parent_id = ct.id and c.root_id = ct.root_id
+    JOIN childList ct ON c.parent_id = ct.id and c.root_id = ct.root_id
   )
-  select * from parentList
+  select * from childList
   `
 
   return queryBySqlStmt(sqlStmt)
@@ -96,7 +96,7 @@ export async function getChildNodesBySqlWithAnyLevelIds(nodeIds: string[], needH
 
 
   const sqlStmt = `
-    WITH RECURSIVE parentList AS (
+    WITH RECURSIVE childList AS (
       SELECT
         b.id,
         b.parent_id,
@@ -114,9 +114,9 @@ export async function getChildNodesBySqlWithAnyLevelIds(nodeIds: string[], needH
       UNION
       SELECT c.id, c.parent_id, c.root_id, c.content, c.fcontent, c.markdown, c.type, c.subtype
       FROM blocks c
-      JOIN parentList ct ON c.parent_id = ct.id AND c.root_id = ct.root_id
+      JOIN childList ct ON c.parent_id = ct.id AND c.root_id = ct.root_id
     )
-    SELECT * FROM parentList;
+    SELECT * FROM childList;
   `
 
   return queryBySqlStmt(sqlStmt)
