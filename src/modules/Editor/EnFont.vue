@@ -6,6 +6,7 @@
       :mask-style="{
         backgroundColor: 'rgba(0,0,0,0)'
       }"
+      :width="390"
       @ok="handleOk"
       @cancel="handleCancel"
     >
@@ -44,6 +45,24 @@
           </button>
         </div>
         <div class="line">
+          选择字体大小
+        </div>
+        <div class="line">
+          <a-select
+            v-model="currentFontSize"
+            :style="{
+              width: '100%'
+            }"
+          >
+            <a-option
+              v-for="fontSize of fontSizeList"
+              :key="fontSize"
+              :value="fontSize"
+              :label="fontSize"
+            />
+          </a-select>
+        </div>
+        <div class="line">
           当前选择的效果
         </div>
         <div class="line">
@@ -52,6 +71,9 @@
             :style="{
               backgroundColor: currentBgColor,
               color: currentColor,
+              fontSize: currentFontSize,
+              width: currentFontSize || undefined,
+              height: currentFontSize || undefined,
             }"
           >
             A
@@ -63,12 +85,23 @@
           >
             添加样式快捷键
           </a-button>
+          <a-button
+            @click="clearCurrentFontStyle"
+            size="mini"
+          >
+            清除样式
+          </a-button>
         </div>
         <template v-if="configgedFontStyleList.length">
           <div class="line">
             当前已设置的颜色列表（点击删除）
           </div>
-          <div class="line">
+          <div
+            class="line"
+            style="
+              align-items: flex-end;
+            "
+          >
             <button
               v-for="item of configgedFontStyleList"
               :key="item.key"
@@ -76,6 +109,9 @@
               :style="{
                 backgroundColor: item.bgColor,
                 color: item.color,
+                fontSize: item.fontSize,
+                width: item.fontSize || undefined,
+                height: item.fontSize || undefined,
               }"
               @click="removeConfiggedFont(item)"
             >
@@ -136,6 +172,21 @@ const siyuanBgColorList = [
   "var(--b3-font-background13)",
 ];
 
+const fontSizeList = [
+  '12px',
+  '13px',
+  '14px',
+  '15px',
+  '16px',
+  '19px',
+  '22px',
+  '24px',
+  '29px',
+  '32px',
+  '40px',
+  '48px',
+]
+
 const parentDatasetKey = 'en_cmd_font_style'
 
 const colorCommandHTML = `
@@ -170,6 +221,17 @@ const setBgColor = (color: string) => {
   currentBgColor.value = color
 }
 
+const currentFontSize = ref('16px')
+const setFontSize = (value: string) => {
+  currentFontSize.value = value
+}
+
+const clearCurrentFontStyle = () => {
+  setColor('')
+  setBgColor('')
+  setFontSize('16px')
+}
+
 const settings = useSettings()
 
 const configgedFontStyleList = ref<ICommandItem[]>(settings.value.configgedFontStyleList)
@@ -186,6 +248,7 @@ const addCommandsByList = () => {
       key,
       color,
       bgColor,
+      fontSize,
     } = item
     plugin.addCommand({
     langKey: `${key}`,
@@ -200,6 +263,9 @@ const addCommandsByList = () => {
           style="
             background-color: ${bgColor};
             color: ${color};
+            font-size: ${fontSize};
+            width: ${fontSize || ''};
+            height: ${fontSize || ''};
           "
         >
           A
@@ -210,6 +276,7 @@ const addCommandsByList = () => {
     editorCallback(protyle) {
       protyle?.toolbar?.setInlineMark(protyle, "EnFont text", "range", {type: 'color', color: color });
       protyle?.toolbar?.setInlineMark(protyle, "EnFont text", "range", {type: 'backgroundColor', color: bgColor });
+      protyle?.toolbar?.setInlineMark(protyle, "EnFont text", "range", {type: 'fontSize', color: fontSize });
     }
   });
   })
@@ -227,7 +294,8 @@ watchEffect(() => {
 const createCommand = () => {
   const color = currentColor.value
   const bgColor = currentBgColor.value
-  const key = `EnFontStyle_${color}_${bgColor}`
+  const fontSize = currentFontSize.value
+  const key = `EnFontStyle_${color}_${bgColor}_${fontSize}`
   const exist = configgedFontStyleList.value.find((item) => item.key === key)
 
   if (exist) {
@@ -243,6 +311,7 @@ const createCommand = () => {
     key,
     color,
     bgColor,
+    fontSize,
   })
 }
 
@@ -274,6 +343,7 @@ export interface ICommandItem {
   key: string
   color: string
   bgColor: string
+  fontSize: string
 }
 </script>
 
