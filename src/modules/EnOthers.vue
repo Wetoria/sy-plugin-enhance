@@ -27,7 +27,8 @@
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue';
 import EnSettingsTeleportModule from './Settings/EnSettingsTeleportModule.vue';
 import { computed, watchEffect } from 'vue';
-import { switchState, useModule } from './Settings/EnSettings.vue';
+import { useModule } from './Settings/EnSettings.vue';
+import { moduleEnableStatusSwitcher } from '@/utils';
 
 interface ModuleOptions {
   useVipStyle: boolean
@@ -42,7 +43,7 @@ const module = useModule(moduleName, defaultOptions)
 const moduleOptions = computed(() => module.value.options as ModuleOptions)
 
 watchEffect(() => {
-  switchState('enhancer', moduleOptions.value.useVipStyle)
+  moduleEnableStatusSwitcher('EnOther', moduleOptions.value.useVipStyle)
 })
 
 </script>
@@ -56,8 +57,8 @@ watchEffect(() => {
 </style>
 
 <style lang="scss">
-html[data-enhancer="true"] {
-  &[data-enhancer-is-mobile="true"] {
+html[data-en_enabled_module~="EnOther"] {
+  &[data-en_enabled_module~="EnhancerIsMobile"] {
     .toolbar {
       border-bottom: unset;
     }

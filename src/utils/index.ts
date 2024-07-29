@@ -134,3 +134,17 @@ export function debounce(fn, time = 500) {
     }, time)
   }
 }
+
+export function moduleEnableStatusSwitcher(moduleName: string, enabled: boolean) {
+  const moduleStr = document.documentElement.dataset.en_enabled_module || ''
+  let enabledModules = moduleStr.split(/\s+/)
+  if (enabled) {
+    if (!enabledModules.includes(moduleName)) {
+      enabledModules.push(moduleName)
+    }
+  } else {
+    enabledModules = enabledModules.filter(i => i != moduleName)
+  }
+  const newModuleStr = enabledModules.filter(Boolean).join(' ')
+  document.documentElement.dataset.en_enabled_module = newModuleStr
+}

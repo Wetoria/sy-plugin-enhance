@@ -174,7 +174,7 @@
   import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue';
   import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue';
   import { computed, onMounted, ref, watchEffect } from 'vue';
-  import { debounce } from '@/utils';
+  import { debounce, moduleEnableStatusSwitcher } from '@/utils';
   import { queryAllByDom } from '@/utils/DOM';
   import { SyDomNodeTypes } from '@/utils/Siyuan';
 
@@ -212,11 +212,6 @@ import EnParagraphBlockTimeDiff from './EnParagraphBlockTimeDiff.vue';
   }
   const module = useModule(moduleName, defaultOptions)
   const moduleOptions = computed(() => module.value.options as ModuleOptions)
-
-  watchEffect(() => {
-    document.documentElement.dataset.enParagraphBlock = `${module.value.enabled}`
-    document.documentElement.style.setProperty('--timeFontSize', `${moduleOptions.value.blockTimeFontSize}px`)
-  })
 
   const paragraphListRef = ref<HTMLDivElement[]>([])
 
@@ -293,13 +288,17 @@ import EnParagraphBlockTimeDiff from './EnParagraphBlockTimeDiff.vue';
     }
   }
 
+  watchEffect(() => {
+    moduleEnableStatusSwitcher('EnParagraphBlock', module.value.enabled)
+    document.documentElement.style.setProperty('--timeFontSize', `${moduleOptions.value.blockTimeFontSize}px`)
+  })
 </script>
 
 <style lang="scss">
   .enProtyleAttrContainer {
     display: none;
   }
-  html[data-en-paragraph-block="true"] {
+  html[data-en_enabled_module~="EnParagraphBlock"] {
     --timeFontSize: 9px;
 
     div[data-type="NodeParagraph"] {

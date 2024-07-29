@@ -45,6 +45,7 @@ import { computed, watch, watchEffect } from 'vue';
 import EnSettingsItem from '../Settings/EnSettingsItem.vue';
 import { usePlugin } from '@/main';
 import { useModule } from '../Settings/EnSettings.vue';
+import { moduleEnableStatusSwitcher } from '@/utils';
 
 const plugin = usePlugin()
 
@@ -65,13 +66,13 @@ const moduleOptions = computed(() => {
 })
 
 watchEffect(() => {
-  document.documentElement.dataset.enBackground = `${moduleOptions.value.enableBackgroundImg}`
+  moduleEnableStatusSwitcher('EnBackgroundImg', moduleOptions.value.enableBackgroundImg)
   document.documentElement.style.setProperty('--en-opacity', `${moduleOptions.value.opacity}`)
 })
 </script>
 
 <style lang="scss">
-html[data-en-background="true"] {
+html[data-en_enabled_module~="EnBackgroundImg"] {
   .enBackground {
     background-repeat: no-repeat;
     background-attachment: fixed;

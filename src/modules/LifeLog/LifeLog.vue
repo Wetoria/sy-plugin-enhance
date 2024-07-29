@@ -69,6 +69,7 @@ import { useModule } from '../Settings/EnSettings.vue';
 import EnSettingsTeleportModule from '../Settings/EnSettingsTeleportModule.vue';
 import EnSettingsItem from '../Settings/EnSettingsItem.vue';
 import { reloadLifeLogData } from './EnLifeLogDailyNoteGraph.vue';
+import { moduleEnableStatusSwitcher } from '@/utils';
 
 const plugin = usePlugin()
 
@@ -156,8 +157,7 @@ onMounted(() => {
 
 
 watchEffect(() => {
-  document.documentElement.dataset.enhancerEnableLifelogTag = `${moduleOptions.value.showLifeLogFlag}`
-  document.documentElement.dataset.enhancerIsMobile = `${plugin.isMobile}`
+  moduleEnableStatusSwitcher('EnableLifelogTag', moduleOptions.value.showLifeLogFlag)
 })
 
 function markLifeLogBlock() {
@@ -239,7 +239,7 @@ export interface ILifeLog {
 </script>
 
 <style>
-html[data-enhancer-enable-lifelog-tag="true"] {
+html[data-en_enabled_module~="EnableLifelogTag"] {
   --en-lifelog-固: #D3D3D3;
   --en-lifelog-固定: #D3D3D3;
 
@@ -329,21 +329,19 @@ html[data-enhancer-enable-lifelog-tag="true"] {
 
   }
 
-  &[data-enhancer-is-mobile="true"] {
-    [custom-lifelog-type] {
-      /* 解决吸顶以后，依旧能看到下方内容的问题 */
-      background-color: var(--b3-theme-background);
-      &.en-stickied {
-        top: -4px;
-      }
-    }
-  }
-  &[data-enhancer-is-mobile="false"] {
+  & {
     [custom-lifelog-type] {
       /* 解决吸顶以后，依旧能看到下方内容的问题 */
       background-color: var(--b3-theme-background);
       &.en-stickied {
         top: -0px;
+      }
+    }
+  }
+  &[data-en_enabled_module~="EnhancerIsMobile"] {
+    [custom-lifelog-type] {
+      &.en-stickied {
+        top: -4px;
       }
     }
   }

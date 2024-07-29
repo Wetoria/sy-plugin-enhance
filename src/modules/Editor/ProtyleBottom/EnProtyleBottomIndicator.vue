@@ -37,7 +37,7 @@ export function jumpToProtyleBottom(docId) {
 </script>
 
 <style lang="scss" scoped>
-html[data-en-debugging="true"] {
+html[data-en_enabled_module~="EnDebugging"] {
   .enhanceToBottomIndicator {
     background: var(--sky-blue);
   }

@@ -62,7 +62,7 @@ import EnDivider from '@/components/EnDivider.vue';
 import { usePlugin } from '@/main';
 import { computed, ref, watchEffect, watch, onMounted, onBeforeUnmount } from 'vue';
 import AnyTouch from 'any-touch';
-import { debounce } from '@/utils';
+import { debounce, moduleEnableStatusSwitcher } from '@/utils';
 import { onCountClick } from '@/utils/DOM';
 import { ICommandItem } from '../Editor/EnFont.vue';
 
@@ -83,7 +83,7 @@ const onTitleClicked = () => {
 }
 
 watchEffect(() => {
-  switchState('enDebugging', settings.value.isDebugging)
+  moduleEnableStatusSwitcher('EnDebugging', settings.value.isDebugging)
 })
 
 const getSettingDrawer = () => document.querySelector('.arco-drawer') as HTMLDivElement
