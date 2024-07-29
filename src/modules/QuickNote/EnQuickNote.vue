@@ -18,6 +18,7 @@
             >
               <a-option
                 v-for="notebook of openedNotebookList"
+                :key="notebook.id"
                 :value="notebook.id"
                 :label="notebook.name"
               >
@@ -28,11 +29,11 @@
       </div>
       <div
         class="inputArea"
-        >
-        <div
-          ref="inputAreaRef"
-        >
-        </div>
+      >
+        <EnProtyle
+          :blockId="currentBlockId"
+          @after-render="onAfterRender"
+        />
       </div>
     </div>
   </EnWindow>
@@ -40,6 +41,7 @@
 
 <script setup lang="ts">
   import { appendDailyNoteBlock, deleteBlock } from '@/api';
+import EnProtyle from '@/components/EnProtyle.vue';
 import { usePlugin } from '@/main';
   import EnWindow, { isInWindow } from '@/modules/EnWindow.vue';
 import { Protyle } from 'siyuan';
@@ -91,28 +93,14 @@ import { Protyle } from 'siyuan';
       id,
     } = transaction;
     currentBlockId.value = id
-    protyleRef.value = new Protyle(plugin.app, inputAreaRef.value, {
-      blockId: id,
-      action: ['cb-get-focus'],
-      render: {
-        breadcrumb: false,
-      },
-      after(protyle) {
-        const contentElement = protyle.protyle.contentElement
-        const wysiwyg: HTMLDivElement = contentElement.querySelector('.protyle-wysiwyg')
-        const clickEvent = new MouseEvent('click', {
-          view: window,
-          bubbles: true,
-          cancelable: true
-        })
-        // 直接focus不行，需要先dispatchEvent
-        wysiwyg.dispatchEvent(clickEvent)
-        wysiwyg.focus()
-      }
-    })
-    protyleRef.value.protyle.element.classList.toggle('EnQuickNoteProtyle', true)
-    protyleRef.value.protyle.element.classList.toggle('EnDisableProtyleEnhance', true)
-    protyleRef.value.protyle.contentElement.classList.toggle('EnDisableProtyleEnhance', true)
+  }
+
+  const onAfterRender = (protyle) => {
+    protyle.protyle.element.classList.toggle('EnQuickNoteProtyle', true)
+    protyle.protyle.element.classList.toggle('EnDisableProtyleEnhance', true)
+    protyle.protyle.contentElement.classList.toggle('EnDisableProtyleEnhance', true)
+
+    protyleRef.value = protyle
   }
 
   const destoryProtyle = () => {
@@ -181,23 +169,6 @@ import { Protyle } from 'siyuan';
     padding: 8px 0px;
     flex: 1;
     overflow: auto;
-
-
-    :deep(.EnQuickNoteProtyle) {
-      min-height: 100%;
-
-      .protyle-content {
-        padding-bottom: 16px;
-      }
-
-      .protyle-wysiwyg {
-        width: 100%;
-        min-height: 100%;
-        box-sizing: border-box;
-        padding: 16px 16px !important;
-        padding-bottom: 64px !important;
-      }
-    }
   }
 }
 </style>
