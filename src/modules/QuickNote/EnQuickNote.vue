@@ -72,8 +72,6 @@ import { Protyle } from 'siyuan';
   const selectedNotebookId = ref(openedNotebookList.value[0]?.id)
 
 
-  const inputAreaRef = ref<HTMLDivElement>()
-
   const protyleRef = ref<Protyle>()
   const currentBlockId = ref()
   const initProtyle = async () => {
@@ -112,7 +110,7 @@ import { Protyle } from 'siyuan';
       deleteBlock(currentBlockId.value)
     }
     protyleRef.value?.destroy()
-    inputAreaRef.value.innerHTML = ''
+    currentBlockId.value = ''
   }
 
   // #endregion 在打开的窗口中
