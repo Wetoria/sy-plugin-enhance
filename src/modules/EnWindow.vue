@@ -163,12 +163,13 @@ export const createWindow = (title, queryStr?) => {
   const electronWindow = new BrowserWindow({
     width,
     height,
-    x,
-    y,
+    // x,
+    // y,
     show: false,
     resizable: true,
     movable: true,
     frame: false,
+    center: true,
     title: title,
     type: 'panel',
     webPreferences: {

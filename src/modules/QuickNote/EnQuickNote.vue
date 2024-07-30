@@ -129,7 +129,7 @@ import { Protyle } from 'siyuan';
             winRef?.hideWindow()
           } else {
             // winRef.getWin().setVisibleOnAllWorkspaces(true, {visibleOnFullScreen: true});
-            // winRef?.pinWindow(true)
+            winRef?.pinWindow(true)
             winRef?.openWindow()
             winRef.getWin().focus()
           }
