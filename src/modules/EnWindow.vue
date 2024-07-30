@@ -83,9 +83,9 @@ const pinned = ref(false)
 const switchPinStatus = () => {
   pinWindow(!pinned.value)
 }
-const pinWindow = (value) => {
+const pinWindow = (value, ...args) => {
   pinned.value = value
-  getEnWinRef().setAlwaysOnTop(pinned.value)
+  getEnWinRef().setAlwaysOnTop(pinned.value, ...args)
 }
 defineExpose({
   pinWindow,
@@ -170,6 +170,7 @@ export const createWindow = (title, queryStr?) => {
     movable: true,
     frame: false,
     title: title,
+    type: 'panel',
     webPreferences: {
       contextIsolation: false,
       nodeIntegration: true,
