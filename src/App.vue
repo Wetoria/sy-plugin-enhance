@@ -67,7 +67,7 @@ import EnQuickNote from './modules/QuickNote/EnQuickNote.vue';
 import EnEditor from './modules/Editor/EnEditor.vue';
 import EnMobileNav from './modules/EnMobileNav.vue';
 import EnVideoAndAudio from './modules/VideoAndAudio/EnVideoAndAudio.vue';
-import EnFormatBrush from './modules/EnFormatBrush.vue';
+import EnFormatBrush from './modules/EnFormatBrush/EnFormatBrush.vue';
 import EnFont from './modules/Editor/EnFont.vue';
 import { Protyle, showMessage } from 'siyuan';
 import { request } from './api';

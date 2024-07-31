@@ -4,10 +4,11 @@
 
 <script setup lang="ts">
 import { usePlugin } from '@/main';
-import { debounce } from '@/utils';
+import { debounce, moduleEnableStatusSwitcher } from '@/utils';
 import { IProtyle } from 'siyuan';
 import { computed, onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue';
 import dayjs from 'dayjs'
+import { log } from '@/utils/Log';
 
 const INLINE_TYPE = [
   "block-ref",
@@ -76,12 +77,52 @@ interface IStyle {
 }
 
 const currentFontStyle = ref<IStyle>()
+const cancelBrush = () => {
+  currentFontStyle.value = null
+
+  document.removeEventListener('keydown', escapeEvent)
+  document.removeEventListener('mouseup', pasteStyleOnMouseUp)
+  plugin.eventBus.off('click-editorcontent', recordCurrentProtyle)
+}
+
 const brushing = computed(() => !!currentFontStyle.value)
+
+const escapeEvent = (event) => {
+  if (event.code === 'Escape') {
+    event.preventDefault()
+    event.stopImmediatePropagation()
+    cancelBrush()
+  }
+}
+
+const pasteStyleOnMouseUp = (event) => {
+  const selection = window.getSelection();
+
+  if (selection.isCollapsed) {
+    return
+  }
+  setTimeout(() => {
+    pasteCurrentStyle()
+  }, 30)
+}
+
+const switchEnableStatus = () => {
+  moduleEnableStatusSwitcher('EnFormatBrush', brushing.value)
+  if (brushing.value) {
+    document.addEventListener('keydown', escapeEvent)
+
+    document.addEventListener('mouseup', pasteStyleOnMouseUp)
+
+    plugin.eventBus.on('click-editorcontent', recordCurrentProtyle)
+  }
+}
+
 watch(brushing, () => {
   const btns = document.querySelectorAll('[data-type="EnFormatBrush"]')
 
   btns.forEach((eachBtn) => {
     const svg = eachBtn.querySelector('svg')
+    eachBtn.setAttribute('aria-label', getAriaLabel())
     if (brushing.value) {
       // @ts-expect-error setAttribute
       svg.firstChild.setAttribute('xlink:href', '#EnIconFormatBrushActived')
@@ -90,6 +131,8 @@ watch(brushing, () => {
       svg.firstChild.setAttribute('xlink:href', '#EnIconFormatBrush')
     }
   })
+
+  switchEnableStatus()
 }, {
   immediate: true,
 })
@@ -109,14 +152,15 @@ const convertStyleByRange = () => {
   // 获取包含选区开始的元素
   const element = (startContainer.nodeType === Node.ELEMENT_NODE ? startContainer : startContainer.parentElement) as HTMLElement;
 
-  const tagNames = [
-    'strong',
-    'span',
-  ]
-  if (!tagNames.includes(element.localName)) {
-    console.log('[Enhance] - 首个元素没有设置样式')
-    return
-  }
+  // console.log('element is ', element)
+  // const tagNames = [
+  //   'strong',
+  //   'span',
+  // ]
+  // if (!tagNames.includes(element.localName)) {
+  //   console.log('[Enhance] - 首个元素没有设置样式')
+  //   return
+  // }
 
   const tempStyle = {} as any as IStyle
   tempStyle.style = {}
@@ -126,7 +170,7 @@ const convertStyleByRange = () => {
     }
   })
 
-  const elDataType = element.dataset.type
+  const elDataType = element.dataset.type || ''
   let validFontStyleDataType = elDataType.split(' ').filter(i => FONT_STYLE_INLINE_TYPE.includes(i))
   validFontStyleDataType = Array.from(new Set(validFontStyleDataType))
   tempStyle.dataType = validFontStyleDataType || []
@@ -172,8 +216,13 @@ const copyCurrentStyle = () => {
   currentFontStyle.value = tempStyle
 }
 
-const pasteCurrentStyle = (protyle: IProtyle) => {
+const pasteCurrentStyle = (protyle: IProtyle = currentProtyle.value) => {
   if (!currentFontStyle.value) {
+    return
+  }
+
+  if (!currentProtyle.value) {
+    log('未选中 protyle')
     return
   }
 
@@ -181,6 +230,7 @@ const pasteCurrentStyle = (protyle: IProtyle) => {
   //   return
   // }
   let range = protyle?.toolbar?.range
+
   let startContainer = range.startContainer;
   let element = (startContainer.nodeType === Node.ELEMENT_NODE ? startContainer : startContainer.parentElement) as HTMLElement;
 
@@ -230,15 +280,33 @@ plugin.addIcons(`
   </symbol>
 `)
 
-
-const command = {
-  langKey: "EnFormatBrush",
-  langText: "格式刷（粘贴当前格式）",
-  hotkey: "",
-  editorCallback: (protyle) => {
-    pasteCurrentStyle(protyle)
-  },
+const getAriaLabel = () => {
+  const cmd = plugin.commands.find(i => i.langKey === 'EnFormatBrushEnable')
+  const enableLabels = [`开启格式刷`]
+  if (cmd) {
+    enableLabels.push(`(${cmd.customHotkey || cmd.hotkey})`)
+  }
+  return `${!brushing.value ? enableLabels.join('') : `关闭格式刷(Esc 取消)`}`
 }
+
+const commands = [
+  {
+    langKey: "EnFormatBrushEnable",
+    langText: "开启格式刷",
+    hotkey: "",
+    editorCallback: () => {
+      copyCurrentStyle()
+    },
+  },
+  {
+    langKey: "EnFormatBrush",
+    langText: "格式刷（粘贴当前格式）",
+    hotkey: "",
+    editorCallback: (protyle) => {
+      pasteCurrentStyle(protyle)
+    },
+  },
+]
 
 // 不想写清除的逻辑了 - -
 const handler = () => {
@@ -267,11 +335,11 @@ const handler = () => {
     const btn = document.createElement('button')
     btn.className = 'protyle-toolbar__item b3-tooltips b3-tooltips__n'
     btn.setAttribute('data-type', 'EnFormatBrush')
-    btn.setAttribute('aria-label', '复制当前格式')
+    btn.setAttribute('aria-label', getAriaLabel())
     btn.innerHTML = `<svg><use xlink:href="${brushing.value ? '#EnIconFormatBrushActived' : '#EnIconFormatBrush'}"></use></svg>`
     btn.addEventListener('click', () => {
       if (brushing.value) {
-        currentFontStyle.value = null
+        cancelBrush()
       } else {
         copyCurrentStyle()
       }
@@ -284,8 +352,16 @@ const handler = () => {
 }
 
 const observer = new MutationObserver(debounce(handler, 300));
+
+const currentProtyle = ref<IProtyle>()
+const recordCurrentProtyle = ({ detail }) => {
+  currentProtyle.value = detail?.protyle
+}
+
 onMounted(() => {
-  plugin.addCommand(command);
+  commands.forEach((command) => {
+    plugin.addCommand(command);
+  })
   observer.observe(document.body, {
     childList: true, // 观察目标子节点的变化，是否有添加或者删除
     subtree: true,
@@ -293,13 +369,16 @@ onMounted(() => {
   })
 });
 onBeforeUnmount(() => {
-  plugin.commands = plugin.commands.filter(
-    (i) => i.langKey !== command.langKey,
-  );
+  plugin.commands = plugin.commands.filter((i) => !commands.find(cmd => cmd.langKey === i.langKey));
   observer.disconnect()
 });
 </script>
 
 <style lang="scss">
+html[data-en_enabled_module~="EnFormatBrush"] {
 
+  .protyle * {
+    cursor: url('./FormatBrush.png'), default;
+  }
+}
 </style>
