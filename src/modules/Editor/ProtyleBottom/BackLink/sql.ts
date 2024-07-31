@@ -57,7 +57,7 @@ export async function getParentNodesBySql(nodeIds: string[]) {
     FROM blocks c
     JOIN parentList ct ON c.id = ct.parent_id and c.root_id = ct.root_id
   )
-  select * from parentList
+  select * from parentList limit 10000000
   `
   return queryBySqlStmt(sqlStmt)
 }
@@ -84,7 +84,7 @@ export async function getChildNodesBySql(nodeIds: string[]) {
     FROM blocks c
     JOIN childList ct ON c.parent_id = ct.id and c.root_id = ct.root_id
   )
-  select * from childList
+  select * from childList limit 10000000
   `
 
   return queryBySqlStmt(sqlStmt)
@@ -116,7 +116,7 @@ export async function getChildNodesBySqlWithAnyLevelIds(nodeIds: string[], needH
       FROM blocks c
       JOIN childList ct ON c.parent_id = ct.id AND c.root_id = ct.root_id
     )
-    SELECT * FROM childList;
+    SELECT * FROM childList limit 10000000;
   `
 
   return queryBySqlStmt(sqlStmt)
