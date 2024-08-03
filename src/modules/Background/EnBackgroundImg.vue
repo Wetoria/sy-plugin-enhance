@@ -79,7 +79,7 @@ html[data-en_enabled_module~="EnBackgroundImg"] {
     background-size: cover;
     background-position: center center;
     width: 100%;
-    height: 100vh;
+    height: 100dvh;
     position: absolute;
     z-index: -10000;
     top: 0;
@@ -90,6 +90,12 @@ html[data-en_enabled_module~="EnBackgroundImg"] {
   }
   body {
     opacity: var(--en-opacity);
+  }
+
+  &[data-en-is-standalone="true"] {
+    .enBackground {
+      height: 100vh;
+    }
   }
 }
 </style>
