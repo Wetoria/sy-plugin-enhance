@@ -7,6 +7,7 @@ import zipPack from "vite-plugin-zip-pack";
 import fg from "fast-glob";
 import vue from "@vitejs/plugin-vue";
 import { vitePluginForArco } from "@arco-plugins/vite-vue";
+import vueJsx from '@vitejs/plugin-vue-jsx'
 
 const args = minimist(process.argv.slice(2));
 const isWatch = args.watch || args.w || false;
@@ -25,6 +26,7 @@ export default defineConfig({
 
   plugins: [
     vue(),
+    vueJsx(),
     vitePluginForArco({
       style: true,
       modifyVars: {
