@@ -270,10 +270,17 @@ const checkIsNeedLoop = () => {
 
 const updateTempBlockTime = () => {
   const hasBlockTimeFlag = target.value.dataset.en_isTimeBlock
+
   if (hasBlockTimeFlag) {
     isTempBlockTime.value = true
     newBlock.value.startTime = Number(target.value.dataset.en_timeBlock_startTime) || 0
     newBlock.value.endTime = Number(target.value.dataset.en_timeBlock_endTime) || 0
+
+    nodeBlockPlayConfig.value.enabledBlockPlay = target.value.dataset.en_enabledBlockPlay === 'true'
+    nodeBlockPlayConfig.value.enabledLoopPlay = target.value.dataset.en_enabledLoopPlay === 'true'
+
+    delete target.value.dataset.en_enabledBlockPlay
+    delete target.value.dataset.en_enabledLoopPlay
 
     delete target.value.dataset.en_isTimeBlock
     delete target.value.dataset.en_timeBlock_startTime

@@ -360,7 +360,7 @@ const setVideoTime = ({
 
   const videoOrAudioNode = videoNode || audioNode
 
-  const validTimeStrReg = /^(\d+(\.\d+)?(:\d+(\.\d+)?)?(:\d+(\.\d+)?)?)(~(\d+(\.\d+)?(:\d+(\.\d+)?)?(:\d+(\.\d+)?)?))?$/
+  const validTimeStrReg = /^(\d+(\.\d+)?(:\d+(\.\d+)?)?(:\d+(\.\d+)?)?)((~|-)(\d+(\.\d+)?(:\d+(\.\d+)?)?(:\d+(\.\d+)?)?))?$/
   const isValidTimeStr = validTimeStrReg.test(time)
 
   if (!isValidTimeStr) {
@@ -368,8 +368,11 @@ const setVideoTime = ({
     return
   }
 
-  const timeStrParts = time.split('~')
-  const isTimeBlock = timeStrParts.length > 1
+  const isTimeBlock = time.includes('~') || time.includes('-')
+  const splitSymbol = time.includes('~') ? '~' : '-'
+  const isLoop = isTimeBlock && splitSymbol == '~'
+
+  const timeStrParts = time.split(splitSymbol)
   const startTimeStr = timeStrParts[0]
   const endTimeStr = timeStrParts[1]
 
@@ -379,6 +382,8 @@ const setVideoTime = ({
 
   videoOrAudioNode.currentTime = startTime
   videoOrAudioNode.dataset.en_isTimeBlock = `${isTimeBlock}`
+  videoOrAudioNode.dataset.en_enabledBlockPlay = `${isTimeBlock}`
+  videoOrAudioNode.dataset.en_enabledLoopPlay = `${isLoop}`
   videoOrAudioNode.dataset.en_timeBlock_startTime = `${startTime}`
   videoOrAudioNode.dataset.en_timeBlock_endTime = `${endTime}`
 }
