@@ -25,7 +25,7 @@ export const urlSchemeCreator = (params: EnURLParams = {} as any) => {
 }
 
 export function isPluginUrl(url: URL): boolean {
-  return `${url.protocol}${url.pathname}` === basePluginUrlScheme
+  return url.href.startsWith(basePluginUrlScheme)
 }
 
 export function isTargetPluginType(href: string, targetType: EnURLParams['type']): boolean {

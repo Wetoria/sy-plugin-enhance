@@ -131,7 +131,7 @@ const envLinkClickHandler = (href, event) => {
     bid,
     time,
   } = getEVAParamsByUrl(href)
-  if (desktopTypes.includes(plugin.platform)) {
+  if (plugin.isElectron) {
     localStorage.setItem(waitKey, JSON.stringify({
       bid,
       time,
@@ -142,6 +142,7 @@ const envLinkClickHandler = (href, event) => {
     }
     winRef?.openWindow()
   } else {
+    // imp 增加网页版弹窗效果
     jumpToBlock(href)
   }
 }
