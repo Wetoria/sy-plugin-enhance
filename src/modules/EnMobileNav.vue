@@ -154,7 +154,7 @@ onMounted(() => {
 const lastScrollTop = ref(0);
 const showToolBar = ref(true)
 const onScroll = (event) => {
-  let currentScrollTop = (event.target as HTMLElement).scrollTop
+  const currentScrollTop = (event.target as HTMLElement).scrollTop
 
   if (currentScrollTop + 60 <= lastScrollTop.value) {
     console.log('向上滚动');
@@ -179,8 +179,8 @@ plugin.eventBus.on('mobile-keyboard-show', () => {
   keyboardShown.value = true
 })
 plugin.eventBus.on('mobile-keyboard-hide', () => {
-  showToolBar.value = false
   showToolBar.value = true
+  keyboardShown.value = false
 })
 
 const containerHeight = computed(() => {
