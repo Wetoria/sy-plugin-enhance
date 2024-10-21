@@ -45,7 +45,6 @@ const pProtyleAttrRef = ref(getRef())
 const watchParagraphAttrChange = () => {
   if (props.el) {
     const handler = () => {
-      pProtyleAttrRef.value = getRef()
       const newUpdated = getUpdated(props.el)
       if (!newUpdated) {
         return
