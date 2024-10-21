@@ -126,7 +126,12 @@ import { Protyle } from 'siyuan';
           const winRef = enWinRef.value
           if (winRef?.isVisible()) {
             // winRef.getWin().setVisibleOnAllWorkspaces(false, {visibleOnFullScreen: false});
-            winRef?.hideWindow()
+            const isFocused = winRef.getWin().isFocused()
+            if (isFocused) {
+              winRef?.hideWindow()
+            } else {
+              winRef.getWin().focus()
+            }
           } else {
             // winRef.getWin().setVisibleOnAllWorkspaces(true, {visibleOnFullScreen: true});
             winRef?.pinWindow(true)
