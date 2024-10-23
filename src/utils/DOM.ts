@@ -88,3 +88,57 @@ export const onCountClick = (fn) => {
     }, 300)
   }
 }
+
+export function useRegisterStyle(id) {
+  const styleDomRef = ref(null)
+  const alreadyExist = document.getElementById(id)
+  if (alreadyExist) {
+    styleDomRef.value = alreadyExist
+  } else {
+    styleDomRef.value = document.createElement('style')
+    styleDomRef.value.id = id
+    document.head.appendChild(styleDomRef.value)
+  }
+  return styleDomRef
+}
+
+export function positionModalWithTranslate(targetElement, modalElement) {
+  // 垂直方向增加偏移，水平方向上不偏移
+  const offset = 8
+  // 获取目标元素的位置
+  const targetRect = targetElement.getBoundingClientRect();
+  const modalRect = modalElement.getBoundingClientRect();
+
+  // 计算 modal 初始的 translate 位置 (假设显示在目标元素的下方)
+  let translateX = targetRect.left;
+  let translateY = targetRect.bottom + offset;
+
+  // 调整 modal 的位置，防止超出屏幕
+  const windowWidth = window.innerWidth;
+  const windowHeight = window.innerHeight;
+
+  // 如果 modal 的右边超出了窗口宽度
+  if (targetRect.left + modalRect.width > windowWidth) {
+    translateX = targetRect.left - modalRect.width;
+  }
+
+  // 如果 modal 的左边超出了窗口左边界
+  if (targetRect.left < 0) {
+    translateX = 0;
+  }
+
+  // 如果 modal 的底部超出了窗口高度
+  if (targetRect.bottom + modalRect.height > windowHeight) {
+    translateY = targetRect.top - modalRect.height - offset;
+  }
+
+  // 如果 modal 的顶部超出了窗口顶部
+  if (targetRect.top < 0) {
+    translateY = 0;
+  }
+
+  return {
+    translateX,
+    translateY,
+  }
+}

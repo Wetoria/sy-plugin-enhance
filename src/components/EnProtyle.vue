@@ -55,7 +55,7 @@ const renderProtyle = () => {
         breadcrumb: false,
         ...render,
       },
-      after(protyle) {
+      after(protyle: Protyle) {
         emits('after', protyle)
       },
       ...rest,

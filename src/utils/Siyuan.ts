@@ -1,7 +1,8 @@
 import { usePlugin } from '@/main'
 import { queryAllByDom } from './DOM'
 import { debounce } from '.'
-import { IOperation } from 'siyuan'
+import { IOperation, IProtyle } from 'siyuan'
+import { onMounted, onUnmounted, ref } from 'vue'
 
 export enum SyFrontendTypes {
   'desktop' = 'desktop',
@@ -297,4 +298,24 @@ export function getCreatedByDataset(id: string) {
   if (!id) return
   const createdStr = id.split('-')[0]
   return createdStr
+}
+
+const currentProtyle = ref<IProtyle>()
+const recorded = false
+
+export function useCurrentProtyle() {
+  const plugin = usePlugin()
+  const recordCurrentProtyle = ({ detail }) => {
+    currentProtyle.value = detail?.protyle
+  }
+
+  if (!recorded) {
+    onMounted(() => {
+      plugin.eventBus.on('click-editorcontent', recordCurrentProtyle)
+    })
+    onUnmounted(() => {
+      plugin.eventBus.off('click-editorcontent', recordCurrentProtyle)
+    })
+  }
+  return currentProtyle
 }
