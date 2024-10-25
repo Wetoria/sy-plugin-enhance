@@ -301,7 +301,7 @@ export function getCreatedByDataset(id: string) {
 }
 
 const currentProtyle = ref<IProtyle>()
-const recorded = false
+let recorded = false
 
 export function useCurrentProtyle() {
   const plugin = usePlugin()
@@ -316,6 +316,7 @@ export function useCurrentProtyle() {
     onUnmounted(() => {
       plugin.eventBus.off('click-editorcontent', recordCurrentProtyle)
     })
+    recorded = true
   }
   return currentProtyle
 }
