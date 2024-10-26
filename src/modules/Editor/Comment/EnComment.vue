@@ -10,7 +10,26 @@
       :alignCenter="false"
     >
       <template #title>
-        添加评论
+        <div class="row flexAlignCenter" style="width: 100%;">
+          <div class="flexAlignCenter">
+            添加评论｜
+          </div>
+          <div class="flexAlignCenter">笔记本：</div>
+          <div>
+            <a-select
+              placeholder="选择笔记本"
+              v-model="dailyNoteNotebookId"
+            >
+              <a-option
+                v-for="notebook of openedNotebookList"
+                :key="notebook.id"
+                :value="notebook.id"
+                :label="notebook.name"
+              >
+              </a-option>
+            </a-select>
+          </div>
+        </div>
       </template>
       <div
         class="enCommentContainerContent"
@@ -41,6 +60,9 @@ import { Protyle, showMessage } from 'siyuan';
 import { onBeforeUnmount, ref, watch, watchEffect } from 'vue';
 
 const currentProtyle = useCurrentProtyle()
+
+const openedNotebookList = ref(window.siyuan.notebooks.filter(i => !i.closed))
+const dailyNoteNotebookId = ref(openedNotebookList.value[0]?.id)
 
 // 是否默认新增一个输入的行
 const defaultInserNewLine = true
@@ -117,7 +139,7 @@ const commentByCommentIdAndText = async (commentId: string, text: string) => {
   const res = await appendDailyNoteBlock(
     'markdown',
     `- ${text}${defaultInserNewLine ? '\n\n    &ZeroWidthSpace;' : ''}`,
-    '20220114182140-nsur2nt', // TODO 调整笔记本逻辑
+    dailyNoteNotebookId.value,
   )
 
   const {
@@ -352,12 +374,15 @@ watch(popoverVisible, (newVal) => {
   } else {
     currentBlockId.value = newCommentNodeIdRef.value
     newCommentNodeIdRef.value = ''
+
+    openedNotebookList.value = window.siyuan.notebooks.filter(i => !i.closed)
   }
 })
 
 const plugin = usePlugin()
 plugin.addCommand({
   langKey: "EnLineComment",
+  // TODO 使用说明的跳转
   langText: '划词评论(<a href="https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse#share-ZMuedaqblocvljxlmFbcHFKcnPd" target="_blank" @click="(event) => {event.stopImmediatePropagation(); event.preventDefault(); console.log("event is ", event)}">使用说明</a>)',
   hotkey: "",
   editorCallback: () => {
