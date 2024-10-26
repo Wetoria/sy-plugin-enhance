@@ -41,7 +41,7 @@
 
       <!-- 仅桌面端 -->
       <template v-else>
-
+        <EnComment v-if="isNotFree" />
       </template>
 
       <!-- <FixedDocArea v-if="!plugin.isMobile" /> -->
@@ -73,6 +73,7 @@ import { Protyle, showMessage } from 'siyuan';
 import { request } from './api';
 import TemplateEntry from './modules/Templates/TemplateEntry.vue';
 import { moduleEnableStatusSwitcher } from './utils';
+import EnComment from './modules/Editor/Comment/EnComment.vue';
 
 const plugin = usePlugin()
 
