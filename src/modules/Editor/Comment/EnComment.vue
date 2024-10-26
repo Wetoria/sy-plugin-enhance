@@ -389,6 +389,7 @@ watchEffect(() => {
       text-shadow: var(--en-comment-text-shadow);
     }
     ${blockSelectorList.join(', ')} {
+      &,
       [data-type="NodeParagraph"],
       [data-type="NodeHeading"] {
         & > div:first-child {
@@ -445,12 +446,11 @@ onBeforeUnmount(() => {
 
 <style lang="scss">
 :root{
-  --en-comment-background-color: var(--b3-font-color11);
-  --en-comment-underline-color: var(--b3-card-success-color);
+  --en-comment-background-color: var(--b3-font-color11, #65b84d);
+  --en-comment-underline-color: var(--b3-card-success-color, rgb(183, 223, 185));
   --en-comment-underline-width: 2px;
 
   --en-comment-text-shadow: 0px -5px 24px var(--en-comment-background-color);
-  --en-comment-text-shadow: unset;
 }
 .enCommentContainerModal {
   pointer-events: none;
