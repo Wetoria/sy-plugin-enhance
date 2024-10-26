@@ -123,8 +123,8 @@ export function positionModalWithTranslate(targetElement, modalElement) {
   }
 
   // 如果 modal 的左边超出了窗口左边界
-  if (targetRect.left < 0) {
-    translateX = 0;
+  if (translateX < 0) {
+    translateX = offset;
   }
 
   // 如果 modal 的底部超出了窗口高度
@@ -133,8 +133,8 @@ export function positionModalWithTranslate(targetElement, modalElement) {
   }
 
   // 如果 modal 的顶部超出了窗口顶部
-  if (targetRect.top < 0) {
-    translateY = 0;
+  if (translateY < 0) {
+    translateY = offset;
   }
 
   return {
