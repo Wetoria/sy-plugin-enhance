@@ -188,7 +188,7 @@ const commentForSingleBlockByNodeId = (nodeId: string, adjustTarget: HTMLElement
       const isBiggerThan3Lines = unblankLines.length > 3
 
       //@ts-expect-error window.siyuan?.config
-      const blockRefDynamicAnchorTextMaxLen = 10 || window.siyuan?.config.editor.blockRefDynamicAnchorTextMaxLen || 96
+      const blockRefDynamicAnchorTextMaxLen = window.siyuan?.config.editor.blockRefDynamicAnchorTextMaxLen || 96
       const splicedContent = blockContent.length > blockRefDynamicAnchorTextMaxLen
         ? blockContent.slice(0, blockRefDynamicAnchorTextMaxLen) + '...'
         : blockContent
