@@ -122,6 +122,10 @@ interface Window {
     ws: any;
     languages: any;
   };
+
+  enLog: typeof console.log,
+  enWarn: typeof console.warn,
+  enError: typeof console.error,
 }
 
 interface IBreadcrumb {
