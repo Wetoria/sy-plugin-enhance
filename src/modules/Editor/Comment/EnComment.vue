@@ -12,8 +12,9 @@
       <template #title>
         <div class="row flexAlignCenter" style="width: 100%;">
           <div class="flexAlignCenter">
-            添加评论｜
+            添加评论
           </div>
+          <a-divider direction="vertical" />
           <div class="flexAlignCenter">笔记本：</div>
           <div>
             <a-select
@@ -74,6 +75,8 @@ import dayjs from 'dayjs';
 import { Protyle, showMessage } from 'siyuan';
 import { onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue';
 
+const plugin = usePlugin()
+
 const currentProtyle = useCurrentProtyle()
 
 const openedNotebookList = ref(window.siyuan.notebooks.filter(i => !i.closed))
@@ -87,7 +90,50 @@ const appendType: 'daily-note' | 'cur-doc' | 'target-doc' = 'daily-note'
 
 const messageFlag = ref(null)
 
+// #region protyle 控制逻辑相关
+
+const currentBlockId = ref()
+
+const onAfterRender = (protyle: Protyle) => {
+  protyle.protyle.element.classList.toggle('EnDisableProtyleEnhance', true)
+  protyle.protyle.contentElement.classList.toggle('EnDisableProtyleEnhance', true)
+  const flag = setInterval(() => {
+    const target = protyle.protyle.contentElement.querySelector(`[data-node-id="${currentBlockId.value}"]`)
+    if (target) {
+      clearInterval(flag)
+
+      const modal = document.querySelector('.enCommentContainerModal .enCommentContainer') as HTMLDivElement
+      if (!modal) {
+        return
+      }
+
+      modal.style.transform = `translate(${window.innerWidth}px, ${window.innerHeight}px)`
+      const {
+        translateX,
+        translateY,
+      } = positionModalWithTranslate(adjustModalTargetRef.value, modal)
+      modal.style.transform = `translate(${translateX}px, ${translateY}px)`
+
+      protyle.focusBlock(target, false)
+      if (messageFlag.value) {
+        clearTimeout(messageFlag.value)
+      }
+    }
+  }, 0)
+}
+
+const destoryProtyle = () => {
+  currentBlockId.value = ''
+}
+
+// #endregion protyle 控制逻辑相关
+
+// #region 评论 modal 窗口
+
 const popoverVisible = ref(false)
+
+// #region 双击关闭评论窗口
+
 const isInCommentModal = (target: HTMLElement) => {
   let targetElement = target
   while (targetElement) {
@@ -112,46 +158,38 @@ onBeforeUnmount(() => {
   document.removeEventListener('dblclick', closeModalOutside)
 })
 
-const currentBlockId = ref()
-const newCommentNodeIdRef = ref()
+// #endregion 双击关闭评论窗口
 
-const onAfterRender = (protyle: Protyle) => {
-  protyle.protyle.element.classList.toggle('EnDisableProtyleEnhance', true)
-  protyle.protyle.contentElement.classList.toggle('EnDisableProtyleEnhance', true)
-  const flag = setInterval(() => {
-    const target = protyle.protyle.contentElement.querySelector(`[data-node-id="${currentBlockId.value}"]`)
-    if (target) {
-      clearInterval(flag)
+watchEffect(() => {
+  if (popoverVisible.value) {
+    // 打开弹窗时，更新笔记本信息。防止过程中出现了打开或者关闭笔记本的情况
+    openedNotebookList.value = window.siyuan.notebooks.filter(i => !i.closed)
 
-      const modal = document.querySelector('.enCommentContainerModal .enCommentContainer') as HTMLDivElement
-      if (!modal) {
-        return
-      }
-      modal.style.transform = `unset`
-      const {
-        translateX,
-        translateY,
-      } = positionModalWithTranslate(adjustModalTargetRef.value, modal)
-      modal.style.transform = `translate(${translateX}px, ${translateY}px)`
-      adjustModalTargetRef.value = null
+    // 隐藏评论按钮
+    hideCommentButton()
+  } else {
+    // 关闭弹窗时，销毁 protyle
+    destoryProtyle()
+  }
+})
 
-      protyle.focusBlock(target, false)
-      if (messageFlag.value) {
-        clearTimeout(messageFlag.value)
-      }
-    }
-  }, 0)
+const adjustModalTargetRef = ref<HTMLElement>(null)
+const adjustCommentModalByElement = (element: HTMLElement) => {
+  adjustModalTargetRef.value = element
 }
 
-const destoryProtyle = () => {
-  currentBlockId.value = ''
-}
+// #endregion 评论 modal 窗口
 
+
+// #region 评论的业务逻辑相关
+
+// 根据 nodeId 生成 commentId
 const getCommentIdByNodeId = (nodeId: string) => {
   const shortUUID = generateShortUUID()
   return `en-comment-id-${nodeId}-${shortUUID}`
 }
 
+// 根据 commentId 获取 nodeId
 const getNodeIdByCommentId = (commentId: string) => {
   const temp = commentId.split('-')
   temp.pop()
@@ -159,20 +197,17 @@ const getNodeIdByCommentId = (commentId: string) => {
   return nodeId
 }
 
-const adjustModalTargetRef = ref<HTMLElement>(null)
-const adjustCommentModalByElement = (element: HTMLElement) => {
-  popoverVisible.value = true
-  adjustModalTargetRef.value = element
-}
-
+// 根据 nodeId 和文本创建评论
 const commentByNodeIdAndText = async (nodeId: string, text: string) => {
   const commentId = getCommentIdByNodeId(nodeId)
   await commentByCommentIdAndText(commentId, text)
   return commentId
 }
 
+
+// 根据 commentId 和文本在思源中创建评论，获取到新的评论 nodeId，用来在 protyle 中展示
+const newCommentNodeIdRef = ref()
 const commentByCommentIdAndText = async (commentId: string, text: string) => {
-  const nodeId = getNodeIdByCommentId(commentId)
 
   const res = await appendDailyNoteBlock(
     'markdown',
@@ -189,13 +224,71 @@ const commentByCommentIdAndText = async (commentId: string, text: string) => {
   } = transaction;
 
   const newCommentNodeId = id
-  newCommentNodeIdRef.value = newCommentNodeId
 
   await setBlockAttrs(newCommentNodeId, {
     'custom-en-comment-ref-id': commentId
   })
 
+  newCommentNodeIdRef.value = newCommentNodeId
+  popoverVisible.value = true
 }
+
+// 当有新的评论 nodeId 时，更新当前的 blockId
+// 即使评论窗口关闭着，也让它渲染着
+watchEffect(() => {
+  if (newCommentNodeIdRef.value) {
+    currentBlockId.value = newCommentNodeIdRef.value
+    newCommentNodeIdRef.value = ''
+  }
+})
+
+const startComment = async () => {
+  const protyle = currentProtyle.value
+  const selectedNodes = Array.from(protyle.contentElement.querySelectorAll('.protyle-wysiwyg--select'))
+
+  messageFlag.value = setTimeout(() => {
+    showMessage('创建评论中，请等待窗口自动显示', 3000)
+  }, 1000)
+
+  if (selectedNodes.length === 0) {
+    commentForInlineText()
+    return
+  }
+
+  // 如果选中了 1 个 Block
+  if (selectedNodes.length === 1) {
+    const block = selectedNodes[0] as HTMLElement
+    commentForSingleBlockByNodeId(block.dataset.nodeId, block)
+    return
+  }
+
+
+  // 如果选中多个块
+  let isSameParent = true
+  const parentNode = selectedNodes[0].parentElement
+  for (let i = 1; i < selectedNodes.length; i++) {
+    if (selectedNodes[i].parentElement !== parentNode) {
+      isSameParent = false
+      break
+    }
+  }
+
+  const allChildren = Array.from(parentNode.childNodes).filter((i: HTMLElement) => 'dataset' in i && 'nodeId' in i.dataset && i.dataset.nodeId)
+  const isNotSelectedAllSiyuanChildNodes = allChildren.length !== selectedNodes.length
+  const parentNodeIsWysiwyg = parentNode.classList.contains('protyle-wysiwyg')
+
+  // 需要合并成超级块
+  if (isSameParent && (parentNodeIsWysiwyg || !isNotSelectedAllSiyuanChildNodes)) {
+    convertIntoSuperBlockAndComment(selectedNodes as HTMLElement[])
+  } else {
+    // 对单一的块进行评论
+    commentForSingleBlockByNodeId(parentNode.dataset.nodeId, parentNode)
+  }
+}
+
+// #endregion 评论的业务逻辑相关
+
+
 
 // 将多个块转换为超级块，然后对超级块进行备注
 const convertIntoSuperBlockAndComment = async (selectedNodes: HTMLElement[]) => {
@@ -224,14 +317,19 @@ const convertIntoSuperBlockAndComment = async (selectedNodes: HTMLElement[]) => 
   commentForSingleBlockByNodeId(superBlockId, superBlock)
 }
 
+// 对单个块进行评论
 const commentForSingleBlockByNodeId = (nodeId: string, adjustTarget: HTMLElement) => {
   const sqlStmt = `select * from blocks where id = '${nodeId}'`;
   const startTime = dayjs()
-  const flag = setInterval(async () => {
+
+  let flag: any = null
+
+  const queryBlockAndComment = async () => {
     const mdRes = await sql(sqlStmt) as any[]
 
     if (mdRes.length > 0 || dayjs().diff(startTime, 'second') > 10) {
       clearInterval(flag)
+
       const blockMarkdown = mdRes[0]?.markdown
       const blockContent = mdRes[0]?.content
       if (!blockMarkdown) {
@@ -270,6 +368,12 @@ const commentForSingleBlockByNodeId = (nodeId: string, adjustTarget: HTMLElement
         adjustCommentModalByElement(adjustTarget)
       }
     }
+  }
+
+  // 立即进行查询
+  queryBlockAndComment()
+  flag = setInterval(async () => {
+    queryBlockAndComment()
   }, 300)
 }
 
@@ -277,9 +381,6 @@ const commentForInlineText = async () => {
   const protyle = currentProtyle.value
 
   const selection = window.getSelection()
-  console.log('selection is ', selection)
-  const range = selection.getRangeAt(0)
-  console.log('range is ', range)
 
   const {
     focusNode,
@@ -289,11 +390,6 @@ const commentForInlineText = async () => {
     siyuanNode = siyuanNode.parentElement
   }
 
-  console.log('siyuanNode is ', selection.isCollapsed, siyuanNode)
-  setTimeout(() => {
-    console.log('siyuanNode is ', selection.isCollapsed, siyuanNode)
-  }, 200)
-
   if (!siyuanNode) {
     warn('siyuanNode is null')
     return
@@ -301,6 +397,7 @@ const commentForInlineText = async () => {
 
   const nodeId = siyuanNode.dataset.nodeId
 
+  // 如果未选择行内文字，则对单个块（段落块）进行评论
   if (selection.isCollapsed) {
     commentForSingleBlockByNodeId(nodeId, siyuanNode)
     return
@@ -368,68 +465,7 @@ const commentForInlineText = async () => {
   }
 }
 
-const startComment = async () => {
-  console.log('start to comment')
-
-  const protyle = currentProtyle.value
-  const selectedNodes = Array.from(protyle.contentElement.querySelectorAll('.protyle-wysiwyg--select'))
-
-  messageFlag.value = setTimeout(() => {
-    showMessage('创建评论中，请等待窗口自动显示', 3000)
-  }, 1000)
-
-  if (selectedNodes.length === 0) {
-    commentForInlineText()
-    return
-  }
-
-  const isSelectedMultiBlocks = selectedNodes.length > 1
-  let isSameParent = true
-  const parentNode = selectedNodes[0].parentElement
-  for (let i = 1; i < selectedNodes.length; i++) {
-    if (selectedNodes[i].parentElement !== parentNode) {
-      isSameParent = false
-      break
-    }
-  }
-  const allChildren = Array.from(parentNode.childNodes).filter((i: HTMLElement) => 'dataset' in i && 'nodeId' in i.dataset && i.dataset.nodeId)
-  const parentNodeIsWysiwyg = parentNode.classList.contains('protyle-wysiwyg')
-
-  // 1. 如果选中了多个 Block
-  if (isSelectedMultiBlocks) {
-    // 需要合并成超级块
-    if (isSameParent && (parentNodeIsWysiwyg || allChildren.length !== selectedNodes.length)) {
-      convertIntoSuperBlockAndComment(selectedNodes as HTMLElement[])
-    } else {
-      // 对单一的块进行评论
-      commentForSingleBlockByNodeId(parentNode.dataset.nodeId, parentNode)
-    }
-    return
-  }
-
-  // 2. 如果选中了 1 个 Block
-  if (selectedNodes.length === 1) {
-    const block = selectedNodes[0] as HTMLElement
-    commentForSingleBlockByNodeId(block.dataset.nodeId, block)
-    return
-  }
-}
-
-
-watchEffect(() => {
-  if (popoverVisible.value) {
-    hideCommentButton()
-
-    if (newCommentNodeIdRef.value) {
-      currentBlockId.value = newCommentNodeIdRef.value
-      newCommentNodeIdRef.value = ''
-    }
-
-    openedNotebookList.value = window.siyuan.notebooks.filter(i => !i.closed)
-  } else {
-    destoryProtyle()
-  }
-})
+// #region 显示评论按钮相关
 
 const commentButtonIsShown = ref(false)
 let commentButtonIsShowing = false
@@ -459,7 +495,7 @@ const isInCommentButton = (target: HTMLElement) => {
 
 // 点击以后，显示评论按钮
 const watchMouseUp = debounce((event: Event) => {
-  console.log('watchMouseUp', isJustClosed)
+
   if (isJustClosed) {
     isJustClosed = false
     return
@@ -524,7 +560,11 @@ const onMouseEnterCommentButton = () => {
   stopReadyToHideCommentButton()
 }
 
-const plugin = usePlugin()
+// #endregion 显示评论按钮相关
+
+
+// #region 插件快捷键相关
+
 plugin.addCommand({
   langKey: "EnLineComment",
   langText: '划词评论(<a class="enCommentUsageLinkBtn" href="https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse#share-ZMuedaqblocvljxlmFbcHFKcnPd" target="_blank">使用说明</a>)',
@@ -550,9 +590,14 @@ onBeforeUnmount(() => {
   document.removeEventListener('click', onClickCommentUsageLinkBtn, true)
 })
 
+// #endregion 插件快捷键相关
+
+
+// #region 监听思源事件，更新评论样式
 const commentIdList = ref([])
 
 const styleDomRef = useRegisterStyle('en-line-comment-style')
+// 监听 commentIdList 的变化，更新样式
 watchEffect(() => {
   const lineSelectorList = commentIdList.value.map(i => {
     const nodeId = getNodeIdByCommentId(i)
@@ -598,7 +643,6 @@ watchEffect(() => {
   `
 })
 
-
 const getAllCommentIds = async () => {
   const sqlStmt = `select * from attributes where name = 'custom-en-comment-ref-id'  and value like 'en-comment-id-%'`
   const res = await sql(sqlStmt)
@@ -615,23 +659,24 @@ const offTransactions = useSiyuanEventTransactions(() => {
     getAllCommentIds()
   }, 1000)
 })
-
 onBeforeUnmount(() => {
   offLoadedProtyleStatic()
   offTransactions()
 })
 
+// #endregion 监听思源事件，更新评论样式
+
+
+// #region 点击评论，显示历史评论列表
 
 const isCommentNode = (target: HTMLElement) => {
   return target?.getAttribute('custom-en-comment-id') || target?.dataset?.type?.includes('en-comment-id')
 }
 const onClickComment = (event: MouseEvent) => {
-  console.log('onClickComment', event)
   let target = event.target as HTMLElement
   while (target && !isCommentNode(target)) {
     target = target.parentElement
   }
-  console.log('target', target)
 }
 onMounted(() => {
   document.addEventListener('click', onClickComment, true)
@@ -639,6 +684,9 @@ onMounted(() => {
 onBeforeUnmount(() => {
   document.removeEventListener('click', onClickComment, true)
 })
+
+// #endregion 点击评论，显示历史评论列表
+
 </script>
 
 <style lang="scss" scoped>
