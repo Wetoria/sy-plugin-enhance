@@ -276,11 +276,40 @@ const commentForSingleBlockByNodeId = (nodeId: string, adjustTarget: HTMLElement
 const commentForInlineText = async () => {
   const protyle = currentProtyle.value
 
+  const selection = window.getSelection()
+  console.log('selection is ', selection)
+  const range = selection.getRangeAt(0)
+  console.log('range is ', range)
+
+  const {
+    focusNode,
+  } = selection
+  let siyuanNode = focusNode as HTMLElement
+  while(siyuanNode != null && !siyuanNode?.dataset?.nodeId) {
+    siyuanNode = siyuanNode.parentElement
+  }
+
+  console.log('siyuanNode is ', selection.isCollapsed, siyuanNode)
+  setTimeout(() => {
+    console.log('siyuanNode is ', selection.isCollapsed, siyuanNode)
+  }, 200)
+
+  if (!siyuanNode) {
+    warn('siyuanNode is null')
+    return
+  }
+
+  const nodeId = siyuanNode.dataset.nodeId
+
+  if (selection.isCollapsed) {
+    commentForSingleBlockByNodeId(nodeId, siyuanNode)
+    return
+  }
+
   // 获取临时注释元素
   protyle.toolbar?.setInlineMark(protyle, 'en-comment-temp', 'range')
 
   const commentElements = document.querySelectorAll('[data-type~="en-comment-temp"]') as NodeListOf<Element>
-  const commentEl = commentElements[0] as HTMLElement
 
   // 先查看选择的所有区域，是否有相同的 commentId
   // 如果有，看是不是还有余下的。
@@ -299,19 +328,6 @@ const commentForInlineText = async () => {
 
   const commonIDs = findCommonIDs(idList);
 
-  // 获取思源节点(理应是段落)
-  let siyuanNode = commentEl
-  while(siyuanNode != null && !siyuanNode.dataset.nodeId) {
-    siyuanNode = siyuanNode.parentElement
-  }
-
-  if (!siyuanNode) {
-    warn('siyuanNode is null')
-    return
-  }
-
-  const nodeId = siyuanNode.dataset.nodeId
-
   const notSubOfParentIdList = []
   const sameId = commonIDs.find(id => {
     if (!id.includes(nodeId)) {
@@ -329,14 +345,7 @@ const commentForInlineText = async () => {
     selectText += commentElement.innerText
   }
 
-
-
   protyle?.toolbar?.setInlineMark(protyle, 'en-comment-temp', "range");
-
-  if (!selectText.replace(/[\u200B]/g, '')) {
-    commentForSingleBlockByNodeId(nodeId, siyuanNode)
-    return
-  }
 
   const enCommentId = sameId ? sameId : getCommentIdByNodeId(nodeId)
 
@@ -406,14 +415,19 @@ const startComment = async () => {
   }
 }
 
-watch(popoverVisible, (newVal) => {
-  if (!newVal) {
-    destoryProtyle()
-  } else {
-    currentBlockId.value = newCommentNodeIdRef.value
-    newCommentNodeIdRef.value = ''
+
+watchEffect(() => {
+  if (popoverVisible.value) {
+    hideCommentButton()
+
+    if (newCommentNodeIdRef.value) {
+      currentBlockId.value = newCommentNodeIdRef.value
+      newCommentNodeIdRef.value = ''
+    }
 
     openedNotebookList.value = window.siyuan.notebooks.filter(i => !i.closed)
+  } else {
+    destoryProtyle()
   }
 })
 
@@ -523,17 +537,17 @@ plugin.addCommand({
     }
   },
 });
-const onClickComment = (event: MouseEvent) => {
+const onClickCommentUsageLinkBtn = (event: MouseEvent) => {
   const target = event.target as HTMLElement
   if (target.classList.contains('enCommentUsageLinkBtn')) {
     event.stopImmediatePropagation()
   }
 }
 onMounted(() => {
-  document.addEventListener('click', onClickComment, true)
+  document.addEventListener('click', onClickCommentUsageLinkBtn, true)
 })
 onBeforeUnmount(() => {
-  document.removeEventListener('click', onClickComment, true)
+  document.removeEventListener('click', onClickCommentUsageLinkBtn, true)
 })
 
 const commentIdList = ref([])
@@ -605,6 +619,25 @@ const offTransactions = useSiyuanEventTransactions(() => {
 onBeforeUnmount(() => {
   offLoadedProtyleStatic()
   offTransactions()
+})
+
+
+const isCommentNode = (target: HTMLElement) => {
+  return target?.getAttribute('custom-en-comment-id') || target?.dataset?.type?.includes('en-comment-id')
+}
+const onClickComment = (event: MouseEvent) => {
+  console.log('onClickComment', event)
+  let target = event.target as HTMLElement
+  while (target && !isCommentNode(target)) {
+    target = target.parentElement
+  }
+  console.log('target', target)
+}
+onMounted(() => {
+  document.addEventListener('click', onClickComment, true)
+})
+onBeforeUnmount(() => {
+  document.removeEventListener('click', onClickComment, true)
 })
 </script>
 
