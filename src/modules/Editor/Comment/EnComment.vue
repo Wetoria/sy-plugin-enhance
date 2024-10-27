@@ -513,8 +513,7 @@ const onMouseEnterCommentButton = () => {
 const plugin = usePlugin()
 plugin.addCommand({
   langKey: "EnLineComment",
-  // TODO 使用说明的跳转
-  langText: '划词评论(<a href="https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse#share-ZMuedaqblocvljxlmFbcHFKcnPd" target="_blank" @click="(event) => {event.stopImmediatePropagation(); event.preventDefault(); console.log("event is ", event)}">使用说明</a>)',
+  langText: '划词评论(<a class="enCommentUsageLinkBtn" href="https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse#share-ZMuedaqblocvljxlmFbcHFKcnPd" target="_blank">使用说明</a>)',
   hotkey: "",
   editorCallback: () => {
     if (popoverVisible.value) {
@@ -524,6 +523,18 @@ plugin.addCommand({
     }
   },
 });
+const onClickComment = (event: MouseEvent) => {
+  const target = event.target as HTMLElement
+  if (target.classList.contains('enCommentUsageLinkBtn')) {
+    event.stopImmediatePropagation()
+  }
+}
+onMounted(() => {
+  document.addEventListener('click', onClickComment, true)
+})
+onBeforeUnmount(() => {
+  document.removeEventListener('click', onClickComment, true)
+})
 
 const commentIdList = ref([])
 
