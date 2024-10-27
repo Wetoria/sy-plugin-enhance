@@ -18,6 +18,7 @@ const protyleRef = ref<Protyle>()
 
 const props = defineProps<{
   blockId: string
+  disableEnhance?: boolean
   options?: IProtyleOption
 }>()
 
@@ -58,6 +59,10 @@ const renderProtyle = () => {
         ...render,
       },
       after(protyle: Protyle) {
+        if (props.disableEnhance) {
+          protyle.protyle.element.classList.toggle('EnDisableProtyleEnhance', true)
+          protyle.protyle.contentElement.classList.toggle('EnDisableProtyleEnhance', true)
+        }
         emits('after', protyle)
       },
       ...rest,
