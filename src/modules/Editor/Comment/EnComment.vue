@@ -43,6 +43,20 @@
         />
       </div>
     </a-modal>
+    <a-button
+      class="enCommentButton"
+      v-show="commentButtonIsShown"
+      :style="{
+        top: commentButtonPosition.y + 'px',
+        left: commentButtonPosition.x + 'px',
+      }"
+      @click="onClickCommentButton"
+      @mouseenter="onMouseEnterCommentButton"
+    >
+      <template #icon>
+        <icon-plus />
+      </template>
+    </a-button>
   </div>
 </template>
 
@@ -50,10 +64,11 @@
 import { appendDailyNoteBlock, getBlockAttrs, setBlockAttrs, sql } from '@/api';
 import EnProtyle from '@/components/EnProtyle.vue';
 import { usePlugin } from '@/main';
-import { generateShortUUID } from '@/utils';
-import { positionModalWithTranslate, useRegisterStyle } from '@/utils/DOM';
+import { debounce, generateShortUUID } from '@/utils';
+import { positionModalWithTranslate, targetIsInnerOf, targetIsOutsideOf, useRegisterStyle } from '@/utils/DOM';
 import { useSiyuanEventLoadedProtyleStatic, useSiyuanEventTransactions } from '@/utils/EventBusHooks';
 import { warn } from '@/utils/Log';
+import { useMousePostion } from '@/utils/Mouse';
 import { useCurrentProtyle } from '@/utils/Siyuan'
 import dayjs from 'dayjs';
 import { Protyle, showMessage } from 'siyuan';
@@ -83,9 +98,11 @@ const isInCommentModal = (target: HTMLElement) => {
   }
   return false
 }
+let isJustClosed = false
 const closeModalOutside = (event: Event) => {
   if (!isInCommentModal(event.target as HTMLElement)) {
     popoverVisible.value = false
+    isJustClosed = true
   }
 }
 onMounted(() => {
@@ -400,6 +417,99 @@ watch(popoverVisible, (newVal) => {
   }
 })
 
+const commentButtonIsShown = ref(false)
+let commentButtonIsShowing = false
+const showCommentButton = () => {
+  commentButtonIsShowing = true
+  commentButtonIsShown.value = true
+
+  setTimeout(() => {
+    commentButtonIsShowing = false
+  }, 500)
+}
+const hideCommentButton = () => {
+  if (commentButtonIsShowing) {
+    commentButtonIsShowing = false
+    return
+  }
+  commentButtonIsShown.value = false
+}
+
+const commentButtonPosition = ref({
+  x: window.innerWidth,
+  y: window.innerHeight,
+})
+const isInCommentButton = (target: HTMLElement) => {
+  return targetIsInnerOf(target, (i) => i.classList.contains('enCommentButton'))
+}
+
+// 点击以后，显示评论按钮
+const watchMouseUp = debounce((event: Event) => {
+  console.log('watchMouseUp', isJustClosed)
+  if (isJustClosed) {
+    isJustClosed = false
+    return
+  }
+  const {
+    target,
+  } = event as MouseEvent
+  // 点击评论按钮，跳过显示逻辑
+  if (isInCommentButton(target as HTMLElement)) {
+    return
+  }
+  // 点击 protyle 时，才显示评论按钮
+  if (targetIsOutsideOf(target as HTMLElement, (i) => i.classList.contains('protyle-wysiwyg'))) {
+    return
+  }
+
+  setTimeout(() => {
+    // 延时获取鼠标当前位置，防止鼠标移动过快，导致位置获取不准确
+    stopReadyToHideCommentButton()
+    commentButtonPosition.value = {
+      x: getCurrentMousePosition().clientX + 10,
+      y: getCurrentMousePosition().clientY - 14,
+    }
+    showCommentButton()
+  }, 200)
+}, 200)
+
+// 鼠标按下时，如果不在评论按钮上，则隐藏评论按钮
+const watchMouseDown = (event: Event) => {
+  stopReadyToHideCommentButton()
+  if (!isInCommentButton(event.target as HTMLElement)) {
+    hideCommentButton()
+  }
+}
+
+const readyToHideCommentButtonFlag = ref(null)
+const stopReadyToHideCommentButton = () => {
+  if (readyToHideCommentButtonFlag.value) {
+    clearTimeout(readyToHideCommentButtonFlag.value)
+    readyToHideCommentButtonFlag.value = null
+  }
+}
+const {
+  getCurrentMousePosition,
+} = useMousePostion({
+  onMouseUp: watchMouseUp,
+  onMouseDown: watchMouseDown,
+  onMouseMoveStart() {
+    if (commentButtonIsShown.value) {
+      readyToHideCommentButtonFlag.value = setTimeout(() => {
+        hideCommentButton()
+      }, 500)
+    }
+  },
+})
+
+const onClickCommentButton = () => {
+  hideCommentButton()
+  startComment()
+}
+const onMouseEnterCommentButton = () => {
+  stopReadyToHideCommentButton()
+}
+
 const plugin = usePlugin()
 plugin.addCommand({
   langKey: "EnLineComment",
@@ -541,6 +651,18 @@ onBeforeUnmount(() => {
       }
     }
   }
+}
 
+.arco-btn.enCommentButton {
+  position: fixed;
+  pointer-events: auto;
+  background: var(--b3-theme-background);
+  z-index: 1000;
+  border: 1px solid var(--b3-border-color);
+
+  &:hover {
+    background: var(--b3-theme-background);
+    border: 1px solid var(--b3-theme-on-background);
+  }
 }
 </style>
