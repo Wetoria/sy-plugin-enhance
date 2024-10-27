@@ -408,7 +408,7 @@ watchEffect(() => {
   })
   styleDomRef.value.textContent = `
     ${lineSelectorList.join(', ')} {
-      text-decoration: underline;
+      text-decoration: var(--en-comment-style);
       text-decoration-color: var(--en-comment-underline-color);
       text-decoration-thickness: var(--en-comment-underline-width);
       text-shadow: var(--en-comment-text-shadow);
@@ -418,7 +418,7 @@ watchEffect(() => {
       [data-type="NodeParagraph"],
       [data-type="NodeHeading"] {
         & > div:first-child {
-          text-decoration: underline;
+          text-decoration: var(--en-comment-style);
           text-decoration-color: var(--en-comment-underline-color);
           text-decoration-thickness: var(--en-comment-underline-width);
           text-shadow: var(--en-comment-text-shadow);
@@ -473,6 +473,7 @@ onBeforeUnmount(() => {
 :root{
   --en-comment-background-color: var(--b3-font-color11, #65b84d);
   --en-comment-underline-color: var(--b3-card-success-color, rgb(183, 223, 185));
+  --en-comment-style: underline;
   --en-comment-underline-width: 2px;
 
   --en-comment-text-shadow: 0px -5px 24px var(--en-comment-background-color);
