@@ -10,7 +10,7 @@
 <script setup lang="ts">
 import { usePlugin } from '@/main';
 import { IProtyleOption, Protyle } from 'siyuan';
-import { ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 
 
 const protyleContainerRef = ref<HTMLDivElement>()
@@ -31,7 +31,9 @@ const plugin = usePlugin()
 const renderProtyle = () => {
   if (!props.blockId) {
     protyleRef.value = null
-    protyleContainerRef.value.innerHTML = `<div></div>`
+    if (protyleContainerRef.value) {
+      protyleContainerRef.value.innerHTML = `<div></div>`
+    }
     return
   }
   const {
@@ -63,6 +65,10 @@ const renderProtyle = () => {
   )
   emits('afterRender', protyleRef.value)
 }
+
+onMounted(() => {
+  renderProtyle()
+})
 
 watch(props, () => {
   renderProtyle()
