@@ -151,3 +151,7 @@ interface LifeLogItem {
   created: string;
   updated: string;
 }
+
+const enLog: typeof console.log
+const enWarn: typeof console.warn
+const enError: typeof console.error
