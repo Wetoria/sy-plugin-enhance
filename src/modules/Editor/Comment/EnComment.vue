@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/require-v-for-key -->
 <template>
   <div>
     <a-modal
@@ -11,37 +12,65 @@
     >
       <template #title>
         <div class="row flexAlignCenter" style="width: 100%;">
-          <div class="flexAlignCenter">
-            添加评论
-          </div>
-          <a-divider direction="vertical" />
-          <div class="flexAlignCenter">笔记本：</div>
-          <div>
-            <a-select
-              placeholder="选择笔记本"
-              v-model="dailyNoteNotebookId"
-            >
-              <a-option
-                v-for="notebook of openedNotebookList"
-                :key="notebook.id"
-                :value="notebook.id"
-                :label="notebook.name"
+          <template v-if="!selectedCommentIdList.length">
+            <div class="flexAlignCenter">
+              添加评论
+            </div>
+            <a-divider direction="vertical" />
+            <div class="flexAlignCenter">笔记本：</div>
+            <div>
+              <a-select
+                placeholder="选择笔记本"
+                v-model="dailyNoteNotebookId"
               >
-              </a-option>
-            </a-select>
-          </div>
+                <a-option
+                  v-for="notebook of openedNotebookList"
+                  :key="notebook.id"
+                  :value="notebook.id"
+                  :label="notebook.name"
+                >
+                </a-option>
+              </a-select>
+            </div>
+          </template>
+          <template v-else>
+            <div class="flexAlignCenter">
+              历史评论
+            </div>
+          </template>
         </div>
       </template>
       <div
         class="enCommentContainerContent"
       >
-        <EnProtyle
-          :blockId="currentBlockId"
-          :options="{
-            action: [],
-          }"
-          @after-render="onAfterRender"
-        />
+        <a-spin dot :loading="isCommenting">
+          <EnProtyle
+            :blockId="currentBlockId"
+            :options="{
+              action: [],
+            }"
+            @after-render="onAfterRender"
+          />
+        </a-spin>
+
+        <div class="enCommentContainerContentHistoryCommentList">
+          <template v-if="selectedCommentIdList.length > 0">
+            <!-- <a-divider orientation="left">历史评论</a-divider> -->
+            <div class="historyCommentList">
+              <div
+                v-for="item of selectedCommentIdList"
+              >
+                <EnProtyle
+                  :blockId="item.commentBlockId"
+                  :options="{
+                    action: [],
+                  }"
+                  disableEnhance
+                />
+              </div>
+            </div>
+          </template>
+        </div>
       </div>
     </a-modal>
     <a-button
@@ -102,21 +131,13 @@ const onAfterRender = (protyle: Protyle) => {
     if (target) {
       clearInterval(flag)
 
-      const modal = document.querySelector('.enCommentContainerModal .enCommentContainer') as HTMLDivElement
-      if (!modal) {
-        return
-      }
-
-      modal.style.transform = `translate(${window.innerWidth}px, ${window.innerHeight}px)`
-      const {
-        translateX,
-        translateY,
-      } = positionModalWithTranslate(adjustModalTargetRef.value, modal)
-      modal.style.transform = `translate(${translateX}px, ${translateY}px)`
+      adjustCommentModal()
 
       protyle.focusBlock(target, false)
+      isCommenting.value = false
       if (messageFlag.value) {
         clearTimeout(messageFlag.value)
+        messageFlag.value = null
       }
     }
   }, 0)
@@ -144,11 +165,11 @@ const isInCommentModal = (target: HTMLElement) => {
   }
   return false
 }
-let isJustClosed = false
+
 const closeModalOutside = (event: Event) => {
   if (!isInCommentModal(event.target as HTMLElement)) {
     popoverVisible.value = false
-    isJustClosed = true
+    doNotShowCommentButton = true
   }
 }
 onMounted(() => {
@@ -174,8 +195,22 @@ watchEffect(() => {
 })
 
 const adjustModalTargetRef = ref<HTMLElement>(null)
-const adjustCommentModalByElement = (element: HTMLElement) => {
+const recordAdjustCommentModalTargetElement = (element: HTMLElement) => {
   adjustModalTargetRef.value = element
+}
+
+const adjustCommentModal = () => {
+  const modal = document.querySelector('.enCommentContainerModal .enCommentContainer') as HTMLDivElement
+  if (!modal) {
+    return
+  }
+
+  modal.style.transform = `translate(${window.innerWidth}px, ${window.innerHeight}px)`
+  const {
+    translateX,
+    translateY,
+  } = positionModalWithTranslate(adjustModalTargetRef.value, modal)
+  modal.style.transform = `translate(${translateX}px, ${translateY}px)`
 }
 
 // #endregion 评论 modal 窗口
@@ -242,13 +277,19 @@ watchEffect(() => {
   }
 })
 
+const isCommenting = ref(false)
 const startComment = async () => {
+  isCommenting.value = true
+  selectedCommentIdList.value = []
+
   const protyle = currentProtyle.value
   const selectedNodes = Array.from(protyle.contentElement.querySelectorAll('.protyle-wysiwyg--select'))
 
-  messageFlag.value = setTimeout(() => {
-    showMessage('创建评论中，请等待窗口自动显示', 3000)
-  }, 1000)
+  if (!popoverVisible.value) {
+    messageFlag.value = setTimeout(() => {
+      showMessage('创建评论中，请等待窗口自动显示', 3000)
+    }, 1000)
+  }
 
   if (selectedNodes.length === 0) {
     commentForInlineText()
@@ -352,20 +393,22 @@ const commentForSingleBlockByNodeId = (nodeId: string, adjustTarget: HTMLElement
         : blockContent
       const finalMd = `((${nodeId} "${splicedContent}"))\n    > 原文内容${isBiggerThan3Lines ? '(已折叠)' : ''}\n    > ${newMarkdown}\n    {: style="" fold="${isBiggerThan3Lines ? '1' : '0'}" }`
 
-      const enCommentId = await commentByNodeIdAndText(nodeId, finalMd)
-
       const blockAttrs = await getBlockAttrs(nodeId)
       const currentBlockCommentIdAttr = blockAttrs['custom-en-comment-id']
-      let currentBlockCommentIdList = []
-      if (currentBlockCommentIdAttr) {
-        currentBlockCommentIdList = currentBlockCommentIdAttr.split(' ')
-      }
-      currentBlockCommentIdList.push(enCommentId)
+      let currentBlockCommentIdList = currentBlockCommentIdAttr ? currentBlockCommentIdAttr.split(' ') : []
+
+      const currentBlockCommentId = currentBlockCommentIdList.length ? currentBlockCommentIdList[0] : getCommentIdByNodeId(nodeId)
+
+      currentBlockCommentIdList.push(currentBlockCommentId)
+      currentBlockCommentIdList = Array.from(new Set(currentBlockCommentIdList))
       await setBlockAttrs(nodeId, {
         'custom-en-comment-id': currentBlockCommentIdList.join(' '),
       })
+
+      await commentByCommentIdAndText(currentBlockCommentId, finalMd)
+
       if (adjustTarget) {
-        adjustCommentModalByElement(adjustTarget)
+        recordAdjustCommentModalTargetElement(adjustTarget)
       }
     }
   }
@@ -461,7 +504,7 @@ const commentForInlineText = async () => {
 
   const firstComment = document.querySelector(`[data-type~="${enCommentId}"]`)
   if (firstComment) {
-    adjustCommentModalByElement(firstComment as HTMLElement)
+    recordAdjustCommentModalTargetElement(firstComment as HTMLElement)
   }
 }
 
@@ -469,6 +512,7 @@ const commentForInlineText = async () => {
 
 const commentButtonIsShown = ref(false)
 let commentButtonIsShowing = false
+let doNotShowCommentButton = false
 const showCommentButton = () => {
   commentButtonIsShowing = true
   commentButtonIsShown.value = true
@@ -495,9 +539,8 @@ const isInCommentButton = (target: HTMLElement) => {
 
 // 点击以后，显示评论按钮
 const watchMouseUp = debounce((event: Event) => {
-
-  if (isJustClosed) {
-    isJustClosed = false
+  if (doNotShowCommentButton) {
+    doNotShowCommentButton = false
     return
   }
   const {
@@ -669,14 +712,92 @@ onBeforeUnmount(() => {
 
 // #region 点击评论，显示历史评论列表
 
+const selectedCommentIdList = ref<Array<{
+  commentId: string;
+  commentForNodeId: string;
+  commentBlockId: string;
+}>>([])
 const isCommentNode = (target: HTMLElement) => {
   return target?.getAttribute('custom-en-comment-id') || target?.dataset?.type?.includes('en-comment-id')
 }
-const onClickComment = (event: MouseEvent) => {
+const onClickComment = async (event: MouseEvent) => {
   let target = event.target as HTMLElement
-  while (target && !isCommentNode(target)) {
+
+  const allCommentNodes = []
+  while (target) {
+    if (isCommentNode(target)) {
+      allCommentNodes.push(target)
+    }
     target = target.parentElement
   }
+
+  if (!allCommentNodes.length) {
+    return
+  }
+
+  const allCommentIdForCommentNodes: Array<{
+    commentId: string;
+    commentForNodeId: string;
+    commentBlockId?: string;
+  }> = []
+  allCommentNodes.forEach((node) => {
+    const customAttrCommentId = node.getAttribute('custom-en-comment-id')
+
+    if (!customAttrCommentId) {
+      const commentIdListInDataType = node.dataset.type.split(' ').filter(i => i.startsWith('en-comment-id-'))
+      commentIdListInDataType.forEach((id) => {
+        const nodeId = getNodeIdByCommentId(id)
+        allCommentIdForCommentNodes.push({
+          commentId: id,
+          commentForNodeId: nodeId,
+        })
+      })
+      return
+    }
+    const commentIdList = customAttrCommentId.split(' ')
+    commentIdList.forEach((id) => {
+      const nodeId = getNodeIdByCommentId(id)
+      allCommentIdForCommentNodes.push({
+        commentId: id,
+        commentForNodeId: nodeId,
+      })
+    })
+  })
+
+  const idListWhichHasComment = []
+  allCommentIdForCommentNodes.forEach((id) => {
+    if (commentIdList.value.includes(id.commentId) && !idListWhichHasComment.find(i => i.commentId === id.commentId && i.commentForNodeId === id.commentForNodeId)) {
+      idListWhichHasComment.push(id)
+    }
+  })
+
+  if (!idListWhichHasComment.length) {
+    return
+  }
+
+  const firstHasCommentId = idListWhichHasComment[0].commentId
+  const firstHasCommentInlineNode = document.querySelector(`[data-type~="${firstHasCommentId}"]`)
+  const firstHasCommentNode = document.querySelector(`[custom-en-comment-id~="${firstHasCommentId}"]`)
+  const firstCommentDom = firstHasCommentInlineNode || firstHasCommentNode
+
+  // doNotShowCommentButton = true
+
+  const queryCommentBlockIdSql = `select * from attributes where name = 'custom-en-comment-ref-id' and value in ('${idListWhichHasComment.map(i => i.commentId).join("','")}')`
+  const commentBlockIdRes = await sql(queryCommentBlockIdSql)
+
+  selectedCommentIdList.value = []
+  idListWhichHasComment.forEach((id) => {
+    const commentBlockId = commentBlockIdRes.find(i => i.value === id.commentId)?.block_id
+    if (commentBlockId) {
+      id.commentBlockId = commentBlockId
+      selectedCommentIdList.value.push(id)
+    }
+  })
+
+  popoverVisible.value = true
+  currentBlockId.value = false
+  recordAdjustCommentModalTargetElement(firstCommentDom as HTMLElement)
+  adjustCommentModal()
 }
 onMounted(() => {
   document.addEventListener('click', onClickComment, true)
@@ -696,7 +817,8 @@ onBeforeUnmount(() => {
 :root{
   --en-comment-background-color: var(--b3-font-color11, #65b84d);
   --en-comment-underline-color: var(--b3-card-success-color, rgb(183, 223, 185));
-  --en-comment-line-underline-color: var(--b3-theme-success, #65b84d);
+  // --en-comment-line-underline-color: var(--b3-theme-success, #65b84d);
+  --en-comment-line-underline-color: var(--b3-card-success-color, rgb(183, 223, 185));
   --en-comment-style: underline;
   --en-comment-underline-width: 2px;
 
@@ -732,6 +854,7 @@ onBeforeUnmount(() => {
 
     .enCommentContainerContent {
       display: flex;
+      flex-direction: column;
       flex: 1;
       overflow: auto;
 
@@ -741,6 +864,26 @@ onBeforeUnmount(() => {
 
       .protyle-wysiwyg {
         padding: 6px 16px !important;
+      }
+
+      .enCommentContainerContentHistoryCommentList {
+        display: flex;
+        flex-direction: column;
+        // gap: var(--en-gap);
+
+        .historyCommentList {
+          display: flex;
+          flex-direction: column;
+          // gap: var(--en-gap);
+
+          max-height: 20vh;
+          overflow: hidden;
+          overflow-y: auto;
+
+          .protyle-content {
+        padding-bottom: unset !important;
+      }
+        }
       }
     }
   }
