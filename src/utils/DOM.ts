@@ -142,3 +142,18 @@ export function positionModalWithTranslate(targetElement, modalElement) {
     translateY,
   }
 }
+
+export function targetIsInnerOf(target: HTMLElement, judge: (target: HTMLElement) => boolean) {
+  let targetElement = target
+  while (targetElement) {
+    if (judge(targetElement)) {
+      return true
+    }
+    targetElement = targetElement.parentElement
+  }
+  return false
+}
+
+export function targetIsOutsideOf(target: HTMLElement, judge: (target: HTMLElement) => boolean) {
+  return !targetIsInnerOf(target, judge)
+}
