@@ -278,7 +278,7 @@ const startComment = async () => {
   const parentNodeIsWysiwyg = parentNode.classList.contains('protyle-wysiwyg')
 
   // 需要合并成超级块
-  if (isSameParent && (parentNodeIsWysiwyg || !isNotSelectedAllSiyuanChildNodes)) {
+  if (isSameParent && (parentNodeIsWysiwyg || isNotSelectedAllSiyuanChildNodes)) {
     convertIntoSuperBlockAndComment(selectedNodes as HTMLElement[])
   } else {
     // 对单一的块进行评论
