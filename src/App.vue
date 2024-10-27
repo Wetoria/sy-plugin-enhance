@@ -41,7 +41,7 @@
 
       <!-- 仅桌面端 -->
       <template v-else>
-        <EnComment v-if="isNotFree" />
+        <EnComment v-if="isNotFree && !isInEnWindow" />
       </template>
 
       <!-- <FixedDocArea v-if="!plugin.isMobile" /> -->
@@ -50,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, watchEffect } from 'vue';
+import { onMounted, ref, watchEffect } from 'vue';
 import { usePlugin } from './main';
 import EnSiyuanEntry from './modules/EnSiyuanEntry.vue';
 
@@ -74,8 +74,11 @@ import { request } from './api';
 import TemplateEntry from './modules/Templates/TemplateEntry.vue';
 import { moduleEnableStatusSwitcher } from './utils';
 import EnComment from './modules/Editor/Comment/EnComment.vue';
+import { isInWindow } from './modules/EnWindow.vue';
 
 const plugin = usePlugin()
+
+const isInEnWindow = ref(isInWindow('QuickNote') || isInWindow('EnVideoAndAudio'))
 
 watchEffect(() => {
   moduleEnableStatusSwitcher('EnhancerIsMobile', plugin.isMobile)
