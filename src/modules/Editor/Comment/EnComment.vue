@@ -57,7 +57,7 @@ import { warn } from '@/utils/Log';
 import { useCurrentProtyle } from '@/utils/Siyuan'
 import dayjs from 'dayjs';
 import { Protyle, showMessage } from 'siyuan';
-import { onBeforeUnmount, ref, watch, watchEffect } from 'vue';
+import { onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue';
 
 const currentProtyle = useCurrentProtyle()
 
@@ -73,6 +73,27 @@ const appendType: 'daily-note' | 'cur-doc' | 'target-doc' = 'daily-note'
 const messageFlag = ref(null)
 
 const popoverVisible = ref(false)
+const isInCommentModal = (target: HTMLElement) => {
+  let targetElement = target
+  while (targetElement) {
+    if (targetElement.classList.contains('enCommentContainerModal')) {
+      return true
+    }
+    targetElement = targetElement.parentElement
+  }
+  return false
+}
+const closeModalOutside = (event: Event) => {
+  if (!isInCommentModal(event.target as HTMLElement)) {
+    popoverVisible.value = false
+  }
+}
+onMounted(() => {
+  document.addEventListener('dblclick', closeModalOutside)
+})
+onBeforeUnmount(() => {
+  document.removeEventListener('dblclick', closeModalOutside)
+})
 
 const currentBlockId = ref()
 const newCommentNodeIdRef = ref()
