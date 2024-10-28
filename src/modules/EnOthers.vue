@@ -132,7 +132,7 @@ html[data-en_enabled_module~="EnOther"] {
     }
   }
 
-  [data-type="img"] {
+  [data-type="img"]:not(:has(img[style~="width:"])) {
     display: inline-block !important;
     width: 50%;
   }
