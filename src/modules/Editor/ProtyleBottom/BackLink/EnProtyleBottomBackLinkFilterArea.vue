@@ -292,9 +292,11 @@ const getTreeStruct = async () => {
     const blockBacklinksTemp = blockBackLinks.value[item.id]
     blockBacklinksTemp?.forEach((b) => {
       const lastOne = b.blockPaths[b.blockPaths.length - 1]
-      parentNodeIds.push(lastOne.id)
+      if (lastOne) {
+        parentNodeIds.push(lastOne.id)
 
-      childNodeIds.push(lastOne.id)
+        childNodeIds.push(lastOne.id)
+      }
     })
 
   }
