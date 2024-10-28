@@ -124,17 +124,24 @@ onBeforeUnmount(() => {
           margin-bottom: unset !important;
           flex-wrap: wrap;
 
-          .protyle-breadcrumb__item.protyle-breadcrumb__item--active {
-            // display: none;
+          .protyle-breadcrumb__item:last-child {
 
             .protyle-breadcrumb__text {
               display: none;
             }
-
-            & ~ .protyle-breadcrumb__item .protyle-breadcrumb__text{
-              display: none;
-            }
           }
+
+          // .protyle-breadcrumb__item.protyle-breadcrumb__item--active {
+          //   // display: none;
+
+          //   .protyle-breadcrumb__text {
+          //     display: none;
+          //   }
+
+          //   & ~ .protyle-breadcrumb__item .protyle-breadcrumb__text{
+          //     display: none;
+          //   }
+          // }
         }
 
         .protyle-breadcrumb__bar:not(:first-child) {
