@@ -1,6 +1,6 @@
 <template>
   <EnSettingsTeleportModule :name="moduleName" :display="moduleDisplayName" :module="module">
-    <div style="color: var(--b3-theme-on-surface);">
+    <!-- <div style="color: var(--b3-theme-on-surface);">
       <div style="color: red">
         <b>注意：不要过分依赖于该模块的功能。</b>
       </div>
@@ -16,7 +16,7 @@
       <div>
         因为这个导致的内容变更，请自行负责。
       </div>
-    </div>
+    </div> -->
     <EnSettingsItem>
       <div>
         显示段落块时间
@@ -64,7 +64,7 @@
       </template>
     </EnSettingsItem>
 
-    <EnSettingsItem>
+    <!-- <EnSettingsItem>
       <div>
         段落锁
       </div>
@@ -128,7 +128,7 @@
           @change="onAutoCheckTimeChange"
         />
       </template>
-    </EnSettingsItem>
+    </EnSettingsItem> -->
   </EnSettingsTeleportModule>
   <div>
     <EnParagraphBlockAttrContainer
@@ -149,13 +149,13 @@
           :nodeId="nodeId"
           v-if="isVip"
         />
-        <EnParagraphBlockLock
+        <!-- <EnParagraphBlockLock
           :pDom="paragraphBlock"
           :updated="updated"
           :enabled="moduleOptions.enableBlockLock"
           :autoLockTimeDiff="moduleOptions.autoLockTimeDiff"
           :autoCheckTime="moduleOptions.autoCheckTime"
-        />
+        /> -->
         <EnParagraphBlockTime
           v-if="moduleOptions.enableBlockTime"
           :created="created"
