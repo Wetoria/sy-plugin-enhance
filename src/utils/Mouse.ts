@@ -56,6 +56,7 @@ function getLastMouseClickPosition() {
 }
 
 export function useMousePostion(props: {
+  immediate?: boolean
   onMouseMoveStart?: (event: Event) => void
   onMouseMove?: (event: Event) => void
   onMouseMoveEnd?: (event: Event) => void
@@ -63,6 +64,7 @@ export function useMousePostion(props: {
   onMouseDown?: (event: Event) => void
 }) {
   const {
+    immediate = true,
     onMouseMove,
     onMouseUp,
     onMouseDown,
@@ -70,6 +72,7 @@ export function useMousePostion(props: {
     onMouseMoveEnd,
   } = props
   let mouseMoveFlag = false
+  const eventBinded = ref(false)
 
   // 停止移动鼠标500ms后，触发结束事件
   const mouseMoveEndInner = debounce((event: Event) => {
@@ -94,17 +97,27 @@ export function useMousePostion(props: {
   const onMouseDownInner = (event: Event) => {
     onMouseDown?.(event)
   }
-  onMounted(() => {
+  const bindEvent = () => {
     document.addEventListener('mousemove', onMouseMoveInner)
     document.addEventListener('mouseup', onMouseUpInner)
     document.addEventListener('mousedown', onMouseDownInner)
-  })
-  onBeforeUnmount(() => {
+    eventBinded.value = true
+  }
+
+  const unbindEvent = () => {
     document.removeEventListener('mousemove', onMouseMoveInner)
     document.removeEventListener('mouseup', onMouseUpInner)
     document.removeEventListener('mousedown', onMouseDownInner)
-  })
+    eventBinded.value = false
+  }
+  if (immediate) {
+    onMounted(bindEvent)
+    onBeforeUnmount(unbindEvent)
+  }
   return {
+    bindEvent,
+    unbindEvent,
+    eventBinded,
     currentMousePosition,
     lastMouseClickPosition,
     getCurrentMousePosition,

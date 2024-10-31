@@ -582,8 +582,12 @@ const stopReadyToHideCommentButton = () => {
   }
 }
 const {
+  eventBinded,
+  bindEvent,
+  unbindEvent,
   getCurrentMousePosition,
 } = useMousePostion({
+  immediate: false,
   onMouseUp: watchMouseUp,
   onMouseDown: watchMouseDown,
   onMouseMoveStart() {
@@ -594,6 +598,20 @@ const {
     }
   },
 })
+
+plugin.addCommand({
+  langKey: "EnLineCommentEnableBtn",
+  langText: '开关评论按钮',
+  hotkey: "",
+  callback: () => {
+    if (eventBinded.value) {
+      hideCommentButton()
+      unbindEvent()
+    } else {
+      bindEvent()
+    }
+  },
+});
 
 const onClickCommentButton = () => {
   hideCommentButton()
@@ -610,7 +628,7 @@ const onMouseEnterCommentButton = () => {
 
 plugin.addCommand({
   langKey: "EnLineComment",
-  langText: '划词评论(<a class="enCommentUsageLinkBtn" href="https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse#share-ZMuedaqblocvljxlmFbcHFKcnPd" target="_blank">使用说明</a>)',
+  langText: '评论当前选中内容(<a class="enCommentUsageLinkBtn" href="https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse#share-ZMuedaqblocvljxlmFbcHFKcnPd" target="_blank">使用说明</a>)',
   hotkey: "",
   editorCallback: () => {
     if (popoverVisible.value) {
