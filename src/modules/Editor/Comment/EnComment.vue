@@ -705,7 +705,7 @@ watchEffect(() => {
 })
 
 const getAllCommentIds = async () => {
-  const sqlStmt = `select * from attributes where name = 'custom-en-comment-ref-id'  and value like 'en-comment-id-%'`
+  const sqlStmt = `select * from attributes where name = 'custom-en-comment-ref-id'  and value like 'en-comment-id-%' limit 9999999`
   const res = await sql(sqlStmt)
   commentIdList.value = res.map(i => i.value)
 }
