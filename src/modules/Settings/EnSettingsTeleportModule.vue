@@ -9,10 +9,13 @@
             <span>
               {{ display }}
             </span>
-            <a-switch
-              v-model="module.enabled"
-              @change="onModuleSwitch"
-            />
+            <div>
+              <a-switch
+                v-if="!always"
+                v-model="module.enabled"
+                @change="onModuleSwitch"
+              />
+            </div>
           </div>
         </EnSettingsItemAreaHeading>
       </div>
@@ -46,6 +49,7 @@ const props = defineProps<{
   name: string
   display: string
   module: EnModuleType
+  always?: boolean
 }>()
 
 const slots = useSlots();
