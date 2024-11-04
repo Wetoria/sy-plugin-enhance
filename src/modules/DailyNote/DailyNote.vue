@@ -30,9 +30,9 @@
       v-model:visible="quickNoteModalVisible"
       class="enQuickNoteModal"
       modal-class="enQuickNoteContainer"
-      :footer="false"
       :mask="false"
       :alignCenter="false"
+      :closable="false"
     >
       <template #title>
         添加日记
@@ -51,6 +51,16 @@
           />
         </a-spin>
       </div>
+
+      <template #footer>
+        <a-button
+          type="primary"
+          size="small"
+          @click="quickNoteModalVisible = false"
+        >
+          关闭
+        </a-button>
+      </template>
     </a-modal>
   </Teleport>
 </template>
@@ -93,16 +103,36 @@ onMounted(() => {
     },
   });
 })
+onMounted(() => {
+  updateOpenedNotebookList()
+  setInterval(() => {
+    updateOpenedNotebookList()
+  }, 1000)
+})
+
+
+onMounted(() => {
+  document.addEventListener('touchmove', (e) => {
+    if (targetIsInnerOf(e.target as HTMLElement, (target) => {
+      return target.classList.contains('enQuickNoteContainer')
+    })) {
+      e.preventDefault()
+      e.stopPropagation()
+      e.stopImmediatePropagation()
+    }
+  }, true)
+})
 </script>
 
 
 
 <script lang="tsx">
 // 打开的笔记本列表
-const openedNotebookList = ref(window.siyuan.notebooks.filter(i => !i.closed))
+const openedNotebookList = ref([])
 export function updateOpenedNotebookList() {
   openedNotebookList.value = window.siyuan.notebooks.filter(i => !i.closed)
 }
+
 interface ModuleOptions {
   dailyNoteNotebookId: string
 }
@@ -116,7 +146,9 @@ const defaultOptions: ModuleOptions = {
 const module = useModule(moduleName, defaultOptions)
 const moduleOptions = computed(() => module.value.options as ModuleOptions)
 
+// TODO 思源的笔记本列表更新不及时，等以后提案了响应式以后，再考虑要不要优化吧。
 export function notebookIsOpened(notebookId: string) {
+  updateOpenedNotebookList()
   return openedNotebookList.value.some(i => i.id === notebookId)
 }
 
@@ -136,6 +168,11 @@ export function appendBlockIntoDailyNote(
   if (!notebook) {
     showMessage('[Enhance 插件] 请先选择创建日记的笔记本')
     return Promise.reject('[Enhance 插件] 请先选择创建日记的笔记本')
+  }
+  const notebookIsClosed = !notebookIsOpened(moduleOptions.value.dailyNoteNotebookId)
+  if (notebookIsClosed) {
+    showMessage('[Enhance 插件] 请先打开日记所在的笔记本')
+    return Promise.reject('[Enhance 插件] 请先打开日记所在的笔记本')
   }
   const payload = {
     dataType,
@@ -305,18 +342,6 @@ export async function createTodayDailyNote() {
 
   currentBlockId.value = blockId
 }
-
-onMounted(() => {
-  document.addEventListener('touchmove', (e) => {
-    if (targetIsInnerOf(e.target as HTMLElement, (target) => {
-      return target.classList.contains('enQuickNoteContainer')
-    })) {
-      e.preventDefault()
-      e.stopPropagation()
-      e.stopImmediatePropagation()
-    }
-  }, true)
-})
 </script>
 
 
@@ -345,6 +370,10 @@ onMounted(() => {
 
   .arco-modal-body {
     padding: 0;
+  }
+
+  .arco-modal-footer {
+    padding: 6px 8px;
   }
 
   .enCommentContainerContent {
@@ -381,7 +410,7 @@ html[data-en-is-standalone="true"][data-en-pwa="true"] {
     .enQuickNoteContainer {
       margin: unset;
       width: calc(100% - var(--en-status-height) - var(--en-toolbar-height));
-      max-height: calc(40vh);
+      max-height: calc(50vh);
     }
   }
   &[data-en-orientation="landscape-secondary"] {
