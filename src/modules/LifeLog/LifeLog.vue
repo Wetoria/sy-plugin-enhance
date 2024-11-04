@@ -70,6 +70,7 @@ import EnSettingsTeleportModule from '../Settings/EnSettingsTeleportModule.vue';
 import EnSettingsItem from '../Settings/EnSettingsItem.vue';
 import { reloadLifeLogData } from './EnLifeLogDailyNoteGraph.vue';
 import { moduleEnableStatusSwitcher } from '@/utils';
+import { log } from '@/utils/Log';
 
 const plugin = usePlugin()
 
@@ -187,6 +188,18 @@ function markLifeLogBlock() {
         return
       }
       const time = (content.match(/^\d{2}:\d{2}(:\d{2})?/) || [])[0]
+
+      let dom = document.createElement('div')
+      dom.innerHTML = opt.data
+      dom = dom.firstElementChild as HTMLDivElement
+      const editDom = dom.firstElementChild
+      const isPureTimeStart = editDom.innerHTML.trim().startsWith(time)
+
+      if (!isPureTimeStart) {
+        log('LifeLog is not start with pure time')
+        return
+      }
+
       const elseContent = content.replace(/^\d{2}:\d{2}(:\d{2})?\s+/, '')
 
       if (!elseContent) {
