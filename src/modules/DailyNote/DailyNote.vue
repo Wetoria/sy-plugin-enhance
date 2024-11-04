@@ -271,6 +271,9 @@ export async function createTodayDailyNote() {
     return
   }
 
+  if (quickNoteModalVisible.value) {
+    return
+  }
   isCreatingDailyNote.value = true
   const res = await appendBlockIntoDailyNote(
     'markdown',
