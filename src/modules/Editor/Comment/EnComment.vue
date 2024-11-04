@@ -83,11 +83,11 @@
 </template>
 
 <script setup lang="ts">
-import { appendDailyNoteBlock, deleteBlock, getBlockAttrs, setBlockAttrs, sql } from '@/api';
+import { deleteBlock, getBlockAttrs, setBlockAttrs, sql } from '@/api';
 import EnNotebookSelector from '@/components/EnNotebookSelector.vue';
 import EnProtyle from '@/components/EnProtyle.vue';
 import { usePlugin } from '@/main';
-import { useDailyNote } from '@/modules/DailyNote/DailyNote.vue';
+import { appendBlockIntoDailyNote, useDailyNote } from '@/modules/DailyNote/DailyNote.vue';
 import { debounce, generateShortUUID } from '@/utils';
 import { positionModalWithTranslate, targetIsInnerOf, targetIsOutsideOf, useRegisterStyle } from '@/utils/DOM';
 import { useSiyuanEventLoadedProtyleStatic, useSiyuanEventTransactions } from '@/utils/EventBusHooks';
@@ -115,6 +115,12 @@ const appendType: 'daily-note' | 'cur-doc' | 'target-doc' = 'daily-note'
 
 
 const messageFlag = ref(null)
+const stopMessage = () => {
+  if (messageFlag.value) {
+    clearTimeout(messageFlag.value)
+    messageFlag.value = null
+  }
+}
 
 // #region protyle 控制逻辑相关
 
@@ -132,10 +138,7 @@ const onAfterRender = (protyle: Protyle) => {
 
       protyle.focusBlock(target, false)
       isCommenting.value = false
-      if (messageFlag.value) {
-        clearTimeout(messageFlag.value)
-        messageFlag.value = null
-      }
+      stopMessage()
     }
   }, 0)
 }
@@ -255,33 +258,37 @@ watch(dailyNoteNotebookId, async () => {
 const newCommentNodeIdRef = ref()
 
 const createCommentIntoDailyNote = async (commentId: string, text: string) => {
-  const res = await appendDailyNoteBlock(
-    'markdown',
-    text,
-    dailyNoteNotebookId.value,
-  )
+  try {
+    const res = await appendBlockIntoDailyNote(
+      'markdown',
+      text,
+      dailyNoteNotebookId.value,
+    )
 
-  const {
-    doOperations = [],
-  } = res[0]
-  const transaction = doOperations[0]
-  const {
-    id,
-  } = transaction;
+    const {
+      doOperations = [],
+    } = res[0]
+    const transaction = doOperations[0]
+    const {
+      id,
+    } = transaction;
 
-  const newCommentNodeId = id
+    const newCommentNodeId = id
 
-  await setBlockAttrs(newCommentNodeId, {
-    'custom-en-comment-ref-id': commentId
-  })
+    await setBlockAttrs(newCommentNodeId, {
+      'custom-en-comment-ref-id': commentId
+    })
 
-  lastCommentParams.value = {
-    commentId,
-    text,
+    lastCommentParams.value = {
+      commentId,
+      text,
+    }
+
+    newCommentNodeIdRef.value = newCommentNodeId
+    popoverVisible.value = true
+  } catch (error) {
+    stopMessage()
   }
-
-  newCommentNodeIdRef.value = newCommentNodeId
-  popoverVisible.value = true
 }
 const commentByCommentIdAndText = async (commentId: string, text: string) => {
   const mdText = `- ${text}${defaultInserNewLine ? '\n\n    &ZeroWidthSpace;' : ''}`

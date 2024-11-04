@@ -98,6 +98,24 @@ export function useDailyNote() {
   }
 }
 
+export function appendBlockIntoDailyNote(
+  dataType: "markdown" | "dom",
+  data: string,
+  notebook: string,
+): Promise<IResdoOperations[]> {
+  if (!notebook) {
+    showMessage('[Enhance 插件] 请先选择创建日记的笔记本')
+    return Promise.reject('[Enhance 插件] 请先选择创建日记的笔记本')
+  }
+  const payload = {
+    dataType,
+    data,
+    notebook,
+  };
+  const url = "/api/block/appendDailyNoteBlock";
+  return request(url, payload);
+}
+
 async function getCurrentDocAttr(currentDocId) {
   const data = {
     stmt: `

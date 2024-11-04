@@ -32,14 +32,14 @@
 </template>
 
 <script setup lang="ts">
-  import { appendDailyNoteBlock, deleteBlock } from '@/api';
+import { deleteBlock } from '@/api';
 import EnProtyle from '@/components/EnProtyle.vue';
 import { usePlugin } from '@/main';
   import EnWindow, { isInWindow } from '@/modules/EnWindow.vue';
 import { Protyle } from 'siyuan';
   import { computed, onMounted, ref, watch } from 'vue';
 import EnNotebookSelector from '@/components/EnNotebookSelector.vue';
-import { useDailyNote } from '../DailyNote/DailyNote.vue';
+import { appendBlockIntoDailyNote, useDailyNote } from '../DailyNote/DailyNote.vue';
 
   const winTitle = 'QuickNote'
   const inWindow = ref(isInWindow(winTitle))
@@ -76,7 +76,7 @@ import { useDailyNote } from '../DailyNote/DailyNote.vue';
     if (!inWindow.value) {
       return
     }
-    const res = await appendDailyNoteBlock(
+    const res = await appendBlockIntoDailyNote(
       'markdown',
       ``,
       selectedNotebookId.value,
