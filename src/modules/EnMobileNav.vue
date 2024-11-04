@@ -33,7 +33,7 @@
             />
           </div>
         </div>
-        <div class="NavItem" @click="createTodayDailyNote">
+        <div class="NavItem" @click="createTodayDailyNote" v-if="isNotFree">
           <div class="NavItemIcon">
             <SyIcon
               name="iconAdd"
@@ -120,7 +120,7 @@ import { computed } from 'vue';
 import { useDocHistory } from '@/utils/History'
 import { entryOpenSettings, useSettings } from '@/modules/Settings/EnSettings.vue';
 import { createTodayDailyNote, jumpToNextDailyNote, jumpToPrevDailyNote } from '@/modules/DailyNote/DailyNote.vue';
-
+import { isNotFree } from '@/modules/Settings/EnSettings.vue';
 
 onMounted(() => {
   if (!plugin.isMobile) {
