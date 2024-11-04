@@ -159,6 +159,7 @@ import { Protyle } from 'siyuan';
   width: 0;
   display: flex;
   flex-direction: column;
+  gap: 4px;
   color: var(--b3-theme-on-background);
 
   .EnQuickNoteToolBarLine {
