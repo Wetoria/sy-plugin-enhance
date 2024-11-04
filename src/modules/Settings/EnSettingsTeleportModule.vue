@@ -71,7 +71,7 @@ const resetModule = () => {
   resetModuleOptions(module.value)
 }
 
-watch(() => module.value.options, () => {
+watch(() => module?.value?.options, () => {
   const optionsKeys = Object.keys(module.value.options)
       .filter((key) => typeof module.value.options[key] == 'boolean')
   if (!optionsKeys.length) {
