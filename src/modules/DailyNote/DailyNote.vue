@@ -25,6 +25,34 @@
       </template>
     </EnSettingsItem>
   </EnSettingsTeleportModule>
+  <Teleport to="body">
+    <a-modal
+      v-model:visible="quickNoteModalVisible"
+      class="enQuickNoteModal"
+      modal-class="enQuickNoteContainer"
+      :footer="false"
+      :mask="false"
+      :alignCenter="false"
+    >
+      <template #title>
+        添加日记
+      </template>
+      <div
+        class="enCommentContainerContent"
+      >
+        <a-spin dot :loading="isCreatingDailyNote">
+          <EnProtyle
+            :blockId="currentBlockId"
+            :options="{
+              action: ['cb-get-focusfirst', 'cb-get-html', 'cb-get-all'],
+            }"
+            @after="onAfterRender"
+            disableEnhance
+          />
+        </a-spin>
+      </div>
+    </a-modal>
+  </Teleport>
 </template>
 
 
@@ -32,6 +60,7 @@
 <script setup lang="tsx">
 import { usePlugin } from '@/main';
 import {
+  Protyle,
   showMessage,
 } from "siyuan";
 import { createDailyNote, lsNotebooks, request } from '@/api';
@@ -43,6 +72,8 @@ import EnNotebookSelector from '@/components/EnNotebookSelector.vue';
 import { jumpToProtyleBottom } from '../Editor/ProtyleBottom/EnProtyleBottomIndicator.vue';
 import EnSettingsTeleportModule from '../Settings/EnSettingsTeleportModule.vue';
 import { useModule } from '../Settings/EnSettings.vue';
+import EnProtyle from '@/components/EnProtyle.vue';
+import { targetIsInnerOf } from '@/utils/DOM';
 
 const plugin = usePlugin()
 onMounted(() => {
@@ -212,64 +243,129 @@ async function jumpTo(next = true) {
   openDocById(prevDailyNoteInfo.id)
 }
 
-export function createTodayDailyNote() {
+export function getAppendedDailyNoteBlockId(res: IResdoOperations[]) {
+  const transaction = res[0]?.doOperations[0]
+  return transaction?.id
+}
+
+const isCreatingDailyNote = ref(false)
+const quickNoteModalVisible = ref(false)
+const currentBlockId = ref()
+
+const onAfterRender = (protyle: Protyle) => {
+  const flag = setInterval(() => {
+    const target = protyle.protyle.contentElement.querySelector(`[data-node-id="${currentBlockId.value}"]`)
+    if (target) {
+      clearInterval(flag)
+
+      protyle.focusBlock(target, false)
+      isCreatingDailyNote.value = false
+    }
+  }, 0)
+  enLog('onAfterRender', protyle)
+}
+export async function createTodayDailyNote() {
   const enhancer = useEnhancer()
   if (enhancer.value.isSync) {
     showMessage('正在同步中，请等待同步完成再创建笔记', 1000)
     return
   }
 
-  lsNotebooks().then(async (res) => {
-    const {
-      notebooks = [],
-    } = res
-    if (!notebooks.length) {
-      return
-    }
+  isCreatingDailyNote.value = true
+  const res = await appendBlockIntoDailyNote(
+    'markdown',
+    '',
+    moduleOptions.value.dailyNoteNotebookId
+  )
+  const blockId = getAppendedDailyNoteBlockId(res)
 
-    const openedNotebookList = notebooks.filter(i => !i.closed)
+  quickNoteModalVisible.value = true
 
-    if (!openedNotebookList.length) {
-      showMessage('请先打开笔记本')
-      return
-    }
-
-    if (openedNotebookList.length !== 1) {
-      // IMP 让选择笔记本
-      showMessage('打开了多个笔记本')
-      return
-    }
-
-    const currentNoteBook = openedNotebookList[0];
-    const {
-      id: notebookId,
-    } = currentNoteBook;
-
-    const dailyNote = await getDailyNote(notebookId)
-    if (!dailyNote || dailyNote.length === 0) {
-      createDailyNote(notebookId).then((res) => {
-        openDocById(res.id);
-        setTimeout(() => {
-          jumpToProtyleBottom(res.id)
-        }, 300)
-      })
-      return
-    }
-
-    if (dailyNote.length !== 1) {
-      return
-    }
-    const todayNote = dailyNote[0]
-    openDoc(todayNote)
-    setTimeout(() => {
-      jumpToProtyleBottom(todayNote.id)
-    }, 300)
-  })
+  currentBlockId.value = blockId
 }
+
+onMounted(() => {
+  document.addEventListener('touchmove', (e) => {
+    if (targetIsInnerOf(e.target as HTMLElement, (target) => {
+      return target.classList.contains('enQuickNoteContainer')
+    })) {
+      e.preventDefault()
+      e.stopPropagation()
+      e.stopImmediatePropagation()
+    }
+  }, true)
+})
 </script>
 
 
 
 <style lang="scss">
+.enQuickNoteModal {
+  pointer-events: none;
 
+  & .arco-modal-wrapper {
+    pointer-events: none;
+    overflow: hidden;
+  }
+}
+.enQuickNoteContainer {
+  pointer-events: auto;
+  top: 0;
+  vertical-align: top;
+  width: calc(100vw - 20px);
+  background: var(--b3-theme-background);
+  border: 1px solid var(--b3-border-color);
+  transform: translateY(20px);
+  max-height: calc(100vh - 40px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  .arco-modal-body {
+    padding: 0;
+  }
+
+  .enCommentContainerContent {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: auto;
+
+    .protyle-content {
+      padding-bottom: unset !important;
+    }
+
+    .protyle-wysiwyg {
+      padding: 6px 16px !important;
+    }
+  }
+}
+
+html[data-en-is-standalone="true"][data-en-pwa="true"] {
+  &[data-en-orientation="portrait-primary"] {
+    .enQuickNoteContainer {
+      transform: translateY(var(--en-status-height));
+      max-height: calc(35vh);
+    }
+  }
+
+  &[data-en-orientation="landscape-secondary"],
+  &[data-en-orientation="landscape-primary"] {
+    .enQuickNoteContainer {
+      margin: unset;
+      width: calc(100% - var(--en-status-height) - var(--en-toolbar-height));
+      max-height: calc(40vh);
+    }
+  }
+  &[data-en-orientation="landscape-secondary"] {
+    .enQuickNoteContainer {
+      transform: translateX(var(--en-toolbar-height));
+    }
+  }
+  &[data-en-orientation="landscape-primary"] {
+    .enQuickNoteContainer {
+      transform: translateX(var(--en-status-height));
+    }
+  }
+}
 </style>
