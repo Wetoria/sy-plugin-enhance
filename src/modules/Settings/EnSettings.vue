@@ -259,10 +259,11 @@ const settings = ref<EnSettings>({
 } as EnSettings)
 
 const socketRef = ref()
-const socketOpenning = computed(() => socketRef.value && socketRef.value.readyState == WebSocket.OPEN)
+const socketIsOpen = () => socketRef.value && socketRef.value?.readyState == WebSocket.OPEN
+const socketIsClosed = () => !socketIsOpen()
 
 const syncWsSettings = () => {
-  if (!socketOpenning.value) {
+  if (socketIsClosed()) {
     return
   }
 
