@@ -90,6 +90,14 @@ export function notebookIsOpened(notebookId: string) {
   return openedNotebookList.value.some(i => i.id === notebookId)
 }
 
+export function useDailyNote() {
+  return {
+    openedNotebookList,
+    module,
+    moduleOptions,
+  }
+}
+
 async function getCurrentDocAttr(currentDocId) {
   const data = {
     stmt: `

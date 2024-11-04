@@ -17,20 +17,12 @@
               添加评论
             </div>
             <a-divider direction="vertical" />
-            <div class="flexAlignCenter">笔记本：</div>
+            <div class="flexAlignCenter">日记笔记本：</div>
             <div>
-              <a-select
-                placeholder="选择笔记本"
-                v-model="dailyNoteNotebookId"
-              >
-                <a-option
-                  v-for="notebook of openedNotebookList"
-                  :key="notebook.id"
-                  :value="notebook.id"
-                  :label="notebook.name"
-                >
-                </a-option>
-              </a-select>
+              <EnNotebookSelector
+                :notebookList="openedNotebookList"
+                v-model="moduleOptions.dailyNoteNotebookId"
+              />
             </div>
           </template>
           <template v-else>
@@ -91,9 +83,11 @@
 </template>
 
 <script setup lang="ts">
-import { appendDailyNoteBlock, getBlockAttrs, setBlockAttrs, sql } from '@/api';
+import { appendDailyNoteBlock, deleteBlock, getBlockAttrs, setBlockAttrs, sql } from '@/api';
+import EnNotebookSelector from '@/components/EnNotebookSelector.vue';
 import EnProtyle from '@/components/EnProtyle.vue';
 import { usePlugin } from '@/main';
+import { useDailyNote } from '@/modules/DailyNote/DailyNote.vue';
 import { debounce, generateShortUUID } from '@/utils';
 import { positionModalWithTranslate, targetIsInnerOf, targetIsOutsideOf, useRegisterStyle } from '@/utils/DOM';
 import { useSiyuanEventLoadedProtyleStatic, useSiyuanEventTransactions } from '@/utils/EventBusHooks';
@@ -102,14 +96,17 @@ import { useMousePostion } from '@/utils/Mouse';
 import { useCurrentProtyle } from '@/utils/Siyuan'
 import dayjs from 'dayjs';
 import { Protyle, showMessage } from 'siyuan';
-import { onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue';
 
 const plugin = usePlugin()
 
 const currentProtyle = useCurrentProtyle()
 
-const openedNotebookList = ref(window.siyuan.notebooks.filter(i => !i.closed))
-const dailyNoteNotebookId = ref(openedNotebookList.value[0]?.id)
+const {
+  openedNotebookList,
+  moduleOptions,
+} = useDailyNote()
+const dailyNoteNotebookId = computed(() => moduleOptions.value.dailyNoteNotebookId)
 
 // 是否默认新增一个输入的行
 const defaultInserNewLine = true
@@ -240,13 +237,27 @@ const commentByNodeIdAndText = async (nodeId: string, text: string) => {
 }
 
 
+const lastCommentParams = ref({
+  commentId: '',
+  text: '',
+})
+
+watch(dailyNoteNotebookId, async () => {
+  if (popoverVisible.value) {
+    if (currentBlockId.value) {
+      await deleteBlock(currentBlockId.value)
+      createCommentIntoDailyNote(lastCommentParams.value.commentId, lastCommentParams.value.text)
+    }
+  }
+})
+
 // 根据 commentId 和文本在思源中创建评论，获取到新的评论 nodeId，用来在 protyle 中展示
 const newCommentNodeIdRef = ref()
-const commentByCommentIdAndText = async (commentId: string, text: string) => {
 
+const createCommentIntoDailyNote = async (commentId: string, text: string) => {
   const res = await appendDailyNoteBlock(
     'markdown',
-    `- ${text}${defaultInserNewLine ? '\n\n    &ZeroWidthSpace;' : ''}`,
+    text,
     dailyNoteNotebookId.value,
   )
 
@@ -264,8 +275,17 @@ const commentByCommentIdAndText = async (commentId: string, text: string) => {
     'custom-en-comment-ref-id': commentId
   })
 
+  lastCommentParams.value = {
+    commentId,
+    text,
+  }
+
   newCommentNodeIdRef.value = newCommentNodeId
   popoverVisible.value = true
+}
+const commentByCommentIdAndText = async (commentId: string, text: string) => {
+  const mdText = `- ${text}${defaultInserNewLine ? '\n\n    &ZeroWidthSpace;' : ''}`
+  await createCommentIntoDailyNote(commentId, mdText)
 }
 
 // 当有新的评论 nodeId 时，更新当前的 blockId
@@ -813,7 +833,7 @@ const onClickComment = async (event: MouseEvent) => {
   })
 
   popoverVisible.value = true
-  currentBlockId.value = false
+  currentBlockId.value = ''
   recordAdjustCommentModalTargetElement(firstCommentDom as HTMLElement)
   adjustCommentModal()
 }

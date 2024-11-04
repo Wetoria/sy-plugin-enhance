@@ -39,8 +39,7 @@ import { usePlugin } from '@/main';
 import { Protyle } from 'siyuan';
   import { computed, onMounted, ref, watch } from 'vue';
 import EnNotebookSelector from '@/components/EnNotebookSelector.vue';
-import { useModule } from '../Settings/EnSettings.vue';
-import { DailyNoteModuleName, DailyNoteModuleOptions } from '../DailyNote/DailyNote.vue';
+import { useDailyNote } from '../DailyNote/DailyNote.vue';
 
   const winTitle = 'QuickNote'
   const inWindow = ref(isInWindow(winTitle))
@@ -63,9 +62,10 @@ import { DailyNoteModuleName, DailyNoteModuleOptions } from '../DailyNote/DailyN
 
   // #region 在打开的窗口中
 
-  const openedNotebookList = ref(window.siyuan.notebooks.filter(i => !i.closed))
-  const module = useModule(DailyNoteModuleName)
-  const moduleOptions = computed(() => module.value.options as DailyNoteModuleOptions)
+  const {
+    openedNotebookList,
+    moduleOptions,
+  } = useDailyNote()
   const selectedNotebookId = computed(() => moduleOptions.value.dailyNoteNotebookId)
 
 
@@ -140,18 +140,22 @@ import { DailyNoteModuleName, DailyNoteModuleOptions } from '../DailyNote/DailyN
       });
     } else {
       const winRef = enWinRef.value.getWin()
+      let unwatchFunc = null
       winRef.on('show', () => {
         initProtyle()
+        enLog('quick note show')
+        unwatchFunc = watch(selectedNotebookId, () => {
+          destoryProtyle()
+          initProtyle()
+        })
       })
 
       winRef.on('hide', () => {
         destoryProtyle()
-      })
-
-
-      watch(selectedNotebookId, () => {
-        destoryProtyle()
-        initProtyle()
+        enLog('quick note hide')
+        if (unwatchFunc) {
+          unwatchFunc()
+        }
       })
     }
   })
