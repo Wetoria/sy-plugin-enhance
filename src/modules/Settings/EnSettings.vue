@@ -351,6 +351,7 @@ export async function loadSettings() {
   const plugin = usePlugin()
   const res = await plugin.loadData(STORAGE_KEY)
   settings.value = Object.assign({}, JSON.parse(JSON.stringify(defaultSettings)), settings.value, res || {})
+  enLog('Settings load success.')
   if (!settings.value.modules) {
     settings.value.modules = {}
   }

@@ -16,15 +16,16 @@
 
       <!-- 全平台 -->
       <template>
+        <!-- 这里的顺序，决定了设置中的模块显示顺序 -->
         <EnSettings />
         <EnSiyuanEntry />
+        <DailyNote />
         <EnEditor />
         <EnBackgroundImg v-if="isVip" />
         <EnOthers />
         <EnQuickNote />
         <ArcoDartkTheme />
 
-        <DailyNote />
         <LifeLog />
         <EnVideoAndAudio v-if="isNotFree" />
         <EnFormatBrush v-if="isNotFree"  />

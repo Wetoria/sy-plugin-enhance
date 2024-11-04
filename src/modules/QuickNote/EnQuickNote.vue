@@ -10,20 +10,12 @@
     >
       <div class="EnQuickNoteToolBarLine">
         <div class="flexAlignCenter enGap">
-          <div class="flexAlignCenter">笔记本：</div>
+          <div class="flexAlignCenter">日记笔记本：</div>
           <div>
-            <a-select
-              placeholder="选择笔记本"
-              v-model="selectedNotebookId"
-            >
-              <a-option
-                v-for="notebook of openedNotebookList"
-                :key="notebook.id"
-                :value="notebook.id"
-                :label="notebook.name"
-              >
-              </a-option>
-            </a-select>
+            <EnNotebookSelector
+              :notebookList="openedNotebookList"
+              v-model="moduleOptions.dailyNoteNotebookId"
+            />
           </div>
         </div>
       </div>
@@ -45,7 +37,10 @@ import EnProtyle from '@/components/EnProtyle.vue';
 import { usePlugin } from '@/main';
   import EnWindow, { isInWindow } from '@/modules/EnWindow.vue';
 import { Protyle } from 'siyuan';
-  import { onMounted, ref } from 'vue';
+  import { computed, onMounted, ref, watch } from 'vue';
+import EnNotebookSelector from '@/components/EnNotebookSelector.vue';
+import { useModule } from '../Settings/EnSettings.vue';
+import { DailyNoteModuleName, DailyNoteModuleOptions } from '../DailyNote/DailyNote.vue';
 
   const winTitle = 'QuickNote'
   const inWindow = ref(isInWindow(winTitle))
@@ -69,7 +64,10 @@ import { Protyle } from 'siyuan';
   // #region 在打开的窗口中
 
   const openedNotebookList = ref(window.siyuan.notebooks.filter(i => !i.closed))
-  const selectedNotebookId = ref(openedNotebookList.value[0]?.id)
+  const module = useModule(DailyNoteModuleName)
+  const moduleOptions = computed(() => module.value.options as DailyNoteModuleOptions)
+  const selectedNotebookId = computed(() => moduleOptions.value.dailyNoteNotebookId)
+
 
 
   const protyleRef = ref<Protyle>()
@@ -148,6 +146,12 @@ import { Protyle } from 'siyuan';
 
       winRef.on('hide', () => {
         destoryProtyle()
+      })
+
+
+      watch(selectedNotebookId, () => {
+        destoryProtyle()
+        initProtyle()
       })
     }
   })

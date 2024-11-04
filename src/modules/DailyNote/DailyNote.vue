@@ -1,12 +1,35 @@
 <template>
-  <!-- <EnSettingsTeleport name="DailyNote">
-    <div>Test teleport</div>
-  </EnSettingsTeleport> -->
+  <EnSettingsTeleportModule
+    :name="moduleName"
+    :display="moduleDisplayName"
+    :module="module"
+    always
+  >
+    <EnSettingsItem mode="vertical">
+      <div>
+        日记笔记本
+      </div>
+      <template #desc>
+        <div>
+          选择日记所在的笔记本。
+        </div>
+        <div>
+          该选项将会影响到一键记事、评论等模块。
+        </div>
+      </template>
+      <template #opt>
+        <EnNotebookSelector
+          :notebookList="openedNotebookList"
+          v-model="moduleOptions.dailyNoteNotebookId"
+        />
+      </template>
+    </EnSettingsItem>
+  </EnSettingsTeleportModule>
 </template>
 
 
 
-<script setup lang="ts">
+<script setup lang="tsx">
 import { usePlugin } from '@/main';
 import {
   showMessage,
@@ -14,9 +37,12 @@ import {
 import { createDailyNote, lsNotebooks, request } from '@/api';
 import { useEnhancer } from '@/modules/GlobalStatus';
 import { getDailyNote, openDoc, openDocById } from '@/utils/Note';
-import { onMounted } from 'vue';
-import EnSettingsTeleport from '../Settings/EnSettingsTeleport.vue';
+import { computed, onMounted, ref } from 'vue';
+import EnSettingsItem from '../Settings/EnSettingsItem.vue';
+import EnNotebookSelector from '@/components/EnNotebookSelector.vue';
 import { jumpToProtyleBottom } from '../Editor/ProtyleBottom/EnProtyleBottomIndicator.vue';
+import EnSettingsTeleportModule from '../Settings/EnSettingsTeleportModule.vue';
+import { useModule } from '../Settings/EnSettings.vue';
 
 const plugin = usePlugin()
 onMounted(() => {
@@ -41,8 +67,28 @@ onMounted(() => {
 
 
 
-<script lang="ts">
+<script lang="tsx">
+// 打开的笔记本列表
+const openedNotebookList = ref(window.siyuan.notebooks.filter(i => !i.closed))
+export function updateOpenedNotebookList() {
+  openedNotebookList.value = window.siyuan.notebooks.filter(i => !i.closed)
+}
+interface ModuleOptions {
+  dailyNoteNotebookId: string
+}
+export type DailyNoteModuleOptions = ModuleOptions
+const moduleName = 'DailyNote'
+export const DailyNoteModuleName = moduleName
+const moduleDisplayName = 'Daily Note'
+const defaultOptions: ModuleOptions = {
+  dailyNoteNotebookId: '',
+}
+const module = useModule(moduleName, defaultOptions)
+const moduleOptions = computed(() => module.value.options as ModuleOptions)
 
+export function notebookIsOpened(notebookId: string) {
+  return openedNotebookList.value.some(i => i.id === notebookId)
+}
 
 async function getCurrentDocAttr(currentDocId) {
   const data = {
