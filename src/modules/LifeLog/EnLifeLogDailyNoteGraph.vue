@@ -170,6 +170,9 @@ const load = () => {
       block_id;
   `
   sql(sqlStmt).then((res) => {
+    if (!res) {
+      return
+    }
     const temp = res.map((item) => {
       const jsonRecord = JSON.parse(item.json_attributes) as ILifeLog
       let endTime = jsonRecord['custom-lifelog-time']
