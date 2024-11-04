@@ -31,6 +31,7 @@ const plugin = usePlugin()
 
 const renderProtyle = () => {
   if (!props.blockId) {
+    protyleRef.value?.destroy()
     protyleRef.value = null
     if (protyleContainerRef.value) {
       protyleContainerRef.value.innerHTML = `<div></div>`

@@ -63,10 +63,10 @@ import {
   Protyle,
   showMessage,
 } from "siyuan";
-import { createDailyNote, lsNotebooks, request } from '@/api';
+import { createDailyNote, deleteBlock, lsNotebooks, request } from '@/api';
 import { useEnhancer } from '@/modules/GlobalStatus';
 import { getDailyNote, openDoc, openDocById } from '@/utils/Note';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import EnSettingsItem from '../Settings/EnSettingsItem.vue';
 import EnNotebookSelector from '@/components/EnNotebookSelector.vue';
 import { jumpToProtyleBottom } from '../Editor/ProtyleBottom/EnProtyleBottomIndicator.vue';
@@ -252,18 +252,38 @@ const isCreatingDailyNote = ref(false)
 const quickNoteModalVisible = ref(false)
 const currentBlockId = ref()
 
+const protyleRef = ref<Protyle>()
 const onAfterRender = (protyle: Protyle) => {
   const flag = setInterval(() => {
-    const target = protyle.protyle.contentElement.querySelector(`[data-node-id="${currentBlockId.value}"]`)
+    const target = protyle.protyle.contentElement.querySelector(`[data-node-id="${currentBlockId.value}"]`) as HTMLElement
+    enLog('target', target)
     if (target) {
       clearInterval(flag)
 
-      protyle.focusBlock(target, false)
+      target.dispatchEvent(new MouseEvent('dblclick'))
+      // protyle.focusBlock(target, false)
       isCreatingDailyNote.value = false
     }
   }, 0)
   enLog('onAfterRender', protyle)
+  protyleRef.value = protyle
 }
+
+const destoryProtyle = () => {
+  if (!protyleRef.value) {
+    return
+  }
+  const protyle = protyleRef.value.protyle
+  if (!protyle.updated && currentBlockId.value) {
+    deleteBlock(currentBlockId.value)
+  }
+  currentBlockId.value = ''
+}
+watch(quickNoteModalVisible, (visible) => {
+  if (!visible) {
+    destoryProtyle()
+  }
+})
 export async function createTodayDailyNote() {
   const enhancer = useEnhancer()
   if (enhancer.value.isSync) {
