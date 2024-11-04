@@ -44,7 +44,7 @@
           <EnProtyle
             :blockId="currentBlockId"
             :options="{
-              action: ['cb-get-focusfirst', 'cb-get-html', 'cb-get-all'],
+              action: ['cb-get-html', 'cb-get-all'],
             }"
             @after="onAfterRender"
             disableEnhance
@@ -63,13 +63,12 @@ import {
   Protyle,
   showMessage,
 } from "siyuan";
-import { createDailyNote, deleteBlock, lsNotebooks, request } from '@/api';
+import { deleteBlock, request } from '@/api';
 import { useEnhancer } from '@/modules/GlobalStatus';
-import { getDailyNote, openDoc, openDocById } from '@/utils/Note';
+import { openDocById } from '@/utils/Note';
 import { computed, onMounted, ref, watch } from 'vue';
 import EnSettingsItem from '../Settings/EnSettingsItem.vue';
 import EnNotebookSelector from '@/components/EnNotebookSelector.vue';
-import { jumpToProtyleBottom } from '../Editor/ProtyleBottom/EnProtyleBottomIndicator.vue';
 import EnSettingsTeleportModule from '../Settings/EnSettingsTeleportModule.vue';
 import { useModule } from '../Settings/EnSettings.vue';
 import EnProtyle from '@/components/EnProtyle.vue';
@@ -256,12 +255,12 @@ const protyleRef = ref<Protyle>()
 const onAfterRender = (protyle: Protyle) => {
   const flag = setInterval(() => {
     const target = protyle.protyle.contentElement.querySelector(`[data-node-id="${currentBlockId.value}"]`) as HTMLElement
-    enLog('target', target)
+    enLog('target', target, target.dataset.nodeId)
     if (target) {
       clearInterval(flag)
+      const editableDom = target.firstElementChild as HTMLElement
 
-      target.dispatchEvent(new MouseEvent('dblclick'))
-      // protyle.focusBlock(target, false)
+      editableDom.setAttribute("placeholder", '写点什么');
       isCreatingDailyNote.value = false
     }
   }, 0)
@@ -360,6 +359,11 @@ onMounted(() => {
 
     .protyle-wysiwyg {
       padding: 6px 16px !important;
+
+      [data-type="NodeParagraph"] > div:first-child:empty:before {
+        color: var(--b3-empty-color);
+        content: attr(placeholder);
+      }
     }
   }
 }
