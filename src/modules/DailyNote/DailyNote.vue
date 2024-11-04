@@ -130,7 +130,7 @@ onMounted(() => {
 // 打开的笔记本列表
 const openedNotebookList = ref([])
 export function updateOpenedNotebookList() {
-  openedNotebookList.value = window.siyuan.notebooks.filter(i => !i.closed)
+  openedNotebookList.value = window.siyuan?.notebooks?.filter(i => !i.closed) || []
 }
 
 interface ModuleOptions {
@@ -144,7 +144,7 @@ const defaultOptions: ModuleOptions = {
   dailyNoteNotebookId: '',
 }
 const module = useModule(moduleName, defaultOptions)
-const moduleOptions = computed(() => module.value.options as ModuleOptions)
+const moduleOptions = computed(() => module.value?.options as ModuleOptions || {})
 
 // TODO 思源的笔记本列表更新不及时，等以后提案了响应式以后，再考虑要不要优化吧。
 export function notebookIsOpened(notebookId: string) {

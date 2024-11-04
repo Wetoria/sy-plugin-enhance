@@ -339,8 +339,8 @@ function registerModule(module: string, defaultOptions: object) {
   const isInSetting = module in settings.value.modules
   const newModule = {
     enabled: false,
-    options: defaultOptions,
-    defaultOptions: defaultOptions,
+    options: JSON.parse(JSON.stringify(defaultOptions)),
+    defaultOptions: JSON.parse(JSON.stringify(defaultOptions)),
   }
   if (!isInSetting) {
     settings.value.modules[module] = newModule
