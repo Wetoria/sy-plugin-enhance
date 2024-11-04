@@ -3,7 +3,7 @@
     to="body"
   >
     <div
-      class="enWindowContainer flexColumn"
+      class="enWindowContainer"
       :data-in-window="currentInWindow"
       v-if="currentInWindow"
     >
@@ -14,19 +14,21 @@
 
         </div>
         <div class="btns">
-          <div
-            class="toolBarItem" @click="switchPinStatus"
+          <a-button
+            type="text"
+            status="normal"
+            @click="switchPinStatus"
             v-if="currentInWindow"
           >
-            <SyIcon v-if="pinned" name="iconUnpin" size="16" />
-            <SyIcon v-else name="iconPin" size="16" />
-          </div>
-          <div
-            class="toolBarItem"
+            <SyIcon v-if="pinned" name="iconUnpin" size="14" />
+            <SyIcon v-else name="iconPin" size="14" />
+          </a-button>
+          <a-button
+            type="text"
             @click="hideWindow"
           >
-            <icon-close class="closeIcon" />
-          </div>
+            <icon-close />
+          </a-button>
         </div>
       </div>
       <div class="displayArea">
@@ -233,6 +235,8 @@ export function getWindow(title, currentInWindow = false) {
   opacity: var(--en-opacity);
 
   display: flex;
+  flex-direction: column;
+  gap: 2px;
 
   &[data-in-window="true"] {
     .windowDraggerArea {
@@ -251,33 +255,16 @@ export function getWindow(title, currentInWindow = false) {
     .btns {
       display: flex;
       box-sizing: border-box;
-      padding: 12px;
-      gap: var(--en-gap);
 
-      .toolBarItem {
-        width: 24px;
-        height: 24px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        cursor: pointer;
-
-        .arco-icon,
-        .enSyIcon {
-          color: var(--b3-toolbar-color);
-          font-size: 16px;
-        }
+      .arco-btn {
+        color: var(--b3-toolbar-color);
 
         &:hover {
           background-color: var(--b3-toolbar-hover);
-
-          .arco-icon,
-          .enSyIcon {
-            color: var(--b3-theme-on-background);
-            font-size: 16px;
-          }
+          color: var(--b3-theme-on-background);
         }
       }
+
     }
 
   }

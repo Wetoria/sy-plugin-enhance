@@ -5,7 +5,7 @@
     ref="enWinRef"
   >
     <div
-      class="EnQuickNoteContainer flexColumn"
+      class="EnQuickNoteContainer"
       v-if="inWindow"
     >
       <div class="EnQuickNoteToolBarLine">
@@ -158,20 +158,25 @@ import { Protyle } from 'siyuan';
   flex: 1;
   width: 0;
   display: flex;
+  flex-direction: column;
   color: var(--b3-theme-on-background);
 
   .EnQuickNoteToolBarLine {
     display: flex;
     align-items: center;
-    padding: 8px 16px;
+    padding: 0px 16px;
     overflow-x: auto;
     z-index: 2;
   }
 
   .inputArea {
-    padding: 8px 0px;
+    padding: 0px 0px;
     flex: 1;
     overflow: auto;
+
+    :deep(.protyle-wysiwyg) {
+      padding-top: unset !important;
+    }
   }
 }
 </style>

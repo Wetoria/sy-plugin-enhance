@@ -1,6 +1,6 @@
 <template>
   <a-config-provider
-    size="small"
+    size="mini"
   >
     <div
       id="SyEnhancerApp"
