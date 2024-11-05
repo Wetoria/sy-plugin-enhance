@@ -10,7 +10,7 @@ import { loadSettings } from './modules/Settings/EnSettings.vue';
 let pluginRef: VPlugin = null
 export function registerPlugin(plugin) {
   pluginRef = reactive(plugin)
-  // @ts-expect-error en_plugin
+
   window.en_plugin = pluginRef
 }
 export function usePlugin() {

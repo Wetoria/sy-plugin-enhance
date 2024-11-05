@@ -126,6 +126,9 @@ interface Window {
   enLog: typeof console.log,
   enWarn: typeof console.warn,
   enError: typeof console.error,
+
+  en_SyncDataRefMap: Ref<EnSyncDataRefMap>,
+  en_plugin: VPlugin,
 }
 
 interface IBreadcrumb {
