@@ -118,8 +118,7 @@ export function useSyncModuleData<T>({
   defaultData = {} as T,
   needSave = true,
 }: IProps<T>): Ref<EnSyncModuleData<T>> {
-  const plugin = usePlugin()
-
+  enWarn('useSyncModuleData', namespace, defaultData, needSave)
 
   const existData = syncDataRefMap[namespace]
   enLog('existData is ', namespace, existData)
@@ -133,46 +132,48 @@ export function useSyncModuleData<T>({
   }
 
   onMounted(() => {
+    const plugin = usePlugin()
+
     initWebsocket()
-  })
 
-  const saveData = () => {
-    const mapData = syncDataRefMap[namespace]
-    if (!needSave) return
+    const saveData = () => {
+      const mapData = syncDataRefMap[namespace]
+      if (!needSave) return
 
-    if (mapData.donotSave) {
-      mapData.donotSave = false
-      return
+      if (mapData.donotSave) {
+        mapData.donotSave = false
+        return
+      }
+      const plugin = usePlugin()
+      plugin.saveData(storageKey, dataRef.value)
     }
-    plugin.saveData(storageKey, dataRef.value)
-  }
-  const syncDataByWebsocket = () => {
-    sendToSyncByData<T>(namespace, dataRef.value)
-  }
+    const syncDataByWebsocket = () => {
+      sendToSyncByData<T>(namespace, dataRef.value)
+    }
 
+    if (!existData) {
+      plugin.loadData(storageKey).then((res: EnSyncModuleData<T>) => {
+        // 合并默认值到返回值中，方便新增字段
+        const mergedData = Object.assign({}, defaultDataCopy, res.data)
+        const mergedRes = {
+          data: mergedData,
+          defaultValue: defaultDataCopy,
+        }
+        enLog('mergedRes ', mergedRes)
+        dataRef.value = mergedRes || {
+          data: defaultDataCopy,
+          defaultValue: defaultDataCopy,
+        }
+      })
 
-  if (!existData) {
-    plugin.loadData(storageKey).then((res: EnSyncModuleData<T>) => {
-      // 合并默认值到返回值中，方便新增字段
-      const mergedData = Object.assign({}, defaultDataCopy, res.data)
-      const mergedRes = {
-        data: mergedData,
-        defaultValue: defaultDataCopy,
-      }
-      enLog('mergedRes ', mergedRes)
-      dataRef.value = mergedRes || {
-        data: defaultDataCopy,
-        defaultValue: defaultDataCopy,
-      }
-    })
-
-    watch(dataRef, () => {
-      saveData()
-      syncDataByWebsocket()
-    }, {
-      deep: true,
-    })
-  }
+      watch(dataRef, () => {
+        saveData()
+        syncDataByWebsocket()
+      }, {
+        deep: true,
+      })
+    }
+  })
 
   return dataRef
 }
