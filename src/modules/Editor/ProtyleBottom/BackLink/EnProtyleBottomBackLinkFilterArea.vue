@@ -654,7 +654,7 @@ const hideDomByBlockRefTree = () => {
     }
   }
 
-  console.log('backlinkDocTreeStruct is ', backlinkDocTreeStruct.value)
+  enLog('backlinkDocTreeStruct is ', backlinkDocTreeStruct.value)
   const needDealChildContent = []
   recursionTree(backlinkDocTreeStruct.value, null, (curNode) => {
     const targetChain = validBacklinkTreePathChain.value.find((chain) => chain.some(i => i.id == curNode.id))

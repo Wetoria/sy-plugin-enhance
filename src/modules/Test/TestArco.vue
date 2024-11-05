@@ -19,7 +19,7 @@ export interface TestArcoType {
 }
 export function testFunc(path) {
   const test = ref('test')
-  console.log(`log in test Func by: ${path}. ${test.value}`)
+  enLog(`log in test Func by: ${path}. ${test.value}`)
 }
 </script>
 

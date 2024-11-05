@@ -231,7 +231,7 @@ const copyCurrentVideoTimeLink = async () => {
     await navigator.clipboard.writeText(link)
     showMessage('已复制当前视频/音频的时间戳链接')
   } catch(err) {
-    console.error(err)
+    enError(err)
   }
 }
 const copyCurrentVideoTimeLinkMD = async () => {
@@ -240,7 +240,7 @@ const copyCurrentVideoTimeLinkMD = async () => {
     await navigator.clipboard.writeText(link)
     showMessage('已复制当前视频/音频的时间戳(Markdown)链接')
   } catch(err) {
-    console.error(err)
+    enError(err)
   }
 }
 

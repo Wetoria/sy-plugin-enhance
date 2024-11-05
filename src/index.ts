@@ -33,7 +33,7 @@ export default class EnhancePlugin extends Plugin {
     this.isMobile = frontEnd === "mobile" || frontEnd === "browser-mobile";
     this.isBrowser = frontEnd.includes('browser')
     this.isLocal = location.href.includes('127.0.0.1') || location.href.includes('localhost')
-    console.log('require is ', require)
+    enLog('require is ', require)
     try {
       require("@electron/remote")
       .require("@electron/remote/main")

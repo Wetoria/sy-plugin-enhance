@@ -158,7 +158,7 @@ const getWebSocketMessage = (event) => {
     changedByWebsocket = true
     settings.value = msg.settings
   } catch(err) {
-    console.error('[Enhance Error]: ', err)
+    enError(err)
   }
 }
 
@@ -168,7 +168,7 @@ const initWebsocket = () => {
   socketRef.value = socket
 
   socket.onopen = () => {
-    console.log('[Enhance - Plugin] websocket connected.')
+    enLog('websocket connected.')
   }
 
   socket.onmessage = getWebSocketMessage

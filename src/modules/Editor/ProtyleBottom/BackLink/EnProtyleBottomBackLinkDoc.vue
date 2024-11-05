@@ -70,7 +70,7 @@ const protyleRef = ref<Protyle>()
 const backlinks = ref([])
 
 watchEffect(() => {
-  console.log('isExpand is ', isExpand.value)
+  enLog('isExpand is ', isExpand.value)
   if (isExpand.value && renderRef.value) {
     protyleRef.value = new Protyle(plugin.app, renderRef.value, {
       blockId: props.currentDocId,

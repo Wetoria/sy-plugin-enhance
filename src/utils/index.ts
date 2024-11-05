@@ -77,7 +77,7 @@ export function useMobileKeyBoardShown() {
             registered = true
           }
         } else {
-          console.log('no keyboard tool bar')
+          enLog('no keyboard tool bar')
         }
       }, 100)
     })

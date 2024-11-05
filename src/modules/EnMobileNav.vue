@@ -157,11 +157,11 @@ const onScroll = (event) => {
   const currentScrollTop = (event.target as HTMLElement).scrollTop
 
   if (currentScrollTop + 60 <= lastScrollTop.value) {
-    console.log('向上滚动');
+    enLog('向上滚动');
     showToolBar.value = true
     lastScrollTop.value = currentScrollTop;
   } else if (currentScrollTop - 10 >= lastScrollTop.value) {
-    console.log('向下滚动');
+    enLog('向下滚动');
     showToolBar.value = false
     lastScrollTop.value = currentScrollTop;
   }

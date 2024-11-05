@@ -222,7 +222,7 @@ plugin.protyleSlash.push({
   id: "enTemplateInsertCornell",
   callback(protyle: Protyle) {
     const iProtyle = protyle.protyle
-    console.log('id is ', iProtyle.selectElement)
+    enLog('id is ', iProtyle.selectElement)
     protyle.insert(`{{{row\n{{{col\n{{{row\n线索\n{: style="" }\n{: style="" }\n}}}\n{{{row\n笔记\n{: style="" }\n{: style="" }\n}}}\n}}}\n{{{row\n总结\n{: style="" }\n{: style="" }\n}}}\n}}}\n{: custom-iscornell="true" }`);
   }
 })
