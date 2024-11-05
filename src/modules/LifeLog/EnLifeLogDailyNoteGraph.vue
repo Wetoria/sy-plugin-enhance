@@ -40,8 +40,14 @@
               ].filter(Boolean).join('：')
             }}
           </div>
+          <div
+            class="info"
+          >
+            持续：{{ record.totalDiffFormatted }}
+          </div>
         </div>
       </div>
+
       <div class="PromptArea">
         <div
           v-for="index of 24"
@@ -56,6 +62,7 @@
           </div>
         </div>
       </div>
+
       <div
         class="PromptCurrent"
         :style="{
@@ -137,6 +144,15 @@ const currentSecondDiff = computed(() => {
   return secondsUntilMidnight
 })
 
+function getDate(record: ILifeLog) {
+  return dayjs(record['custom-lifelog-date'] || record['custom-lifelog-created']).format('YYYY/MM/DD')
+}
+
+function calcDiff(record: ILifeLog, secondRecord: ILifeLog) {
+  return dayjs(getDate(record) + ' ' + record['custom-lifelog-time'])
+    .diff(dayjs(getDate(secondRecord) + ' ' + secondRecord['custom-lifelog-time']), 'seconds')
+}
+
 const lifelogRecords = ref<Array<{
   block_id: string;
   record: ILifeLog;
@@ -144,10 +160,13 @@ const lifelogRecords = ref<Array<{
   endTime?: string;
   diff?: number;
 }>>([])
-const load = () => {
+const load = async () => {
   if (!isDailyNote.value) return
 
-  const dailyNoteDate = dayjs(wysiwyg.value?.dataset.en_dailynote_date, 'YYYYMMDD').format('YYYY/MM/DD')
+  const dailyNoteDate = dayjs(wysiwyg.value?.dataset.en_dailynote_date, 'YYYYMMDD')
+  const dailyNoteDateStr = dailyNoteDate.format('YYYY/MM/DD')
+  const yesterdayStr = dailyNoteDate.subtract(1, 'day').format('YYYY/MM/DD')
+  const tomorrowStr = dailyNoteDate.add(1, 'day').format('YYYY/MM/DD')
   const sqlStmt = `
     SELECT
       block_id,
@@ -165,11 +184,15 @@ const load = () => {
         FROM attributes
         WHERE (
           name = 'custom-lifelog-created'
-          AND value like '${dailyNoteDate}%'
+          AND value like '${dailyNoteDateStr}%'
+          OR value like '${yesterdayStr}%'
+          OR value like '${tomorrowStr}%'
         )
         OR (
           name = 'custom-lifelog-date'
-          AND value = '${dailyNoteDate}'
+          AND value = '${dailyNoteDateStr}'
+          OR value = '${yesterdayStr}'
+          OR value = '${tomorrowStr}'
         )
       )
     GROUP BY
@@ -183,13 +206,12 @@ const load = () => {
       const jsonRecord = JSON.parse(item.json_attributes) as ILifeLog
 
       let endTime = jsonRecord['custom-lifelog-time']
+      const date = getDate(jsonRecord)
 
       // 如果是两位的时间，需要补上秒
       if (/\d{2}:\d{2}/.test(endTime)) {
-        const temp = dayjs(`${dailyNoteDate} ${endTime}:00`)
-        const tempCreated = jsonRecord['custom-lifelog-date']
-          ? dayjs(jsonRecord['custom-lifelog-date'])
-          : dayjs(jsonRecord['custom-lifelog-created'])
+        const temp = dayjs(`${dailyNoteDateStr} ${endTime}:00`)
+        const tempCreated = dayjs(jsonRecord['custom-lifelog-created'])
 
         // 如果创建时间属于 Daily Note 同一天，则用创建的时间的 秒 数，作为 LifeLog 的 秒 数
         const isSame = dayjs(temp).set('second', 0).set('millisecond', 0).isSame(dayjs(tempCreated).set('second', 0).set('millisecond', 0))
@@ -203,16 +225,55 @@ const load = () => {
         block_id: item.block_id,
         record: jsonRecord,
         endTime,
+        date,
       }
     })
+    temp.sort((a, b) => {
+      return a.date === b.date ? 0 : a.date < b.date ? -1 : 1
+    })
 
-    lifelogRecords.value = temp.map((item, index) => {
-      const lastRecord = temp[index - 1] || {
-        endTime: `00:00:00`,
+    const yesterDayRecords = temp.filter(item => getDate(item.record) === yesterdayStr)
+    const tomorrowRecords = temp.filter(item => getDate(item.record) === tomorrowStr)
+    const todayRecords = temp.filter(item => getDate(item.record) === dailyNoteDateStr)
+
+    const lastYesterDayRecord = yesterDayRecords[yesterDayRecords.length - 1]
+    const firstTomorrowRecord = tomorrowRecords[0]
+
+
+    const firstRecord = todayRecords[0]
+    const firstDiff = calcDiff(firstRecord.record, lastYesterDayRecord?.record || {
+        'custom-lifelog-date': dailyNoteDateStr,
+        'custom-lifelog-time': '00:00:00',
+      } as ILifeLog)
+    const firstTotalDiff = lastYesterDayRecord ? calcDiff(firstRecord.record, lastYesterDayRecord?.record) : firstDiff
+    const fixedFirstRecord = {
+      block_id: firstRecord.block_id,
+      record: firstRecord.record,
+      startTime: '00:00:00',
+      endTime: firstRecord.endTime,
+      diff: firstDiff,
+      diffFormatted: diffFormat(firstDiff),
+      totalDiff: firstTotalDiff,
+      totalDiffFormatted: diffFormat(firstTotalDiff),
+    }
+    lifelogRecords.value = todayRecords.map((item, index) => {
+      const isFirst = index === 0
+      if (isFirst) {
+        return fixedFirstRecord
       }
-      const startTime = lastRecord.endTime
+      const lastRecord = todayRecords[index - 1] || lastYesterDayRecord || {
+        endTime: `00:00:00`,
+        record: {
+          'custom-lifelog-date': dailyNoteDateStr,
+        },
+      }
+      const lastRecordEndTimeDayjs = dayjs(getDate(lastRecord.record as ILifeLog) + ' ' + lastRecord.endTime)
+      const startTime = isFirst ? '00:00:00' : lastRecord.endTime
       const endTime = item.endTime
-      const diff = dayjs(dailyNoteDate + ' ' + endTime).diff(dayjs(dailyNoteDate + ' ' + startTime), 'seconds')
+      const diff = dayjs(getDate(item.record) + ' ' + endTime)
+        .diff(dayjs(isFirst ? dailyNoteDateStr :getDate(lastRecord.record as ILifeLog) + ' ' + startTime), 'seconds')
+      const totalDiff = dayjs(getDate(item.record) + ' ' + endTime)
+        .diff(lastRecordEndTimeDayjs, 'seconds')
 
       return {
         block_id: item.block_id,
@@ -220,8 +281,35 @@ const load = () => {
         startTime,
         endTime,
         diff,
+        diffFormatted: diffFormat(diff),
+        totalDiff,
+        totalDiffFormatted: diffFormat(totalDiff),
       }
     })
+
+    if (firstTomorrowRecord) {
+      const lastTodayRecord = todayRecords[todayRecords.length - 1]
+      const firstDiff = calcDiff({
+        'custom-lifelog-date': dailyNoteDateStr,
+        'custom-lifelog-time': '23:59:59',
+      } as ILifeLog, lastTodayRecord.record)
+
+      const firstTotalDiff = calcDiff(firstTomorrowRecord.record, lastTodayRecord?.record)
+
+      const lastRecord = {
+        block_id: firstTomorrowRecord.block_id,
+        record: firstTomorrowRecord.record,
+        startTime: lastTodayRecord.endTime,
+        endTime: '23:59:59',
+        diff: firstDiff,
+        diffFormatted: diffFormat(firstDiff),
+        totalDiff: firstTotalDiff,
+        totalDiffFormatted: diffFormat(firstTotalDiff),
+      }
+      if (firstDiff > 60) {
+        lifelogRecords.value.push(lastRecord)
+      }
+    }
 
     if (dailyNoteId.value) {
       dailyNoteId.value = ''
