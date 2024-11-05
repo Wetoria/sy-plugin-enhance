@@ -62,7 +62,7 @@ import { computed, onMounted, watchEffect } from 'vue';
 import { queryAllByDom } from '@/utils/DOM';
 import { usePlugin } from '@/main';
 import { EnhanceIOperation, SyDomNodeTypes, onEditorUpdate } from '../../utils/Siyuan'
-import { getBlockAttrs, setBlockAttrs } from '@/api'
+import { getBlockAttrs, setBlockAttrs, sql } from '@/api'
 import { Protyle } from 'siyuan'
 import dayjs from 'dayjs'
 import { useModule } from '../Settings/EnSettings.vue';
@@ -214,14 +214,43 @@ function markLifeLogBlock() {
       const logContent = elseContent.substring(colonIndex + 1, elseContent.length)
 
       let createdTime = blockAttrs[lifelogAttrCreated]
+      let date = blockAttrs[lifelogAttrDate]
       const isFirstCreate = !(createdTime)
       if (isFirstCreate) {
         createdTime = dayjs().format('YYYY/MM/DD HH:mm:ss')
       }
       const updatedTime = dayjs().format('YYYY/MM/DD HH:mm:ss')
 
+      if (!date) {
+        // 如果没有LifeLog的日期，需要按照DailyNote的日期来设置
+        const sqlStmt = `
+          select
+            b.id,
+            b.name,
+            b.fcontent,
+            b.type,
+            a.id attr_id,
+            a.name attr_name,
+            a.value attr_value
+          from blocks b
+          left join attributes a on b.id = a.block_id
+          where b.id in (select root_id from blocks where id = '${opt.id}')
+          and a.name like 'custom-dailynote-%'
+          order by a.name desc
+          limit 1
+        `
+        const res = await sql(sqlStmt)
+
+        // 没查到 Daily Note 文档的话，不算做 LifeLog
+        if (!res[0]?.attr_value) {
+          continue
+        }
+        date = dayjs(res[0]?.attr_value).format('YYYY/MM/DD')
+      }
+
       await setBlockAttrs(opt.id, {
         [lifelogAttrTime]: time,
+        [lifelogAttrDate]: date,
         [lifelogAttrType]: logType,
         [lifelogAttrContent]: logContent,
         [lifelogAttrCreated]: createdTime,
@@ -231,7 +260,7 @@ function markLifeLogBlock() {
     setTimeout(() => {
       reloadLifeLogData('reload')
     }, 2000)
-  }, moduleOptions.value.lifelogTriggerTime * 1000)
+  }, 1000)
 }
 
 </script>
@@ -239,6 +268,7 @@ function markLifeLogBlock() {
 <script lang="ts">
 const lifelogPrefix = 'custom-lifelog-'
 const lifelogAttrTime = `${lifelogPrefix}time`
+const lifelogAttrDate = `${lifelogPrefix}date`
 const lifelogAttrType = `${lifelogPrefix}type`
 const lifelogAttrContent = `${lifelogPrefix}content`
 const lifelogAttrCreated = `${lifelogPrefix}created`
@@ -246,6 +276,7 @@ const lifelogAttrUpdated = `${lifelogPrefix}updated`
 
 export interface ILifeLog {
   [lifelogAttrTime]: string;
+  [lifelogAttrDate]: string;
   [lifelogAttrType]: string;
   [lifelogAttrContent]: string;
   [lifelogAttrCreated]: string;
