@@ -12,7 +12,7 @@
         class="EnLifeLogGraphItem"
         :key="record.block_id"
         :data-en_lifelog_diff="record.diff"
-        :data-en_lifelog_diff_format="diffFormat(record.diff)"
+        :data-en_lifelog_diff_format="record.diffFormatted"
         :style="{
           height: `${(record.diff / secondsOfADay) * 100}%`
         }"
@@ -158,7 +158,12 @@ const lifelogRecords = ref<Array<{
   record: ILifeLog;
   startTime?: string;
   endTime?: string;
+  // 当天内的持续时间
   diff?: number;
+  diffFormatted?: string;
+  // 记录的完整持续时间，截止上一条记录。可能跨天。
+  totalDiff?: number;
+  totalDiffFormatted?: string;
 }>>([])
 const load = async () => {
   if (!isDailyNote.value) return
@@ -242,10 +247,12 @@ const load = async () => {
 
 
     const firstRecord = todayRecords[0]
-    const firstDiff = calcDiff(firstRecord.record, lastYesterDayRecord?.record || {
-        'custom-lifelog-date': dailyNoteDateStr,
-        'custom-lifelog-time': '00:00:00',
-      } as ILifeLog)
+    // 首条记录与0点的差异
+    const firstDiff = calcDiff(firstRecord.record, {
+      'custom-lifelog-date': dailyNoteDateStr,
+      'custom-lifelog-time': '00:00:00',
+    } as ILifeLog)
+    // 首条记录与昨日最后一条记录的差异
     const firstTotalDiff = lastYesterDayRecord ? calcDiff(firstRecord.record, lastYesterDayRecord?.record) : firstDiff
     const fixedFirstRecord = {
       block_id: firstRecord.block_id,
@@ -262,17 +269,16 @@ const load = async () => {
       if (isFirst) {
         return fixedFirstRecord
       }
-      const lastRecord = todayRecords[index - 1] || lastYesterDayRecord || {
-        endTime: `00:00:00`,
-        record: {
-          'custom-lifelog-date': dailyNoteDateStr,
-        },
-      }
+
+      const lastRecord = todayRecords[index - 1]
       const lastRecordEndTimeDayjs = dayjs(getDate(lastRecord.record as ILifeLog) + ' ' + lastRecord.endTime)
-      const startTime = isFirst ? '00:00:00' : lastRecord.endTime
+
+      const startTime = lastRecord.endTime
       const endTime = item.endTime
+      const currentRecordStartTimeDayjs = dayjs(getDate(lastRecord.record as ILifeLog) + ' ' + startTime)
+
       const diff = dayjs(getDate(item.record) + ' ' + endTime)
-        .diff(dayjs(isFirst ? dailyNoteDateStr :getDate(lastRecord.record as ILifeLog) + ' ' + startTime), 'seconds')
+        .diff(currentRecordStartTimeDayjs, 'seconds')
       const totalDiff = dayjs(getDate(item.record) + ' ' + endTime)
         .diff(lastRecordEndTimeDayjs, 'seconds')
 
