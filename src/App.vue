@@ -9,6 +9,7 @@
     >
       <div class="displayArea">
         <TestArco />
+        <!-- <TestLogic /> -->
       </div>
       <div class="hiddenArea">
 
@@ -76,6 +77,7 @@ import TemplateEntry from './modules/Templates/TemplateEntry.vue';
 import { moduleEnableStatusSwitcher } from './utils';
 import EnComment from './modules/Editor/Comment/EnComment.vue';
 import { isInWindow } from './modules/EnWindow.vue';
+import TestLogic from './modules/Test/TestLogic.vue';
 
 const plugin = usePlugin()
 
