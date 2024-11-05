@@ -196,7 +196,8 @@ const load = async () => {
         )
       )
     GROUP BY
-      block_id;
+      block_id
+    limit 9999999
   `
   sql(sqlStmt).then((res) => {
     if (!res) {
@@ -310,6 +311,7 @@ const load = async () => {
         lifelogRecords.value.push(lastRecord)
       }
     }
+
 
     if (dailyNoteId.value) {
       dailyNoteId.value = ''
