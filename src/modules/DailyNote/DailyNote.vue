@@ -107,10 +107,13 @@ onMounted(() => {
 })
 onMounted(() => {
   updateOpenedNotebookList()
+  enLog('onMounted daily note')
   useSiyuanNotebookMount(() => {
+    enLog('update opened notebook list by mount')
     updateOpenedNotebookList()
   })
   useSiyuanNotebookUnmount(() => {
+    enLog('update opened notebook list by unmount')
     updateOpenedNotebookList()
   })
 })
@@ -139,9 +142,11 @@ const openedNotebookList = useSyncModuleData({
   namespace: 'dailyNoteOpenedNotebookList',
   defaultData: [],
   needSave: false,
+  needSync: false,
 })
 export function updateOpenedNotebookList() {
   lsNotebooks().then((res) => {
+    enLog('lsNotebooks res', res)
     openedNotebookList.value.data = res?.notebooks?.filter(i => !i.closed) || []
   })
 }

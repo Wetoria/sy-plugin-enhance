@@ -67,6 +67,7 @@ import { useSyncModuleData } from '@/utils/SyncData';
     namespace: 'dailyNoteOpenedNotebookList',
     defaultData: [],
     needSave: false,
+    needSync: false,
   })
   const {
     moduleOptions,
