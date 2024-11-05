@@ -13,7 +13,7 @@
           <div class="flexAlignCenter">日记笔记本：</div>
           <div>
             <EnNotebookSelector
-              :notebookList="openedNotebookList"
+              :notebookList="openedNotebookList.data"
               v-model="moduleOptions.dailyNoteNotebookId"
             />
           </div>
@@ -35,11 +35,12 @@
 import { deleteBlock } from '@/api';
 import EnProtyle from '@/components/EnProtyle.vue';
 import { usePlugin } from '@/main';
-  import EnWindow, { isInWindow } from '@/modules/EnWindow.vue';
+import EnWindow, { isInWindow } from '@/modules/EnWindow.vue';
 import { Protyle } from 'siyuan';
-  import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import EnNotebookSelector from '@/components/EnNotebookSelector.vue';
 import { appendBlockIntoDailyNote, useDailyNote } from '../DailyNote/DailyNote.vue';
+import { useSyncModuleData } from '@/utils/SyncData';
 
   const winTitle = 'QuickNote'
   const inWindow = ref(isInWindow(winTitle))
@@ -62,8 +63,12 @@ import { appendBlockIntoDailyNote, useDailyNote } from '../DailyNote/DailyNote.v
 
   // #region 在打开的窗口中
 
+  const openedNotebookList = useSyncModuleData({
+    namespace: 'dailyNoteOpenedNotebookList',
+    defaultData: [],
+    needSave: false,
+  })
   const {
-    openedNotebookList,
     moduleOptions,
   } = useDailyNote()
   const selectedNotebookId = computed(() => moduleOptions.value.dailyNoteNotebookId)

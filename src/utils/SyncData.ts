@@ -5,6 +5,7 @@ interface IProps<T> {
   namespace: string
   defaultData: T
   needSave?: boolean
+  needSync?: boolean
 }
 
 export interface EnSyncModuleData<T> {
@@ -117,15 +118,21 @@ export function useSyncModuleData<T>({
   namespace,
   defaultData = {} as T,
   needSave = true,
+  needSync = true
 }: IProps<T>): Ref<EnSyncModuleData<T>> {
   enWarn('useSyncModuleData', namespace, defaultData, needSave)
 
   const existData = syncDataRefMap[namespace]
   enLog('existData is ', namespace, existData)
 
-  const dataRef = existData ? existData.dataRef : ref<EnSyncModuleData<T>>()
   const defaultDataCopy = JSON.parse(JSON.stringify(defaultData))
+  const dataRef = existData ? existData.dataRef : ref<EnSyncModuleData<T>>()
   const storageKey = `SEP-${namespace}`
+
+  dataRef.value = {
+    data: defaultDataCopy,
+    defaultValue: defaultDataCopy,
+  }
 
   syncDataRefMap[namespace] = {
     dataRef,
@@ -148,23 +155,26 @@ export function useSyncModuleData<T>({
       plugin.saveData(storageKey, dataRef.value)
     }
     const syncDataByWebsocket = () => {
+      if (!needSync) return
       sendToSyncByData<T>(namespace, dataRef.value)
     }
 
     if (!existData) {
-      plugin.loadData(storageKey).then((res: EnSyncModuleData<T>) => {
-        // 合并默认值到返回值中，方便新增字段
-        const mergedData = Object.assign({}, defaultDataCopy, res.data)
-        const mergedRes = {
-          data: mergedData,
-          defaultValue: defaultDataCopy,
-        }
-        enLog('mergedRes ', mergedRes)
-        dataRef.value = mergedRes || {
-          data: defaultDataCopy,
-          defaultValue: defaultDataCopy,
-        }
-      })
+      if (needSave) {
+        plugin.loadData(storageKey).then((res: EnSyncModuleData<T>) => {
+          // 合并默认值到返回值中，方便新增字段
+          const mergedData = Object.assign(defaultDataCopy, res?.data)
+          const mergedRes = {
+            data: mergedData,
+            defaultValue: defaultDataCopy,
+          }
+          enLog('mergedRes ', mergedRes)
+          dataRef.value = mergedRes || {
+            data: defaultDataCopy,
+            defaultValue: defaultDataCopy,
+          }
+        })
+      }
 
       watch(dataRef, () => {
         saveData()

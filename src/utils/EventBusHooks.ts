@@ -34,3 +34,21 @@ export function useSiyuanEventTransactions(cb: (event: any) => void) {
     }
   })
 }
+
+export function useSiyuanNotebookMount(cb: (event?: any) => void) {
+  return useSiyuanEventWsMain((event) => {
+    const { detail } = event
+    if (detail.cmd === 'mount') {
+      cb(event)
+    }
+  })
+}
+
+export function useSiyuanNotebookUnmount(cb: (event?: any) => void) {
+  return useSiyuanEventWsMain((event) => {
+    const { detail } = event
+    if (detail.cmd === 'unmount') {
+      cb(event)
+    }
+  })
+}

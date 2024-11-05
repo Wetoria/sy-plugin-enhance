@@ -19,7 +19,7 @@
       </template>
       <template #opt>
         <EnNotebookSelector
-          :notebookList="openedNotebookList"
+          :notebookList="openedNotebookList.data"
           v-model="moduleOptions.dailyNoteNotebookId"
         />
       </template>
@@ -73,7 +73,7 @@ import {
   Protyle,
   showMessage,
 } from "siyuan";
-import { deleteBlock, request } from '@/api';
+import { deleteBlock, lsNotebooks, request } from '@/api';
 import { useEnhancer } from '@/modules/GlobalStatus';
 import { openDocById } from '@/utils/Note';
 import { computed, onMounted, ref, watch } from 'vue';
@@ -83,6 +83,8 @@ import EnSettingsTeleportModule from '../Settings/EnSettingsTeleportModule.vue';
 import { useModule } from '../Settings/EnSettings.vue';
 import EnProtyle from '@/components/EnProtyle.vue';
 import { targetIsInnerOf } from '@/utils/DOM';
+import { useSyncModuleData } from '@/utils/SyncData';
+import { useSiyuanNotebookMount, useSiyuanNotebookUnmount } from '@/utils/EventBusHooks';
 
 const plugin = usePlugin()
 onMounted(() => {
@@ -105,9 +107,12 @@ onMounted(() => {
 })
 onMounted(() => {
   updateOpenedNotebookList()
-  setInterval(() => {
+  useSiyuanNotebookMount(() => {
     updateOpenedNotebookList()
-  }, 1000)
+  })
+  useSiyuanNotebookUnmount(() => {
+    updateOpenedNotebookList()
+  })
 })
 
 
@@ -128,9 +133,17 @@ onMounted(() => {
 
 <script lang="tsx">
 // 打开的笔记本列表
-const openedNotebookList = ref([])
+// const openedNotebookList = ref([])
+
+const openedNotebookList = useSyncModuleData({
+  namespace: 'dailyNoteOpenedNotebookList',
+  defaultData: [],
+  needSave: false,
+})
 export function updateOpenedNotebookList() {
-  openedNotebookList.value = window.siyuan?.notebooks?.filter(i => !i.closed) || []
+  lsNotebooks().then((res) => {
+    openedNotebookList.value.data = res?.notebooks?.filter(i => !i.closed) || []
+  })
 }
 
 interface ModuleOptions {
@@ -149,7 +162,7 @@ const moduleOptions = computed(() => module.value?.options as ModuleOptions || {
 // TODO 思源的笔记本列表更新不及时，等以后提案了响应式以后，再考虑要不要优化吧。
 export function notebookIsOpened(notebookId: string) {
   updateOpenedNotebookList()
-  return openedNotebookList.value.some(i => i.id === notebookId)
+  return openedNotebookList.value.data.some(i => i.id === notebookId)
 }
 
 export function useDailyNote() {
