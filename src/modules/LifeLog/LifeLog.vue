@@ -70,7 +70,6 @@ import EnSettingsTeleportModule from '../Settings/EnSettingsTeleportModule.vue';
 import EnSettingsItem from '../Settings/EnSettingsItem.vue';
 import { reloadLifeLogData } from './EnLifeLogDailyNoteGraph.vue';
 import { moduleEnableStatusSwitcher } from '@/utils';
-import { log } from '@/utils/Log';
 
 const plugin = usePlugin()
 
@@ -176,8 +175,6 @@ function markLifeLogBlock() {
     optList = Object.values(optMap)
     optList = optList.filter(i => i.nodeType === SyDomNodeTypes.NodeParagraph)
 
-    enLog('optList is ', optList)
-
     for (const opt of optList) {
       const blockAttrs = await getBlockAttrs(opt.id)
 
@@ -185,7 +182,7 @@ function markLifeLogBlock() {
 
       // const isLifeLogParagraph = /^\d{2}:\d{2}\s+/.test(content)
       const isLifeLogParagraph = /^\d{2}:\d{2}(:\d{2})?\s+[^\n\r]*?$/.test(content)
-      enLog('isLifeLogParagraph is ', isLifeLogParagraph)
+
       if (!isLifeLogParagraph) {
         continue
       }
@@ -198,13 +195,13 @@ function markLifeLogBlock() {
       const isPureTimeStart = editDom.innerHTML.trim().startsWith(time)
 
       if (!isPureTimeStart) {
-        log('LifeLog is not start with pure time')
+        enLog('LifeLog is not start with pure time')
         continue
       }
 
       const elseContent = content.replace(/^\d{2}:\d{2}(:\d{2})?\s+/, '')
-      enLog('elseContent is ', elseContent)
       if (!elseContent) {
+        enLog('LifeLog only has time')
         continue
       }
       let colonIndex = elseContent.indexOf('：')
@@ -243,6 +240,7 @@ function markLifeLogBlock() {
 
         // 没查到 Daily Note 文档的话，不算做 LifeLog
         if (!res[0]?.attr_value) {
+          enLog('LifeLog record is not in a daily note')
           continue
         }
         date = dayjs(res[0]?.attr_value).format('YYYY/MM/DD')

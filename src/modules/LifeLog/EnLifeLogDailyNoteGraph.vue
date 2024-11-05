@@ -77,7 +77,7 @@
 <script setup lang="ts">
 import { sql } from '@/api';
 import dayjs from 'dayjs'
-import { computed, onBeforeUnmount, onBeforeUpdate, onMounted, onUpdated, ref, watchEffect } from 'vue';
+import { computed, onBeforeUnmount, onMounted, onUpdated, ref, watchEffect } from 'vue';
 import { ILifeLog } from './LifeLog.vue';
 import { diffFormat } from '@/utils/Date'
 import { queryAllByDom } from '@/utils/DOM';
@@ -163,8 +163,14 @@ const load = () => {
       AND block_id IN (
         SELECT block_id
         FROM attributes
-        WHERE name = 'custom-lifelog-created'
+        WHERE (
+          name = 'custom-lifelog-created'
           AND value like '${dailyNoteDate}%'
+        )
+        OR (
+          name = 'custom-lifelog-date'
+          AND value = '${dailyNoteDate}'
+        )
       )
     GROUP BY
       block_id;
@@ -175,10 +181,17 @@ const load = () => {
     }
     const temp = res.map((item) => {
       const jsonRecord = JSON.parse(item.json_attributes) as ILifeLog
+
       let endTime = jsonRecord['custom-lifelog-time']
+
+      // 如果是两位的时间，需要补上秒
       if (/\d{2}:\d{2}/.test(endTime)) {
         const temp = dayjs(`${dailyNoteDate} ${endTime}:00`)
-        const tempCreated = dayjs(jsonRecord['custom-lifelog-created'])
+        const tempCreated = jsonRecord['custom-lifelog-date']
+          ? dayjs(jsonRecord['custom-lifelog-date'])
+          : dayjs(jsonRecord['custom-lifelog-created'])
+
+        // 如果创建时间属于 Daily Note 同一天，则用创建的时间的 秒 数，作为 LifeLog 的 秒 数
         const isSame = dayjs(temp).set('second', 0).set('millisecond', 0).isSame(dayjs(tempCreated).set('second', 0).set('millisecond', 0))
         if (isSame) {
           endTime += `:${tempCreated.format('ss')}`
