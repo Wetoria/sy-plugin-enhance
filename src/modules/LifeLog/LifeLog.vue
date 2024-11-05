@@ -176,6 +176,7 @@ function markLifeLogBlock() {
     optList = Object.values(optMap)
     optList = optList.filter(i => i.nodeType === SyDomNodeTypes.NodeParagraph)
 
+    enLog('optList is ', optList)
 
     for (const opt of optList) {
       const blockAttrs = await getBlockAttrs(opt.id)
@@ -184,8 +185,9 @@ function markLifeLogBlock() {
 
       // const isLifeLogParagraph = /^\d{2}:\d{2}\s+/.test(content)
       const isLifeLogParagraph = /^\d{2}:\d{2}(:\d{2})?\s+[^\n\r]*?$/.test(content)
+      enLog('isLifeLogParagraph is ', isLifeLogParagraph)
       if (!isLifeLogParagraph) {
-        return
+        continue
       }
       const time = (content.match(/^\d{2}:\d{2}(:\d{2})?/) || [])[0]
 
@@ -197,13 +199,13 @@ function markLifeLogBlock() {
 
       if (!isPureTimeStart) {
         log('LifeLog is not start with pure time')
-        return
+        continue
       }
 
       const elseContent = content.replace(/^\d{2}:\d{2}(:\d{2})?\s+/, '')
-
+      enLog('elseContent is ', elseContent)
       if (!elseContent) {
-        return
+        continue
       }
       let colonIndex = elseContent.indexOf('：')
       colonIndex = colonIndex < 0 ? elseContent.length : colonIndex
@@ -218,7 +220,7 @@ function markLifeLogBlock() {
       }
       const updatedTime = dayjs().format('YYYY/MM/DD HH:mm:ss')
 
-      setBlockAttrs(opt.id, {
+      await setBlockAttrs(opt.id, {
         [lifelogAttrTime]: time,
         [lifelogAttrType]: logType,
         [lifelogAttrContent]: logContent,
