@@ -4,6 +4,7 @@ import { onMounted, Ref, ref, watch } from 'vue'
 interface IProps<T> {
   namespace: string
   defaultData: T
+  needSave?: boolean
 }
 
 export interface EnSyncModuleData<T> {
@@ -115,6 +116,7 @@ const initWebsocket = () => {
 export function useSyncModuleData<T>({
   namespace,
   defaultData = {} as T,
+  needSave = true,
 }: IProps<T>): Ref<EnSyncModuleData<T>> {
   const plugin = usePlugin()
 
@@ -136,6 +138,8 @@ export function useSyncModuleData<T>({
 
   const saveData = () => {
     const mapData = syncDataRefMap[namespace]
+    if (!needSave) return
+
     if (mapData.donotSave) {
       mapData.donotSave = false
       return
