@@ -245,6 +245,9 @@ const load = async () => {
     const lastYesterDayRecord = yesterDayRecords[yesterDayRecords.length - 1]
     const firstTomorrowRecord = tomorrowRecords[0]
 
+    if (!todayRecords.length) {
+      return
+    }
 
     const firstRecord = todayRecords[0]
     // 首条记录与0点的差异
