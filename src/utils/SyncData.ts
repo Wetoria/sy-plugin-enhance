@@ -1,5 +1,6 @@
 import { usePlugin } from '@/main'
 import { Ref, ref, watch } from 'vue'
+import { debounce } from '@/utils'
 
 interface IProps<T> {
   namespace: string
@@ -20,9 +21,7 @@ export interface EnSyncModuleData<T> {
   data: T,
   defaultValue: T,
 }
-export interface EnSyncModuleDataResult<T> {
-  data: Ref<EnSyncModuleData<T>>,
-}
+export type EnSyncModuleDataResult<T> = Ref<EnSyncModuleData<T>>
 
 interface EnSyncModuleDataMsg<T> {
   // 当前 app 的 appId
@@ -65,7 +64,7 @@ const socketIsClosed = () => !socketIsOpen()
 const getSyncDataByWebSocket = (event) => {
   try {
     const msg = JSON.parse(event.data) as EnSyncModuleDataMsg<any>
-    enLog('getWebSocketMessage', msg)
+    enLog(`Received module [${msg.namespace}] data from other device: `, JSON.parse(JSON.stringify(msg.data)))
     // 当前 app 的数据不处理
     if (msg.appId == window.siyuan.ws.app.appId) {
       return
@@ -102,6 +101,7 @@ const sendToSyncByData = <T>(namespace: string, data: EnSyncModuleData<T>) => {
     namespace,
     data,
   }
+  enLog(`Ready to send module [${namespace}] data to sync: `, JSON.parse(JSON.stringify(msgData)))
   const msgStr = JSON.stringify(msgData)
   socketRef.value.send(msgStr)
 }
@@ -110,13 +110,14 @@ const initWebsocket = () => {
   if (socketIsOpen()) return
   if (connecting) return
 
+  // imp 支持加密
   const wsUrl = `ws://${location.host}/ws/broadcast?channel=SEP-data-sync-channel`
   connecting = true
   const socket = new WebSocket(wsUrl)
   socketRef.value = socket
 
   socket.onopen = () => {
-    enLog('Sync Data websocket connected.')
+    enLog('Sync Data Websocket Channel Ready.')
   }
 
   socket.onmessage = getSyncDataByWebSocket
@@ -143,6 +144,7 @@ export function useSyncModuleData<T>({
 
   // 对默认值进行拷贝，防止修改默认值
   const defaultDataCopy = JSON.parse(JSON.stringify(defaultData))
+  const initData = JSON.parse(JSON.stringify(defaultData))
 
   const dataRef = ref<EnSyncModuleData<T>>()
   const storageKey = `SEP-${namespace}`
@@ -150,15 +152,14 @@ export function useSyncModuleData<T>({
   syncDataRefMap[namespace] = {
     dataRef,
   }
-
   markAsDoNotSave(namespace)
   markAsDoNotSync(namespace)
   dataRef.value = {
-    data: defaultDataCopy,
+    data: initData,
     defaultValue: defaultDataCopy,
   }
 
-  const saveData = async () => {
+  const saveData = debounce(async () => {
     if (!needSave) return
 
     const mapData = syncDataRefMap[namespace]
@@ -167,33 +168,39 @@ export function useSyncModuleData<T>({
       return
     }
     const plugin = usePlugin()
+    enLog(`Ready to save module [${namespace}] data: `, JSON.parse(JSON.stringify(dataRef.value)))
     await plugin.saveData(storageKey, dataRef.value)
-  }
+  })
   const syncDataByWebsocket = () => {
     if (!needSync) return
     sendToSyncByData<T>(namespace, dataRef.value)
   }
 
-  if (needSave) {
-    const plugin = usePlugin()
-    plugin.loadData(storageKey).then((res: EnSyncModuleData<T>) => {
-      // 合并默认值到返回值中，方便新增字段
-      const mergedData = Object.assign(defaultDataCopy, res?.data)
-      const mergedRes = {
-        data: mergedData,
-        defaultValue: defaultDataCopy,
-      }
-      markAsDoNotSave(namespace)
-      markAsDoNotSync(namespace)
-      dataRef.value = mergedRes || {
-        data: defaultDataCopy,
-        defaultValue: defaultDataCopy,
-      }
-    })
-  }
+  const plugin = usePlugin()
+  plugin.loadData(storageKey).then(async (res: EnSyncModuleData<T>) => {
+    if (!res) {
+      await saveData()
+      return
+    }
+    // 合并默认值到返回值中，方便新增字段
+    const mergedData = Object.assign({}, defaultDataCopy, res?.data)
+    const mergedRes = {
+      data: mergedData,
+      defaultValue: defaultDataCopy,
+    }
+    enLog(`Saved module [${namespace}] data loaded: `, JSON.parse(JSON.stringify(mergedRes)))
+    markAsDoNotSave(namespace)
+    markAsDoNotSync(namespace)
+    dataRef.value = res ? mergedRes : {
+      data: initData,
+      defaultValue: defaultDataCopy,
+    }
+  })
 
   watch(dataRef, () => {
-    enError('watch dataRef', namespace, dataRef.value)
+    const mapData = syncDataRefMap[namespace]
+    enLog(`Watched module [${namespace}] data change. [DoNotSave: ${mapData.doNotSave}, DoNotSync: ${mapData.doNotSync}].`)
+    enLog(`Above Data is: `, JSON.parse(JSON.stringify(dataRef.value)))
     saveData()
     syncDataByWebsocket()
   }, {
