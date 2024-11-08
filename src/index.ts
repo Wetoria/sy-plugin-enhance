@@ -18,6 +18,7 @@ const {
 import { destroy, init } from './main';
 import { openSettings } from './modules/Settings/EnSettings.vue';
 import { SyFrontendTypes } from './utils/Siyuan';
+import '@/utils/Log'
 
 export default class EnhancePlugin extends Plugin {
   public isMobile: boolean;

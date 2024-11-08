@@ -21,7 +21,7 @@ export interface EnSyncModuleData<T> {
   data: T,
   defaultValue: T,
 }
-export type EnSyncModuleDataResult<T> = Ref<EnSyncModuleData<T>>
+export type EnSyncModuleDataRef<T> = Ref<EnSyncModuleData<T>>
 
 interface EnSyncModuleDataMsg<T> {
   // 当前 app 的 appId
@@ -48,13 +48,13 @@ interface EnSyncDataRefMap {
 const syncDataRefMap: EnSyncDataRefMap = {}
 window.en_SyncDataRefMap = syncDataRefMap
 
-export const markAsDoNotSave = (namespace: string) => {
+export const markAsDoNotSave = (namespace: string, value = true) => {
   const mapData = syncDataRefMap[namespace]
-  mapData.doNotSave = true
+  mapData.doNotSave = value
 }
-export const markAsDoNotSync = (namespace: string) => {
+export const markAsDoNotSync = (namespace: string, value = true) => {
   const mapData = syncDataRefMap[namespace]
-  mapData.doNotSync = true
+  mapData.doNotSync = value
 }
 
 const socketRef = ref<WebSocket>()
@@ -127,12 +127,12 @@ const initWebsocket = () => {
   }
 }
 
-export function useSyncModuleData<T>({
+export async function useSyncModuleData<T>({
   namespace,
   defaultData = {} as T,
   needSave = true,
   needSync = true
-}: IProps<T>): Ref<EnSyncModuleData<T>> {
+}: IProps<T>): Promise<Ref<EnSyncModuleData<T>>> {
   initWebsocket()
 
   const existData = syncDataRefMap[namespace]
@@ -177,30 +177,31 @@ export function useSyncModuleData<T>({
   }
 
   const plugin = usePlugin()
-  plugin.loadData(storageKey).then(async (res: EnSyncModuleData<T>) => {
-    if (!res) {
-      await saveData()
-      return
-    }
-    // 合并默认值到返回值中，方便新增字段
-    const mergedData = Object.assign({}, defaultDataCopy, res?.data)
-    const mergedRes = {
-      data: mergedData,
-      defaultValue: defaultDataCopy,
-    }
-    enLog(`Saved module [${namespace}] data loaded: `, JSON.parse(JSON.stringify(mergedRes)))
-    markAsDoNotSave(namespace)
-    markAsDoNotSync(namespace)
-    dataRef.value = res ? mergedRes : {
-      data: initData,
-      defaultValue: defaultDataCopy,
-    }
-  })
+  const res: EnSyncModuleData<T> = await plugin.loadData(storageKey)
+  if (!res) {
+    await saveData()
+    markAsDoNotSave(namespace, false)
+    markAsDoNotSync(namespace, false)
+    return dataRef
+  }
+  // 合并默认值到返回值中，方便新增字段
+  const mergedData = Object.assign({}, defaultDataCopy, res?.data)
+  const mergedRes = {
+    data: mergedData,
+    defaultValue: defaultDataCopy,
+  }
+  enLog(`Loaded module [${namespace}] data: `, JSON.parse(JSON.stringify(mergedRes)))
+  markAsDoNotSave(namespace)
+  markAsDoNotSync(namespace)
+  dataRef.value = res ? mergedRes : {
+    data: initData,
+    defaultValue: defaultDataCopy,
+  }
 
   watch(dataRef, () => {
     const mapData = syncDataRefMap[namespace]
     enLog(`Watched module [${namespace}] data change. [DoNotSave: ${mapData.doNotSave}, DoNotSync: ${mapData.doNotSync}].`)
-    enLog(`Above Data is: `, JSON.parse(JSON.stringify(dataRef.value)))
+    enLog(`The Data is: `, JSON.parse(JSON.stringify(dataRef.value)))
     saveData()
     syncDataByWebsocket()
   }, {
@@ -208,4 +209,9 @@ export function useSyncModuleData<T>({
   })
 
   return dataRef
+}
+
+export function getModuleRefByNamespace(namespace: string) {
+  console.log('Getting module ref by namespace: ', namespace, syncDataRefMap, syncDataRefMap[namespace])
+  return syncDataRefMap[namespace]?.dataRef
 }
