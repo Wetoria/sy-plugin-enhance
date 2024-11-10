@@ -25,6 +25,7 @@
     <div class="flexColumn en_settings_list">
       <template
         v-for="(refItem, index) of settingRefKeys"
+        :key="refItem"
       >
         <div
           :ref="(el) => settingsRefMap[refItem] = el"
@@ -60,11 +61,11 @@
 <script setup lang="ts">
 import EnDivider from '@/components/EnDivider.vue';
 import { usePlugin } from '@/main';
-import { computed, ref, watchEffect, watch, onMounted, onBeforeUnmount } from 'vue';
+import { computed, ref, watchEffect, watch, onMounted } from 'vue';
 import AnyTouch from 'any-touch';
-import { debounce, moduleEnableStatusSwitcher } from '@/utils';
+import { moduleEnableStatusSwitcher } from '@/utils';
 import { onCountClick } from '@/utils/DOM';
-import { ICommandItem } from '../Editor/EnFont.vue';
+import { EnSyncModuleDataRef, getModuleRefByNamespace, loadModuleDataByNamespace, useSyncModuleData } from '@/utils/SyncData';
 
 const plugin = usePlugin()
 
@@ -133,9 +134,10 @@ const onDrawerOpen = () => {
 }
 
 const resetAllModule = () => {
-  const moduleValues = Object.values(settings.value.modules)
-  moduleValues.forEach((eachModule) => {
-    resetModuleOptions(eachModule)
+  const moduleValues = Object.keys(settings.value.modules)
+  moduleValues.forEach((moduleName) => {
+    const moduleRef = getModuleRefByNamespace(moduleName)
+    resetModuleOptions(moduleRef)
   })
 }
 
@@ -143,48 +145,7 @@ const onDrawerCLose = () => {
 
 }
 
-const getWebSocketMessage = (event) => {
-  try {
-    const msg = JSON.parse(event.data)
-
-    if (msg.appId == window.siyuan.ws.app.appId) {
-      return
-    }
-    if (!msg.settings) {
-      return
-    }
-
-    doNotSave = true
-    changedByWebsocket = true
-    settings.value = msg.settings
-  } catch(err) {
-    enError(err)
-  }
-}
-
-const initWebsocket = () => {
-  const wsUrl = `ws://${location.host}/ws/broadcast?channel=EnhancePlugin`
-  const socket = new WebSocket(wsUrl)
-  socketRef.value = socket
-
-  socket.onopen = () => {
-    enLog('websocket connected.')
-  }
-
-  socket.onmessage = getWebSocketMessage
-
-  socket.onerror = function() {
-    initWebsocket()
-  }
-}
-
 onMounted(() => {
-  initWebsocket()
-
-  window.addEventListener('beforeunload', () => {
-    socketRef.value?.close()
-  })
-
   plugin.addCommand({
     langKey: "openEnhanceSettings",
     langText: "打开设置",
@@ -194,23 +155,9 @@ onMounted(() => {
     },
   });
 })
-onBeforeUnmount(() => {
-  socketRef.value?.close()
-})
 </script>
 
 <script lang="ts">
-
-export interface EnModuleType {
-  enabled: boolean
-  options: object
-  defaultOptions: object
-}
-
-export function resetModuleOptions(aModule: EnModuleType) {
-  aModule.options = JSON.parse(JSON.stringify(aModule.defaultOptions))
-}
-
 interface EnSettings {
   isDebugging: boolean
   v: 0 | 1 | 2
@@ -219,23 +166,8 @@ interface EnSettings {
   boxId: string;
 
   modules: {
-    [module: string]: EnModuleType
+    [module: string]: boolean
   }
-  timeDiff: {
-    [id: string]: string
-  }
-
-  videoAndAudioBlockMap: {
-    [id: string]: any
-  }
-  videoAndAudioBlockPlayConfigMap: {
-    [id: string]: {
-      enabledBlockPlay: boolean
-      enabledLoopPlay: boolean
-    }
-  }
-
-  configgedFontStyleList: ICommandItem[]
 }
 
 const defaultSettings: EnSettings = {
@@ -246,44 +178,16 @@ const defaultSettings: EnSettings = {
   boxId: '',
 
   modules: {},
-  timeDiff: {},
-  videoAndAudioBlockMap: {},
-  videoAndAudioBlockPlayConfigMap: {},
-  configgedFontStyleList: [],
 }
 
-let doNotSave = false
-let changedByWebsocket = false
-const settings = ref<EnSettings>({
-  modules: {},
-} as EnSettings)
+const namespace = 'EnSettings'
 
-const socketRef = ref()
-const socketIsOpen = () => socketRef.value && socketRef.value?.readyState == WebSocket.OPEN
-const socketIsClosed = () => !socketIsOpen()
-
-const syncWsSettings = () => {
-  if (socketIsClosed()) {
-    return
-  }
-
-  if (changedByWebsocket) {
-    changedByWebsocket = false
-    return
-  }
-
-  const msgData = {
-    appId: window.siyuan.ws.app.appId,
-    settings: settings.value
-  }
-  socketRef.value.send(JSON.stringify(msgData))
-}
-watch(settings, () => {
-  syncWsSettings()
-  saveSettings()
-}, {
-  deep: true,
+const syncSettings = useSyncModuleData({
+  namespace,
+  defaultData: defaultSettings,
 })
+const settings = computed(() => syncSettings.value.data)
+
 
 const STORAGE_KEY = 'SyEnhancerSettings'
 
@@ -306,79 +210,61 @@ export const isPro = computed(() => settings.value.v === 1)
 export const isVip = computed(() => settings.value.v === 2)
 export const isNotFree = computed(() => settings.value.v >= 1)
 
-export function useModule(moduleName: string, defaultOptions: object = {}) {
-  const module = ref<EnModuleType>(settings.value.modules[moduleName])
+watchEffect(() => {
+  console.log('flag is ', isFree.value, isPro.value, isVip.value, isNotFree.value)
+})
 
-  if (!module.value) {
-    module.value = registerModule(moduleName, defaultOptions)
-  }
-  watch(() => settings.value.modules[moduleName], () => {
-    module.value = settings.value.modules[moduleName]
+export interface EnModule {
+  enabled: boolean
+  readonly moduleName: string
+  readonly moduleDisplayName: string
+}
+
+export interface EnModuleOptions<T extends EnModule> {
+  defaultData: T
+  // 是否立即加载数据
+  loadImmediate: boolean
+}
+
+export function useSettingModule<T extends EnModule>(moduleName: string, moduleOptions: EnModuleOptions<T>) {
+  const {
+    loadImmediate,
+    defaultData,
+  } = moduleOptions
+
+  const module = useSyncModuleData({
+    namespace: moduleName,
+    defaultData,
   })
-  // 刷一次 options，防止新增参数不生效
-  const options = module.value.options
-  module.value.options = {
-    ...defaultOptions,
-    ...options,
+
+  const recorded = settings.value.modules[moduleName]
+  if (!recorded && loadImmediate) {
+    loadModuleDataByNamespace(moduleName)
   }
-  // 刷一次默认值设置，防止出现问题
-  // 比如 module 的数据已经保存过了，但是更新了代码。
-  module.value.defaultOptions = {
-    ...module.value.defaultOptions,
-    ...defaultOptions,
-  }
+
   return module
 }
 
-export function useModuleOptions(moduleName: string) {
-  const module = useModule(moduleName)
-  return module.value.options
+export function resetModuleOptions<T>(aModule: EnSyncModuleDataRef<T>) {
+  aModule.value.data = JSON.parse(JSON.stringify(aModule.value.defaultValue))
 }
 
-function registerModule(module: string, defaultOptions: object) {
-  const isInSetting = module in settings.value.modules
-  const newModule = {
-    enabled: false,
-    options: JSON.parse(JSON.stringify(defaultOptions)),
-    defaultOptions: JSON.parse(JSON.stringify(defaultOptions)),
-  }
-  if (!isInSetting) {
-    settings.value.modules[module] = newModule
-  }
-  return newModule
+export function useSettingModuleData<T>(moduleName: string) {
+  const module = getModuleRefByNamespace<T>(moduleName)
+  const moduleData = computed(() => module.value.data)
+  return moduleData
 }
 
 export async function loadSettings() {
-  const plugin = usePlugin()
-  const res = await plugin.loadData(STORAGE_KEY)
-  settings.value = Object.assign({}, JSON.parse(JSON.stringify(defaultSettings)), settings.value, res || {})
-  enLog('Settings load success.')
-  if (!settings.value.modules) {
-    settings.value.modules = {}
+  const syncSettingsRef = useSyncModuleData({
+    namespace,
+    defaultData: defaultSettings,
+  })
+  const res = await loadModuleDataByNamespace(namespace)
+  if (res) {
+    syncSettingsRef.value = res.value
   }
 }
-
-/**
- * 修正设置中，错误的值
- */
-function reviseSettingsValue() {
-
-}
-
-const saveSettings = debounce(()=> {
-  if (doNotSave) {
-    doNotSave = false
-    return
-  }
-
-  const plugin = usePlugin()
-
-  // 保存前对值进行校验和修正。
-  reviseSettingsValue()
-
-  const info = JSON.stringify(settings.value);
-  plugin.saveData(STORAGE_KEY, info)
-})
 
 const editingSettings = ref(false);
 
@@ -418,9 +304,6 @@ export const closeSettings = () => {
   editingSettings.value = false;
 }
 
-export const switchState = (key, value) => {
-  document.documentElement.dataset[key] = `${value}`
-}
 
 export const useProWatcher = (props: {
   onChange?: (enabled: boolean) => void,

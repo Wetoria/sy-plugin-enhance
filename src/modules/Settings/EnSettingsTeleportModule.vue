@@ -41,14 +41,14 @@
 
 <script setup lang="ts">
 import { computed, useSlots, watch } from 'vue';
-import { EnModuleType, resetModuleOptions } from './EnSettings.vue';
+import { EnModule, resetModuleOptions } from './EnSettings.vue';
 import EnSettingsItemAreaHeading from './EnSettingsItemAreaHeading.vue';
 import EnSettingsTeleport from './EnSettingsTeleport.vue';
 
 const props = defineProps<{
   name: string
   display: string
-  module: EnModuleType
+  module: EnModule
   always?: boolean
 }>()
 

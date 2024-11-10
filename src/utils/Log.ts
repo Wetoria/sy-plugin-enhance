@@ -1,20 +1,20 @@
 const prefix = '[SEP by Wetoria]'
 const isDebug = true
 
-export function log(...args) {
+export function enLog(...args) {
   if (!isDebug) return
   return console.log(`%c${prefix} `, 'background-color: gray; color: white;', ...args)
 }
-window.enLog = log
+window.enLog = enLog
 
-export function warn(...args) {
+export function enWarn(...args) {
   if (!isDebug) return
   return console.warn(`%c${prefix} `, 'background-color: yellow; color: black;', ...args)
 }
-window.enWarn = warn
+window.enWarn = enWarn
 
-export function error(...args) {
+export function enError(...args) {
   if (!isDebug) return
   return console.error(`%c${prefix} `, 'background-color: red; color: white;', ...args)
 }
-window.enError = error
+window.enError = enError

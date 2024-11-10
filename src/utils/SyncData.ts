@@ -1,21 +1,26 @@
 import { usePlugin } from '@/main'
 import { Ref, ref, watch } from 'vue'
 import { debounce } from '@/utils'
+import { enLog, enError } from './Log'
 
-interface IProps<T> {
+/** 如果 needSave 和 needSync 都为 false。
+ * 则只是当前 window 内进行同步，相当于只做窗口内同步，不进行跨窗口同步。
+ *
+ * 如果 needSave: true, needSync: false。仅保存
+ *
+ * 如果 needSave: false, needSync: true。仅多窗口同步
+*/
+export interface EnSyncModuleProps<T> {
   namespace: string
   defaultData: T
-  /** 如果 needSave 和 needSync 都为 false，则只是当前 window 内进行同步
-   * 相当于只做窗口内同步，不进行跨窗口同步
-   * 如果 needSave: true, needSync: false, 则只是保存
-   * 如果 needSave: false, needSync: true, 则只是多窗口同步
-  */
-  // 是否需要保存至本地
+  /** 是否需要保存至本地 */
   needSave?: boolean
 
-  // 是否需要多终端同步
+  /** 是否需要多终端同步 */
   needSync?: boolean
 }
+
+type Namespace = string
 
 export interface EnSyncModuleData<T> {
   data: T,
@@ -28,34 +33,186 @@ interface EnSyncModuleDataMsg<T> {
   appId: string,
 
   // 当前同步的数据的命名空间
-  namespace: string,
+  namespace: Namespace,
 
   // 当前同步的数据
   data: EnSyncModuleData<T>,
 }
 
+interface EnSyncModule<T> {
+  dataRef: Ref<EnSyncModuleData<T>>,
+
+  needSync?: Pick<EnSyncModuleProps<T>, 'needSync'>
+  // 为 true 则不发送更新
+  doNotSync?: boolean,
+
+
+  needSave?: Pick<EnSyncModuleProps<T>, 'needSave'>
+  // 不保存的标记，为 true 则不调用思源插件的保存逻辑
+  doNotSave?: boolean,
+}
+
+export function getModuleStorageKey(namespace: Namespace) {
+  return `SEP-${namespace}`
+}
+
 interface EnSyncDataRefMap {
-  [key: string]: {
-    dataRef: Ref<EnSyncModuleData<any>>,
-
-    // 为 true 则不发送更新
-    doNotSync?: boolean,
-
-    // 不保存的标记，为 true 则不调用思源插件的保存逻辑
-    doNotSave?: boolean,
-  },
+  [key: string]: EnSyncModule<any>,
 }
 const syncDataRefMap: EnSyncDataRefMap = {}
 window.en_SyncDataRefMap = syncDataRefMap
 
+function getInitModuleData(defaultData) {
+  const defaultValue = JSON.parse(JSON.stringify(defaultData))
+  const data = JSON.parse(JSON.stringify(defaultData))
+
+  return {
+    data,
+    defaultValue,
+  }
+}
+
+export function useSyncModuleData<T>({
+  namespace,
+  defaultData = {} as T,
+  needSave = true,
+  needSync = true,
+}: EnSyncModuleProps<T>): EnSyncModuleDataRef<T> {
+
+  const exist = syncDataRefMap[namespace]?.dataRef
+  if (exist) {
+    return exist
+  }
+
+  const dataRef = ref<EnSyncModuleDataRef<T>>({} as any)
+  syncDataRefMap[namespace] = {
+    dataRef,
+  }
+  dataRef.value = getInitModuleData(defaultData)
+
+  enLog(`Module [${namespace}] registered.`, JSON.parse(JSON.stringify(syncDataRefMap)), JSON.parse(JSON.stringify(dataRef.value)))
+
+  const saveData = debounce(async () => {
+    if (!needSave) {
+      enLog(`Module [${namespace}] do not need to save. Cancel to save.`)
+      return
+    }
+
+    const mapData = getModuleByNamespace(namespace)
+    if (mapData.doNotSave) {
+      enLog(`Module [${namespace}] marked as doNotSave. Cancel to save.`)
+      mapData.doNotSave = false
+      return
+    }
+    const plugin = usePlugin()
+    const storageKey = getModuleStorageKey(namespace)
+    enLog(`Ready to save module data of [${namespace}] into file [${storageKey}]: `, JSON.parse(JSON.stringify(dataRef.value)))
+    await plugin.saveData(storageKey, dataRef.value)
+  })
+
+  const syncDataByWebsocket = () => {
+    if (!needSync) {
+      enLog(`Module [${namespace}] do not need to sync. Cancel to sync.`)
+      return
+    }
+    sendToSyncByData<T>(namespace, dataRef.value)
+  }
+
+  watch(dataRef, () => {
+    const mapData = getModuleByNamespace(namespace)
+    enLog(`Watched module data of [${namespace}] change. [DoNotSave: ${mapData.doNotSave}, DoNotSync: ${mapData.doNotSync}].`)
+    enLog(`The Data is: `, JSON.parse(JSON.stringify(dataRef.value)))
+    saveData()
+    syncDataByWebsocket()
+  }, {
+    deep: true,
+  })
+
+  return dataRef
+}
+
+export async function loadModuleDataByNamespace<T>(namespace: Namespace) {
+  const plugin = usePlugin()
+  const storageKey = getModuleStorageKey(namespace)
+
+  enLog(`Ready to load module data of [${namespace}] from file [${storageKey}]`)
+  const res: EnSyncModuleData<T> = await plugin.loadData(storageKey)
+
+  const dataRef = syncDataRefMap[namespace]?.dataRef
+
+  if (!dataRef) {
+    enError(`Module [${namespace}] was not found.`)
+    return
+  }
+
+  if (!res) {
+    await saveModuleDataByNamespace(namespace)
+    return syncDataRefMap[namespace]?.dataRef
+  }
+
+  const defaultDataCopy = JSON.parse(JSON.stringify(dataRef.value.defaultValue))
+
+  // 合并默认值到返回值中，方便新增字段
+  const mergedData = Object.assign(
+    {},
+    defaultDataCopy,
+    res?.data
+  )
+  const mergedRes = {
+    data: mergedData,
+    defaultValue: defaultDataCopy,
+  }
+
+  markAsDoNotSave(namespace)
+  markAsDoNotSync(namespace)
+  dataRef.value = mergedRes
+  return dataRef
+}
+
+export function getModuleByNamespace<T>(namespace: string): EnSyncModule<T> {
+  const module = syncDataRefMap[namespace]
+  if (!module) {
+    enError(`Module [${namespace}] was not registered.`)
+    return
+  }
+  return module
+}
+
+export function getModuleRefByNamespace<T>(namespace: string): EnSyncModuleDataRef<T> {
+  return getModuleByNamespace<T>(namespace).dataRef
+}
+
+
 export const markAsDoNotSave = (namespace: string, value = true) => {
-  const mapData = syncDataRefMap[namespace]
+  const mapData = getModuleByNamespace(namespace)
   mapData.doNotSave = value
 }
 export const markAsDoNotSync = (namespace: string, value = true) => {
-  const mapData = syncDataRefMap[namespace]
+  const mapData = getModuleByNamespace(namespace)
   mapData.doNotSync = value
 }
+
+export const saveModuleDataByNamespace = debounce(async (namespace: Namespace) => {
+  const mapData = getModuleByNamespace(namespace)
+
+  if (!mapData.needSave) {
+    enLog(`Module [${namespace}] do not need to save. Cancel to save.`)
+    return
+  }
+
+  if (mapData.doNotSave) {
+    enLog(`Module [${namespace}] marked as doNotSave. Cancel to save.`)
+    mapData.doNotSave = false
+    return
+  }
+  const plugin = usePlugin()
+  const dataRef = mapData.dataRef
+  const storageKey = getModuleStorageKey(namespace)
+  enLog(`Ready to save module [${namespace}] data into file [${storageKey}]: `, JSON.parse(JSON.stringify(dataRef.value)))
+  await plugin.saveData(storageKey, dataRef.value)
+})
+
+// #region socket logics
 
 const socketRef = ref<WebSocket>()
 const socketIsOpen = () => socketRef.value && socketRef.value?.readyState == WebSocket.OPEN
@@ -70,7 +227,7 @@ const getSyncDataByWebSocket = (event) => {
       return
     }
 
-    const mapData = syncDataRefMap[msg.namespace]
+    const mapData = getModuleByNamespace(msg.namespace)
     if (!mapData) return
 
     // 标记相关逻辑
@@ -87,7 +244,7 @@ const sendToSyncByData = <T>(namespace: string, data: EnSyncModuleData<T>) => {
   // 如果 socket 未连接，则不处理
   if (socketIsClosed()) return
 
-  const mapData = syncDataRefMap[namespace]
+  const mapData = getModuleByNamespace(namespace)
   if (!mapData) return
 
   // 如果是由 websocket 同步的，则不处理
@@ -110,7 +267,7 @@ const initWebsocket = () => {
   if (socketIsOpen()) return
   if (connecting) return
 
-  // imp 支持加密
+  // IMP 支持加密
   const wsUrl = `ws://${location.host}/ws/broadcast?channel=SEP-data-sync-channel`
   connecting = true
   const socket = new WebSocket(wsUrl)
@@ -127,91 +284,4 @@ const initWebsocket = () => {
   }
 }
 
-export async function useSyncModuleData<T>({
-  namespace,
-  defaultData = {} as T,
-  needSave = true,
-  needSync = true
-}: IProps<T>): Promise<Ref<EnSyncModuleData<T>>> {
-  initWebsocket()
-
-  const existData = syncDataRefMap[namespace]
-
-  // 如果已经创建，直接返回。不执行后续的创建逻辑
-  if (existData) {
-    return existData.dataRef
-  }
-
-  // 对默认值进行拷贝，防止修改默认值
-  const defaultDataCopy = JSON.parse(JSON.stringify(defaultData))
-  const initData = JSON.parse(JSON.stringify(defaultData))
-
-  const dataRef = ref<EnSyncModuleData<T>>()
-  const storageKey = `SEP-${namespace}`
-
-  syncDataRefMap[namespace] = {
-    dataRef,
-  }
-  markAsDoNotSave(namespace)
-  markAsDoNotSync(namespace)
-  dataRef.value = {
-    data: initData,
-    defaultValue: defaultDataCopy,
-  }
-
-  const saveData = debounce(async () => {
-    if (!needSave) return
-
-    const mapData = syncDataRefMap[namespace]
-    if (mapData.doNotSave) {
-      mapData.doNotSave = false
-      return
-    }
-    const plugin = usePlugin()
-    enLog(`Ready to save module [${namespace}] data: `, JSON.parse(JSON.stringify(dataRef.value)))
-    await plugin.saveData(storageKey, dataRef.value)
-  })
-  const syncDataByWebsocket = () => {
-    if (!needSync) return
-    sendToSyncByData<T>(namespace, dataRef.value)
-  }
-
-  const plugin = usePlugin()
-  const res: EnSyncModuleData<T> = await plugin.loadData(storageKey)
-  if (!res) {
-    await saveData()
-    markAsDoNotSave(namespace, false)
-    markAsDoNotSync(namespace, false)
-    return dataRef
-  }
-  // 合并默认值到返回值中，方便新增字段
-  const mergedData = Object.assign({}, defaultDataCopy, res?.data)
-  const mergedRes = {
-    data: mergedData,
-    defaultValue: defaultDataCopy,
-  }
-  enLog(`Loaded module [${namespace}] data: `, JSON.parse(JSON.stringify(mergedRes)))
-  markAsDoNotSave(namespace)
-  markAsDoNotSync(namespace)
-  dataRef.value = res ? mergedRes : {
-    data: initData,
-    defaultValue: defaultDataCopy,
-  }
-
-  watch(dataRef, () => {
-    const mapData = syncDataRefMap[namespace]
-    enLog(`Watched module [${namespace}] data change. [DoNotSave: ${mapData.doNotSave}, DoNotSync: ${mapData.doNotSync}].`)
-    enLog(`The Data is: `, JSON.parse(JSON.stringify(dataRef.value)))
-    saveData()
-    syncDataByWebsocket()
-  }, {
-    deep: true,
-  })
-
-  return dataRef
-}
-
-export function getModuleRefByNamespace(namespace: string) {
-  console.log('Getting module ref by namespace: ', namespace, syncDataRefMap, syncDataRefMap[namespace])
-  return syncDataRefMap[namespace]?.dataRef
-}
+// #endregion socket logics
