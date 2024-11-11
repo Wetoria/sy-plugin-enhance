@@ -350,6 +350,11 @@ export const useProWatcher = (props: {
 </script>
 
 <style lang="scss" scoped>
+.SyEnhancerDialogTitle {
+  font-weight: bold;
+  font-size: 1.18em;
+  color: rgb(var(--primary-6));
+}
 .en_settings_list {
 }
 
