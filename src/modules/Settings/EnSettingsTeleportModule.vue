@@ -91,7 +91,9 @@ const onModuleSwitch = (enabled) => {
   })
 }
 
+let resetFlag = false
 const resetModule = () => {
+  resetFlag = true
   resetModuleOptions(module)
 }
 
@@ -101,6 +103,10 @@ const resetModule = () => {
  * 在切换模块内部设置时，需要控制整个模块的开关。
  */
 watch(moduleData, () => {
+  if (resetFlag) {
+    resetFlag = false
+    return
+  }
 
   // 如果模块没有子模块，则不需要进行开关控制
   if (!hasSubBooleanOptions.value) {
