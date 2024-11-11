@@ -202,10 +202,16 @@ export async function loadModuleDataByNamespace<T>(namespace: Namespace) {
   return dataRef
 }
 
+export async function updateModuleDataByNamespaceWithLoadFile<T>(namespace: string) {
+  const module = getModuleByNamespace<T>(namespace)
+  const res = await loadModuleDataByNamespace<T>(namespace)
+  module.dataRef.value = res.value
+}
+
 export function getModuleByNamespace<T>(namespace: string): EnSyncModule<T> {
   const module = syncDataRefMap[namespace]
   if (!module) {
-    enError(`Module ${getNamespaceLogString(namespace)} was not registered.`)
+    enError(`Module was not registered: ${getNamespaceLogString(namespace)}`)
     return
   }
   return module

@@ -44,7 +44,8 @@ import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import { usePlugin } from '@/main'
 import { SyFrontendTypes } from '@/utils/Siyuan'
 import { computed, onMounted, ref } from 'vue'
-import { useModule } from './Settings/EnSettings.vue'
+import { useSyncModuleData } from '@/utils/SyncData'
+import { getColorStringWarn } from '@/utils/Log'
 
 const props = defineProps<{
   windowTitle: string;
@@ -149,11 +150,18 @@ export const createWindow = (title, queryStr?) => {
   }
   const { BrowserWindow } = require('@electron/remote')
 
-  const module = useModule(`enWindow-${title}`, {
-    width: 1000,
-    height: 350,
+  const module = useSyncModuleData({
+    namespace: `enWindow-${title}`,
+    defaultData: {
+      width: 1000,
+      height: 350,
+    },
+    needSync: false,
   })
-  const moduleOptions = computed(() => module.value.options as IEnWindow)
+  enLog(`${getColorStringWarn('EnWindow created:')} ${title}`)
+  enLog('', module.value)
+
+  const moduleOptions = computed(() => module.value.data as IEnWindow)
 
   const {
     width = 1000,

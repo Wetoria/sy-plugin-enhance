@@ -90,6 +90,7 @@
         </a-dropdown>
         <div
           v-for="item of navList"
+          :key="item.label"
           class="NavItem"
           @click="() => {
             if (item.onClick) {
@@ -119,8 +120,9 @@ import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import { computed } from 'vue';
 import { useDocHistory } from '@/utils/History'
 import { entryOpenSettings, useSettings } from '@/modules/Settings/EnSettings.vue';
-import { createTodayDailyNote, jumpToNextDailyNote, jumpToPrevDailyNote } from '@/modules/DailyNote/DailyNote.vue';
+import { jumpToNextDailyNote, jumpToPrevDailyNote } from '@/modules/DailyNote/DailyNote.vue';
 import { isNotFree } from '@/modules/Settings/EnSettings.vue';
+import { createTodayDailyNote } from '@/modules/DailyNote/QuickNote/EnQuickNoteMobile.vue';
 
 onMounted(() => {
   if (!plugin.isMobile) {

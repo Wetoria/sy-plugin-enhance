@@ -39,7 +39,7 @@ import EnWindow, { isInWindow } from '@/modules/EnWindow.vue';
 import { Protyle } from 'siyuan';
 import { computed, onMounted, ref, watch } from 'vue';
 import EnNotebookSelector from '@/components/EnNotebookSelector.vue';
-import { appendBlockIntoDailyNote, useDailyNote } from '../DailyNote/DailyNote.vue';
+import { getNewDailyNoteBlockId, useDailyNote } from '@/modules/DailyNote/DailyNote.vue';
 import { useSyncModuleData } from '@/utils/SyncData';
 
   const winTitle = 'QuickNote'
@@ -82,19 +82,8 @@ import { useSyncModuleData } from '@/utils/SyncData';
     if (!inWindow.value) {
       return
     }
-    const res = await appendBlockIntoDailyNote(
-      'markdown',
-      ``,
-      selectedNotebookId.value,
-    )
-    const {
-      doOperations = [],
-    } = res[0]
-    const transaction = doOperations[0]
-    const {
-      id,
-    } = transaction;
-    currentBlockId.value = id
+
+    currentBlockId.value = await getNewDailyNoteBlockId()
   }
 
   const onAfterRender = (protyle) => {

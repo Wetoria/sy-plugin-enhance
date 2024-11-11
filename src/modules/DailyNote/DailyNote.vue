@@ -25,44 +25,21 @@
       </template>
     </EnSettingsItem>
   </EnSettingsTeleportModule>
-  <Teleport to="body">
-    <a-modal
-      v-model:visible="quickNoteModalVisible"
-      class="enQuickNoteModal"
-      modal-class="enQuickNoteContainer"
-      :mask="false"
-      :alignCenter="false"
-      :closable="false"
-    >
-      <template #title>
-        添加日记
-      </template>
-      <div
-        class="enCommentContainerContent"
-      >
-        <a-spin dot :loading="isCreatingDailyNote">
-          <EnProtyle
-            :blockId="currentBlockId"
-            :options="{
-              action: ['cb-get-html', 'cb-get-all'],
-            }"
-            @after="onAfterRender"
-            disableEnhance
-          />
-        </a-spin>
-      </div>
 
-      <template #footer>
-        <a-button
-          type="primary"
-          size="small"
-          @click="quickNoteModalVisible = false"
-        >
-          关闭
-        </a-button>
-      </template>
-    </a-modal>
-  </Teleport>
+  <!-- 一键记事 -->
+
+  <!-- 移动端一键记事 -->
+  <template>
+
+  </template>
+
+  <!-- 浏览器 - 桌面端 -->
+  <!-- IMP 网页伺服 一键记事 -->
+
+  <!-- 桌面端 一键记事 electron 窗口 -->
+  <template>
+    <EnQuickNote />
+  </template>
 </template>
 
 
@@ -70,23 +47,24 @@
 <script setup lang="tsx">
 import { usePlugin } from '@/main';
 import {
-  Protyle,
   showMessage,
 } from "siyuan";
-import { deleteBlock, lsNotebooks, request } from '@/api';
-import { useEnhancer } from '@/modules/GlobalStatus';
+import { lsNotebooks, request } from '@/api';
 import { openDocById } from '@/utils/Note';
-import { computed, onMounted, ref, watch } from 'vue';
+import { onMounted } from 'vue';
 import EnSettingsItem from '../Settings/EnSettingsItem.vue';
 import EnNotebookSelector from '@/components/EnNotebookSelector.vue';
 import EnSettingsTeleportModule from '../Settings/EnSettingsTeleportModule.vue';
-import { useModule } from '../Settings/EnSettings.vue';
-import EnProtyle from '@/components/EnProtyle.vue';
+import EnQuickNote from '@/modules/DailyNote/QuickNote/EnQuickNote.vue';
+import { EnModule, useSettingModule, useSettingModuleData } from '../Settings/EnSettings.vue';
 import { targetIsInnerOf } from '@/utils/DOM';
-import { useSyncModuleData } from '@/utils/SyncData';
+import { updateModuleDataByNamespaceWithLoadFile, useSyncModuleData } from '@/utils/SyncData';
 import { useSiyuanNotebookMount, useSiyuanNotebookUnmount } from '@/utils/EventBusHooks';
+import { getColorStringWarn } from '@/utils/Log';
 
 const plugin = usePlugin()
+updateModuleDataByNamespaceWithLoadFile(moduleName)
+
 onMounted(() => {
   plugin.addCommand({
     langKey: "goPrevDailyNote",
@@ -138,31 +116,44 @@ onMounted(() => {
 // 打开的笔记本列表
 // const openedNotebookList = ref([])
 
+export const namespace_DailyNoteOpenedNotebookList = 'dailyNoteOpenedNotebookList'
 const openedNotebookList = useSyncModuleData({
-  namespace: 'dailyNoteOpenedNotebookList',
+  namespace: namespace_DailyNoteOpenedNotebookList,
   defaultData: [],
   needSave: false,
   needSync: false,
 })
 export function updateOpenedNotebookList() {
   lsNotebooks().then((res) => {
-    enLog('lsNotebooks res', res)
+    enLog(`${getColorStringWarn(`Loaded notebook list: `)}`, res)
     openedNotebookList.value.data = res?.notebooks?.filter(i => !i.closed) || []
   })
 }
 
-interface ModuleOptions {
+// #region 初始化设置模块
+
+interface ModuleOptions extends EnModule {
   dailyNoteNotebookId: string
 }
 export type DailyNoteModuleOptions = ModuleOptions
+
 const moduleName = 'DailyNote'
-export const DailyNoteModuleName = moduleName
 const moduleDisplayName = 'Daily Note'
-const defaultOptions: ModuleOptions = {
+
+const defaultData: ModuleOptions = {
+  enabled: true,
+  moduleName,
+  moduleDisplayName,
   dailyNoteNotebookId: '',
 }
-const module = useModule(moduleName, defaultOptions)
-const moduleOptions = computed(() => module.value?.options as ModuleOptions || {})
+const module = useSettingModule<ModuleOptions>(moduleName, {
+  defaultData,
+})
+const moduleOptions = useSettingModuleData<ModuleOptions>(moduleName)
+
+// #endregion 初始化设置模块
+
+export const DailyNoteModuleName = moduleName
 
 // TODO 思源的笔记本列表更新不及时，等以后提案了响应式以后，再考虑要不要优化吧。
 export function notebookIsOpened(notebookId: string) {
@@ -199,6 +190,16 @@ export function appendBlockIntoDailyNote(
   };
   const url = "/api/block/appendDailyNoteBlock";
   return request(url, payload);
+}
+
+export async function getNewDailyNoteBlockId() {
+  const res = await appendBlockIntoDailyNote(
+    'markdown',
+    '',
+    moduleOptions.value.dailyNoteNotebookId
+  )
+  const blockId = getAppendedDailyNoteBlockId(res)
+  return blockId
 }
 
 async function getCurrentDocAttr(currentDocId) {
@@ -302,64 +303,6 @@ export function getAppendedDailyNoteBlockId(res: IResdoOperations[]) {
   return transaction?.id
 }
 
-const isCreatingDailyNote = ref(false)
-const quickNoteModalVisible = ref(false)
-const currentBlockId = ref()
-
-const protyleRef = ref<Protyle>()
-const onAfterRender = (protyle: Protyle) => {
-  const flag = setInterval(() => {
-    const target = protyle.protyle.contentElement.querySelector(`[data-node-id="${currentBlockId.value}"]`) as HTMLElement
-    enLog('target', target, target.dataset.nodeId)
-    if (target) {
-      clearInterval(flag)
-      const editableDom = target.firstElementChild as HTMLElement
-
-      editableDom.setAttribute("placeholder", '写点什么');
-      isCreatingDailyNote.value = false
-    }
-  }, 0)
-  enLog('onAfterRender', protyle)
-  protyleRef.value = protyle
-}
-
-const destoryProtyle = () => {
-  if (!protyleRef.value) {
-    return
-  }
-  const protyle = protyleRef.value.protyle
-  if (!protyle.updated && currentBlockId.value) {
-    deleteBlock(currentBlockId.value)
-  }
-  currentBlockId.value = ''
-}
-watch(quickNoteModalVisible, (visible) => {
-  if (!visible) {
-    destoryProtyle()
-  }
-})
-export async function createTodayDailyNote() {
-  const enhancer = useEnhancer()
-  if (enhancer.value.isSync) {
-    showMessage('正在同步中，请等待同步完成再创建笔记', 1000)
-    return
-  }
-
-  if (quickNoteModalVisible.value) {
-    return
-  }
-  isCreatingDailyNote.value = true
-  const res = await appendBlockIntoDailyNote(
-    'markdown',
-    '',
-    moduleOptions.value.dailyNoteNotebookId
-  )
-  const blockId = getAppendedDailyNoteBlockId(res)
-
-  quickNoteModalVisible.value = true
-
-  currentBlockId.value = blockId
-}
 </script>
 
 
