@@ -10,6 +10,7 @@ onMounted(() => {
   const handler = () => {
     document.body.setAttribute('arco-theme', document.documentElement.dataset.themeMode)
   }
+  handler()
   const observer = new MutationObserver(debounce(handler, 100));
   observer.observe(document.documentElement, {
     attributes: true,
