@@ -74,7 +74,7 @@ export function getModuleStorageKey(namespace: Namespace) {
 interface EnSyncDataRefMap {
   [key: string]: EnSyncModule<any>,
 }
-const syncDataRefMap: EnSyncDataRefMap = {}
+export const syncDataRefMap: EnSyncDataRefMap = {}
 window.en_SyncDataRefMap = syncDataRefMap
 
 const getNamespaceLogString = (namespace: string) => {
@@ -101,6 +101,7 @@ export function useSyncModuleData<T>({
 
   const exist = syncDataRefMap[namespace]?.dataRef
   if (exist) {
+    enLog(`${getColorStringWarn(`Module already registered. Return the exist module dataRef of`)} ${getNamespaceLogString(namespace)}`)
     return exist
   }
 
