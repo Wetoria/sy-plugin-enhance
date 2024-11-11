@@ -181,7 +181,10 @@ export interface IBacklink {
   created: string
 }
 
-export interface BottomBacklinkModuleOptions {
+export const BottomBacklinkModuleName = 'EnBottomBacklink'
+
+
+export interface BottomBacklinkModuleOptions extends EnModule {
   enableBottomBacklink: boolean
 
 
@@ -198,10 +201,14 @@ export interface BottomBacklinkModuleOptions {
   }
 }
 
-export const BottomBacklinkModuleName = 'EnBottomBacklink'
+const moduleName = 'EnBottomBacklink'
 const moduleDisplayName = '底部反链'
 
 const defaultOptions: BottomBacklinkModuleOptions = {
+  enabled: true,
+  moduleName,
+  moduleDisplayName,
+
   enableBottomBacklink: false,
 
   enableBacklinkFilter: false,
@@ -211,10 +218,11 @@ const defaultOptions: BottomBacklinkModuleOptions = {
   docFilterPropertiesSaved: {
   },
 }
+
 </script>
 
 <script setup lang="ts">
-import { useModule, useSettings } from "@/modules/Settings/EnSettings.vue";
+import { EnModule, useSettingModule, useSettingModuleData, useSettings } from "@/modules/Settings/EnSettings.vue";
 import EnProtyleBottomBackLinkFilterArea, { FilterProperties } from './EnProtyleBottomBackLinkFilterArea.vue';
 import EnProtyleBottomBackLinkDoc from './EnProtyleBottomBackLinkDoc.vue';
 import EnProtyleBottomBackMention from './EnProtyleBottomBackMention.vue';
@@ -225,11 +233,15 @@ import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue';
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue';
 import { usePlugin } from '@/main';
+import { updateModuleDataByNamespaceWithLoadFile } from '@/utils/SyncData';
 
 const plugin = usePlugin()
 
-const module = useModule(BottomBacklinkModuleName, defaultOptions)
-const moduleOptions = computed(() => module.value.options as BottomBacklinkModuleOptions)
+const module = useSettingModule<BottomBacklinkModuleOptions>(moduleName, {
+  defaultData: defaultOptions,
+})
+const moduleOptions = useSettingModuleData<BottomBacklinkModuleOptions>(moduleName)
+updateModuleDataByNamespaceWithLoadFile(moduleName)
 
 watch(() => moduleOptions.value.sqlLimit, () => {
   if (!moduleOptions.value.sqlLimit) {

@@ -1,22 +1,5 @@
 <template>
   <EnSettingsTeleportModule :name="moduleName" :display="moduleDisplayName" :module="module">
-    <!-- <div style="color: var(--b3-theme-on-surface);">
-      <div style="color: red">
-        <b>注意：不要过分依赖于该模块的功能。</b>
-      </div>
-      <div>
-        在一些特定的场景下，因为思源内部的逻辑，将会导致你的内容变成 HTML 块。
-      </div>
-      <div>
-        比如，拖拽（重复）移动内容时，如果未关闭段落锁，生成的内容将会是一个 HTML 块，而不是原格式。
-      </div>
-      <div>
-        如果主要是新增内容而不是修改，你可以开启该功能。
-      </div>
-      <div>
-        因为这个导致的内容变更，请自行负责。
-      </div>
-    </div> -->
     <EnSettingsItem>
       <div>
         显示段落块时间
@@ -64,71 +47,6 @@
       </template>
     </EnSettingsItem>
 
-    <!-- <EnSettingsItem>
-      <div>
-        段落锁
-      </div>
-      <template #desc>
-        <div style="display: flex; align-items: center;">
-          是否启用段落锁功能。点击 <span><SyIcon name="iconLock" /></span> 进行解锁，用来临时编辑。
-        </div>
-        <div>
-          开启段落锁功能，会高亮 HTML 块的背景色，用于及时提醒。
-        </div>
-      </template>
-      <template #opt>
-        <a-switch v-model="moduleOptions.enableBlockLock" />
-      </template>
-    </EnSettingsItem>
-    <EnSettingsItem mode="vertical">
-      <div>
-        段落锁定的时间（秒）
-      </div>
-      <template #desc>
-        <div>
-          段落的更新时间，如果超过该时间，将会被锁定。
-        </div>
-        <div>
-          最短 1 秒，最长 120 分钟（7200 秒）。
-        </div>
-      </template>
-      <template #opt>
-        <a-input-number
-          class="input-demo"
-          placeholder="Please Enter"
-          mode="button"
-          :max="120 * 60"
-          :min="1"
-          :readOnly="plugin.isMobile"
-          v-model="moduleOptions.autoLockTimeDiff"
-          @change="onAutoLockTimeDiffChange"
-        />
-      </template>
-    </EnSettingsItem>
-    <EnSettingsItem mode="vertical">
-      <div>
-        自动检测的时间（秒）
-      </div>
-      <template #desc>
-        <div>
-          更新段落锁状态的自动检测的时间。检测新增加或修改的的段落，是否需要被锁定。
-        </div>
-        <div>
-          最短 10 秒。
-        </div>
-      </template>
-      <template #opt>
-        <a-input-number
-          class="input-demo"
-          placeholder="Please Enter"
-          mode="button"
-          :min="10"
-          :readOnly="plugin.isMobile"
-          v-model="moduleOptions.autoCheckTime"
-          @change="onAutoCheckTimeChange"
-        />
-      </template>
-    </EnSettingsItem> -->
   </EnSettingsTeleportModule>
   <div>
     <EnParagraphBlockAttrContainer
@@ -173,7 +91,7 @@
 <script setup lang="ts">
   import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue';
   import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue';
-  import { computed, onMounted, ref, watchEffect } from 'vue';
+  import { onMounted, ref, watchEffect } from 'vue';
   import { debounce, moduleEnableStatusSwitcher } from '@/utils';
   import { queryAllByDom } from '@/utils/DOM';
   import { SyDomNodeTypes } from '@/utils/Siyuan';
@@ -181,37 +99,45 @@
 
   import EnParagraphBlockAttrContainer from './EnParagraphBlockAttrContainer.vue';
   import EnParagraphBlockTime from './EnParagraphBlockTime.vue';
-  import EnParagraphBlockLock from './EnParagraphBlockLock.vue';
   import { usePlugin } from '@/main';
-import { isVip, useModule } from '../Settings/EnSettings.vue';
-import SyIcon from '@/components/SiyuanTheme/SyIcon.vue';
+import { EnModule, isVip, useSettingModule, useSettingModuleData } from '@/modules/Settings/EnSettings.vue';
 import EnParagraphBlockTimeDiff from './EnParagraphBlockTimeDiff.vue';
-
-  interface ModuleOptions {
-    enableBlockTime: boolean
-    blockTimeFontSize: number
-    defaultBlockType: 'created' | 'updated'
-
-    enableBlockLock: boolean
-    autoLockTimeDiff: number
-    autoCheckTime: number
-  }
+import { updateModuleDataByNamespaceWithLoadFile } from '@/utils/SyncData';
 
   const plugin = usePlugin()
 
-  const moduleName = 'EnParagraphBlock'
-  const moduleDisplayName = '段落块相关功能'
-  const defaultOptions: ModuleOptions = {
-    enableBlockTime: false,
-    blockTimeFontSize: 9,
-    defaultBlockType: 'created',
+interface ModuleOptions extends EnModule {
+  enableBlockTime: boolean
+  blockTimeFontSize: number
+  defaultBlockType: 'created' | 'updated'
 
-    enableBlockLock: false,
-    autoLockTimeDiff: 5 * 60,
-    autoCheckTime: 10,
-  }
-  const module = useModule(moduleName, defaultOptions)
-  const moduleOptions = computed(() => module.value.options as ModuleOptions)
+  enableBlockLock: boolean
+  autoLockTimeDiff: number
+  autoCheckTime: number
+}
+
+const moduleName = 'EnParagraphBlock'
+const moduleDisplayName = '段落块相关功能'
+
+const defaultData: ModuleOptions = {
+  enabled: true,
+  moduleName,
+  moduleDisplayName,
+
+  enableBlockTime: false,
+  blockTimeFontSize: 9,
+  defaultBlockType: 'created',
+
+  enableBlockLock: false,
+  autoLockTimeDiff: 5 * 60,
+  autoCheckTime: 10,
+}
+const module = useSettingModule<ModuleOptions>(moduleName, {
+  defaultData,
+})
+const moduleOptions = useSettingModuleData<ModuleOptions>(moduleName)
+
+updateModuleDataByNamespaceWithLoadFile(moduleName)
 
   const paragraphListRef = ref<HTMLDivElement[]>([])
 
@@ -232,7 +158,7 @@ import EnParagraphBlockTimeDiff from './EnParagraphBlockTimeDiff.vue';
   const FOCUS_CLASS_NAME = 'block-focus'
   const lasFocusDom = ref<HTMLDivElement>()
   const bindClickFocusEvent = (dom: HTMLDivElement) => {
-    // @ts-ignore
+    // @ts-expect-error bindedFocusEvent
     if (dom.bindedFocusEvent) {
       return
     }
@@ -245,7 +171,7 @@ import EnParagraphBlockTimeDiff from './EnParagraphBlockTimeDiff.vue';
       }
       lasFocusDom.value = dom
     })
-    // @ts-ignore
+    // @ts-expect-error bindedFocusEvent
     dom.bindedFocusEvent = true
   }
 
@@ -277,19 +203,9 @@ import EnParagraphBlockTimeDiff from './EnParagraphBlockTimeDiff.vue';
     insertBlockTime();
   })
 
-  const onAutoLockTimeDiffChange = (value) => {
-    if (!value) {
-      moduleOptions.value.autoLockTimeDiff = defaultOptions.autoLockTimeDiff
-    }
-  }
-  const onAutoCheckTimeChange = (value) => {
-    if (!value) {
-      moduleOptions.value.autoCheckTime = defaultOptions.autoCheckTime
-    }
-  }
 
   watchEffect(() => {
-    moduleEnableStatusSwitcher('EnParagraphBlock', module.value.enabled)
+    moduleEnableStatusSwitcher('EnParagraphBlock', moduleOptions.value.enabled)
     document.documentElement.style.setProperty('--timeFontSize', `${moduleOptions.value.blockTimeFontSize}px`)
   })
 </script>

@@ -162,7 +162,7 @@ export interface FilterProperties {
 import { computed, ref, watch } from 'vue';
 import { BottomBacklinkModuleName, BottomBacklinkModuleOptions, IBacklink } from './EnProtyleBottomBackLink.vue';
 import { sql } from '@/api';
-import { useModule } from '@/modules/Settings/EnSettings.vue';
+import { useSettingModuleData } from '@/modules/Settings/EnSettings.vue';
 import { chainHasRefNode, chainHasTargetBlockRefIdAndName, getTreeChainPathOfDoc, hasTargetBlockRef, hasTargetBlockRefIdAndName, hideDom, isSyBreadCrumbDom, isSyContainerNode, isSyDocNode, isSyHeadingNode, isSyListItemNode, isSyNodeCanContainerBlockRef, showDom, SyDomNodeTypes } from '@/utils/Siyuan';
 import { debounce, recursionTree } from '@/utils';
 import EnTagsContainer from '@/components/EnTagsContainer.vue';
@@ -186,8 +186,7 @@ const props = defineProps<{
   backlinkListDomRef: any
 }>()
 
-const module = useModule(BottomBacklinkModuleName)
-const moduleOptions = computed(() => module.value.options as BottomBacklinkModuleOptions)
+const moduleOptions = useSettingModuleData<BottomBacklinkModuleOptions>(BottomBacklinkModuleName)
 const docFilterPropertiesSaved = computed(() => moduleOptions.value.docFilterPropertiesSaved[props.currentDocId] || {})
 const savedNames = computed(() => Object.keys(docFilterPropertiesSaved.value))
 
