@@ -29,6 +29,7 @@ export default class EnhancePlugin extends Plugin {
   public readonly version = version;
 
   async onload() {
+    enSuccess(`Plugin script loaded, ready to init plugin logics`)
     const frontEnd = getFrontend();
     this.platform = frontEnd as SyFrontendTypes
     this.isMobile = frontEnd === "mobile" || frontEnd === "browser-mobile";

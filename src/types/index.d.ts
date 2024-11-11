@@ -126,6 +126,7 @@ interface Window {
   enLog: typeof console.log,
   enWarn: typeof console.warn,
   enError: typeof console.error,
+  enSuccess: typeof console.log,
 
   en_SyncDataRefMap: Ref<EnSyncDataRefMap>,
   en_plugin: VPlugin,
@@ -158,3 +159,4 @@ interface LifeLogItem {
 const enLog: typeof console.log
 const enWarn: typeof console.warn
 const enError: typeof console.error
+const enSuccess: typeof console.log
