@@ -1,7 +1,8 @@
 import { usePlugin } from '@/main'
 import { Ref, ref, watch } from 'vue'
 import { debounce } from '@/utils'
-import { enLog, enError } from './Log'
+import { enLog, enError, getColorStringWarn } from './Log'
+import chalk from 'chalk'
 
 /** 如果 needSave 和 needSync 都为 false。
  * 则只是当前 window 内进行同步，相当于只做窗口内同步，不进行跨窗口同步。
@@ -42,12 +43,12 @@ interface EnSyncModuleDataMsg<T> {
 interface EnSyncModule<T> {
   dataRef: Ref<EnSyncModuleData<T>>,
 
-  needSync?: Pick<EnSyncModuleProps<T>, 'needSync'>
+  needSync?: EnSyncModuleProps<T>['needSync']
   // 为 true 则不发送更新
   doNotSync?: boolean,
 
 
-  needSave?: Pick<EnSyncModuleProps<T>, 'needSave'>
+  needSave?: EnSyncModuleProps<T>['needSave']
   // 不保存的标记，为 true 则不调用思源插件的保存逻辑
   doNotSave?: boolean,
 }
@@ -62,6 +63,10 @@ interface EnSyncDataRefMap {
 const syncDataRefMap: EnSyncDataRefMap = {}
 window.en_SyncDataRefMap = syncDataRefMap
 
+const getNamespaceLogString = (namespace: string) => {
+  return `${chalk.bgCyanBright.cyan.bold(` [${namespace}] `)}`
+}
+
 function getInitModuleData(defaultData) {
   const defaultValue = JSON.parse(JSON.stringify(defaultData))
   const data = JSON.parse(JSON.stringify(defaultData))
@@ -72,6 +77,7 @@ function getInitModuleData(defaultData) {
   }
 }
 
+// 根据 namespace 注册全局 module 数据
 export function useSyncModuleData<T>({
   namespace,
   defaultData = {} as T,
@@ -87,32 +93,37 @@ export function useSyncModuleData<T>({
   const dataRef = ref<EnSyncModuleDataRef<T>>({} as any)
   syncDataRefMap[namespace] = {
     dataRef,
+    needSave,
+    needSync,
   }
   dataRef.value = getInitModuleData(defaultData)
 
-  enLog(`Module [${namespace}] registered.`, JSON.parse(JSON.stringify(syncDataRefMap)), JSON.parse(JSON.stringify(dataRef.value)))
+  enLog(`${getColorStringWarn('Module registered:')} ${getNamespaceLogString(namespace)}.`)
+  enLog(`Module map data is: `, syncDataRefMap)
+  enLog(`The Module data is: `, JSON.parse(JSON.stringify(dataRef.value)))
 
   const saveData = debounce(async () => {
     if (!needSave) {
-      enLog(`Module [${namespace}] do not need to save. Cancel to save.`)
+      enLog(`Module ${getNamespaceLogString(namespace)} do not need to save. Cancel to save.`)
       return
     }
 
     const mapData = getModuleByNamespace(namespace)
     if (mapData.doNotSave) {
-      enLog(`Module [${namespace}] marked as doNotSave. Cancel to save.`)
+      enLog(`Module ${getNamespaceLogString(namespace)} marked as doNotSave. Cancel to save.`)
       mapData.doNotSave = false
       return
     }
     const plugin = usePlugin()
     const storageKey = getModuleStorageKey(namespace)
-    enLog(`Ready to save module data of [${namespace}] into file [${storageKey}]: `, JSON.parse(JSON.stringify(dataRef.value)))
+    enLog(`${getColorStringWarn('Ready to save module data')} of ${getNamespaceLogString(namespace)} into file [${storageKey}]: `, JSON.parse(JSON.stringify(dataRef.value)))
     await plugin.saveData(storageKey, dataRef.value)
+    enLog(`${getColorStringWarn('Saved module data')} of ${getNamespaceLogString(namespace)} into file [${storageKey}].`)
   })
 
   const syncDataByWebsocket = () => {
     if (!needSync) {
-      enLog(`Module [${namespace}] do not need to sync. Cancel to sync.`)
+      enLog(`Module ${getNamespaceLogString(namespace)} do not need to sync. Cancel to sync.`)
       return
     }
     sendToSyncByData<T>(namespace, dataRef.value)
@@ -120,7 +131,7 @@ export function useSyncModuleData<T>({
 
   watch(dataRef, () => {
     const mapData = getModuleByNamespace(namespace)
-    enLog(`Watched module data of [${namespace}] change. [DoNotSave: ${mapData.doNotSave}, DoNotSync: ${mapData.doNotSync}].`)
+    enLog(`Watched module data of ${getNamespaceLogString(namespace)} change. [DoNotSave: ${mapData.doNotSave}, DoNotSync: ${mapData.doNotSync}].`)
     enLog(`The Data is: `, JSON.parse(JSON.stringify(dataRef.value)))
     saveData()
     syncDataByWebsocket()
@@ -131,22 +142,27 @@ export function useSyncModuleData<T>({
   return dataRef
 }
 
+// 根据 namespace 加载 module 数据
 export async function loadModuleDataByNamespace<T>(namespace: Namespace) {
   const plugin = usePlugin()
   const storageKey = getModuleStorageKey(namespace)
 
-  enLog(`Ready to load module data of [${namespace}] from file [${storageKey}]`)
+  enLog(`${getColorStringWarn('Ready to load module data')} of ${getNamespaceLogString(namespace)} from file [${storageKey}]`)
   const res: EnSyncModuleData<T> = await plugin.loadData(storageKey)
+  enLog(`${getColorStringWarn('Loaded module data')} of ${getNamespaceLogString(namespace)} is: `, res)
 
   const dataRef = syncDataRefMap[namespace]?.dataRef
 
   if (!dataRef) {
-    enError(`Module [${namespace}] was not found.`)
+    enError(`Module ${getNamespaceLogString(namespace)} was not found.`)
     return
   }
 
   if (!res) {
+    enWarn(`${getColorStringWarn('Module data not found')} for ${getNamespaceLogString(namespace)}.`)
+    enLog(`Ready to save and return default data.`)
     await saveModuleDataByNamespace(namespace)
+    enSuccess(`Saved default Module data. for ${getNamespaceLogString(namespace)}`)
     return syncDataRefMap[namespace]?.dataRef
   }
 
@@ -172,7 +188,7 @@ export async function loadModuleDataByNamespace<T>(namespace: Namespace) {
 export function getModuleByNamespace<T>(namespace: string): EnSyncModule<T> {
   const module = syncDataRefMap[namespace]
   if (!module) {
-    enError(`Module [${namespace}] was not registered.`)
+    enError(`Module ${getNamespaceLogString(namespace)} was not registered.`)
     return
   }
   return module
@@ -192,24 +208,26 @@ export const markAsDoNotSync = (namespace: string, value = true) => {
   mapData.doNotSync = value
 }
 
+// 根据 namespace 保存数据
 export const saveModuleDataByNamespace = debounce(async (namespace: Namespace) => {
   const mapData = getModuleByNamespace(namespace)
 
   if (!mapData.needSave) {
-    enLog(`Module [${namespace}] do not need to save. Cancel to save.`)
+    enLog(`Module ${getNamespaceLogString(namespace)} do not need to save. Cancel to save.`)
     return
   }
 
   if (mapData.doNotSave) {
-    enLog(`Module [${namespace}] marked as doNotSave. Cancel to save.`)
+    enLog(`Module ${getNamespaceLogString(namespace)} marked as doNotSave. Cancel to save.`)
     mapData.doNotSave = false
     return
   }
   const plugin = usePlugin()
   const dataRef = mapData.dataRef
   const storageKey = getModuleStorageKey(namespace)
-  enLog(`Ready to save module [${namespace}] data into file [${storageKey}]: `, JSON.parse(JSON.stringify(dataRef.value)))
+  enLog(`${getColorStringWarn('Ready to save module')} ${getNamespaceLogString(namespace)} data into file [${storageKey}]: `, JSON.parse(JSON.stringify(dataRef.value)))
   await plugin.saveData(storageKey, dataRef.value)
+  enLog(`${getColorStringWarn('Saved Module Data: ')} ${getNamespaceLogString(namespace)}`)
 })
 
 // #region socket logics
@@ -221,7 +239,7 @@ const socketIsClosed = () => !socketIsOpen()
 const getSyncDataByWebSocket = (event) => {
   try {
     const msg = JSON.parse(event.data) as EnSyncModuleDataMsg<any>
-    enLog(`Received module [${msg.namespace}] data from other device: `, JSON.parse(JSON.stringify(msg.data)))
+    enLog(`${getColorStringWarn('Received module data of')} [${getNamespaceLogString(msg.namespace)}] from other device: `, JSON.parse(JSON.stringify(msg.data)))
     // 当前 app 的数据不处理
     if (msg.appId == window.siyuan.ws.app.appId) {
       return
@@ -258,7 +276,7 @@ const sendToSyncByData = <T>(namespace: string, data: EnSyncModuleData<T>) => {
     namespace,
     data,
   }
-  enLog(`Ready to send module [${namespace}] data to sync: `, JSON.parse(JSON.stringify(msgData)))
+  enLog(`${getColorStringWarn('Ready to send module')} ${getNamespaceLogString(namespace)} data to sync: `, JSON.parse(JSON.stringify(msgData)))
   const msgStr = JSON.stringify(msgData)
   socketRef.value.send(msgStr)
 }
@@ -274,7 +292,7 @@ const initWebsocket = () => {
   socketRef.value = socket
 
   socket.onopen = () => {
-    enLog('Sync Data Websocket Channel Ready.')
+    enSuccess('Sync Data Websocket Channel Ready.')
   }
 
   socket.onmessage = getSyncDataByWebSocket
