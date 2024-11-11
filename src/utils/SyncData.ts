@@ -140,12 +140,14 @@ export function useSyncModuleData<T>({
       enLog(`Module ${getNamespaceLogString(namespace)} do not need to sync. Cancel to sync.`)
       return
     }
+    enLog(`${getColorStringWarn(`Ready to sync module data:`)} ${getNamespaceLogString(namespace)}`)
     sendToSyncByData<T>(namespace, dataRef.value)
   }
 
   watch(dataRef, () => {
     const mapData = getModuleByNamespace(namespace)
-    enLog(`Watched module data of ${getNamespaceLogString(namespace)} change. [DoNotSave: ${mapData.doNotSave}, DoNotSync: ${mapData.doNotSync}].`)
+    enLog(`${getColorStringWarn(`Watched module data changed:`)} ${getNamespaceLogString(namespace)}`)
+    enLog(`The module flag is [DoNotSave: ${mapData.doNotSave}, DoNotSync: ${mapData.doNotSync}].`)
     enLog(`The Data is: `, JSON.parse(JSON.stringify(dataRef.value)))
     saveData()
     syncDataByWebsocket()
@@ -247,7 +249,12 @@ export const saveModuleDataByNamespace = debounce(async (namespace: Namespace) =
 // #region socket logics
 
 const socketRef = ref<WebSocket>()
-const socketIsOpen = () => socketRef.value && socketRef.value?.readyState == WebSocket.OPEN
+const socketIsOpen = () => {
+  // enLog(`Socket is open: ${socketRef.value?.readyState == WebSocket.OPEN}`)
+  // enLog(`Socket ref is: `, socketRef.value)
+  // enLog(`Socket readyState is: `, socketRef.value?.readyState)
+  return socketRef.value && socketRef.value?.readyState == WebSocket.OPEN
+}
 const socketIsClosed = () => !socketIsOpen()
 
 const getSyncDataByWebSocket = (event) => {
@@ -274,13 +281,20 @@ const getSyncDataByWebSocket = (event) => {
 
 const sendToSyncByData = <T>(namespace: string, data: EnSyncModuleData<T>) => {
   // 如果 socket 未连接，则不处理
-  if (socketIsClosed()) return
+  if (socketIsClosed()) {
+    enWarn(`${getColorStringWarn(`Socket is closed. Can not send module data:`)} ${getNamespaceLogString(namespace)}`)
+    return
+  }
 
   const mapData = getModuleByNamespace(namespace)
-  if (!mapData) return
+  if (!mapData) {
+    enLog(`${getColorStringWarn(`Module ${getNamespaceLogString(namespace)} was not registered. Cancel to send module data.`)}`)
+    return
+  }
 
   // 如果是由 websocket 同步的，则不处理
   if (mapData.doNotSync) {
+    enLog(`${getColorStringWarn(`Module ${getNamespaceLogString(namespace)} marked as doNotSync. Cancel to send module data.`)}`)
     mapData.doNotSync = false
     return
   }
@@ -295,25 +309,34 @@ const sendToSyncByData = <T>(namespace: string, data: EnSyncModuleData<T>) => {
   socketRef.value.send(msgStr)
 }
 let connecting = false
-const initWebsocket = () => {
-  if (socketIsOpen()) return
-  if (connecting) return
+export const initWebsocket = () => {
+  return new Promise((resolve) => {
+    if (socketIsOpen()) {
+      resolve(socketRef.value)
+      return
+    }
 
-  // IMP 支持加密
-  const wsUrl = `ws://${location.host}/ws/broadcast?channel=SEP-data-sync-channel`
-  connecting = true
-  const socket = new WebSocket(wsUrl)
-  socketRef.value = socket
+    if (connecting) {
+      return
+    }
 
-  socket.onopen = () => {
-    enSuccess('Sync Data Websocket Channel Ready.')
-  }
+    // IMP 支持加密
+    const wsUrl = `ws://${location.host}/ws/broadcast?channel=SEP-data-sync-channel`
+    connecting = true
+    const socket = new WebSocket(wsUrl)
+    socketRef.value = socket
 
-  socket.onmessage = getSyncDataByWebSocket
+    socket.onopen = () => {
+      enSuccess('Sync Data Websocket Channel Ready.')
+      resolve(socketRef.value)
+    }
 
-  socket.onerror = function() {
-    initWebsocket()
-  }
+    socket.onmessage = getSyncDataByWebSocket
+
+    socket.onerror = function() {
+      initWebsocket()
+    }
+  })
 }
 
 // #endregion socket logics

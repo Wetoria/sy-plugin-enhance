@@ -6,6 +6,7 @@ import { registerProtyleBottomArea } from './utils/DOM';
 import AppVue from './App.vue';
 import { reactive } from 'vue';
 import { loadSettings } from './modules/Settings/EnSettings.vue';
+import { initWebsocket } from './utils/SyncData';
 
 let pluginRef: VPlugin = null
 export function registerPlugin(plugin) {
@@ -23,6 +24,7 @@ const loadVueApp = () => {
 
 export async function init(plugin: VPlugin) {
   registerPlugin(plugin);
+  await initWebsocket()
   await loadSettings()
   loadVueApp()
   registerProtyleBottomArea()
