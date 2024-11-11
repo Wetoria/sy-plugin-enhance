@@ -61,27 +61,20 @@
 <script setup lang="ts">
 import EnDivider from '@/components/EnDivider.vue';
 import { usePlugin } from '@/main';
-import { computed, ref, watchEffect, watch, onMounted } from 'vue';
+import { computed, ref, watchEffect, watch, onMounted, ComputedRef, Ref } from 'vue';
 import AnyTouch from 'any-touch';
 import { moduleEnableStatusSwitcher } from '@/utils';
 import { onCountClick } from '@/utils/DOM';
-import { EnSyncModuleDataRef, getModuleRefByNamespace, loadModuleDataByNamespace, useSyncModuleData } from '@/utils/SyncData';
+import { EnSyncModuleData, EnSyncModuleDataRef, getModuleRefByNamespace, loadModuleDataByNamespace, useSyncModuleData } from '@/utils/SyncData';
 
 const plugin = usePlugin()
 
 
-const clickNum = ref(0)
-let flag
-const onTitleClicked = () => {
-  clickNum.value += 1
-  clearTimeout(flag)
-  if (clickNum.value >= 10) {
+const onTitleClicked = onCountClick((count) => {
+  if (count >= 10) {
     settings.value.isDebugging = !settings.value.isDebugging
   }
-  flag = setTimeout(() => {
-    clickNum.value = 0
-  }, 1000)
-}
+})
 
 watchEffect(() => {
   moduleEnableStatusSwitcher('EnDebugging', settings.value.isDebugging)
@@ -214,6 +207,13 @@ watchEffect(() => {
   console.log('flag is ', isFree.value, isPro.value, isVip.value, isNotFree.value)
 })
 
+/**
+ * 模块接口
+ *
+ * @field enabled - 模块是否启用
+ * @field moduleName - 模块名称，用于标识模块，不可修改
+ * @field moduleDisplayName - 模块在设置界面显示的名称，不可修改
+ */
 export interface EnModule {
   enabled: boolean
   readonly moduleName: string
@@ -222,25 +222,36 @@ export interface EnModule {
 
 export interface EnModuleOptions<T extends EnModule> {
   defaultData: T
-  // 是否立即加载数据
-  loadImmediate: boolean
 }
 
-export function useSettingModule<T extends EnModule>(moduleName: string, moduleOptions: EnModuleOptions<T>) {
+export interface EnSettingModule<T extends EnModule>
+  extends EnSyncModuleData<T>
+{
+
+}
+export interface EnSettingModuleRef<T extends EnModule>
+  extends EnSyncModuleDataRef<T>
+{
+
+}
+
+
+export function useSettingModule<T extends EnModule>(
+  moduleName: string,
+  moduleOptions: EnModuleOptions<T>,
+): EnSettingModuleRef<T> {
   const {
-    loadImmediate,
     defaultData,
   } = moduleOptions
 
-  const module = useSyncModuleData({
+  const module: EnSettingModuleRef<T> = useSyncModuleData<T>({
     namespace: moduleName,
     defaultData,
   })
 
-  const recorded = settings.value.modules[moduleName]
-  if (!recorded && loadImmediate) {
-    loadModuleDataByNamespace(moduleName)
-  }
+  // const recorded = settings.value.modules[moduleName]
+  // if (!recorded) {
+  // }
 
   return module
 }
@@ -249,7 +260,10 @@ export function resetModuleOptions<T>(aModule: EnSyncModuleDataRef<T>) {
   aModule.value.data = JSON.parse(JSON.stringify(aModule.value.defaultValue))
 }
 
-export function useSettingModuleData<T>(moduleName: string) {
+export interface EnSettingModuleDataRef<T extends EnModule> extends ComputedRef<T> {
+}
+
+export function useSettingModuleData<T extends EnModule>(moduleName: string): EnSettingModuleDataRef<T> {
   const module = getModuleRefByNamespace<T>(moduleName)
   const moduleData = computed(() => module.value.data)
   return moduleData

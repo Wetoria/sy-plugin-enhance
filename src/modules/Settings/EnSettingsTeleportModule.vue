@@ -12,7 +12,7 @@
             <div>
               <a-switch
                 v-if="!always"
-                v-model="module.enabled"
+                v-model="moduleData.enabled"
                 @change="onModuleSwitch"
               />
             </div>
@@ -41,14 +41,14 @@
 
 <script setup lang="ts">
 import { computed, useSlots, watch } from 'vue';
-import { EnModule, resetModuleOptions } from './EnSettings.vue';
-import EnSettingsItemAreaHeading from './EnSettingsItemAreaHeading.vue';
-import EnSettingsTeleport from './EnSettingsTeleport.vue';
+import { EnModule, EnSettingModule, resetModuleOptions, useSettingModuleData } from '@/modules/Settings/EnSettings.vue';
+import EnSettingsItemAreaHeading from '@/modules/Settings/EnSettingsItemAreaHeading.vue';
+import EnSettingsTeleport from '@/modules/Settings/EnSettingsTeleport.vue';
 
 const props = defineProps<{
   name: string
   display: string
-  module: EnModule
+  module: EnSettingModule<EnModule>
   always?: boolean
 }>()
 
@@ -58,34 +58,66 @@ const hasFooterSlot = computed(() => {
 });
 
 const module = computed(() => props.module)
+const moduleData = useSettingModuleData(props.name)
+const moduleBooleanOptionKeys = computed(() => {
+  return Object.keys(moduleData.value || {})
+    .filter(key => typeof moduleData.value[key] === 'boolean')
+})
+const hasBooleanOptions = computed(() => {
+  return !!moduleBooleanOptionKeys.value.length
+})
+
+const moduleBooleanOptionsKeysWithoutEnabledAttr = computed(() => {
+  return moduleBooleanOptionKeys.value.filter(key => key !== 'enabled')
+})
+const hasSubBooleanOptions = computed(() => {
+  return !!moduleBooleanOptionsKeysWithoutEnabledAttr.value.length
+})
+
+
+/**
+ * 模块开关切换
+ * @param enabled 是否启用
+ *
+ * 在模块上进行开关时，需要将相关的设置全部开启或关闭
+ */
 const onModuleSwitch = (enabled) => {
-  Object.keys(module.value.options).forEach((key) => {
-    const value = module.value.options[key]
-    if (typeof value == 'boolean') {
-      module.value.options[key] = enabled
-    }
+  if (!hasBooleanOptions.value) {
+    enLog('Module has no boolean options')
+    return
+  }
+  moduleBooleanOptionKeys.value.forEach((key) => {
+    moduleData.value[key] = enabled
   })
 }
 
 const resetModule = () => {
-  resetModuleOptions(module.value)
+  resetModuleOptions(module)
 }
 
-watch(() => module?.value?.options, () => {
-  const optionsKeys = Object.keys(module.value.options)
-      .filter((key) => typeof module.value.options[key] == 'boolean')
-  if (!optionsKeys.length) {
+/**
+ * 监听模块数据变化
+ *
+ * 在切换模块内部设置时，需要控制整个模块的开关。
+ */
+watch(moduleData, () => {
+
+  // 如果模块没有子模块，则不需要进行开关控制
+  if (!hasSubBooleanOptions.value) {
     return
   }
-  if (module.value.enabled) {
-    const noEnabled = optionsKeys.every((key) => !module.value.options[key])
-    if (noEnabled) {
-      module.value.enabled = false
+
+  // 如果模块开启中，最新的子模块数据全部为关闭时，需要关闭当前模块
+  if (moduleData.value.enabled) {
+    const allSubOptionsDisabled = moduleBooleanOptionsKeysWithoutEnabledAttr.value.every((key) => !moduleData.value[key])
+    if (allSubOptionsDisabled) {
+      moduleData.value.enabled = false
     }
   } else {
-    const hasEnabled = optionsKeys.some((key) => module.value.options[key])
+    // 如果模块关闭中，最新的子模块数据中存在开启时，需要开启当前模块
+    const hasEnabled = moduleBooleanOptionsKeysWithoutEnabledAttr.value.some((key) => moduleData.value[key])
     if (hasEnabled) {
-      module.value.enabled = true
+      moduleData.value.enabled = true
     }
   }
 }, {deep: true})

@@ -4,12 +4,17 @@ import { debounce } from '@/utils'
 import { enLog, enError, getColorStringWarn } from './Log'
 import chalk from 'chalk'
 
-/** 如果 needSave 和 needSync 都为 false。
- * 则只是当前 window 内进行同步，相当于只做窗口内同步，不进行跨窗口同步。
+/** 同步模块的初始化配置
+ * @field namespace - 模块的命名空间，用于标识模块
+ * @field defaultData - 模块的默认数据
+ * @field needSave - 是否需要保存至本地文件
+ * @field needSync - 是否需要在多终端间同步数据
  *
- * 如果 needSave: true, needSync: false。仅保存
- *
- * 如果 needSave: false, needSync: true。仅多窗口同步
+ * needSave 和 needSync 的组合效果:
+ * - needSave=false, needSync=false: 仅在当前终端内同步数据
+ * - needSave=true, needSync=false: 仅保存数据到本地文件
+ * - needSave=false, needSync=true: 仅在多终端间同步数据，不保存数据到本地文件
+ * - needSave=true, needSync=true: 保存到本地文件并在多终端间同步
 */
 export interface EnSyncModuleProps<T> {
   namespace: string
@@ -23,10 +28,19 @@ export interface EnSyncModuleProps<T> {
 
 type Namespace = string
 
+/**
+ * 同步模块的数据结构
+ * @field data 当前数据
+ * @field defaultValue 默认数据
+ */
 export interface EnSyncModuleData<T> {
   data: T,
   defaultValue: T,
 }
+
+/**
+ * 同步模块的数据引用 Ref<EnSyncModuleData<T>>
+ */
 export type EnSyncModuleDataRef<T> = Ref<EnSyncModuleData<T>>
 
 interface EnSyncModuleDataMsg<T> {
@@ -41,7 +55,7 @@ interface EnSyncModuleDataMsg<T> {
 }
 
 interface EnSyncModule<T> {
-  dataRef: Ref<EnSyncModuleData<T>>,
+  dataRef: EnSyncModuleDataRef<T>,
 
   needSync?: EnSyncModuleProps<T>['needSync']
   // 为 true 则不发送更新
@@ -159,8 +173,8 @@ export async function loadModuleDataByNamespace<T>(namespace: Namespace) {
   }
 
   if (!res) {
-    enWarn(`${getColorStringWarn('Module data not found')} for ${getNamespaceLogString(namespace)}.`)
-    enLog(`Ready to save and return default data.`)
+    enWarn(`${getColorStringWarn('Module data not found')} for ${getNamespaceLogString(namespace)}`)
+    enWarn(`Ready to save and return default data.`)
     await saveModuleDataByNamespace(namespace)
     enSuccess(`Saved default Module data. for ${getNamespaceLogString(namespace)}`)
     return syncDataRefMap[namespace]?.dataRef
