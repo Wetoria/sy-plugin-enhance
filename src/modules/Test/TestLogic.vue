@@ -28,12 +28,12 @@
 <script setup lang="ts">
 import EnSettingsTeleportModule from '../Settings/EnSettingsTeleportModule.vue';
 import EnSettingsItem from '../Settings/EnSettingsItem.vue';
-import { EnModule, useSettingModule, useSettingModuleData, useSettings } from '../Settings/EnSettings.vue';
-import { onMounted } from 'vue';
-import { loadModuleDataByNamespace } from '@/utils/SyncData';
+import { EnModule, useSettings } from '../Settings/EnSettings.vue';
+import { onBeforeMount } from 'vue';
+import { useSettingModuleInScript } from '@/utils/SyncDataHooks';
 
-onMounted(async () => {
-  await loadModuleDataByNamespace(moduleName)
+onBeforeMount(async () => {
+  await loadAndUpdate()
 })
 
 const settings = useSettings()
@@ -45,20 +45,20 @@ interface ModuleOptions extends EnModule {
   test2: boolean
 }
 
-const moduleName = 'TestLogic'
-const moduleDisplayName = 'Test Logic'
-
-const defaultData: ModuleOptions = {
-  enabled: true,
+const {
   moduleName,
   moduleDisplayName,
+  module,
+  moduleOptions,
+  loadAndUpdate,
+} = useSettingModuleInScript<ModuleOptions>({
+  enabled: true,
+  moduleName: 'TestLogic',
+  moduleDisplayName: 'Test Logic',
   test1: false,
   test2: false,
-}
-const module = useSettingModule<ModuleOptions>(moduleName, {
-  defaultData,
 })
-const moduleOptions = useSettingModuleData<ModuleOptions>(moduleName)
+
 </script>
 
 <style lang="scss" scoped>
