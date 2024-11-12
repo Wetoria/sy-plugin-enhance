@@ -40,9 +40,21 @@ const settings = useSettings()
 </script>
 
 <script lang="ts">
-interface ModuleOptions extends EnModule {
+
+// #region 基本的模块配置
+
+interface ISettingModuleOptions extends EnModule {
   test1: boolean
   test2: boolean
+}
+
+const moduleConfig: ISettingModuleOptions = {
+  enabled: true,
+  moduleName: 'TestLogic',
+  moduleDisplayName: 'Test Logic',
+
+  test1: false,
+  test2: false,
 }
 
 const {
@@ -51,13 +63,12 @@ const {
   module,
   moduleOptions,
   loadAndUpdate,
-} = useSettingModuleInScript<ModuleOptions>({
-  enabled: true,
-  moduleName: 'TestLogic',
-  moduleDisplayName: 'Test Logic',
-  test1: false,
-  test2: false,
-})
+} = useSettingModuleInScript<ISettingModuleOptions>(moduleConfig)
+
+// #endregion 基本的模块配置
+
+// 导出模块配置
+export const ModuleName_TestLogic = moduleName
 
 </script>
 

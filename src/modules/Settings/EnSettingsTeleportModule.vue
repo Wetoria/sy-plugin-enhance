@@ -40,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, useSlots, watch } from 'vue';
+import { computed, onMounted, onUnmounted, useSlots, watch } from 'vue';
 import { EnModule, EnSettingModule, resetModuleOptions, useSettingModuleData } from '@/modules/Settings/EnSettings.vue';
 import EnSettingsItemAreaHeading from '@/modules/Settings/EnSettingsItemAreaHeading.vue';
 import EnSettingsTeleport from '@/modules/Settings/EnSettingsTeleport.vue';
@@ -97,36 +97,47 @@ const resetModule = () => {
   resetModuleOptions(module)
 }
 
-/**
- * 监听模块数据变化
- *
- * 在切换模块内部设置时，需要控制整个模块的开关。
- */
-watch(moduleData, () => {
-  if (resetFlag) {
-    resetFlag = false
-    return
-  }
 
-  // 如果模块没有子模块，则不需要进行开关控制
-  if (!hasSubBooleanOptions.value) {
-    return
-  }
+onMounted(() => {
+  /**
+   * 监听模块数据变化
+   *
+   * 在切换模块内部设置时，需要控制整个模块的开关。
+   */
+  const unwatchFunc = watch(moduleData, () => {
+    if (resetFlag) {
+      resetFlag = false
+      return
+    }
 
-  // 如果模块开启中，最新的子模块数据全部为关闭时，需要关闭当前模块
-  if (moduleData.value.enabled) {
-    const allSubOptionsDisabled = moduleBooleanOptionsKeysWithoutEnabledAttr.value.every((key) => !moduleData.value[key])
-    if (allSubOptionsDisabled) {
-      moduleData.value.enabled = false
+    // 如果模块没有子模块，则不需要进行开关控制
+    if (!hasSubBooleanOptions.value) {
+      return
     }
-  } else {
-    // 如果模块关闭中，最新的子模块数据中存在开启时，需要开启当前模块
-    const hasEnabled = moduleBooleanOptionsKeysWithoutEnabledAttr.value.some((key) => moduleData.value[key])
-    if (hasEnabled) {
-      moduleData.value.enabled = true
+
+    // 如果模块开启中，最新的子模块数据全部为关闭时，需要关闭当前模块
+    if (moduleData.value.enabled) {
+      const allSubOptionsDisabled = moduleBooleanOptionsKeysWithoutEnabledAttr.value.every((key) => !moduleData.value[key])
+      if (allSubOptionsDisabled) {
+        moduleData.value.enabled = false
+      }
+    } else {
+      // 如果模块关闭中，最新的子模块数据中存在开启时，需要开启当前模块
+      const hasEnabled = moduleBooleanOptionsKeysWithoutEnabledAttr.value.some((key) => moduleData.value[key])
+      if (hasEnabled) {
+        moduleData.value.enabled = true
+      }
     }
-  }
-}, {deep: true})
+  }, {deep: true})
+
+  onUnmounted(() => {
+    unwatchFunc()
+    enSuccess('Module unmounted', props.name)
+  })
+
+  enSuccess('Module mounted', props.name)
+})
+
 </script>
 
 <style lang="scss" scoped>

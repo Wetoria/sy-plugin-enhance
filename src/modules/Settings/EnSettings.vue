@@ -3,7 +3,7 @@
   <a-drawer
     class="enSettingDrawer"
     :visible="editingSettings"
-    :unmountOnClose="true"
+    :unmountOnClose="false"
     :drawer-style="{
       maxHeight: '80vh',
       height: 'unset',
@@ -24,7 +24,7 @@
 
     <div class="flexColumn en_settings_list">
       <template
-        v-for="(refItem, index) of settingRefKeys"
+        v-for="(refItem, index) of settingRefKeysSorted"
         :key="refItem"
       >
         <div
@@ -32,7 +32,7 @@
           :data-ref-name="refItem"
         >
         </div>
-        <EnDivider v-if="index != settingRefKeys.length - 1" />
+        <EnDivider v-if="index != settingRefKeysSorted.length - 1" />
       </template>
       <a-button
         size="mini"
@@ -66,6 +66,8 @@ import AnyTouch from 'any-touch';
 import { moduleEnableStatusSwitcher } from '@/utils';
 import { onCountClick } from '@/utils/DOM';
 import { EnSyncModuleData, EnSyncModuleDataRef, getModuleRefByNamespace, updateModuleDataByNamespaceWithLoadFile, useSyncModuleData } from '@/utils/SyncData';
+import { getColorStringError } from '@/utils/Log';
+import { flushModuleConfigs } from '@/modules/Settings/ModuleConfigs';
 
 const plugin = usePlugin()
 
@@ -139,6 +141,8 @@ const onDrawerCLose = () => {
 }
 
 onMounted(() => {
+  flushModuleConfigs()
+
   plugin.addCommand({
     langKey: "openEnhanceSettings",
     langText: "打开设置",
@@ -218,6 +222,7 @@ export interface EnModule {
   enabled: boolean
   readonly moduleName: string
   readonly moduleDisplayName: string
+  sort?: number
 }
 
 export interface EnModuleOptions<T extends EnModule> {
@@ -280,16 +285,43 @@ export async function loadSettings() {
 
 const editingSettings = ref(false);
 
+const settingRefKeys = ref<string[]>([])
 const settingsRefMap = ref({})
-const settingRefKeys = computed(() => Object.keys(settingsRefMap.value))
+
+const settingRefKeysSorted = computed(() => {
+  const moduleKeys = settingRefKeys.value
+  enLog(getColorStringError('moduleKeys is'), moduleKeys)
+
+  moduleKeys.sort((a, b) => {
+    const aModule = getModuleRefByNamespace<EnModule>(a)
+    const bModule = getModuleRefByNamespace<EnModule>(b)
+    return (aModule.value.data.sort || 999) - (bModule.value.data.sort || 999)
+  })
+
+  return moduleKeys
+})
 
 export function registerSettingRef(refName: string) {
+  const registered = settingRefKeys.value.includes(refName)
   let settingRef = settingsRefMap.value[refName]
-  if (!settingRef) {
+  if (!registered) {
     settingRef = ref()
+    settingRefKeys.value.push(refName)
     settingsRefMap.value[refName] = settingRef
   }
+
+  enSuccess('Setting Ref Registered', refName)
   return settingRef
+}
+
+export function unregisterSettingRef(refName: string) {
+  settingRefKeys.value = settingRefKeys.value.filter((key) => {
+    if (key === refName) {
+      return
+    }
+    return true
+  })
+  enSuccess('Setting Ref Unregistered', refName)
 }
 
 const switchSettingsDisplay = () => {

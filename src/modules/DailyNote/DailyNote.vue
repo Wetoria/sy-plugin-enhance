@@ -51,19 +51,23 @@ import {
 } from "siyuan";
 import { lsNotebooks, request } from '@/api';
 import { openDocById } from '@/utils/Note';
-import { onMounted } from 'vue';
+import { onBeforeMount, onMounted } from 'vue';
 import EnSettingsItem from '../Settings/EnSettingsItem.vue';
 import EnNotebookSelector from '@/components/EnNotebookSelector.vue';
 import EnSettingsTeleportModule from '../Settings/EnSettingsTeleportModule.vue';
 import EnQuickNote from '@/modules/DailyNote/QuickNote/EnQuickNote.vue';
-import { EnModule, useSettingModule, useSettingModuleData } from '../Settings/EnSettings.vue';
+import { EnModule } from '../Settings/EnSettings.vue';
 import { targetIsInnerOf } from '@/utils/DOM';
-import { updateModuleDataByNamespaceWithLoadFile, useSyncModuleData } from '@/utils/SyncData';
+import { useSyncModuleData } from '@/utils/SyncData';
 import { useSiyuanNotebookMount, useSiyuanNotebookUnmount } from '@/utils/EventBusHooks';
 import { getColorStringWarn } from '@/utils/Log';
+import { useSettingModuleInScript } from '@/utils/SyncDataHooks';
 
 const plugin = usePlugin()
-updateModuleDataByNamespaceWithLoadFile(moduleName)
+
+onBeforeMount(async () => {
+  await loadAndUpdate()
+})
 
 onMounted(() => {
   plugin.addCommand({
@@ -130,30 +134,35 @@ export function updateOpenedNotebookList() {
   })
 }
 
-// #region 初始化设置模块
 
-interface ModuleOptions extends EnModule {
+// #region 基本的模块配置
+
+interface ISettingModuleOptions extends EnModule {
   dailyNoteNotebookId: string
 }
 
-const moduleName = 'DailyNote'
-const moduleDisplayName = 'Daily Note'
+const moduleConfig: ISettingModuleOptions = {
+  enabled: false,
+  moduleName: 'DailyNote',
+  moduleDisplayName: 'Daily Note',
 
-const defaultData: ModuleOptions = {
-  enabled: true,
-  moduleName,
-  moduleDisplayName,
   dailyNoteNotebookId: '',
 }
-const module = useSettingModule<ModuleOptions>(moduleName, {
-  defaultData,
-})
-const moduleOptions = useSettingModuleData<ModuleOptions>(moduleName)
 
-// #endregion 初始化设置模块
+const {
+  moduleName,
+  moduleDisplayName,
+  module,
+  moduleOptions,
+  loadAndUpdate,
+} = useSettingModuleInScript<ISettingModuleOptions>(moduleConfig)
 
-export type DailyNoteModuleOptions = ModuleOptions
-export const DailyNoteModuleName = moduleName
+// #endregion 基本的模块配置
+
+export type DailyNoteModuleOptions = ISettingModuleOptions
+export const ModuleName_DailyNote = moduleName
+export const ModuleDailyNoteConfig = moduleConfig
+
 
 // TODO 思源的笔记本列表更新不及时，等以后提案了响应式以后，再考虑要不要优化吧。
 export function notebookIsOpened(notebookId: string) {
