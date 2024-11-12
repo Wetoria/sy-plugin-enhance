@@ -7,9 +7,9 @@
       class="SyEnhancerApp"
       ref="SyEnhancerAppRef"
     >
+      <ArcoTheme />
       <div class="displayArea">
-        <TestArco />
-        <!-- <TestLogic /> -->
+        <TestLogic />
       </div>
       <div class="hiddenArea">
 
@@ -24,8 +24,6 @@
         <EnEditor />
         <EnBackgroundImg v-if="isVip" />
         <EnOthers />
-        <EnQuickNote />
-        <ArcoDartkTheme />
 
         <LifeLog />
         <EnVideoAndAudio v-if="isNotFree" />
@@ -58,14 +56,12 @@ import EnSiyuanEntry from './modules/EnSiyuanEntry.vue';
 
 
 import LifeLog from './modules/LifeLog/LifeLog.vue';
-import TestArco from './modules/Test/TestArco.vue';
-import ArcoDartkTheme from './modules/ArcoDartkTheme.vue';
+import ArcoTheme from './modules/ArcoTheme.vue';
 import EnPWA from './modules/EnPWA.vue';
 import DailyNote, { getCurrentDocTitleDomByDom } from './modules/DailyNote/DailyNote.vue';
 import EnSettings, { isPro, isVip, isNotFree } from './modules/Settings/EnSettings.vue';
 import EnOthers from './modules/EnOthers.vue';
 import EnBackgroundImg from './modules/Background/EnBackgroundImg.vue';
-import EnQuickNote from './modules/QuickNote/EnQuickNote.vue';
 import EnEditor from './modules/Editor/EnEditor.vue';
 import EnMobileNav from './modules/EnMobileNav.vue';
 import EnVideoAndAudio from './modules/VideoAndAudio/EnVideoAndAudio.vue';
