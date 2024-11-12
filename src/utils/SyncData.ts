@@ -118,22 +118,7 @@ export function useSyncModuleData<T>({
   enLog(`The Module data is: `, JSON.parse(JSON.stringify(dataRef.value)))
 
   const saveData = debounce(async () => {
-    if (!needSave) {
-      enLog(`Module ${getNamespaceLogString(namespace)} do not need to save. Cancel to save.`)
-      return
-    }
-
-    const mapData = getModuleByNamespace(namespace)
-    if (mapData.doNotSave) {
-      enLog(`Module ${getNamespaceLogString(namespace)} marked as doNotSave. Cancel to save.`)
-      mapData.doNotSave = false
-      return
-    }
-    const plugin = usePlugin()
-    const storageKey = getModuleStorageKey(namespace)
-    enLog(`${getColorStringWarn('Ready to save module data')} of ${getNamespaceLogString(namespace)} into file [${storageKey}]: `, JSON.parse(JSON.stringify(dataRef.value)))
-    await plugin.saveData(storageKey, dataRef.value)
-    enLog(`${getColorStringWarn('Saved module data')} of ${getNamespaceLogString(namespace)} into file [${storageKey}].`)
+    await saveModuleDataByNamespace(namespace)
   })
 
   const syncDataByWebsocket = debounce(() => {
@@ -248,6 +233,7 @@ export const saveModuleDataByNamespace = async (namespace: Namespace) => {
   const plugin = usePlugin()
   const dataRef = mapData.dataRef
   const storageKey = getModuleStorageKey(namespace)
+  // IMP 记录保存状态，在设置页面进行展示
   enLog(`${getColorStringWarn('Ready to save module')} ${getNamespaceLogString(namespace)} data into file [${storageKey}]: `, JSON.parse(JSON.stringify(dataRef.value)))
   await plugin.saveData(storageKey, dataRef.value)
   enLog(`${getColorStringWarn('Saved Module Data: ')} ${getNamespaceLogString(namespace)}`)
