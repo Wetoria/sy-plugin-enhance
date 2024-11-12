@@ -50,28 +50,40 @@
 
 <script setup lang="ts">
 import { useEnhancer } from '@/modules/GlobalStatus';
-import { computed, onMounted, watchEffect } from 'vue';
+import { onMounted, watchEffect } from 'vue';
 import EnSettingsTeleportModule from './Settings/EnSettingsTeleportModule.vue';
 import EnSettingsItem from './Settings/EnSettingsItem.vue';
 import { usePlugin } from '@/main';
-import { useModule } from './Settings/EnSettings.vue';
+import { EnModule } from './Settings/EnSettings.vue';
+import { useSettingModuleInSetup } from '@/utils/SyncDataHooks';
 
 const plugin = usePlugin()
 const EnhancerState = useEnhancer()
 
-interface ModuleOptions {
+// #region 基本的模块配置
+
+interface ISettingModuleOptions extends EnModule {
   statusBarHeight: number;
   toolBarHeight: number;
 }
 
-const moduleName = 'EnPWA'
-const moduleDisplayName = '移动端 PWA 适配'
-const defaultOptions: ModuleOptions = {
+const moduleConfig: ISettingModuleOptions = {
+  enabled: false,
+  moduleName: 'EnPWA',
+  moduleDisplayName: '移动端 PWA 适配',
+
   statusBarHeight: 56,
   toolBarHeight: 30,
 }
-const module = useModule(moduleName, defaultOptions)
-const moduleOptions = computed(() => module.value.options as ModuleOptions)
+
+const {
+  moduleName,
+  moduleDisplayName,
+  module,
+  moduleOptions,
+} = useSettingModuleInSetup<ISettingModuleOptions>(moduleConfig)
+
+// #endregion 基本的模块配置
 
 watchEffect(() => {
   const root = document.documentElement;
@@ -80,7 +92,7 @@ watchEffect(() => {
 })
 
 watchEffect(() => {
-  document.documentElement.dataset.enPwa = `${module.value.enabled}`
+  document.documentElement.dataset.enPwa = `${module.value.data.enabled}`
 })
 
 onMounted(() => {
@@ -95,7 +107,7 @@ onMounted(() => {
     headDom.appendChild(metaDom)
   }
 
-  // @ts-ignore
+  // @ts-expect-error standalone
   const isStandalone = window.navigator.standalone
   EnhancerState.value.isStandalone = isStandalone
   if (isStandalone) {
