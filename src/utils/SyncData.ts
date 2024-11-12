@@ -136,14 +136,14 @@ export function useSyncModuleData<T>({
     enLog(`${getColorStringWarn('Saved module data')} of ${getNamespaceLogString(namespace)} into file [${storageKey}].`)
   })
 
-  const syncDataByWebsocket = () => {
+  const syncDataByWebsocket = debounce(() => {
     if (!needSync) {
       enLog(`Module ${getNamespaceLogString(namespace)} do not need to sync. Cancel to sync.`)
       return
     }
     enLog(`${getColorStringWarn(`Ready to sync module data:`)} ${getNamespaceLogString(namespace)}`)
     sendToSyncByData<T>(namespace, dataRef.value)
-  }
+  })
 
   watch(dataRef, () => {
     const mapData = getModuleByNamespace(namespace)
