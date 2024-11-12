@@ -243,7 +243,7 @@ export interface EnSettingModuleRef<T extends EnModule>
 
 export function useSettingModule<T extends EnModule>(
   moduleName: string,
-  moduleOptions: EnModuleOptions<T>,
+  moduleOptions: EnModuleOptions<T> = {} as EnModuleOptions<T>,
 ): EnSettingModuleRef<T> {
   const {
     defaultData,

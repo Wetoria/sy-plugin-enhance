@@ -103,39 +103,26 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import { useModule } from '../Settings/EnSettings.vue';
 import TemplateCornell from './TemplateCornell.vue';
-import { usePlugin } from '@/main';
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue';
 import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue';
 import EnColorPicker from '@/components/EnColorPicker.vue';
+import { EnModule } from '../Settings/EnSettings.vue';
+import { useSettingModuleInScript } from '@/utils/SyncDataHooks';
+import { onBeforeMount } from 'vue';
 
-const plugin = usePlugin()
 
-
-const defaultOptions: ModuleTemplatesOptions = {
-  cornell: {
-    noteTitleColor: '',
-    noteBgColor: '',
-    noteFontColor: '',
-
-    clueTitleColor: '',
-    clueBgColor: '',
-    clueFontColor: '',
-
-    summaryTitleColor: '',
-    summaryBgColor: '',
-    summaryFontColor: '',
-  }
-}
-const module = useModule(moduleTamplatesName, defaultOptions)
-const moduleOptions = computed(() => module.value.options as ModuleTemplatesOptions)
+onBeforeMount(async () => {
+  await loadAndUpdate()
+})
 
 </script>
 
 <script lang="ts">
-export interface ModuleTemplatesOptions {
+
+// #region 基本的模块配置
+
+interface ISettingModuleOptions extends EnModule {
   cornell: {
     noteTitleColor: string
     noteBgColor: string
@@ -150,8 +137,41 @@ export interface ModuleTemplatesOptions {
     summaryFontColor: string
   }
 }
-export const moduleTamplatesName = 'EnTemplates'
-export const moduleTemplatesDisplayName = '模板'
+
+const moduleConfig: ISettingModuleOptions = {
+  enabled: false,
+  moduleName: 'EnTemplates',
+  moduleDisplayName: '模板',
+
+  cornell: {
+    noteTitleColor: '',
+    noteBgColor: '',
+    noteFontColor: '',
+
+    clueTitleColor: '',
+    clueBgColor: '',
+    clueFontColor: '',
+
+    summaryTitleColor: '',
+    summaryBgColor: '',
+    summaryFontColor: '',
+  }
+}
+
+const {
+  moduleName,
+  moduleDisplayName,
+  module,
+  moduleOptions,
+  loadAndUpdate,
+} = useSettingModuleInScript<ISettingModuleOptions>(moduleConfig)
+
+// #endregion 基本的模块配置
+
+
+export type ModuleTemplatesOptions = ISettingModuleOptions
+export const moduleTamplatesName = moduleName
+export const moduleTemplatesDisplayName = moduleDisplayName
 </script>
 
 <style lang="scss" scoped>

@@ -135,8 +135,9 @@
 import { usePlugin } from "@/main";
 import { addCommand, removeCommand } from '@/utils/Commands';
 import { ICommandOption, showMessage } from 'siyuan';
-import { onBeforeUnmount, onMounted, ref, watchEffect } from "vue";
-import { isFree, useSettings } from '../Settings/EnSettings.vue';
+import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from "vue";
+import { EnModule, isFree } from '../Settings/EnSettings.vue';
+import { useSettingModuleInSetup } from '@/utils/SyncDataHooks';
 
 const plugin = usePlugin();
 
@@ -186,12 +187,28 @@ const clearCurrentFontStyle = () => {
   setFontSize('16px')
 }
 
-const settings = useSettings()
+// #region 基本的模块配置
 
-const configgedFontStyleList = ref<ICommandItem[]>(settings.value.configgedFontStyleList)
-watchEffect(() => {
-  settings.value.configgedFontStyleList = configgedFontStyleList.value
-})
+interface ISettingModuleOptions extends EnModule {
+  configgedFontStyleList: ICommandItem[]
+}
+
+const moduleConfig: ISettingModuleOptions = {
+  enabled: false,
+  moduleName: 'EnFont',
+  moduleDisplayName: '字体样式快捷键',
+
+  configgedFontStyleList: [],
+}
+
+const {
+  moduleOptions,
+} = useSettingModuleInSetup<ISettingModuleOptions>(moduleConfig)
+
+// #endregion 基本的模块配置
+
+const configgedFontStyleList = computed<ICommandItem[]>(() => moduleOptions.value.configgedFontStyleList)
+
 
 const EnFontStyleItem = `en_cmd_font_style_item`
 
@@ -237,7 +254,7 @@ const addCommandsByList = () => {
 }
 
 const removeConfiggedFont = (item: ICommandItem) => {
-  configgedFontStyleList.value = configgedFontStyleList.value.filter(i => i.key !== item.key)
+  moduleOptions.value.configgedFontStyleList = configgedFontStyleList.value.filter(i => i.key !== item.key)
 }
 
 watchEffect(() => {

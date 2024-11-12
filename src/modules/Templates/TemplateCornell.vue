@@ -121,7 +121,6 @@
 <script setup lang="ts">
 import { usePlugin } from '@/main';
 import { Protyle } from 'siyuan';
-import { useModule } from '../Settings/EnSettings.vue';
 import { moduleTamplatesName, ModuleTemplatesOptions } from './TemplateEntry.vue';
 import { computed, onMounted, Ref, ref, watchEffect } from 'vue';
 import { queryAllByDom } from '@/utils/DOM';
@@ -129,16 +128,17 @@ import { SyDomNodeTypes } from '@/utils/Siyuan';
 import { debounce } from '@/utils';
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue';
 import EnColorPicker from '@/components/EnColorPicker.vue';
+import { useSettingModule } from '../Settings/EnSettings.vue';
 
 const plugin = usePlugin()
 
-const module = useModule(moduleTamplatesName)
-const cornellOptions = computed(() => (module.value.options as ModuleTemplatesOptions).cornell)
+const module = useSettingModule(moduleTamplatesName)
+const cornellOptions = computed(() => (module.value.data as ModuleTemplatesOptions).cornell)
 
 const resetColors = () => {
 
   Object.keys(cornellOptions.value).forEach((key) => {
-    cornellOptions.value[key] = (module.value.defaultOptions as ModuleTemplatesOptions).cornell[key]
+    cornellOptions.value[key] = (module.value.defaultValue as ModuleTemplatesOptions).cornell[key]
   })
 }
 
