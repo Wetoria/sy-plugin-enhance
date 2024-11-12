@@ -49,7 +49,7 @@ interface ISettingModuleOptions extends EnModule {
 }
 
 const moduleConfig: ISettingModuleOptions = {
-  enabled: true,
+  enabled: false,
   moduleName: 'TestLogic',
   moduleDisplayName: 'Test Logic',
 

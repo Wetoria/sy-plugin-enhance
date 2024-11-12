@@ -58,36 +58,49 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watchEffect } from 'vue';
+import { onMounted, watchEffect } from 'vue';
 import { queryAllByDom } from '@/utils/DOM';
 import { usePlugin } from '@/main';
 import { EnhanceIOperation, SyDomNodeTypes, onEditorUpdate } from '../../utils/Siyuan'
 import { getBlockAttrs, setBlockAttrs, sql } from '@/api'
 import { Protyle } from 'siyuan'
 import dayjs from 'dayjs'
-import { useModule } from '../Settings/EnSettings.vue';
 import EnSettingsTeleportModule from '../Settings/EnSettingsTeleportModule.vue';
 import EnSettingsItem from '../Settings/EnSettingsItem.vue';
 import { reloadLifeLogData } from './EnLifeLogDailyNoteGraph.vue';
 import { moduleEnableStatusSwitcher } from '@/utils';
+import { EnModule } from '../Settings/EnSettings.vue';
+import { useSettingModuleInSetup } from '@/utils/SyncDataHooks';
 
 const plugin = usePlugin()
 
-interface ModuleOptions {
+
+// #region 基本的模块配置
+
+interface ISettingModuleOptions extends EnModule {
   enableLifeLog: boolean
   showLifeLogFlag: boolean
   lifelogTriggerTime: number
 }
 
-const moduleName = 'EnLifeLog'
-const moduleDisplayName = 'LifeLog'
-const defaultOptions = {
+const moduleConfig: ISettingModuleOptions = {
+  enabled: false,
+  moduleName: 'EnLifeLog',
+  moduleDisplayName: 'LifeLog',
+
   enableLifeLog: false,
   showLifeLogFlag: false,
   lifelogTriggerTime: 5,
 }
-const module = useModule(moduleName, defaultOptions)
-const moduleOptions = computed(() => module.value.options as ModuleOptions)
+
+const {
+  moduleName,
+  moduleDisplayName,
+  module,
+  moduleOptions,
+} = useSettingModuleInSetup<ISettingModuleOptions>(moduleConfig)
+
+// #endregion 基本的模块配置
 
 
 const listenerSticky = () => {
