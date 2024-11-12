@@ -8,7 +8,6 @@ import { debounce, moduleEnableStatusSwitcher } from '@/utils';
 import { IProtyle } from 'siyuan';
 import { computed, onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue';
 import dayjs from 'dayjs'
-import { log } from '@/utils/Log';
 
 const INLINE_TYPE = [
   "block-ref",
@@ -222,7 +221,7 @@ const pasteCurrentStyle = (protyle: IProtyle = currentProtyle.value) => {
   }
 
   if (!currentProtyle.value) {
-    log('未选中 protyle')
+    enLog('未选中 protyle')
     return
   }
 
