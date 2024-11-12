@@ -65,7 +65,7 @@ import { computed, ref, watchEffect, watch, onMounted, ComputedRef, Ref } from '
 import AnyTouch from 'any-touch';
 import { moduleEnableStatusSwitcher } from '@/utils';
 import { onCountClick } from '@/utils/DOM';
-import { EnSyncModuleData, EnSyncModuleDataRef, getModuleRefByNamespace, loadModuleDataByNamespace, useSyncModuleData } from '@/utils/SyncData';
+import { EnSyncModuleData, EnSyncModuleDataRef, getModuleRefByNamespace, updateModuleDataByNamespaceWithLoadFile, useSyncModuleData } from '@/utils/SyncData';
 
 const plugin = usePlugin()
 
@@ -270,14 +270,12 @@ export function useSettingModuleData<T extends EnModule>(moduleName: string): En
 }
 
 export async function loadSettings() {
-  const syncSettingsRef = useSyncModuleData({
+  useSyncModuleData({
     namespace,
     defaultData: defaultSettings,
   })
-  const res = await loadModuleDataByNamespace(namespace)
-  if (res) {
-    syncSettingsRef.value = res.value
-  }
+  await updateModuleDataByNamespaceWithLoadFile(namespace)
+
 }
 
 const editingSettings = ref(false);

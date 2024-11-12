@@ -35,37 +35,53 @@
 <script setup lang="ts">
 import { getCreatedByDataset } from '@/utils/Siyuan';
 import { computed, ref, watchEffect } from 'vue';
-import dayjs from 'dayjs'
-import { useSettings } from '../Settings/EnSettings.vue';
+import dayjs, { Dayjs } from 'dayjs'
 import { getDiffFormat } from '@/utils/Date';
+import { updateModuleDataByNamespaceWithLoadFile, useSyncModuleData } from '@/utils/SyncData';
 
+interface ModuleOptions {
+  [key: string]: string
+}
 
-const settings = useSettings()
+const moduleName = 'EnParagraphBlockTimeDiff'
+const module = useSyncModuleData<ModuleOptions>({
+  namespace: moduleName,
+  defaultData: {},
+})
+const moduleOptions = computed(() => {
+  return module.value.data
+})
+
+updateModuleDataByNamespaceWithLoadFile(moduleName)
+
 
 
 const props = defineProps<{
   nodeId: string
 }>()
 
-const created = computed(() => {
-  const createdStr = getCreatedByDataset(props.nodeId)
+const getCreatedStr = (nodeId: string) => {
+  if (!nodeId) {
+    return undefined
+  }
+  const createdStr = getCreatedByDataset(nodeId)
   if (createdStr) {
     return dayjs(createdStr)
   }
-  return
+  return undefined
+}
+
+const created = computed<Dayjs | undefined>(() => {
+  return getCreatedStr(props.nodeId)
 })
 
-const bindedId = ref(settings.value.timeDiff[props.nodeId])
+const bindedId = ref(moduleOptions.value[props.nodeId])
 watchEffect(() => {
-  settings.value.timeDiff[props.nodeId] = bindedId.value
+  moduleOptions.value[props.nodeId] = bindedId.value
 })
 
-const bindedCreated = computed(() => {
-  const createdStr = getCreatedByDataset(bindedId.value)
-  if (createdStr) {
-    return dayjs(createdStr)
-  }
-  return
+const bindedCreated = computed<Dayjs | undefined>(() => {
+  return getCreatedStr(bindedId.value)
 })
 </script>
 

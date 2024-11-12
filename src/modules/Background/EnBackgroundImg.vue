@@ -41,29 +41,41 @@
 
 <script setup lang="ts">
 import EnSettingsTeleportModule from '../Settings/EnSettingsTeleportModule.vue';
-import { computed, watch, watchEffect } from 'vue';
+import { watchEffect } from 'vue';
 import EnSettingsItem from '../Settings/EnSettingsItem.vue';
 import { usePlugin } from '@/main';
-import { useModule } from '../Settings/EnSettings.vue';
+import { EnModule, useSettingModule, useSettingModuleData } from '@/modules/Settings/EnSettings.vue';
 import { moduleEnableStatusSwitcher } from '@/utils';
+import { updateModuleDataByNamespaceWithLoadFile } from '@/utils/SyncData';
 
 const plugin = usePlugin()
 
-interface ModuleOptions {
+// #region 初始化设置模块
+
+const moduleName = 'EnBackgroundImg'
+const moduleDisplayName = '背景图'
+
+interface ModuleOptions extends EnModule {
   enableBackgroundImg: boolean
   opacity: number
 }
 
-const moduleName = 'EnBackgroundImg'
-const moduleDisplayName = '背景图'
-const defaultOptions = {
+const defaultData: ModuleOptions = {
+  enabled: true,
+  moduleName,
+  moduleDisplayName,
+
   enableBackgroundImg: false,
   opacity: 0.9
 }
-const module = useModule(moduleName, defaultOptions)
-const moduleOptions = computed(() => {
-  return module.value.options as ModuleOptions
+const module = useSettingModule<ModuleOptions>(moduleName, {
+  defaultData,
 })
+const moduleOptions = useSettingModuleData<ModuleOptions>(moduleName)
+
+// #endregion 初始化设置模块
+
+updateModuleDataByNamespaceWithLoadFile(moduleName)
 
 watchEffect(() => {
   moduleEnableStatusSwitcher('EnBackgroundImg', moduleOptions.value.enableBackgroundImg)

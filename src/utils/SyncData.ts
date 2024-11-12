@@ -232,7 +232,7 @@ export const markAsDoNotSync = (namespace: string, value = true) => {
 }
 
 // 根据 namespace 保存数据
-export const saveModuleDataByNamespace = debounce(async (namespace: Namespace) => {
+export const saveModuleDataByNamespace = async (namespace: Namespace) => {
   const mapData = getModuleByNamespace(namespace)
 
   if (!mapData.needSave) {
@@ -251,7 +251,7 @@ export const saveModuleDataByNamespace = debounce(async (namespace: Namespace) =
   enLog(`${getColorStringWarn('Ready to save module')} ${getNamespaceLogString(namespace)} data into file [${storageKey}]: `, JSON.parse(JSON.stringify(dataRef.value)))
   await plugin.saveData(storageKey, dataRef.value)
   enLog(`${getColorStringWarn('Saved Module Data: ')} ${getNamespaceLogString(namespace)}`)
-})
+}
 
 // #region socket logics
 

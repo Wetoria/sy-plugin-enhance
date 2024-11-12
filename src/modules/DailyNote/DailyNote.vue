@@ -135,7 +135,6 @@ export function updateOpenedNotebookList() {
 interface ModuleOptions extends EnModule {
   dailyNoteNotebookId: string
 }
-export type DailyNoteModuleOptions = ModuleOptions
 
 const moduleName = 'DailyNote'
 const moduleDisplayName = 'Daily Note'
@@ -153,6 +152,7 @@ const moduleOptions = useSettingModuleData<ModuleOptions>(moduleName)
 
 // #endregion 初始化设置模块
 
+export type DailyNoteModuleOptions = ModuleOptions
 export const DailyNoteModuleName = moduleName
 
 // TODO 思源的笔记本列表更新不及时，等以后提案了响应式以后，再考虑要不要优化吧。
