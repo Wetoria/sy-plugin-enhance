@@ -127,11 +127,10 @@ const openedNotebookList = useSyncModuleData({
   needSave: false,
   needSync: false,
 })
-export function updateOpenedNotebookList() {
-  lsNotebooks().then((res) => {
-    enLog(`${getColorStringWarn(`Loaded notebook list: `)}`, res)
-    openedNotebookList.value.data = res?.notebooks?.filter(i => !i.closed) || []
-  })
+export async function updateOpenedNotebookList() {
+  const res = await lsNotebooks()
+  enLog(`${getColorStringWarn(`Loaded notebook list: `)}`, res)
+  openedNotebookList.value.data = res?.notebooks?.filter(i => !i.closed) || []
 }
 
 
@@ -165,8 +164,8 @@ export const ModuleDailyNoteConfig = moduleConfig
 
 
 // TODO 思源的笔记本列表更新不及时，等以后提案了响应式以后，再考虑要不要优化吧。
-export function notebookIsOpened(notebookId: string) {
-  updateOpenedNotebookList()
+export async function notebookIsOpened(notebookId: string) {
+  await updateOpenedNotebookList()
   return openedNotebookList.value.data.some(i => i.id === notebookId)
 }
 
@@ -178,7 +177,7 @@ export function useDailyNote() {
   }
 }
 
-export function appendBlockIntoDailyNote(
+export async function appendBlockIntoDailyNote(
   dataType: "markdown" | "dom",
   data: string,
   notebook: string,
@@ -187,7 +186,7 @@ export function appendBlockIntoDailyNote(
     showMessage('[Enhance 插件] 请先选择创建日记的笔记本')
     return Promise.reject('[Enhance 插件] 请先选择创建日记的笔记本')
   }
-  const notebookIsClosed = !notebookIsOpened(moduleOptions.value.dailyNoteNotebookId)
+  const notebookIsClosed = await !notebookIsOpened(moduleOptions.value.dailyNoteNotebookId)
   if (notebookIsClosed) {
     showMessage('[Enhance 插件] 请先打开日记所在的笔记本')
     return Promise.reject('[Enhance 插件] 请先打开日记所在的笔记本')

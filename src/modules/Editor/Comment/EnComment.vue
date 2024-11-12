@@ -20,7 +20,7 @@
             <div class="flexAlignCenter">日记笔记本：</div>
             <div>
               <EnNotebookSelector
-                :notebookList="openedNotebookList"
+                :notebookList="openedNotebookList.data"
                 v-model="moduleOptions.dailyNoteNotebookId"
               />
             </div>
@@ -91,7 +91,6 @@ import { appendBlockIntoDailyNote, useDailyNote } from '@/modules/DailyNote/Dail
 import { debounce, generateShortUUID } from '@/utils';
 import { positionModalWithTranslate, targetIsInnerOf, targetIsOutsideOf, useRegisterStyle } from '@/utils/DOM';
 import { useSiyuanEventLoadedProtyleStatic, useSiyuanEventTransactions } from '@/utils/EventBusHooks';
-import { warn } from '@/utils/Log';
 import { useMousePostion } from '@/utils/Mouse';
 import { useCurrentProtyle } from '@/utils/Siyuan'
 import dayjs from 'dayjs';
@@ -107,7 +106,6 @@ const {
   moduleOptions,
 } = useDailyNote()
 const dailyNoteNotebookId = computed(() => moduleOptions.value.dailyNoteNotebookId)
-
 // 是否默认新增一个输入的行
 const defaultInserNewLine = true
 // TODO 后续需要支持在当前文档中插入
@@ -183,9 +181,6 @@ onBeforeUnmount(() => {
 
 watchEffect(() => {
   if (popoverVisible.value) {
-    // 打开弹窗时，更新笔记本信息。防止过程中出现了打开或者关闭笔记本的情况
-    openedNotebookList.value = window.siyuan.notebooks.filter(i => !i.closed)
-
     // 隐藏评论按钮
     hideCommentButton()
   } else {
@@ -376,7 +371,7 @@ const convertIntoSuperBlockAndComment = async (selectedNodes: HTMLElement[]) => 
     }
   }
   if (!firstNodeParent) {
-    warn('firstNodeParent is incorrect.')
+    enWarn('firstNodeParent is incorrect.')
     return
   }
   const superBlock = firstNodeParent as HTMLElement
@@ -401,7 +396,7 @@ const commentForSingleBlockByNodeId = (nodeId: string, adjustTarget: HTMLElement
       const blockMarkdown = mdRes[0]?.markdown
       const blockContent = mdRes[0]?.content
       if (!blockMarkdown) {
-        warn('md is null')
+        enWarn('md is null')
         return
       }
 
@@ -461,7 +456,7 @@ const commentForInlineText = async () => {
   }
 
   if (!siyuanNode) {
-    warn('siyuanNode is null')
+    enWarn('siyuanNode is null')
     return
   }
 
