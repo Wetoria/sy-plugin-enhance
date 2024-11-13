@@ -63,6 +63,7 @@ import { useSiyuanNotebookMount, useSiyuanNotebookUnmount } from '@/utils/EventB
 import { getColorStringWarn } from '@/utils/Log';
 import { useSettingModuleInScript } from '@/utils/SyncDataHooks';
 import EnQuickNoteMobile from './QuickNote/EnQuickNoteMobile.vue';
+import { addCommand } from '@/utils/Commands';
 
 const plugin = usePlugin()
 
@@ -71,16 +72,16 @@ onBeforeMount(async () => {
 })
 
 onMounted(() => {
-  plugin.addCommand({
-    langKey: "goPrevDailyNote",
+  addCommand({
+    langKey: "En_DailyNote_GoPrev",
     langText: "前一篇日记",
     hotkey: "⌥⌘↑",
     callback: () => {
       jumpToPrevDailyNote();
     },
   });
-  plugin.addCommand({
-    langKey: "goNextDailyNote",
+  addCommand({
+    langKey: "En_DailyNote_GoNext",
     langText: "后一篇日记",
     hotkey: "⌥⌘↓",
     callback: () => {

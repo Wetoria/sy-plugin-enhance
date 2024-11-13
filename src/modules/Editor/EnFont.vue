@@ -151,7 +151,7 @@ const colorCommandHTML = `
 `;
 
 const command: ICommandOption = {
-  langKey: "enHighlight",
+  langKey: "En_FontStyle",
   langText: colorCommandHTML,
   hotkey: "",
   callback() {
@@ -213,7 +213,7 @@ const configgedFontStyleList = computed<ICommandItem[]>(() => moduleOptions.valu
 const EnFontStyleItem = `en_cmd_font_style_item`
 
 const addCommandsByList = () => {
-  plugin.commands = plugin.commands.filter((item) => !item.langKey.startsWith('EnFontStyle_'))
+  plugin.commands = plugin.commands.filter((item) => !item.langKey.startsWith('En_FontStyle_'))
   configgedFontStyleList.value.forEach((item) => {
     const {
       key,
@@ -221,7 +221,7 @@ const addCommandsByList = () => {
       bgColor,
       fontSize,
     } = item
-    plugin.addCommand({
+    addCommand({
     langKey: `${key}`,
     langText: `
       <div data-${EnFontStyleItem} style="display: flex; align-items: center; gap: var(--en-gap);">
@@ -266,7 +266,7 @@ const createCommand = () => {
   const color = currentColor.value
   const bgColor = currentBgColor.value
   const fontSize = currentFontSize.value
-  const key = `EnFontStyle_${color}_${bgColor}_${fontSize}`
+  const key = `En_FontStyle_${color}_${bgColor}_${fontSize}`
   const exist = configgedFontStyleList.value.find((item) => item.key === key)
 
   if (exist) {

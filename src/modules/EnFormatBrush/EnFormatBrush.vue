@@ -8,6 +8,7 @@ import { debounce, moduleEnableStatusSwitcher } from '@/utils';
 import { IProtyle } from 'siyuan';
 import { computed, onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue';
 import dayjs from 'dayjs'
+import { addCommand } from '@/utils/Commands';
 
 const INLINE_TYPE = [
   "block-ref",
@@ -115,6 +116,17 @@ const switchEnableStatus = () => {
     plugin.eventBus.on('click-editorcontent', recordCurrentProtyle)
   }
 }
+
+
+const getAriaLabel = () => {
+  const cmd = plugin.commands.find(i => i.langKey === 'En_FormatBrush_Enable')
+  const enableLabels = [`开启格式刷`]
+  if (cmd) {
+    enableLabels.push(`(${cmd.customHotkey || cmd.hotkey})`)
+  }
+  return `${!brushing.value ? enableLabels.join('') : `关闭格式刷(Esc 取消)`}`
+}
+
 
 watch(brushing, () => {
   const btns = document.querySelectorAll('[data-type="EnFormatBrush"]')
@@ -279,18 +291,9 @@ plugin.addIcons(`
   </symbol>
 `)
 
-const getAriaLabel = () => {
-  const cmd = plugin.commands.find(i => i.langKey === 'EnFormatBrushEnable')
-  const enableLabels = [`开启格式刷`]
-  if (cmd) {
-    enableLabels.push(`(${cmd.customHotkey || cmd.hotkey})`)
-  }
-  return `${!brushing.value ? enableLabels.join('') : `关闭格式刷(Esc 取消)`}`
-}
-
 const commands = [
   {
-    langKey: "EnFormatBrushEnable",
+    langKey: "En_FormatBrush_Enable",
     langText: "开启格式刷",
     hotkey: "",
     editorCallback: () => {
@@ -298,7 +301,7 @@ const commands = [
     },
   },
   {
-    langKey: "EnFormatBrush",
+    langKey: "En_FormatBrush_Paste",
     langText: "格式刷（粘贴当前格式）",
     hotkey: "",
     editorCallback: (protyle) => {
@@ -359,7 +362,7 @@ const recordCurrentProtyle = ({ detail }) => {
 
 onMounted(() => {
   commands.forEach((command) => {
-    plugin.addCommand(command);
+    addCommand(command);
   })
   observer.observe(document.body, {
     childList: true, // 观察目标子节点的变化，是否有添加或者删除

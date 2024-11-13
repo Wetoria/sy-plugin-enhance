@@ -38,6 +38,7 @@ import EnWindow, { isInWindow } from '@/modules/EnWindow.vue';
 import { onMounted, ref } from 'vue';
 import EnVideoAndAudioBlockPlay from './EnVideoAndAudioBlockPlay.vue';
 import { EnVideoAndAudioUrlParams, urlSchemeCreator, URL_TYPE_MAP, isTargetPluginType, convertSiyuanLinkIntoNormal } from '@/utils/url';
+import { addCommand } from '@/utils/Commands';
 
 const plugin = usePlugin()
 
@@ -444,7 +445,7 @@ const protyleSlashList = [
 
 const commands = [
   {
-    langKey: "enPinVideoAndAudio",
+    langKey: "En_VideoAndAudio_Pin",
     langText: '切换当前视频/音频的钉住状态',
     hotkey: "",
     callback: () => {
@@ -462,7 +463,7 @@ const enable = () => {
   })
 
   commands.forEach((command) => {
-    plugin.addCommand(command);
+    addCommand(command);
   })
 
   plugin.protyleSlash.push(...protyleSlashList)

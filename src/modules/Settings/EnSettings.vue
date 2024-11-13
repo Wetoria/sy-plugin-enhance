@@ -91,6 +91,7 @@ import { onCountClick } from '@/utils/DOM';
 import { EnSyncModuleData, EnSyncModuleDataRef, getModuleRefByNamespace, updateModuleDataByNamespaceWithLoadFile, useSyncModuleData } from '@/utils/SyncData';
 import { getColorStringError } from '@/utils/Log';
 import { flushModuleConfigs } from '@/modules/Settings/ModuleConfigs';
+import { addCommand } from '@/utils/Commands';
 
 const plugin = usePlugin()
 
@@ -171,8 +172,8 @@ const onTouchMove = (e: TouchEvent) => {
 onMounted(() => {
   flushModuleConfigs()
 
-  plugin.addCommand({
-    langKey: "openEnhanceSettings",
+  addCommand({
+    langKey: "En_OpenSettings",
     langText: "打开设置",
     hotkey: "",
     callback: () => {

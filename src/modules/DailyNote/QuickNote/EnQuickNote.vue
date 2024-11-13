@@ -41,6 +41,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import EnNotebookSelector from '@/components/EnNotebookSelector.vue';
 import { getNewDailyNoteBlockId, useDailyNote } from '@/modules/DailyNote/DailyNote.vue';
 import { useSyncModuleData } from '@/utils/SyncData';
+import { addCommand } from '@/utils/Commands';
 
   const winTitle = 'QuickNote'
   const inWindow = ref(isInWindow(winTitle))
@@ -111,8 +112,8 @@ import { useSyncModuleData } from '@/utils/SyncData';
 
   onMounted(() => {
     if (!inWindow.value && location.pathname != '/stage/build/app/window.html') {
-      plugin.addCommand({
-        langKey: "enOpenQuickNote",
+      addCommand({
+        langKey: "En_OpenQuickNote",
         langText: "一键记事",
         hotkey: "",
         globalCallback: () => {

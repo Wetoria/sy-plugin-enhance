@@ -3,6 +3,54 @@ import { ICommandOption } from 'siyuan';
 
 const commandsKeyList: string[] = []
 
+const commandOrder = [
+  'En_OpenSettings',
+
+  'En_OpenQuickNote',
+  'En_DailyNote_GoPrev',
+  'En_DailyNote_GoNext',
+
+  'En_Comment_EnableBtn',
+  'En_Comment',
+
+  'En_FormatBrush_Enable',
+  'En_FormatBrush_Paste',
+
+  'En_VideoAndAudio_Pin',
+
+  'En_FontStyle',
+]
+
+function sortCommandKeys() {
+  // 根据 key 的字符串顺序，将 command 排序
+  commandsKeyList.sort((a, b) => {
+    const aIndex = commandOrder.findIndex((key) => key === a)
+    const bIndex = commandOrder.findIndex((key) => key === b)
+
+    // 如果都记录了顺序，则按照顺序排序
+    if (aIndex !== -1 && bIndex !== -1) {
+      return aIndex - bIndex
+    }
+
+    // 如果 a 没有记录顺序，则 a 排在 b 后面
+    if (aIndex === -1) {
+      return 1
+    }
+    // 如果 b 没有记录顺序，则 b 排在 a 后面
+    if (bIndex === -1) {
+      return 1
+    }
+
+    // 如果都没有记录顺序，则按照字符串顺序排序
+    if (a < b) {
+      return -1
+    } else if (a > b) {
+      return 1
+    }
+    return 0
+  })
+}
+
 export function addCommand(command: ICommandOption) {
   if (!command) {
     return
@@ -12,31 +60,38 @@ export function addCommand(command: ICommandOption) {
 
   const existInKeyList = commandsKeyList.find((key) => key === command.langKey)
 
+  // 如果没有添加过
   if (!existInKeyList) {
+    // 记录当前 command 的 key
     commandsKeyList.push(command.langKey)
-    commandsKeyList.sort((a, b) => {
-      if (a < b) {
-        return -1
-      } else if (a > b) {
-        return 1
-      }
-      return 0
-    })
+
+    sortCommandKeys()
+
     plugin.addCommand(command)
-  } else {
+
     const temp = plugin.commands
     temp.push(command)
+
     const result = []
     plugin.commands = []
+
+    sortCommandKeys()
+
+    // 根据已经存储的 command 列表，从已经注册的 command 中，找到对应的 cmd 存储下来
     commandsKeyList.forEach((key) => {
       const targetCmd = temp.find((cmd) => cmd.langKey === key)
       if (targetCmd) {
+        // 防止显示 undefined
+        targetCmd.hotkey = targetCmd.hotkey || ''
+        // 防止显示 undefined
+        targetCmd.customHotkey = targetCmd.customHotkey || ''
         result.push(targetCmd)
       }
     })
+
+    // 更新插件的 commands
     plugin.commands = result
   }
-
 }
 
 export function removeCommand(command: ICommandOption) {

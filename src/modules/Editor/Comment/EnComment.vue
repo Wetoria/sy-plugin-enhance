@@ -89,6 +89,7 @@ import EnProtyle from '@/components/EnProtyle.vue';
 import { usePlugin } from '@/main';
 import { appendBlockIntoDailyNote, useDailyNote } from '@/modules/DailyNote/DailyNote.vue';
 import { debounce, generateShortUUID } from '@/utils';
+import { addCommand } from '@/utils/Commands';
 import { positionModalWithTranslate, targetIsInnerOf, targetIsOutsideOf, useRegisterStyle } from '@/utils/DOM';
 import { useSiyuanEventLoadedProtyleStatic, useSiyuanEventTransactions } from '@/utils/EventBusHooks';
 import { useMousePostion } from '@/utils/Mouse';
@@ -621,8 +622,8 @@ const {
   },
 })
 
-plugin.addCommand({
-  langKey: "EnLineCommentEnableBtn",
+addCommand({
+  langKey: "En_Comment_EnableBtn",
   langText: '开关评论按钮',
   hotkey: "",
   callback: () => {
@@ -648,8 +649,8 @@ const onMouseEnterCommentButton = () => {
 
 // #region 插件快捷键相关
 
-plugin.addCommand({
-  langKey: "EnLineComment",
+addCommand({
+  langKey: "En_Comment",
   langText: '评论当前选中内容(<a class="enCommentUsageLinkBtn" href="https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse#share-ZMuedaqblocvljxlmFbcHFKcnPd" target="_blank">使用说明</a>)',
   hotkey: "",
   editorCallback: () => {
