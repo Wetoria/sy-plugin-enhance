@@ -6,7 +6,7 @@
       :mask-style="{
         backgroundColor: 'rgba(0,0,0,0)'
       }"
-      :width="390"
+      :width="580"
       @ok="handleOk"
       @cancel="handleCancel"
     >
@@ -154,7 +154,7 @@ const command: ICommandOption = {
   langKey: "enHighlight",
   langText: colorCommandHTML,
   hotkey: "",
-  editorCallback() {
+  callback() {
     switchModalVisibleStatus()
   }
 };
@@ -176,7 +176,7 @@ const setBgColor = (color: string) => {
   currentBgColor.value = color
 }
 
-const currentFontSize = ref('16px')
+const currentFontSize = ref('')
 const setFontSize = (value: string) => {
   currentFontSize.value = value
 }
@@ -184,7 +184,7 @@ const setFontSize = (value: string) => {
 const clearCurrentFontStyle = () => {
   setColor('')
   setBgColor('')
-  setFontSize('16px')
+  setFontSize('')
 }
 
 // #region 基本的模块配置
