@@ -311,7 +311,7 @@ export async function loadSettings() {
 
 }
 
-const editingSettings = ref(true);
+const editingSettings = ref(false);
 
 const settingRefKeys = ref<string[]>([])
 const settingsRefMap = ref({})
