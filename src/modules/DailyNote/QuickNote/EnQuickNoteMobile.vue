@@ -45,6 +45,7 @@ import { useEnhancer } from '@/modules/GlobalStatus';
 import { Protyle, showMessage } from 'siyuan';
 import { ref, watch } from 'vue';
 import { getNewDailyNoteBlockId } from '@/modules/DailyNote/DailyNote.vue';
+import EnProtyle from '@/components/EnProtyle.vue';
 
 const protyleRef = ref<Protyle>()
 const onAfterRender = (protyle: Protyle) => {
@@ -55,7 +56,10 @@ const onAfterRender = (protyle: Protyle) => {
       clearInterval(flag)
       const editableDom = target.firstElementChild as HTMLElement
 
+      editableDom.dispatchEvent(new MouseEvent('click'))
       editableDom.setAttribute("placeholder", '写点什么');
+
+      protyle.focusBlock(target, false)
       isCreatingDailyNote.value = false
     }
   }, 0)

@@ -1,5 +1,5 @@
 <template>
-  <Teleport to="html" v-if="module.enabled">
+  <Teleport to="html" v-if="moduleOptions.enabled">
     <div class="enPWAContainer" id="enPWAContainer">
       <div
         class="enPWAPadding1"

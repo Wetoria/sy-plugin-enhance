@@ -29,8 +29,8 @@
   <!-- 一键记事 -->
 
   <!-- 移动端一键记事 -->
-  <template>
-
+  <template v-if="plugin.isMobile">
+    <EnQuickNoteMobile />
   </template>
 
   <!-- 浏览器 - 桌面端 -->
@@ -62,6 +62,7 @@ import { useSyncModuleData } from '@/utils/SyncData';
 import { useSiyuanNotebookMount, useSiyuanNotebookUnmount } from '@/utils/EventBusHooks';
 import { getColorStringWarn } from '@/utils/Log';
 import { useSettingModuleInScript } from '@/utils/SyncDataHooks';
+import EnQuickNoteMobile from './QuickNote/EnQuickNoteMobile.vue';
 
 const plugin = usePlugin()
 
