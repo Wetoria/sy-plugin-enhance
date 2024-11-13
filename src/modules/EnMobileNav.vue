@@ -227,12 +227,9 @@ html[data-theme-mode="light"] {
   // --b3-theme-background: white;
   --hack-tool-bar-bg-color: rgb(221,221,221);
 }
-#enApp {
-  z-index: 2;
-}
 
 .enToolbar {
-  position: absolute;
+  position: fixed;
   pointer-events: auto;
   width: 80%;
   bottom: 50px;

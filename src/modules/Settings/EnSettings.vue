@@ -22,25 +22,48 @@
       </div>
     </template>
 
-    <div class="flexColumn en_settings_list">
-      <template
-        v-for="(refItem, index) of settingRefKeysSorted"
-        :key="refItem"
-      >
+    <div
+      class="enSettingsMain"
+      @touchmove="onTouchMove"
+    >
+      <div :class="`enSettingsModuleSelectorList ${!plugin.isMobile ? 'isNotMobile' : ''}`">
         <div
-          :ref="(el) => settingsRefMap[refItem] = el"
-          :data-ref-name="refItem"
+          v-for="(moduleInfo, index) of settingModulesList"
+          :class="['moduleSelectorItem', {
+            'moduleSelectorItem__Actived': index === currentModuleIndex,
+          }]"
+          :key="moduleInfo.moduleName"
+          :data-en-setting-module-index="index"
+          @click="onSelectModule(index)"
         >
+          {{ moduleInfo.moduleDisplayName }}
         </div>
-        <EnDivider v-if="index != settingRefKeysSorted.length - 1" />
-      </template>
-      <a-button
-        size="mini"
-        status="danger"
-        @click="resetAllModule"
+      </div>
+      <div
+        class="flexColumn enSettingsMainContent"
+        @scroll="onSettingListScroll"
       >
-        重置所有配置
-      </a-button>
+        <div class="flexColumn en_settings_list">
+          <template
+            v-for="(refItem, index) of settingRefKeysSorted"
+            :key="refItem"
+          >
+            <div
+              :ref="(el) => settingsRefMap[refItem] = el"
+              :data-en-setting-ref-module-name="refItem"
+            >
+            </div>
+            <EnDivider v-if="index != settingRefKeysSorted.length - 1" />
+          </template>
+          <a-button
+            size="mini"
+            status="danger"
+            @click="resetAllModule"
+          >
+            重置所有配置
+          </a-button>
+        </div>
+      </div>
     </div>
 
     <template #footer>
@@ -63,7 +86,7 @@ import EnDivider from '@/components/EnDivider.vue';
 import { usePlugin } from '@/main';
 import { computed, ref, watchEffect, watch, onMounted, ComputedRef, Ref } from 'vue';
 import AnyTouch from 'any-touch';
-import { moduleEnableStatusSwitcher } from '@/utils';
+import { debounce, moduleEnableStatusSwitcher } from '@/utils';
 import { onCountClick } from '@/utils/DOM';
 import { EnSyncModuleData, EnSyncModuleDataRef, getModuleRefByNamespace, updateModuleDataByNamespaceWithLoadFile, useSyncModuleData } from '@/utils/SyncData';
 import { getColorStringError } from '@/utils/Log';
@@ -138,6 +161,11 @@ const resetAllModule = () => {
 
 const onDrawerCLose = () => {
 
+}
+
+const onTouchMove = (e: TouchEvent) => {
+  e.stopImmediatePropagation()
+  e.stopPropagation()
 }
 
 onMounted(() => {
@@ -301,6 +329,74 @@ const settingRefKeysSorted = computed(() => {
   return moduleKeys
 })
 
+const settingModulesList = computed(() => {
+  return settingRefKeysSorted.value.map((moduleKey) => {
+    const moduleRef = getModuleRefByNamespace<EnModule>(moduleKey)
+    return moduleRef.value.data
+  })
+})
+
+const currentModuleIndex = ref(0)
+const changedByClick = ref(false)
+const onSelectModule = (index: number) => {
+  currentModuleIndex.value = index
+  const moduleInfo = settingModulesList.value[index]
+  const el = document.querySelector(`[data-en-setting-ref-module-name="${moduleInfo.moduleName}"]`) as HTMLDivElement
+  if (el) {
+    changedByClick.value = true
+    el.scrollIntoView({
+      behavior: 'smooth',
+    })
+  }
+}
+
+const triggerScrollEnd = debounce(() => {
+  enLog('scroll end')
+  changedByClick.value = false
+}, 300)
+
+const onSettingListScroll = (e: Event) => {
+  if (changedByClick.value) {
+    triggerScrollEnd()
+    return
+  }
+
+  const target = e.target as HTMLElement
+  const targetRect = target.getBoundingClientRect()
+
+  // 获取所有模块元素
+  const moduleElements = Array.from(document.querySelectorAll('[data-en-setting-ref-module-name]'))
+
+  // 找到当前在视口中最靠近顶部的模块
+  let closestModule = null
+  let minDistance = Infinity
+
+  moduleElements.forEach((el) => {
+    const rect = el.getBoundingClientRect()
+    const distance = Math.abs(rect.top - targetRect.top)
+
+    if (distance < minDistance) {
+      minDistance = distance
+      closestModule = el
+    }
+  })
+
+  if (closestModule) {
+    const moduleName = closestModule.getAttribute('data-en-setting-ref-module-name')
+    const moduleIndex = settingModulesList.value.findIndex(m => m.moduleName === moduleName)
+    if (moduleIndex !== -1) {
+      currentModuleIndex.value = moduleIndex
+      const el = document.querySelector(`[data-en-setting-module-index="${moduleIndex}"]`) as HTMLDivElement
+      if (el) {
+        el.scrollIntoView({
+          behavior: 'auto',
+          block: 'nearest',
+        })
+      }
+    }
+  }
+}
+
 export function registerSettingRef(refName: string) {
   const registered = settingRefKeys.value.includes(refName)
   let settingRef = settingsRefMap.value[refName]
@@ -386,6 +482,7 @@ export const useProWatcher = (props: {
   color: rgb(var(--primary-6));
 }
 .en_settings_list {
+  padding: 0 16px;
 }
 
 .enSettingsFooter {
@@ -393,12 +490,101 @@ export const useProWatcher = (props: {
   align-items: center;
   gap: var(--en-gap);
 }
+
+.enSettingsMain {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 85vh;
+}
+
+.enSettingsModuleSelectorList {
+
+  padding: 0px 10px;
+  overflow-x: auto;
+  background-color: var(--color-bg-3);
+
+  display: flex;
+  align-items: center;
+  height: 34px; // 明确设置与子元素相同的高度
+  flex-shrink: 0;
+
+  &::-webkit-scrollbar {
+    display: none; // Chrome, Safari, newer versions of Opera
+  }
+
+  .moduleSelectorItem {
+    display: inline-block;
+    box-sizing: border-box;
+    padding: 4px 6px;
+    font-size: 1.17em;
+    cursor: pointer;
+    font-weight: bold;
+    position: relative;
+    width: max-content;
+    white-space: nowrap;
+    background-color: var(--color-bg-3);
+    height: 34px;
+
+    &:first-child {
+      scroll-margin-left: 16px;
+    }
+
+    &:last-child {
+      scroll-margin-right: 16px;
+    }
+
+    &.moduleSelectorItem__Actived {
+      color: rgb(var(--primary-6));
+
+      &:after {
+        content: '';
+        display: block;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        border-radius: 2px;
+        background-color: rgb(var(--primary-6));
+      }
+
+      &:hover {
+        border-bottom-left-radius: unset;
+        border-bottom-right-radius: unset;
+      }
+    }
+
+
+  }
+
+  &.isNotMobile {
+
+    .moduleSelectorItem {
+
+      &:hover {
+        background-color: var(--color-fill-2);
+        border-radius: var(--b3-border-radius);
+      }
+    }
+  }
+}
+
+.enSettingsMainContent {
+  overflow: hidden;
+  overflow-y: auto;
+  padding-bottom: 32px;
+}
 </style>
 
 <style lang="scss">
 .enSettingDrawer {
   .arco-drawer-body {
     overscroll-behavior: none;
+    padding: 0px 0px;
+
+    display: flex;
+    flex-direction: column;
   }
 }
 </style>

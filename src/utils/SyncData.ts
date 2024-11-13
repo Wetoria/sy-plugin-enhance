@@ -313,8 +313,7 @@ export const initWebsocket = () => {
       return
     }
 
-    // IMP 支持加密
-    const wsUrl = `ws://${location.host}/ws/broadcast?channel=SEP-data-sync-channel`
+    const wsUrl = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws/broadcast?channel=SEP-data-sync-channel`
     connecting = true
     const socket = new WebSocket(wsUrl)
     socketRef.value = socket
