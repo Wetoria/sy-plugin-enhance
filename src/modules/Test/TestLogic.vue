@@ -29,12 +29,26 @@
 import EnSettingsTeleportModule from '../Settings/EnSettingsTeleportModule.vue';
 import EnSettingsItem from '../Settings/EnSettingsItem.vue';
 import { EnModule, useSettings } from '../Settings/EnSettings.vue';
-import { onBeforeMount } from 'vue';
+import { onBeforeMount, onBeforeUnmount, onMounted, watchEffect } from 'vue';
 import { useSettingModuleInScript } from '@/utils/SyncDataHooks';
+import { watchDomChange, unWatchDomChange } from '@/utils/DOM';
 
 onBeforeMount(async () => {
   await loadAndUpdate()
 })
+
+const test = () => {
+  enLog('TestLogic test')
+}
+
+watchEffect(() => {
+  if (moduleOptions.value.enabled) {
+    watchDomChange(test)
+  } else {
+    unWatchDomChange(test)
+  }
+})
+
 
 const settings = useSettings()
 </script>

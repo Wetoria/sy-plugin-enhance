@@ -1,4 +1,4 @@
-import { reactive, ref } from 'vue'
+import { onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { usePlugin } from '@/main';
 
 
@@ -156,4 +156,50 @@ export function targetIsInnerOf(target: HTMLElement, judge: (target: HTMLElement
 
 export function targetIsOutsideOf(target: HTMLElement, judge: (target: HTMLElement) => boolean) {
   return !targetIsInnerOf(target, judge)
+}
+
+let observer = null
+let observeCallbackList = []
+
+export function unWatchDomChange(callback: () => void) {
+  observeCallbackList = observeCallbackList.filter(i => i !== callback)
+  callback = null
+}
+
+export function watchDomChange(callback?: () => void) {
+  if (callback) {
+    const listener = observeCallbackList.find(i => i === callback)
+    if (!listener) {
+      observeCallbackList.push(callback)
+    }
+  }
+}
+
+export function registerGlobalObserver() {
+  observer = new MutationObserver(() => {
+    observeCallbackList.forEach(i => i())
+  })
+  const observe = () => {
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+    })
+  }
+  const unobserve = () => {
+    observer.disconnect()
+    observer = null
+    observeCallbackList = []
+  }
+  onMounted(() => {
+    observe()
+  })
+
+  onBeforeUnmount(() => {
+    unobserve()
+  })
+  window.addEventListener('beforeunload', () => {
+    unobserve()
+  })
+  enSuccess('Global MutationObserver registered')
 }
