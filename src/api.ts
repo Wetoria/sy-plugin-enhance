@@ -327,6 +327,28 @@ export async function getBlockAttrs(
   const url = "/api/attr/getBlockAttrs";
   return request(url, data);
 }
+export async function batchSetBlockAttrs(
+  blockAttrs: Array<{
+    id: BlockId,
+    attrs: { [key: string]: string }
+  }>
+) {
+  const data = {
+    blockAttrs,
+  }
+  const url = "/api/attr/batchSetBlockAttrs";
+  return request(url, data);
+}
+
+export async function batchGetBlockAttrs(
+  ids: BlockId[]
+): Promise<{ [key: string]: string }> {
+  const data = {
+    ids: ids,
+  };
+  const url = "/api/attr/batchGetBlockAttrs";
+  return request(url, data);
+}
 
 // **************************************** SQL ****************************************
 

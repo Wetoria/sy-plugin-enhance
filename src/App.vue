@@ -84,7 +84,6 @@ watchEffect(() => {
   moduleEnableStatusSwitcher('EnhancerIsMobile', plugin.isMobile)
 })
 registerGlobalObserver()
-})
 
 onMounted(() => {
   const searchParams = {

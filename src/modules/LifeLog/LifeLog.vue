@@ -42,7 +42,7 @@ import { onMounted, watchEffect } from 'vue';
 import { queryAllByDom } from '@/utils/DOM';
 import { usePlugin } from '@/main';
 import { EnhanceIOperation, SyDomNodeTypes, onEditorUpdate } from '../../utils/Siyuan'
-import { flushTransactions, getBlockAttrs, setBlockAttrs, sql } from '@/api'
+import { batchGetBlockAttrs, batchSetBlockAttrs, flushTransactions, sql } from '@/api'
 import { Protyle } from 'siyuan'
 import dayjs from 'dayjs'
 import EnSettingsTeleportModule from '../Settings/EnSettingsTeleportModule.vue';
@@ -179,6 +179,8 @@ function markLifeLogBlock() {
       time: string
       contentWithoutTime: string
     }> = []
+
+
     // 先在前端进行过滤，防止频繁的请求后端
     optList.forEach((opt) => {
       const content = opt.text
@@ -217,17 +219,29 @@ function markLifeLogBlock() {
       })
     })
 
+
+
     if (!validParagraphList.length) {
       enWarn(`LifeLog module found no valid paragraph.`)
       return
     }
 
+
+
     // flush sqlite，防止数据库里没更新相关内容
     enWarn(`LifeLog module ready to flush transactions. In order to confirm the changes, please wait for a moment.`)
     await flushTransactions()
 
+
+
+    const blockIds = validParagraphList.map(i => i.id)
+
+    const blockAttrsRes = await batchGetBlockAttrs(blockIds)
+
+    const newBlockAttrs = []
+
     for (const opt of validParagraphList) {
-      const blockAttrs = await getBlockAttrs(opt.id)
+      const blockAttrs = blockAttrsRes[opt.id]
 
       let colonIndex = opt.contentWithoutTime.indexOf('：')
       colonIndex = colonIndex < 0 ? opt.contentWithoutTime.length : colonIndex
@@ -271,19 +285,23 @@ function markLifeLogBlock() {
         date = dayjs(res[0]?.attr_value).format('YYYY/MM/DD')
       }
 
-      await setBlockAttrs(opt.id, {
+      const newResult = {
         [lifelogAttrTime]: opt.time,
         [lifelogAttrDate]: date,
         [lifelogAttrType]: logType,
         [lifelogAttrContent]: logContent,
         [lifelogAttrCreated]: createdTime,
         [lifelogAttrUpdated]: updatedTime,
+      }
+
+      newBlockAttrs.push({
+        id: opt.id,
+        attrs: newResult,
       })
     }
-    enWarn(`LifeLog module marked all valid paragraphs. Ready to flush sqlite to confirm the graph data correct.`)
-    await flushTransactions()
+    await batchSetBlockAttrs(newBlockAttrs)
     reloadLifeLogData('reload')
-  }, 500)
+  }, 1000)
 }
 
 </script>
