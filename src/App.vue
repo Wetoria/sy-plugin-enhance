@@ -82,6 +82,7 @@ const isInEnWindow = ref(isInWindow('QuickNote') || isInWindow('EnVideoAndAudio'
 
 watchEffect(() => {
   moduleEnableStatusSwitcher('EnhancerIsMobile', plugin.isMobile)
+})
 registerGlobalObserver()
 })
 
