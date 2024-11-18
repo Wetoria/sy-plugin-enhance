@@ -500,3 +500,10 @@ export async function version(): Promise<string> {
 export async function currentTime(): Promise<number> {
   return request("/api/system/currentTime", {});
 }
+
+// **************************************** Sqlite ****************************************
+
+export async function flushTransactions(): Promise<any> {
+  const url = "/api/sqlite/flushTransaction";
+  return request(url, {});
+}
