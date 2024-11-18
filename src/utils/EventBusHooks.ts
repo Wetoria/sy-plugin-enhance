@@ -3,19 +3,18 @@ import { IEventBusMap } from 'siyuan'
 
 export type offSiyuanEvent = () => void
 
-export function useSiyuanEvent(event: keyof IEventBusMap, cb: (event: any) => void): offSiyuanEvent {
+export function useSiyuanEvent(eventName: keyof IEventBusMap, cb: (event: any) => void): offSiyuanEvent {
   const plugin = usePlugin()
-  plugin.eventBus.on(event, (event) => {
-    cb(event)
-  })
+  const wrappedCallback = (event: any) => cb(event)
+  plugin.eventBus.on(eventName, wrappedCallback)
   return () => {
-    plugin.eventBus.off(event, cb)
+    plugin.eventBus.off(eventName, wrappedCallback)
   }
 }
 
-export function useSiyuanEventOnce(event: keyof IEventBusMap, cb: (event: any) => void) {
+export function useSiyuanEventOnce(eventName: keyof IEventBusMap, cb: (event: any) => void) {
   const plugin = usePlugin()
-  plugin.eventBus.once(event, (event) => {
+  plugin.eventBus.once(eventName, (event) => {
     cb(event)
   })
 }

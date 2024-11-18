@@ -83,17 +83,17 @@
 </template>
 
 <script setup lang="ts">
-import { deleteBlock, getBlockAttrs, setBlockAttrs, sql } from '@/api';
+import { deleteBlock, flushTransactions, getBlockAttrs, setBlockAttrs, sql } from '@/api';
 import EnNotebookSelector from '@/components/EnNotebookSelector.vue';
 import EnProtyle from '@/components/EnProtyle.vue';
 import { usePlugin } from '@/main';
 import { appendBlockIntoDailyNote, useDailyNote } from '@/modules/DailyNote/DailyNote.vue';
 import { debounce, generateShortUUID } from '@/utils';
 import { addCommand } from '@/utils/Commands';
-import { positionModalWithTranslate, targetIsInnerOf, targetIsOutsideOf, useRegisterStyle } from '@/utils/DOM';
-import { useSiyuanEventLoadedProtyleStatic, useSiyuanEventTransactions } from '@/utils/EventBusHooks';
+import { getSelectionCopy, positionModalWithTranslate, targetIsInnerOf, targetIsOutsideOf, useRegisterStyle } from '@/utils/DOM';
+import { useSiyuanDatabaseIndexCommit, useSiyuanEventLoadedProtyleStatic, useSiyuanEventTransactions, useSiyuanEventWsMain } from '@/utils/EventBusHooks';
 import { useMousePostion } from '@/utils/Mouse';
-import { useCurrentProtyle } from '@/utils/Siyuan'
+import { getClosetSiyuanNodeByDom, useCurrentProtyle } from '@/utils/Siyuan'
 import dayjs from 'dayjs';
 import { Protyle, showMessage } from 'siyuan';
 import { computed, onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue';
@@ -308,13 +308,27 @@ const startComment = async () => {
   const protyle = currentProtyle.value
   const selectedNodes = Array.from(protyle.contentElement.querySelectorAll('.protyle-wysiwyg--select'))
 
-  if (!popoverVisible.value) {
-    messageFlag.value = setTimeout(() => {
-      showMessage('创建评论中，请等待窗口自动显示', 3000)
-    }, 1000)
-  }
+  // if (!popoverVisible.value) {
+  //   messageFlag.value = setTimeout(() => {
+  //     showMessage('创建评论中，请等待窗口自动显示', 3000)
+  //   }, 1000)
+  // }
 
   if (selectedNodes.length === 0) {
+    // 防止 selection 更新不及时
+    const selection = window.getSelection()
+    const siyuanNode = getClosetSiyuanNodeByDom(selection.focusNode as HTMLElement)
+
+    if (!siyuanNode) {
+      enWarn('siyuanNode was not found')
+      return
+    }
+    // 如果未选择行内文字，则对单个块（段落块）进行评论
+    if (selectionCopy.value.isCollapsed) {
+      const nodeId = siyuanNode.dataset.nodeId
+      commentForSingleBlockByNodeId(nodeId, siyuanNode)
+      return
+    }
     commentForInlineText()
     return
   }
@@ -350,6 +364,22 @@ const startComment = async () => {
   }
 }
 
+// #region 注册 selectionchange 事件
+
+const selectionCopy = ref<Record<string, any>>({})
+const watchSelectionChange = () => {
+  selectionCopy.value = getSelectionCopy()
+}
+
+onMounted(() => {
+  document.addEventListener('selectionchange', watchSelectionChange)
+})
+onBeforeUnmount(() => {
+  document.removeEventListener('selectionchange', watchSelectionChange)
+})
+
+// #endregion 注册 selectionchange 事件
+
 // #endregion 评论的业务逻辑相关
 
 
@@ -378,69 +408,60 @@ const convertIntoSuperBlockAndComment = async (selectedNodes: HTMLElement[]) => 
   const superBlock = firstNodeParent as HTMLElement
   const superBlockId = superBlock.dataset.nodeId
 
-  commentForSingleBlockByNodeId(superBlockId, superBlock)
+  enLog('Convert into super block.')
+  enLog('Ready to flush transactions.')
+  await flushTransactions()
+  enLog('Flush done. Ready to comment for single block.')
+  const off = useSiyuanDatabaseIndexCommit(debounce(async () => {
+    await commentForSingleBlockByNodeId(superBlockId, superBlock)
+    off()
+  }, 20))
 }
 
 // 对单个块进行评论
-const commentForSingleBlockByNodeId = (nodeId: string, adjustTarget: HTMLElement) => {
+const commentForSingleBlockByNodeId = async (nodeId: string, adjustTarget: HTMLElement) => {
   const sqlStmt = `select * from blocks where id = '${nodeId}'`;
-  const startTime = dayjs()
+  const mdRes = await sql(sqlStmt) as any[]
 
-  let flag: any = null
-
-  const queryBlockAndComment = async () => {
-    const mdRes = await sql(sqlStmt) as any[]
-
-    if (mdRes.length > 0 || dayjs().diff(startTime, 'second') > 10) {
-      clearInterval(flag)
-
-      const blockMarkdown = mdRes[0]?.markdown
-      const blockContent = mdRes[0]?.content
-      if (!blockMarkdown) {
-        enWarn('md is null')
-        return
-      }
-
-      const lines = blockMarkdown.replace(/^{{{row(\s*\n*\s*)*/, '').replace(/(\s*\n*\s*)*}}}$/, '').split('\n');
-      let newMarkdown = '';
-      lines.forEach(line => {
-        newMarkdown += `${line}\n    > `;
-      });
-      const unblankLines = lines.filter(i => i.trim())
-      const isBiggerThan3Lines = unblankLines.length > 3
-
-      //@ts-expect-error window.siyuan?.config
-      const blockRefDynamicAnchorTextMaxLen = window.siyuan?.config.editor.blockRefDynamicAnchorTextMaxLen || 96
-      const splicedContent = blockContent.length > blockRefDynamicAnchorTextMaxLen
-        ? blockContent.slice(0, blockRefDynamicAnchorTextMaxLen) + '...'
-        : blockContent
-      const finalMd = `((${nodeId} "${splicedContent}"))\n    > 原文内容${isBiggerThan3Lines ? '(已折叠)' : ''}\n    > ${newMarkdown}\n    {: style="" fold="${isBiggerThan3Lines ? '1' : '0'}" }`
-
-      const blockAttrs = await getBlockAttrs(nodeId)
-      const currentBlockCommentIdAttr = blockAttrs['custom-en-comment-id']
-      let currentBlockCommentIdList = currentBlockCommentIdAttr ? currentBlockCommentIdAttr.split(' ') : []
-
-      const currentBlockCommentId = currentBlockCommentIdList.length ? currentBlockCommentIdList[0] : getCommentIdByNodeId(nodeId)
-
-      currentBlockCommentIdList.push(currentBlockCommentId)
-      currentBlockCommentIdList = Array.from(new Set(currentBlockCommentIdList))
-      await setBlockAttrs(nodeId, {
-        'custom-en-comment-id': currentBlockCommentIdList.join(' '),
-      })
-
-      await commentByCommentIdAndText(currentBlockCommentId, finalMd)
-
-      if (adjustTarget) {
-        recordAdjustCommentModalTargetElement(adjustTarget)
-      }
-    }
+  const blockMarkdown = mdRes[0]?.markdown
+  const blockContent = mdRes[0]?.content
+  if (!blockMarkdown) {
+    enWarn('md is null')
+    return
   }
 
-  // 立即进行查询
-  queryBlockAndComment()
-  flag = setInterval(async () => {
-    queryBlockAndComment()
-  }, 300)
+  const lines = blockMarkdown.replace(/^{{{row(\s*\n*\s*)*/, '').replace(/(\s*\n*\s*)*}}}$/, '').split('\n');
+  let newMarkdown = '';
+  lines.forEach(line => {
+    newMarkdown += `${line}\n    > `;
+  });
+  const unblankLines = lines.filter(i => i.trim())
+  const isBiggerThan3Lines = unblankLines.length > 3
+
+  //@ts-expect-error window.siyuan?.config
+  const blockRefDynamicAnchorTextMaxLen = window.siyuan?.config.editor.blockRefDynamicAnchorTextMaxLen || 96
+  const splicedContent = blockContent.length > blockRefDynamicAnchorTextMaxLen
+    ? blockContent.slice(0, blockRefDynamicAnchorTextMaxLen) + '...'
+    : blockContent
+  const finalMd = `((${nodeId} "${splicedContent}"))\n    > 原文内容${isBiggerThan3Lines ? '(已折叠)' : ''}\n    > ${newMarkdown}\n    {: style="" fold="${isBiggerThan3Lines ? '1' : '0'}" }`
+
+  const blockAttrs = await getBlockAttrs(nodeId)
+  const currentBlockCommentIdAttr = blockAttrs['custom-en-comment-id']
+  let currentBlockCommentIdList = currentBlockCommentIdAttr ? currentBlockCommentIdAttr.split(' ') : []
+
+  const currentBlockCommentId = currentBlockCommentIdList.length ? currentBlockCommentIdList[0] : getCommentIdByNodeId(nodeId)
+
+  currentBlockCommentIdList.push(currentBlockCommentId)
+  currentBlockCommentIdList = Array.from(new Set(currentBlockCommentIdList))
+  await setBlockAttrs(nodeId, {
+    'custom-en-comment-id': currentBlockCommentIdList.join(' '),
+  })
+
+  await commentByCommentIdAndText(currentBlockCommentId, finalMd)
+
+  if (adjustTarget) {
+    recordAdjustCommentModalTargetElement(adjustTarget)
+  }
 }
 
 const commentForInlineText = async () => {
@@ -451,23 +472,8 @@ const commentForInlineText = async () => {
   const {
     focusNode,
   } = selection
-  let siyuanNode = focusNode as HTMLElement
-  while(siyuanNode != null && !siyuanNode?.dataset?.nodeId) {
-    siyuanNode = siyuanNode.parentElement
-  }
-
-  if (!siyuanNode) {
-    enWarn('siyuanNode is null')
-    return
-  }
-
+  const siyuanNode = getClosetSiyuanNodeByDom(focusNode as HTMLElement)
   const nodeId = siyuanNode.dataset.nodeId
-
-  // 如果未选择行内文字，则对单个块（段落块）进行评论
-  if (selection.isCollapsed) {
-    commentForSingleBlockByNodeId(nodeId, siyuanNode)
-    return
-  }
 
   // 获取临时注释元素
   protyle.toolbar?.setInlineMark(protyle, 'en-comment-temp', 'range')

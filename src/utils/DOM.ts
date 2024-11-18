@@ -203,3 +203,24 @@ export function registerGlobalObserver() {
   })
   enSuccess('Global MutationObserver registered')
 }
+
+export enum SELECTION_KEYS {
+  anchorNode = 'anchorNode',
+  anchorOffset = 'anchorOffset',
+  baseNode = 'baseNode',
+  baseOffset = 'baseOffset',
+  extentNode = 'extentNode',
+  extentOffset = 'extentOffset',
+  focusNode = 'focusNode',
+  focusOffset = 'focusOffset',
+  isCollapsed = 'isCollapsed',
+}
+
+export function getSelectionCopy() {
+  const selection = window.getSelection()
+  const selectionResult = {}
+  Object.values(SELECTION_KEYS).forEach((key) => {
+    selectionResult[key] = selection[key]
+  })
+  return selectionResult
+}
