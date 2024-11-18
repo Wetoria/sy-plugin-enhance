@@ -217,6 +217,11 @@ function markLifeLogBlock() {
       })
     })
 
+    if (!validParagraphList.length) {
+      enWarn(`LifeLog module found no valid paragraph.`)
+      return
+    }
+
     // flush sqlite，防止数据库里没更新相关内容
     enWarn(`LifeLog module ready to flush transactions. In order to confirm the changes, please wait for a moment.`)
     await flushTransactions()
