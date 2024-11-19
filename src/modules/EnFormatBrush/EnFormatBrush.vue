@@ -6,13 +6,30 @@
 import { usePlugin } from '@/main';
 import { debounce, moduleEnableStatusSwitcher } from '@/utils';
 import { IProtyle } from 'siyuan';
-import { computed, onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue';
-import dayjs from 'dayjs'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { addCommand } from '@/utils/Commands';
+import { unWatchDomChange, watchDomChange } from '@/utils/DOM';
+import { useCurrentProtyle } from '@/utils/Siyuan';
+
+const plugin = usePlugin()
+
+plugin.addIcons(`
+  <symbol id="EnIconFormatBrushActived" viewBox="0 0 32 32">
+    <path fill="#3d7bfc" style="fill: var(--color1, #3d7bfc)" d="M10.816 9.008l11.328 12.928 6.016-5.728-10.896-13.040-6.448 5.84zM31.952 5.408l-3.152-3.6-7.456 4.736 5.312 6.016 5.296-7.152z"></path>
+    <path fill="#e1f0ff" style="fill: var(--color2, #e1f0ff)" d="M10.608 10.512s-6.304 3.008-9.6 1.792l13.68 17.344s4.944-7.088 5.952-7.168l-10.032-11.968z"></path>
+    <path fill="#3d7bfc" style="fill: var(--color1, #3d7bfc)" d="M19.824 23.52c0.368-0.432 0.752-0.88 1.088-1.232l-10.224-12.176-0.224 0.112c-0.064 0.032-6.224 2.944-9.344 1.776l-1.072-0.4 14.672 18.592 0.256-0.352c0.016-0.016 1.216-1.744 2.544-3.472 0.736-0.96 1.312-1.664 1.744-2.176 0.208-0.288 0.4-0.496 0.56-0.672zM17.024 25.904c-0.992 1.296-1.92 2.608-2.352 3.216l-12.832-16.272c3.12 0.464 7.6-1.456 8.672-1.936l9.616 11.456c-0.24 0.176-0.576 0.48-1.072 1.040-0.56 0.608-1.232 1.456-2.032 2.496z"></path>
+  </symbol>
+`)
+plugin.addIcons(`
+  <symbol id="EnIconFormatBrush" viewBox="0 0 32 32">
+  <path fill="#8a8a8a" style="fill: var(--color1, #8a8a8a)" d="M10.816 9.008l11.328 12.928 6.016-5.728-10.896-13.040-6.448 5.84zM31.952 5.408l-3.152-3.6-7.456 4.736 5.312 6.016 5.296-7.152z"></path>
+  <path fill="#8a8a8a" style="fill: var(--color1, #8a8a8a)" d="M10.608 10.512s-6.304 3.008-9.6 1.792l13.68 17.344s4.944-7.088 5.952-7.168l-10.032-11.968z"></path>
+  <path fill="#8a8a8a" style="fill: var(--color1, #8a8a8a)" d="M19.824 23.52c0.368-0.432 0.752-0.88 1.088-1.232l-10.224-12.176-0.224 0.112c-0.064 0.032-6.224 2.944-9.344 1.776l-1.072-0.4 14.672 18.592 0.256-0.352c0.016-0.016 1.216-1.744 2.544-3.472 0.736-0.96 1.312-1.664 1.744-2.176 0.208-0.288 0.4-0.496 0.56-0.672zM17.024 25.904c-0.992 1.296-1.92 2.608-2.352 3.216l-12.832-16.272c3.12 0.464 7.6-1.456 8.672-1.936l9.616 11.456c-0.24 0.176-0.576 0.48-1.072 1.040-0.56 0.608-1.232 1.456-2.032 2.496z"></path>
+  </symbol>
+`)
 
 const INLINE_TYPE = [
   "block-ref",
-  "kbd",
   "text",
   "file-annotation-ref",
   "a",
@@ -23,8 +40,9 @@ const INLINE_TYPE = [
   "mark",
   "sup",
   "sub",
-  "tag",
   "code",
+  "kbd",
+  "tag",
   "inline-math",
   "inline-memo",
   "clear",
@@ -39,6 +57,9 @@ const FONT_STYLE_INLINE_TYPE = [
   "mark",
   "sup",
   "sub",
+  "code",
+  "kbd",
+  "tag",
 ]
 
 const FONT_STYLE_KEYS = [
@@ -77,12 +98,17 @@ interface IStyle {
 }
 
 const currentFontStyle = ref<IStyle>()
+const enableBrush = () => {
+  document.addEventListener('keydown', escapeEvent)
+
+  document.addEventListener('mouseup', pasteStyleOnMouseUp)
+}
+
 const cancelBrush = () => {
   currentFontStyle.value = null
 
   document.removeEventListener('keydown', escapeEvent)
   document.removeEventListener('mouseup', pasteStyleOnMouseUp)
-  plugin.eventBus.off('click-editorcontent', recordCurrentProtyle)
 }
 
 const brushing = computed(() => !!currentFontStyle.value)
@@ -109,44 +135,9 @@ const pasteStyleOnMouseUp = (event) => {
 const switchEnableStatus = () => {
   moduleEnableStatusSwitcher('EnFormatBrush', brushing.value)
   if (brushing.value) {
-    document.addEventListener('keydown', escapeEvent)
-
-    document.addEventListener('mouseup', pasteStyleOnMouseUp)
-
-    plugin.eventBus.on('click-editorcontent', recordCurrentProtyle)
+    enableBrush()
   }
 }
-
-
-const getAriaLabel = () => {
-  const cmd = plugin.commands.find(i => i.langKey === 'En_FormatBrush_Enable')
-  const enableLabels = [`开启格式刷`]
-  if (cmd) {
-    enableLabels.push(`(${cmd.customHotkey || cmd.hotkey})`)
-  }
-  return `${!brushing.value ? enableLabels.join('') : `关闭格式刷(Esc 取消)`}`
-}
-
-
-watch(brushing, () => {
-  const btns = document.querySelectorAll('[data-type="EnFormatBrush"]')
-
-  btns.forEach((eachBtn) => {
-    const svg = eachBtn.querySelector('svg')
-    eachBtn.setAttribute('aria-label', getAriaLabel())
-    if (brushing.value) {
-      // @ts-expect-error setAttribute
-      svg.firstChild.setAttribute('xlink:href', '#EnIconFormatBrushActived')
-    } else {
-      // @ts-expect-error setAttribute
-      svg.firstChild.setAttribute('xlink:href', '#EnIconFormatBrush')
-    }
-  })
-
-  switchEnableStatus()
-}, {
-  immediate: true,
-})
 
 const convertStyleByRange = () => {
   const selection = window.getSelection();
@@ -191,6 +182,7 @@ const convertStyleByRange = () => {
     tempStyle.selection[key] = selection[key]
   })
 
+  enLog('tempStyle is ', tempStyle)
   return tempStyle
 }
 
@@ -240,17 +232,17 @@ const pasteCurrentStyle = (protyle: IProtyle = currentProtyle.value) => {
   // if (!Object.keys(currentFontStyle.value.style).length && !currentFontStyle.value.dataType.length) {
   //   return
   // }
-  let range = protyle?.toolbar?.range
+  // const range = protyle?.toolbar?.range
 
-  let startContainer = range.startContainer;
-  let element = (startContainer.nodeType === Node.ELEMENT_NODE ? startContainer : startContainer.parentElement) as HTMLElement;
+  // const startContainer = range.startContainer;
+  // const element = (startContainer.nodeType === Node.ELEMENT_NODE ? startContainer : startContainer.parentElement) as HTMLElement;
 
-  let siyuanNode = element
-  while(siyuanNode != null && !siyuanNode.dataset.nodeId) {
-    siyuanNode = siyuanNode.parentElement
-  }
+  // let siyuanNode = element
+  // while(siyuanNode != null && !siyuanNode.dataset.nodeId) {
+  //   siyuanNode = siyuanNode.parentElement
+  // }
 
-  const oldElement = siyuanNode.outerHTML
+  // const oldElement = siyuanNode.outerHTML
 
   protyle?.toolbar?.setInlineMark(protyle, 'clear', "range");
   protyle?.toolbar?.setInlineMark(protyle, 'clear', "range");
@@ -259,37 +251,32 @@ const pasteCurrentStyle = (protyle: IProtyle = currentProtyle.value) => {
     protyle?.toolbar?.setInlineMark(protyle, item, "range");
   })
 
-  range = protyle?.toolbar?.range
-  startContainer = range.startContainer;
-  element = (startContainer.nodeType === Node.ELEMENT_NODE ? startContainer : startContainer.parentElement) as HTMLElement;
-  element.setAttribute('style', '')
-
+  const specialStyle = [
+    'webkitTextStroke',
+    'webkitTextFillColor',
+    'textShadow',
+  ]
   Object.keys(currentFontStyle.value.style).forEach((key) => {
-    element.style[key] = currentFontStyle.value.style[key]
+    if (specialStyle.includes(key)) {
+      if (key === 'textShadow') {
+        protyle?.toolbar?.setInlineMark(protyle, 'text', "range", {
+          type: 'style4',
+          color: "",
+        });
+      } else {
+        protyle?.toolbar?.setInlineMark(protyle, 'text', "range", {
+          type: 'style2',
+          color: "",
+        });
+      }
+      return
+    }
+    protyle?.toolbar?.setInlineMark(protyle, 'text', "range", {
+      type: key,
+      color: currentFontStyle.value.style[key],
+    });
   })
-
-  siyuanNode.setAttribute("updated", dayjs().format("YYYYMMDDHHmmss"));
-
-  const protyleIns = protyle.getInstance()
-  protyleIns.updateTransaction(siyuanNode.getAttribute("data-node-id"), siyuanNode.outerHTML, oldElement);
 }
-
-const plugin = usePlugin()
-
-plugin.addIcons(`
-  <symbol id="EnIconFormatBrushActived" viewBox="0 0 32 32">
-    <path fill="#3d7bfc" style="fill: var(--color1, #3d7bfc)" d="M10.816 9.008l11.328 12.928 6.016-5.728-10.896-13.040-6.448 5.84zM31.952 5.408l-3.152-3.6-7.456 4.736 5.312 6.016 5.296-7.152z"></path>
-    <path fill="#e1f0ff" style="fill: var(--color2, #e1f0ff)" d="M10.608 10.512s-6.304 3.008-9.6 1.792l13.68 17.344s4.944-7.088 5.952-7.168l-10.032-11.968z"></path>
-    <path fill="#3d7bfc" style="fill: var(--color1, #3d7bfc)" d="M19.824 23.52c0.368-0.432 0.752-0.88 1.088-1.232l-10.224-12.176-0.224 0.112c-0.064 0.032-6.224 2.944-9.344 1.776l-1.072-0.4 14.672 18.592 0.256-0.352c0.016-0.016 1.216-1.744 2.544-3.472 0.736-0.96 1.312-1.664 1.744-2.176 0.208-0.288 0.4-0.496 0.56-0.672zM17.024 25.904c-0.992 1.296-1.92 2.608-2.352 3.216l-12.832-16.272c3.12 0.464 7.6-1.456 8.672-1.936l9.616 11.456c-0.24 0.176-0.576 0.48-1.072 1.040-0.56 0.608-1.232 1.456-2.032 2.496z"></path>
-  </symbol>
-`)
-plugin.addIcons(`
-  <symbol id="EnIconFormatBrush" viewBox="0 0 32 32">
-  <path fill="#8a8a8a" style="fill: var(--color1, #8a8a8a)" d="M10.816 9.008l11.328 12.928 6.016-5.728-10.896-13.040-6.448 5.84zM31.952 5.408l-3.152-3.6-7.456 4.736 5.312 6.016 5.296-7.152z"></path>
-  <path fill="#8a8a8a" style="fill: var(--color1, #8a8a8a)" d="M10.608 10.512s-6.304 3.008-9.6 1.792l13.68 17.344s4.944-7.088 5.952-7.168l-10.032-11.968z"></path>
-  <path fill="#8a8a8a" style="fill: var(--color1, #8a8a8a)" d="M19.824 23.52c0.368-0.432 0.752-0.88 1.088-1.232l-10.224-12.176-0.224 0.112c-0.064 0.032-6.224 2.944-9.344 1.776l-1.072-0.4 14.672 18.592 0.256-0.352c0.016-0.016 1.216-1.744 2.544-3.472 0.736-0.96 1.312-1.664 1.744-2.176 0.208-0.288 0.4-0.496 0.56-0.672zM17.024 25.904c-0.992 1.296-1.92 2.608-2.352 3.216l-12.832-16.272c3.12 0.464 7.6-1.456 8.672-1.936l9.616 11.456c-0.24 0.176-0.576 0.48-1.072 1.040-0.56 0.608-1.232 1.456-2.032 2.496z"></path>
-  </symbol>
-`)
 
 const commands = [
   {
@@ -311,7 +298,7 @@ const commands = [
 ]
 
 // 不想写清除的逻辑了 - -
-const handler = () => {
+const registerToolbarBrush = debounce(() => {
   const domList = document.querySelectorAll('.protyle-toolbar')
 
   if (!domList.length) {
@@ -320,12 +307,14 @@ const handler = () => {
 
   domList.forEach((dom) => {
     let exist = false
-    Array.prototype.find.call(dom.childNodes, (node: HTMLElement) => {
+    const findResult = Array.prototype.find.call(dom.children, (node: HTMLElement) => {
       if (node.dataset.type === 'EnFormatBrush') {
         exist = true
+        return node
       }
     })
     if (exist) {
+      updateToolbarBrushInfo(findResult)
       return
     }
 
@@ -333,12 +322,20 @@ const handler = () => {
 
     const divider = document.createElement('div')
     divider.className = 'protyle-toolbar__divider'
+    fragment.appendChild(divider)
+
+
 
     const btn = document.createElement('button')
     btn.className = 'protyle-toolbar__item b3-tooltips b3-tooltips__n'
     btn.setAttribute('data-type', 'EnFormatBrush')
     btn.setAttribute('aria-label', getAriaLabel())
-    btn.innerHTML = `<svg><use xlink:href="${brushing.value ? '#EnIconFormatBrushActived' : '#EnIconFormatBrush'}"></use></svg>`
+    btn.dataset.en_brush_enabled = brushing.value ? 'true' : 'false'
+    btn.innerHTML = `
+    <svg>
+      <use xlink:href="${brushing.value ? '#EnIconFormatBrushActived' : '#EnIconFormatBrush'}"></use>
+    </svg>
+    `
     btn.addEventListener('click', () => {
       if (brushing.value) {
         cancelBrush()
@@ -346,33 +343,72 @@ const handler = () => {
         copyCurrentStyle()
       }
     })
-    fragment.appendChild(divider)
     fragment.appendChild(btn)
+
+
 
     dom.appendChild(fragment)
   })
+}, 300)
+
+
+const getAriaLabel = () => {
+  const cmd = plugin.commands.find(i => i.langKey === 'En_FormatBrush_Enable')
+  const enableLabels = [`开启格式刷`]
+  if (cmd && (cmd.customHotkey || cmd.hotkey)) {
+    enableLabels.push(`(${cmd.customHotkey || cmd.hotkey})`)
+  }
+  return `${!brushing.value ? enableLabels.join('') : `关闭格式刷(Esc 取消)`}`
 }
 
-const observer = new MutationObserver(debounce(handler, 300));
+const updateToolbarBrushInfo = (eachBtn: HTMLElement) => {
+  const svg = eachBtn.querySelector('svg')
+  const oldAriaLabel = eachBtn.getAttribute('aria-label')
+  const domEnabledStatus = eachBtn.dataset.en_brush_enabled
+  const newAriaLabel = getAriaLabel()
+  if (oldAriaLabel === newAriaLabel && domEnabledStatus === `${brushing.value}`) {
+    return
+  }
 
-const currentProtyle = ref<IProtyle>()
-const recordCurrentProtyle = ({ detail }) => {
-  currentProtyle.value = detail?.protyle
+  eachBtn.setAttribute('aria-label', newAriaLabel)
+  eachBtn.dataset.en_brush_enabled = brushing.value ? 'true' : 'false'
+
+  const useDom = svg.querySelector('use')
+  if (brushing.value) {
+    useDom?.setAttribute('xlink:href', '#EnIconFormatBrushActived')
+  } else {
+    useDom?.setAttribute('xlink:href', '#EnIconFormatBrush')
+  }
 }
+
+const updateAllToolbarBrushInfo = () => {
+  const btns = document.querySelectorAll('[data-type="EnFormatBrush"]')
+
+  btns.forEach((eachBtn) => {
+    updateToolbarBrushInfo(eachBtn as HTMLElement)
+  })
+}
+
+
+const currentProtyle = useCurrentProtyle()
+
+
+watch(brushing, () => {
+  updateAllToolbarBrushInfo()
+  switchEnableStatus()
+}, {
+  immediate: true,
+})
 
 onMounted(() => {
   commands.forEach((command) => {
     addCommand(command);
   })
-  observer.observe(document.body, {
-    childList: true, // 观察目标子节点的变化，是否有添加或者删除
-    subtree: true,
-    attributes: true,
-  })
+  watchDomChange(registerToolbarBrush)
 });
 onBeforeUnmount(() => {
   plugin.commands = plugin.commands.filter((i) => !commands.find(cmd => cmd.langKey === i.langKey));
-  observer.disconnect()
+  unWatchDomChange(registerToolbarBrush)
 });
 </script>
 

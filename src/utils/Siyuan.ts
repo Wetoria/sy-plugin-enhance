@@ -324,3 +324,11 @@ export function useCurrentProtyle() {
   }
   return currentProtyle
 }
+
+export function getClosetSiyuanNodeByDom(dom: HTMLElement) {
+  let siyuanNode = dom as HTMLElement
+  while(siyuanNode != null && !siyuanNode?.dataset?.nodeId) {
+    siyuanNode = siyuanNode.parentElement
+  }
+  return siyuanNode
+}

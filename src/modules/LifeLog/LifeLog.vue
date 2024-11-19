@@ -33,26 +33,6 @@
         <a-switch v-model="moduleOptions.showLifeLogFlag" />
       </template>
     </EnSettingsItem>
-    <EnSettingsItem mode="vertical">
-      <div>
-        LifeLog 触发时间（秒）
-      </div>
-      <template #desc>
-        <div>
-          停止编辑以后，触发 LifeLog 标记逻辑的等待时间。单位：秒。
-        </div>
-      </template>
-      <template #opt>
-        <a-input-number
-          class="input-demo"
-          placeholder="Please Enter"
-          mode="button"
-          :min="1"
-          :readOnly="plugin.isMobile"
-          v-model="moduleOptions.lifelogTriggerTime"
-        />
-      </template>
-    </EnSettingsItem>
 
   </EnSettingsTeleportModule>
 </template>
@@ -62,7 +42,7 @@ import { onMounted, watchEffect } from 'vue';
 import { queryAllByDom } from '@/utils/DOM';
 import { usePlugin } from '@/main';
 import { EnhanceIOperation, SyDomNodeTypes, onEditorUpdate } from '../../utils/Siyuan'
-import { getBlockAttrs, setBlockAttrs, sql } from '@/api'
+import { batchGetBlockAttrs, batchSetBlockAttrs, flushTransactions, sql } from '@/api'
 import { Protyle } from 'siyuan'
 import dayjs from 'dayjs'
 import EnSettingsTeleportModule from '../Settings/EnSettingsTeleportModule.vue';
@@ -71,6 +51,7 @@ import { reloadLifeLogData } from './EnLifeLogDailyNoteGraph.vue';
 import { moduleEnableStatusSwitcher } from '@/utils';
 import { EnModule } from '../Settings/EnSettings.vue';
 import { useSettingModuleInSetup } from '@/utils/SyncDataHooks';
+import { getColorStringWarn } from '@/utils/Log';
 
 const plugin = usePlugin()
 
@@ -80,7 +61,6 @@ const plugin = usePlugin()
 interface ISettingModuleOptions extends EnModule {
   enableLifeLog: boolean
   showLifeLogFlag: boolean
-  lifelogTriggerTime: number
 }
 
 const moduleConfig: ISettingModuleOptions = {
@@ -90,7 +70,6 @@ const moduleConfig: ISettingModuleOptions = {
 
   enableLifeLog: false,
   showLifeLogFlag: false,
-  lifelogTriggerTime: 5,
 }
 
 const {
@@ -159,7 +138,7 @@ onMounted(() => {
       'df now',
       'now',
     ],
-    html: `<div class="b3-list-item__first"><span class="b3-list-item__text">${'插入当前时间'}</span></div>`,
+    html: `<div class="b3-list-item__first"><span class="b3-list-item__text">${'EN｜插入当前时间'}</span></div>`,
     id: "enInsertCurrentTime",
     callback(protyle: Protyle) {
       const timestamp = dayjs().format('HH:mm')
@@ -188,16 +167,30 @@ function markLifeLogBlock() {
     optList = Object.values(optMap)
     optList = optList.filter(i => i.nodeType === SyDomNodeTypes.NodeParagraph)
 
-    for (const opt of optList) {
-      const blockAttrs = await getBlockAttrs(opt.id)
+    if (!optList.length) {
+      enWarn(`LifeLog watched no paragraph`)
+      return
+    }
 
+    enLog(`${getColorStringWarn('LifeLog watched paragraph list changed: ')}`, optList)
+
+    const validParagraphList: Array<EnhanceIOperation & {
+      content: string
+      time: string
+      contentWithoutTime: string
+    }> = []
+
+
+    // 先在前端进行过滤，防止频繁的请求后端
+    optList.forEach((opt) => {
       const content = opt.text
 
       // const isLifeLogParagraph = /^\d{2}:\d{2}\s+/.test(content)
       const isLifeLogParagraph = /^\d{2}:\d{2}(:\d{2})?\s+[^\n\r]*?$/.test(content)
 
       if (!isLifeLogParagraph) {
-        continue
+        enLog(`${getColorStringWarn('LifeLog is not a valid paragraph: ')}`, opt)
+        return
       }
       const time = (content.match(/^\d{2}:\d{2}(:\d{2})?/) || [])[0]
 
@@ -209,19 +202,52 @@ function markLifeLogBlock() {
 
       if (!isPureTimeStart) {
         enLog('LifeLog is not start with pure time')
-        continue
+        return
       }
 
-      const elseContent = content.replace(/^\d{2}:\d{2}(:\d{2})?\s+/, '')
-      if (!elseContent) {
+      const contentWithoutTime = content.replace(/^\d{2}:\d{2}(:\d{2})?\s+/, '')
+      if (!contentWithoutTime) {
         enLog('LifeLog only has time')
-        continue
+        return
       }
-      let colonIndex = elseContent.indexOf('：')
-      colonIndex = colonIndex < 0 ? elseContent.length : colonIndex
 
-      const logType = elseContent.substring(0, colonIndex)
-      const logContent = elseContent.substring(colonIndex + 1, elseContent.length)
+      validParagraphList.push({
+        ...opt,
+        content,
+        time,
+        contentWithoutTime,
+      })
+    })
+
+
+
+    if (!validParagraphList.length) {
+      enWarn(`LifeLog module found no valid paragraph.`)
+      return
+    }
+
+
+
+    // flush sqlite，防止数据库里没更新相关内容
+    enWarn(`LifeLog module ready to flush transactions. In order to confirm the changes, please wait for a moment.`)
+    await flushTransactions()
+
+
+
+    const blockIds = validParagraphList.map(i => i.id)
+
+    const blockAttrsRes = await batchGetBlockAttrs(blockIds)
+
+    const newBlockAttrs = []
+
+    for (const opt of validParagraphList) {
+      const blockAttrs = blockAttrsRes[opt.id]
+
+      let colonIndex = opt.contentWithoutTime.indexOf('：')
+      colonIndex = colonIndex < 0 ? opt.contentWithoutTime.length : colonIndex
+
+      const logType = opt.contentWithoutTime.substring(0, colonIndex)
+      const logContent = opt.contentWithoutTime.substring(colonIndex + 1, opt.contentWithoutTime.length)
 
       let createdTime = blockAttrs[lifelogAttrCreated]
       let date = blockAttrs[lifelogAttrDate]
@@ -253,24 +279,28 @@ function markLifeLogBlock() {
 
         // 没查到 Daily Note 文档的话，不算做 LifeLog
         if (!res[0]?.attr_value) {
-          enLog('LifeLog record is not in a daily note')
+          enLog(`${getColorStringWarn('LifeLog record is not in a daily note: ')}`, opt)
           continue
         }
         date = dayjs(res[0]?.attr_value).format('YYYY/MM/DD')
       }
 
-      await setBlockAttrs(opt.id, {
-        [lifelogAttrTime]: time,
+      const newResult = {
+        [lifelogAttrTime]: opt.time,
         [lifelogAttrDate]: date,
         [lifelogAttrType]: logType,
         [lifelogAttrContent]: logContent,
         [lifelogAttrCreated]: createdTime,
         [lifelogAttrUpdated]: updatedTime,
+      }
+
+      newBlockAttrs.push({
+        id: opt.id,
+        attrs: newResult,
       })
     }
-    setTimeout(() => {
-      reloadLifeLogData('reload')
-    }, 2000)
+    await batchSetBlockAttrs(newBlockAttrs)
+    reloadLifeLogData('reload')
   }, 1000)
 }
 

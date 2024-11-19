@@ -74,6 +74,7 @@ import { moduleEnableStatusSwitcher } from './utils';
 import EnComment from './modules/Editor/Comment/EnComment.vue';
 import { isInWindow } from './modules/EnWindow.vue';
 import TestLogic from './modules/Test/TestLogic.vue';
+import { registerGlobalObserver } from './utils/DOM';
 
 const plugin = usePlugin()
 
@@ -82,6 +83,7 @@ const isInEnWindow = ref(isInWindow('QuickNote') || isInWindow('EnVideoAndAudio'
 watchEffect(() => {
   moduleEnableStatusSwitcher('EnhancerIsMobile', plugin.isMobile)
 })
+registerGlobalObserver()
 
 onMounted(() => {
   const searchParams = {
