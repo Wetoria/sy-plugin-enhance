@@ -22,7 +22,11 @@ function getWhiteBoardListBySearchValue(searchValue: string) {
       value: cbValue,
       id: `whiteboard-${i}`,
       html: `
-        <div class="b3-list-item__text en-whiteboard-selector-item" data-en-whiteboard-id="whiteboard-${i}">
+        <div
+          class="b3-list-item__text en-whiteboard-selector-item"
+          data-en-whiteboard-id="whiteboard-${i}"
+          data-en-whiteboard-name="白板 ${i}"
+        >
           白板 ${i}
         </div>
       `,
@@ -45,13 +49,19 @@ async function renderWhiteBoardListIntoProtyleHint(protyle: Protyle, searchValue
   const hint = protyle.protyle.hint
 
   const result = await getWhiteBoardListBySearchValue(searchValue)
-  if (!result.length) {
-    result.push({
-      value: cbValue,
-      id: '-',
-      html: `<div class="b3-list-item__text"><span data-en-whiteboard-id="-" data-en-protyle-root-id="${protyle.protyle.block.rootID}">未找到符合条件的白板</span></div>`,
-    })
-  }
+  result.unshift({
+    value: cbValue,
+    id: 'new',
+    html: `
+      <div
+        class="b3-list-item__text en-whiteboard-selector-item"
+        data-en-whiteboard-id="new"
+        data-en-whiteboard-name="${searchValue}"
+      >
+        新增白板${searchValue ? ` ${searchValue}` : ''}
+      </div>
+    `,
+  })
   hint.genHTML(result, protyle.protyle, true, "hint");
 
   const newHintInputWrapperDom = document.createElement('div') as HTMLDivElement
