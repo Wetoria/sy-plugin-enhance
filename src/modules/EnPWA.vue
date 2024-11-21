@@ -122,17 +122,24 @@ onMounted(() => {
 })
 
 onViewportChange((newViewport) => {
-  // @ts-expect-error keyboardToolbar
-  window.keyboardToolbar.style.top = newViewport.offsetTop + newViewport.height - 42 + 'px'
-  // @ts-expect-error keyboardToolbar
-  window.keyboardToolbar.style.bottom = 'unset'
+  if (newViewport.height != window.innerHeight) {
+    // @ts-expect-error keyboardToolbar
+    window.keyboardToolbar.style.top = newViewport.offsetTop + newViewport.height - 42 + 'px'
+  } else {
+    // @ts-expect-error keyboardToolbar
+    window.keyboardToolbar.style.top = 'unset'
+  }
 })
 
-const testViewPortHeight = computed(() => {
-  return viewportRef.value.height - 5 + 'px'
-})
-const testViewPortTop = computed(() => {
-  return viewportRef.value.offsetTop + 'px'
+
+onViewportChange((newViewport) => {
+  // @ts-expect-error testv
+  if (window.testv) {
+    // @ts-expect-error testv
+    window.testv.style.height = newViewport.height - 5 + 'px'
+    // @ts-expect-error testv
+    window.testv.style.top = newViewport.offsetTop + 'px'
+  }
 })
 </script>
 
@@ -163,7 +170,6 @@ export function useViewport() {
       pendingUpdate = false;
 
       Object.values(viewportKeys).forEach((key) => {
-        console.log(key, window.visualViewport[key])
         viewportRef.value[key] = window.visualViewport[key]
       })
     });
@@ -207,8 +213,6 @@ export function onViewportChange(cb: (newViewport: any, oldViewport: any) => voi
   width: calc(100vw - 2px);
   box-sizing: border-box;
   min-height: 100px;
-  height: v-bind(testViewPortHeight);
-  top: v-bind(testViewPortTop);
   left: 0px;
   border: 1px solid red;
   pointer-events: none;
