@@ -46,19 +46,21 @@
       </template>
     </EnSettingsItem>
   </EnSettingsTeleportModule>
+  <div id="testv" v-if="settings.isDebugging"></div>
 </template>
 
 <script setup lang="ts">
 import { useEnhancer } from '@/modules/GlobalStatus';
-import { onMounted, watchEffect } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue';
 import EnSettingsTeleportModule from './Settings/EnSettingsTeleportModule.vue';
 import EnSettingsItem from './Settings/EnSettingsItem.vue';
 import { usePlugin } from '@/main';
-import { EnModule } from './Settings/EnSettings.vue';
+import { EnModule, useSettings } from './Settings/EnSettings.vue';
 import { useSettingModuleInSetup } from '@/utils/SyncDataHooks';
 
 const plugin = usePlugin()
 const EnhancerState = useEnhancer()
+const settings = useSettings()
 
 // #region 基本的模块配置
 
@@ -118,6 +120,85 @@ onMounted(() => {
     document.documentElement.dataset.enOrientation = (event.target as ScreenOrientation).type
   })
 })
+
+onViewportChange((newViewport) => {
+  if (newViewport.height != window.innerHeight) {
+    // @ts-expect-error keyboardToolbar
+    window.keyboardToolbar.style.top = newViewport.offsetTop + newViewport.height - 42 + 'px'
+  } else {
+    // @ts-expect-error keyboardToolbar
+    window.keyboardToolbar.style.top = 'unset'
+  }
+})
+
+
+onViewportChange((newViewport) => {
+  // @ts-expect-error testv
+  if (window.testv) {
+    // @ts-expect-error testv
+    window.testv.style.height = newViewport.height - 5 + 'px'
+    // @ts-expect-error testv
+    window.testv.style.top = newViewport.offsetTop + 'px'
+  }
+})
+</script>
+
+<script lang="ts">
+let listened = false
+export enum viewportKeys {
+  height = 'height',
+  offsetLeft = 'offsetLeft',
+  offsetTop = 'offsetTop',
+  onresize = 'onresize',
+  onscroll = 'onscroll',
+  pageLeft = 'pageLeft',
+  pageTop = 'pageTop',
+  scale = 'scale',
+  width = 'width',
+}
+
+const viewportRef = ref<{
+  [key in viewportKeys]: any;
+}>({} as any)
+export function useViewport() {
+  let pendingUpdate = false;
+  function viewportHandler() {
+    if (pendingUpdate) return;
+    pendingUpdate = true;
+
+    requestAnimationFrame(() => {
+      pendingUpdate = false;
+
+      Object.values(viewportKeys).forEach((key) => {
+        viewportRef.value[key] = window.visualViewport[key]
+      })
+    });
+  }
+  onMounted(() => {
+    if (!listened) {
+      window.visualViewport.addEventListener('scroll', viewportHandler)
+      window.visualViewport.addEventListener('resize', viewportHandler)
+      listened = true
+    }
+  })
+  onBeforeUnmount(() => {
+    if (listened) {
+      window.visualViewport.removeEventListener('scroll', viewportHandler)
+      window.visualViewport.removeEventListener('resize', viewportHandler)
+    }
+  })
+  viewportHandler()
+  return viewportRef
+}
+export function onViewportChange(cb: (newViewport: any, oldViewport: any) => void) {
+  useViewport()
+  watch(viewportRef, (newVal, oldVal) => {
+    cb(newVal, oldVal)
+  }, {
+    deep: true,
+    immediate: true,
+  })
+}
 </script>
 
 <style lang="scss">
@@ -125,6 +206,19 @@ onMounted(() => {
   --en-status-height: 56px;
   --en-toolbar-height: 30px;
 }
+
+
+#testv {
+  position: fixed;
+  width: calc(100vw - 2px);
+  box-sizing: border-box;
+  min-height: 100px;
+  left: 0px;
+  border: 1px solid red;
+  pointer-events: none;
+  z-index: 99999;
+}
+
 
 html[data-en-is-standalone="true"][data-en-pwa="true"] {
   height: 100vh;

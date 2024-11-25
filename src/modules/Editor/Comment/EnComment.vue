@@ -92,6 +92,7 @@ import { debounce, generateShortUUID } from '@/utils';
 import { addCommand } from '@/utils/Commands';
 import { getSelectionCopy, positionModalWithTranslate, targetIsInnerOf, targetIsOutsideOf, useRegisterStyle } from '@/utils/DOM';
 import { useSiyuanDatabaseIndexCommit, useSiyuanEventLoadedProtyleStatic, useSiyuanEventTransactions, useSiyuanEventWsMain } from '@/utils/EventBusHooks';
+import { getColorStringWarn } from '@/utils/Log';
 import { useMousePostion } from '@/utils/Mouse';
 import { getClosetSiyuanNodeByDom, useCurrentProtyle } from '@/utils/Siyuan'
 import dayjs from 'dayjs';
@@ -308,11 +309,11 @@ const startComment = async () => {
   const protyle = currentProtyle.value
   const selectedNodes = Array.from(protyle.contentElement.querySelectorAll('.protyle-wysiwyg--select'))
 
-  // if (!popoverVisible.value) {
-  //   messageFlag.value = setTimeout(() => {
-  //     showMessage('创建评论中，请等待窗口自动显示', 3000)
-  //   }, 1000)
-  // }
+  if (!popoverVisible.value) {
+    messageFlag.value = setTimeout(() => {
+      showMessage('创建评论中，请等待窗口自动显示', 3000)
+    }, 1000)
+  }
 
   if (selectedNodes.length === 0) {
     // 防止 selection 更新不及时
@@ -413,8 +414,9 @@ const convertIntoSuperBlockAndComment = async (selectedNodes: HTMLElement[]) => 
   await flushTransactions()
   enLog('Flush done. Ready to comment for single block.')
   const off = useSiyuanDatabaseIndexCommit(debounce(async () => {
-    await commentForSingleBlockByNodeId(superBlockId, superBlock)
+    enLog(`${getColorStringWarn(`Ready to comment for super block.`)}`)
     off()
+    await commentForSingleBlockByNodeId(superBlockId, superBlock)
   }, 20))
 }
 
@@ -781,11 +783,17 @@ const selectedCommentIdList = ref<Array<{
 const isCommentNode = (target: HTMLElement) => {
   return target?.getAttribute('custom-en-comment-id') || target?.dataset?.type?.includes('en-comment-id')
 }
+const isCancelShowCommentListDom = (target: HTMLElement) => {
+  return target.classList.contains('enCancelShowCommentListDom')
+}
 const onClickComment = async (event: MouseEvent) => {
   let target = event.target as HTMLElement
 
   const allCommentNodes = []
   while (target) {
+    if (isCancelShowCommentListDom(target)) {
+      return
+    }
     if (isCommentNode(target)) {
       allCommentNodes.push(target)
     }
