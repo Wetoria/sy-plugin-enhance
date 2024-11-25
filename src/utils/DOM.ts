@@ -224,3 +224,51 @@ export function getSelectionCopy() {
   })
   return selectionResult
 }
+
+
+export enum AppendDomClassOrder {
+  Test = 'Test',
+}
+const appendDomClassOrder = Object.values(AppendDomClassOrder)
+
+export function appendTargetDomAsClassOrder(className: AppendDomClassOrder | string, targetDom: HTMLElement) {
+  if (!className) {
+    enWarn('Append Target need a className')
+    return
+  }
+  if (!targetDom) {
+    enWarn('Append Target need a targetDom')
+    return
+  }
+  const indexInOrder = appendDomClassOrder.findIndex(i => i === className)
+
+
+  // 如果 className 不在 appendDomClassOrder 中，则认为它在最后
+  const finalIndex = indexInOrder > -1 ? indexInOrder : 999
+  const children = targetDom.children;
+  let existDomInTargetDom;
+
+  // 从后往前查找已存在的同类元素
+  for (let i = children.length - 1; i >= 0; i--) {
+    if (children[i].classList.contains(className)) {
+      existDomInTargetDom = children[i];
+      break;
+    }
+  }
+
+  let result = existDomInTargetDom
+
+  if (result) {
+    return result
+  }
+
+  result = document.createElement('div')
+  result.classList.add(className)
+
+  if (finalIndex < children.length) {
+    targetDom.insertBefore(result, children[finalIndex]);
+  } else {
+    targetDom.appendChild(result);
+  }
+  return result
+}
