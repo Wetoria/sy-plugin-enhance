@@ -783,11 +783,17 @@ const selectedCommentIdList = ref<Array<{
 const isCommentNode = (target: HTMLElement) => {
   return target?.getAttribute('custom-en-comment-id') || target?.dataset?.type?.includes('en-comment-id')
 }
+const isCancelShowCommentListDom = (target: HTMLElement) => {
+  return target.classList.contains('enCancelShowCommentListDom')
+}
 const onClickComment = async (event: MouseEvent) => {
   let target = event.target as HTMLElement
 
   const allCommentNodes = []
   while (target) {
+    if (isCancelShowCommentListDom(target)) {
+      return
+    }
     if (isCommentNode(target)) {
       allCommentNodes.push(target)
     }
