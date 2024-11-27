@@ -7,6 +7,7 @@ function getDocPath(noteId) {
 }
 
 function openFileByURL(path) {
+  // @ts-expect-error openFileByURL 是 SiYuan 的 API，但未在 siyuan.d.ts 中定义
   window.openFileByURL(path)
 }
 

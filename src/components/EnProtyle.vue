@@ -9,7 +9,7 @@
 
 <script setup lang="ts">
 import { usePlugin } from '@/main';
-import { IProtyleOption, Protyle } from 'siyuan';
+import { IProtyleOptions, Protyle } from 'siyuan';
 import { onMounted, ref, watch } from 'vue';
 
 
@@ -19,7 +19,7 @@ const protyleRef = ref<Protyle>()
 const props = defineProps<{
   blockId: string
   disableEnhance?: boolean
-  options?: IProtyleOption
+  options?: IProtyleOptions
 }>()
 
 const emits = defineEmits<{

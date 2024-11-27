@@ -134,7 +134,7 @@
 <script setup lang="ts">
 import { usePlugin } from "@/main";
 import { addCommand, removeCommand } from '@/utils/Commands';
-import { ICommandOption, showMessage } from 'siyuan';
+import { ICommand, showMessage } from 'siyuan';
 import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from "vue";
 import { EnModule, isFree } from '../Settings/EnSettings.vue';
 import { useSettingModuleInSetup } from '@/utils/SyncDataHooks';
@@ -150,7 +150,7 @@ const colorCommandHTML = `
   </div>
 `;
 
-const command: ICommandOption = {
+const command: ICommand = {
   langKey: "En_FontStyle",
   langText: colorCommandHTML,
   hotkey: "",

@@ -2,7 +2,7 @@
   <textarea
     class="b3-text-field fn__block"
     :value="modelValue"
-    @input="$emit('update:modelValue', $event.target.value)"
+    @input="$emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)"
   ></textarea>
 </template>
 

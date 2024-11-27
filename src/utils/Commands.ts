@@ -1,5 +1,5 @@
 import { usePlugin } from '@/main';
-import { ICommandOption } from 'siyuan';
+import { ICommand } from 'siyuan';
 
 const commandsKeyList: string[] = []
 
@@ -51,7 +51,7 @@ function sortCommandKeys() {
   })
 }
 
-export function addCommand(command: ICommandOption) {
+export function addCommand(command: ICommand) {
   if (!command) {
     return
   }
@@ -94,7 +94,7 @@ export function addCommand(command: ICommandOption) {
   }
 }
 
-export function removeCommand(command: ICommandOption) {
+export function removeCommand(command: ICommand) {
   const plugin = usePlugin()
 
   plugin.commands = plugin.commands
