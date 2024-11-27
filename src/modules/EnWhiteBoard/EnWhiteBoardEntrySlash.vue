@@ -138,7 +138,7 @@ function createOrInsertWhiteBoard(protyle: Protyle) {
     whiteBoardId = generateWhiteBoardId()
   }
 
-  const result = `选择的白板id：${whiteBoardId}<br/>选择的白板名称：${whiteBoardName ? ` ${whiteBoardName}` : '[后续应该自动生成白板的名称]'}<br/>选择的块id：${hint.enBlockId}。<br/>已经能拿到相关数据，后续将段落块标记白板相关的属性，然后额外渲染出白板的区域。`
+  const result = `选择的白板id：${whiteBoardId}<br/>选择的白板名称：${whiteBoardName ? ` ${whiteBoardName}` : '[后续应该自动生成白板的名称]'}<br/>选择的块id：${hint.enBlockId}。`
   const testHtml =
 `<div>
   <div style="display: none;">
