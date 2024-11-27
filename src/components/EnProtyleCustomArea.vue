@@ -150,8 +150,6 @@ onBeforeUnmount(() => {
   width: 100%;
   display: flex;
   min-height: 50px;
-  background: white;
-  border: 1px solid red;
   box-sizing: border-box;
 }
 
@@ -168,8 +166,7 @@ onBeforeUnmount(() => {
 }
 .enProtyleActualAreaContainer {
   display: flex;
-  background: grey;
-  border: 1px solid blue;
+  border: 1px solid var(--b3-board-color);
   box-sizing: border-box;
 
   pointer-events: auto;

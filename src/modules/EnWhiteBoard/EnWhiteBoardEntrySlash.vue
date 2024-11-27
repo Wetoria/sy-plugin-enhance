@@ -5,11 +5,11 @@
 <script setup lang="ts">
 import { updateBlock } from '@/api';
 import { usePlugin } from '@/main';
-import { generateShortUUID } from '@/utils';
 import { getClosetSiyuanNodeByDom } from '@/utils/Siyuan';
 import { setPosition, upDownHint } from '@/utils/Siyuan/utils';
 import { Protyle } from 'siyuan';
-import { getWhiteBoardListBySearchValue } from './EnWhiteBoard.vue';
+import { createWhiteBoard, generateWhiteBoardId, getWhiteBoardListBySearchValue } from './EnWhiteBoard.vue';
+import { onBeforeUnmount, onMounted } from 'vue';
 
 const plugin = usePlugin()
 
@@ -125,10 +125,6 @@ async function renderWhiteBoardListIntoProtyleHint(protyle: Protyle, searchValue
   setPosition(hint.element, siyuanNodeRect?.left, siyuanNodeRect?.bottom);
 }
 
-function getWhiteBoardId() {
-  const shortUUID = generateShortUUID()
-  return `en-whiteboard-id-${shortUUID}`
-}
 function createOrInsertWhiteBoard(protyle: Protyle) {
   const hint: any = protyle.protyle.hint
 
@@ -139,7 +135,7 @@ function createOrInsertWhiteBoard(protyle: Protyle) {
 
   const isCreateNew = whiteBoardId === 'new'
   if (isCreateNew) {
-    whiteBoardId = getWhiteBoardId()
+    whiteBoardId = generateWhiteBoardId()
   }
 
   const result = `选择的白板id：${whiteBoardId}<br/>选择的白板名称：${whiteBoardName ? ` ${whiteBoardName}` : '[后续应该自动生成白板的名称]'}<br/>选择的块id：${hint.enBlockId}。<br/>已经能拿到相关数据，后续将段落块标记白板相关的属性，然后额外渲染出白板的区域。`
@@ -150,51 +146,61 @@ function createOrInsertWhiteBoard(protyle: Protyle) {
   </div>
 </div>
 
-{: custom-en-ref-whiteboard-id="${whiteBoardId}" }
+{: custom-en-ref-whiteboard-id="${whiteBoardId}" alias="en-wb-${whiteBoardName}" }
 `
+  createWhiteBoard({
+    whiteBoardId,
+    whiteBoardName,
+  })
   updateBlock('markdown', testHtml, hint.enBlockId)
   hint.enCreatingOrSelectingWhiteBoard = false
   hint.enWhiteboardFinished = true
   hint.enBlockId = ''
 }
 
-plugin.protyleSlash.push({
-  filter: [
-    'en whiteboard',
-    'whiteboard',
-    'enwhiteboard',
-    'enwb',
-    'wb',
-    'baiban',
-    'enbaiban',
-    'huaban',
-    '画板',
-    '白板',
-  ],
-  html: `<div class="b3-list-item__first"><span class="b3-list-item__text">EN｜白板</span></div>`,
-  id: slashId_WhiteBoard,
-  callback(protyle: Protyle) {
-    const hint: any = protyle.protyle.hint
+onMounted(() => {
+  plugin.protyleSlash.push({
+    filter: [
+      'en whiteboard',
+      'whiteboard',
+      'enwhiteboard',
+      'enwb',
+      'wb',
+      'baiban',
+      'enbaiban',
+      'huaban',
+      '画板',
+      '白板',
+    ],
+    html: `<div class="b3-list-item__first"><span class="b3-list-item__text">EN｜白板</span></div>`,
+    id: slashId_WhiteBoard,
+    callback(protyle: Protyle) {
+      const hint: any = protyle.protyle.hint
 
-    if (!hint.enCreatingOrSelectingWhiteBoard) {
-      hint.enCreatingOrSelectingWhiteBoard = true
-      hint.enWhiteboardFinished = false
-      const range = protyle.protyle.toolbar.range as Range
-      const siyuanNode = getClosetSiyuanNodeByDom(range.startContainer as HTMLElement)
-      const nodeId = siyuanNode?.dataset.nodeId
+      if (!hint.enCreatingOrSelectingWhiteBoard) {
+        hint.enCreatingOrSelectingWhiteBoard = true
+        hint.enWhiteboardFinished = false
+        const range = protyle.protyle.toolbar.range as Range
+        const siyuanNode = getClosetSiyuanNodeByDom(range.startContainer as HTMLElement)
+        const nodeId = siyuanNode?.dataset.nodeId
 
-      hint.siyuanNode = siyuanNode
-      hint.enBlockId = nodeId
-      renderWhiteBoardListIntoProtyleHint(protyle)
-    } else {
-      // 如果以外中断（点击隐藏了），则重新渲染
-      if (!hint.enWhiteboardFinished) {
+        hint.siyuanNode = siyuanNode
+        hint.enBlockId = nodeId
         renderWhiteBoardListIntoProtyleHint(protyle)
       } else {
-        createOrInsertWhiteBoard(protyle)
+        // 如果以外中断（点击隐藏了），则重新渲染
+        if (!hint.enWhiteboardFinished) {
+          renderWhiteBoardListIntoProtyleHint(protyle)
+        } else {
+          createOrInsertWhiteBoard(protyle)
+        }
       }
     }
-  }
+  })
+})
+
+onBeforeUnmount(() => {
+  plugin.protyleSlash = plugin.protyleSlash.filter((item) => item.id !== slashId_WhiteBoard)
 })
 </script>
 
