@@ -61,10 +61,10 @@ const recordCurrentSiyuanNode = (node) => {
 const getParentSiyuanNode = (videoOrAudioElement: HTMLVideoElement | HTMLAudioElement) => {
   let parent = videoOrAudioElement.parentElement
   while (parent) {
-    parent = parent.parentElement
     if (isTargetSiyuanNode(parent.dataset.type)) {
       break
     }
+    parent = parent.parentElement
   }
   return parent
 }
@@ -107,10 +107,10 @@ const recordVideoAndAudio = (video: HTMLVideoElement | HTMLAudioElement) => {
       currentTarget = video
       let parent = video.parentElement
       while (parent) {
-        parent = parent.parentElement
         if (isTargetSiyuanNode(parent.dataset.type)) {
           break
         }
+        parent = parent.parentElement
       }
       if (parent) {
         recordCurrentSiyuanNode(parent)
