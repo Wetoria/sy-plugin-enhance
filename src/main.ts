@@ -7,6 +7,7 @@ import AppVue from './App.vue';
 import { reactive } from 'vue';
 import { loadSettings } from './modules/Settings/EnSettings.vue';
 import { initWebsocket } from './utils/SyncData';
+import { loadModuleData_EnVideoAndAudioBlockPlay } from './modules/VideoAndAudio/EnVideoAndAudioBlockPlay.vue';
 
 let pluginRef: VPlugin = null
 export function registerPlugin(plugin) {
@@ -22,10 +23,15 @@ const loadVueApp = () => {
   loadComponentAppendToBody(AppVue)
 }
 
+const loadModuleDataBeforeApp = async () => {
+  await loadModuleData_EnVideoAndAudioBlockPlay()
+}
+
 export async function init(plugin: VPlugin) {
   registerPlugin(plugin);
   await initWebsocket()
   await loadSettings()
+  await loadModuleDataBeforeApp()
   loadVueApp()
   registerProtyleBottomArea()
 }

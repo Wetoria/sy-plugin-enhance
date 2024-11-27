@@ -144,12 +144,34 @@
   </a-trigger>
 </template>
 
+<script lang="ts">
+const moduleName = 'EnVideoAndAudioBlockPlay'
+export const Module_EnVideoAndAudioBlockPlay = moduleName
+
+const useEnVideoAndAudioBlockPlayModule = () => {
+  return useSyncModuleData({
+    namespace: moduleName,
+    defaultData: {
+      videoAndAudioBlockMap: {},
+      videoAndAudioBlockPlayConfigMap: {},
+    },
+    needSync: false,
+  })
+}
+
+export async function loadModuleData_EnVideoAndAudioBlockPlay() {
+  useEnVideoAndAudioBlockPlayModule()
+  await updateModuleDataByNamespaceWithLoadFile(moduleName)
+}
+</script>
+
 <script setup lang="ts">
 import { SyDomNodeTypes } from '@/utils/Siyuan';
 import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue';
 import { useSettings } from '../Settings/EnSettings.vue';
 import { showMessage } from 'siyuan';
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue';
+import { updateModuleDataByNamespaceWithLoadFile, useSyncModuleData } from '@/utils/SyncData';
 
 const iconMap = {
   [SyDomNodeTypes.NodeAudio]: 'iconRecord',
@@ -194,18 +216,24 @@ const setTargetTime = (newTimeBlock: ATimeBlock) => {
   newBlock.value = JSON.parse(JSON.stringify(newTimeBlock))
 }
 
-const settings = useSettings()
-const nodeTimeBlockList = ref(settings.value.videoAndAudioBlockMap[props.nodeId] || [])
-watchEffect(() => {
-  settings.value.videoAndAudioBlockMap[props.nodeId] = nodeTimeBlockList.value
+
+const module = useEnVideoAndAudioBlockPlayModule()
+const moduleOptions = computed(() => {
+  return module.value.data
 })
 
-const nodeBlockPlayConfig = ref(settings.value.videoAndAudioBlockPlayConfigMap[props.nodeId] || {
+
+const nodeTimeBlockList = ref(moduleOptions.value.videoAndAudioBlockMap[props.nodeId] || [])
+watchEffect(() => {
+  moduleOptions.value.videoAndAudioBlockMap[props.nodeId] = nodeTimeBlockList.value
+})
+
+const nodeBlockPlayConfig = ref(moduleOptions.value.videoAndAudioBlockPlayConfigMap[props.nodeId] || {
   enabledBlockPlay: false,
   enabledLoopPlay: false,
 })
 watchEffect(() => {
-  settings.value.videoAndAudioBlockPlayConfigMap[props.nodeId] = nodeBlockPlayConfig.value
+  moduleOptions.value.videoAndAudioBlockPlayConfigMap[props.nodeId] = nodeBlockPlayConfig.value
 })
 
 const target = ref<HTMLVideoElement | HTMLAudioElement>()
