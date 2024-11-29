@@ -8,7 +8,7 @@ import { usePlugin } from '@/main';
 import { getClosetSiyuanNodeByDom } from '@/utils/Siyuan';
 import { setPosition, upDownHint } from '@/utils/Siyuan/utils';
 import { Protyle } from 'siyuan';
-import { createWhiteBoard, generateWhiteBoardId, getWhiteBoardListBySearchValue } from './EnWhiteBoard.vue';
+import { createWhiteBoard, generateWhiteBoardId, getWhiteBoardListBySearchValue } from './EnModuleWhiteBoard.vue';
 import { onBeforeUnmount, onMounted } from 'vue';
 
 const plugin = usePlugin()
