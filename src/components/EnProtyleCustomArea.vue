@@ -52,28 +52,39 @@ const protyleContentRef = ref<HTMLElement | null>(null)
 const registerDom = debounce(() => {
   const dom = props.getTargetBlockDom()
   if (!dom) {
-    enLog(`${getColorStringWarn('Render Protyle Custom Area Failed: ')} can not get target dom`)
+    // enLog(`${getColorStringWarn('Render Protyle Custom Area Failed: ')} can not get target dom`)
     return
   }
-  if (dom) {
-    const enProtyleCustomAreaDom = appendTargetDomAsClassOrder(enProtyleCustomAreaClassName, dom)
-    enProtyleCustomAreaRef.value = enProtyleCustomAreaDom
-
-    let parent = dom.parentElement
-    while (parent && !parent.classList.contains('protyle-content')) {
-      parent = parent.parentElement
-    }
-
-    // 没找到 protyle-content，则不进行操作
-    if (!parent) {
-      return
-    }
-
-    const enProtyleActualDom = appendTargetDomAsClassOrder(enProtyleActualAreaClassName, parent)
-    enProtyleActualAreaRef.value = enProtyleActualDom
-
-    protyleContentRef.value = parent
+  const enProtyleCustomAreaDom = appendTargetDomAsClassOrder(
+    enProtyleCustomAreaClassName + '-' + dom.dataset.nodeId,
+    dom
+  )
+  const isSameDom = enProtyleCustomAreaDom === enProtyleCustomAreaRef.value
+  if (isSameDom) {
+    // enLog(`${getColorStringWarn('No need to update Protyle Custom Area: ')} is same dom`)
+    return
   }
+  enProtyleCustomAreaDom.classList.add(enProtyleCustomAreaClassName)
+  enProtyleCustomAreaRef.value = enProtyleCustomAreaDom
+
+  let parent = dom.parentElement
+  while (parent && !parent.classList.contains('protyle-content')) {
+    parent = parent.parentElement
+  }
+
+  // 没找到 protyle-content，则不进行操作
+  if (!parent) {
+    return
+  }
+
+  const enProtyleActualDom = appendTargetDomAsClassOrder(
+    enProtyleActualAreaClassName + '-' + dom.dataset.nodeId,
+    parent
+  )
+  enProtyleActualDom.classList.add(enProtyleActualAreaClassName)
+  enProtyleActualAreaRef.value = enProtyleActualDom
+
+  protyleContentRef.value = parent
 }, 200)
 
 const cancelMouseDown = (event: MouseEvent) => {
