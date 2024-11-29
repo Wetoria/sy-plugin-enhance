@@ -4,20 +4,53 @@
     :display="moduleDisplayName"
     :module="module"
   >
+    <EnSettingsItem mode="vertical">
+      <div>
+        嵌入白板最小高度
+      </div>
+      <template #desc>
+        <div>
+          在文档中嵌入白板的最小高度。
+        </div>
+      </template>
+      <template #opt>
+        <a-input-number class="input-demo" placeholder="Please Enter" mode="button"
+          :readOnly="plugin.isMobile"
+          v-model="moduleOptions.embedBlockMinHeight" />
+      </template>
+    </EnSettingsItem>
   </EnSettingsTeleportModule>
 
   <template v-if="moduleOptions.enabled">
     <EnWhiteBoardEntrySlash />
     <template
-      v-for="item in wbBlockDomTargetList"
+      v-for="item in wbEmbedBlockDomTargetList"
       :key="item.whiteBoardId + '|' + item.nodeId"
     >
-      <EnWhiteBoardRender :data="item" />
+      <EnWhiteBoardRenderEmbed :data="item" />
     </template>
   </template>
 </template>
 
 <script lang="ts">
+export interface EnWhiteBoardConfig {
+  id: string
+  name: string
+  embedOptions: {
+    // key 嵌入的思源 nodeId
+    [key: string]: {
+      // 嵌入的白板高度
+      height: number
+    }
+  }
+}
+
+const defaultWhiteBoardConfig: EnWhiteBoardConfig = {
+  id: '',
+  name: '',
+  embedOptions: {},
+}
+
 export interface EnWhiteBoardIndexMap {
   [key: string]: {
     // 方便后续新增加相关字段
@@ -33,9 +66,28 @@ export interface EnWhiteBoardBlockDomTarget {
   getDom: () => HTMLElement
 }
 
-const Module_EnWhiteBoardIndexMap = 'enWhiteBoardIndexMap'
+let loadedData = false
+export const Module_EnWhiteBoardIndexMap = 'EnWhiteBoardIndexMap'
 const whiteBoardIndexMap = useSyncModuleData<EnWhiteBoardIndexMap>({
   namespace: Module_EnWhiteBoardIndexMap,
+  defaultData: {},
+})
+watchEffect(() => {
+  Object.keys(whiteBoardIndexMap.value.data).forEach(whiteBoardId => {
+    if (!whiteBoardConfigList.value.data[whiteBoardId]) {
+      whiteBoardConfigList.value.data[whiteBoardId] = createWhiteBoardConfig({
+        whiteBoardId,
+        whiteBoardName: whiteBoardIndexMap.value.data[whiteBoardId].whiteBoardName,
+      })
+    }
+  })
+})
+
+export const Module_EnWhiteBoardConfigList = 'EnWhiteBoardConfigList'
+export const whiteBoardConfigList = useSyncModuleData<{
+  [id: string]: EnWhiteBoardConfig
+}>({
+  namespace: Module_EnWhiteBoardConfigList,
   defaultData: {},
 })
 
@@ -54,6 +106,19 @@ export function getWhiteBoardListBySearchValue(searchValue: string) {
   })
 }
 
+function createWhiteBoardConfig({
+  whiteBoardId,
+  whiteBoardName,
+}: {
+  whiteBoardId: string
+  whiteBoardName: string
+}) {
+  const newConfig = JSON.parse(JSON.stringify(defaultWhiteBoardConfig))
+  newConfig.id = whiteBoardId
+  newConfig.name = whiteBoardName
+  return newConfig
+}
+
 // TODO 新增白板
 export function createWhiteBoard({
   whiteBoardId,
@@ -66,6 +131,15 @@ export function createWhiteBoard({
     whiteBoardId,
     whiteBoardName,
   }
+  whiteBoardConfigList.value.data[whiteBoardId] = createWhiteBoardConfig({
+    whiteBoardId,
+    whiteBoardName,
+  })
+}
+
+export const EnWhiteBoard = 'EnWhiteBoard'
+export interface EnWhiteBoardSetting extends EnModule {
+  embedBlockMinHeight: number
 }
 </script>
 
@@ -75,21 +149,27 @@ import EnWhiteBoardEntrySlash from './EnWhiteBoardEntrySlash.vue';
 import { useSettingModuleInSetup } from '@/utils/SyncDataHooks';
 import { EnModule } from '../Settings/EnSettings.vue';
 import EnSettingsTeleportModule from '../Settings/EnSettingsTeleportModule.vue';
+import EnSettingsItem from '../Settings/EnSettingsItem.vue';
 import { onMounted, ref, watchEffect } from 'vue';
 import { debounce, generateShortUUID } from '@/utils';
 import { queryAllByDom, unWatchDomChange, watchDomChange } from '@/utils/DOM';
-import EnWhiteBoardRender from './EnWhiteBoardRender.vue';
+import EnWhiteBoardRenderEmbed from './EnWhiteBoardRenderEmbed.vue';
 import { getColorStringWarn } from '@/utils/Log';
+import { usePlugin } from '@/main';
+
+const plugin = usePlugin()
 
 // #region 基本的模块配置
 
-interface ISettingModuleOptions extends EnModule {
+interface ISettingModuleOptions extends EnModule, EnWhiteBoardSetting {
 }
 
 const moduleConfig: ISettingModuleOptions = {
   enabled: false,
-  moduleName: 'EnWhiteBoard',
+  moduleName: EnWhiteBoard,
   moduleDisplayName: '白板',
+
+  embedBlockMinHeight: 200,
 }
 
 const {
@@ -105,15 +185,15 @@ onMounted(async () => {
   await updateModuleDataByNamespaceWithLoadFile(Module_EnWhiteBoardIndexMap)
 })
 
-const wbBlockDomTargetList = ref<Array<EnWhiteBoardBlockDomTarget>>([])
+const wbEmbedBlockDomTargetList = ref<Array<EnWhiteBoardBlockDomTarget>>([])
 
 const recordBlockDomNeedRenderWhiteBoard = debounce(() => {
   const targetList = queryAllByDom(document.body, '[custom-en-ref-whiteboard-id]')
 
-  const isSameLength = targetList.length === wbBlockDomTargetList.value.length
+  const isSameLength = targetList.length === wbEmbedBlockDomTargetList.value.length
   const isSameDom = targetList.every(target => {
     const targetDom = target as HTMLElement
-    return wbBlockDomTargetList.value.some(item => item.getDom() === targetDom)
+    return wbEmbedBlockDomTargetList.value.some(item => item.getDom() === targetDom)
   })
 
   if (isSameLength && isSameDom) {
@@ -122,7 +202,7 @@ const recordBlockDomNeedRenderWhiteBoard = debounce(() => {
   }
 
   // 清空不存在的
-  wbBlockDomTargetList.value = wbBlockDomTargetList.value.filter(item => {
+  wbEmbedBlockDomTargetList.value = wbEmbedBlockDomTargetList.value.filter(item => {
     const target = item.getDom()
     return targetList.includes(target)
   })
@@ -130,9 +210,9 @@ const recordBlockDomNeedRenderWhiteBoard = debounce(() => {
   targetList.forEach((target: HTMLElement) => {
     const whiteBoardId = target.getAttribute('custom-en-ref-whiteboard-id')
     const nodeId = target.dataset.nodeId
-    const whiteBoardItem = wbBlockDomTargetList.value.find(item => item.domRef === target)
+    const whiteBoardItem = wbEmbedBlockDomTargetList.value.find(item => item.domRef === target)
     if (!whiteBoardItem) {
-      wbBlockDomTargetList.value.push({
+      wbEmbedBlockDomTargetList.value.push({
         whiteBoardId,
         nodeId,
         domRef: target as HTMLElement,
@@ -153,6 +233,12 @@ const unwatchBlockNeedRenderWhiteBoard = () => {
 watchEffect(() => {
   if (moduleOptions.value.enabled) {
     watchBlockNeedRenderWhiteBoard()
+
+    if (!loadedData) {
+      loadedData = true
+      updateModuleDataByNamespaceWithLoadFile(Module_EnWhiteBoardIndexMap)
+      updateModuleDataByNamespaceWithLoadFile(Module_EnWhiteBoardConfigList)
+    }
   } else {
     unwatchBlockNeedRenderWhiteBoard()
   }
