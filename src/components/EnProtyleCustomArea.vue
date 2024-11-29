@@ -6,12 +6,7 @@
       ref="enProtyleCustomAreaContainerRef"
       @mousedown="cancelMouseDown"
     >
-      <a-resize-box
-        :directions="['bottom']"
-        style="min-height: 50px;"
-      >
-        <slot name="customArea"></slot>
-      </a-resize-box>
+      <slot name="customArea"></slot>
     </div>
   </Teleport>
 
