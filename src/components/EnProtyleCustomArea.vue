@@ -169,6 +169,7 @@ onBeforeUnmount(() => {
   height: calc(100% - var(--en-protyle-breadcrumb-height));
 
   pointer-events: none;
+  overflow: hidden;
 }
 .enProtyleActualAreaContainer {
   display: flex;
