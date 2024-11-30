@@ -25,9 +25,11 @@
     <EnWhiteBoardEntrySlash />
     <template
       v-for="item in wbEmbedBlockDomTargetList"
-      :key="item.whiteBoardId + '|' + item.nodeId"
+      :key="item.getDom()"
     >
-      <EnWhiteBoardRenderEmbed :data="item" />
+      <EnWhiteBoardRenderEmbed
+        :data="item"
+      />
     </template>
   </template>
 </template>
@@ -62,6 +64,7 @@ export interface EnWhiteBoardIndexMap {
 export interface EnWhiteBoardBlockDomTarget {
   whiteBoardId: string
   nodeId: string
+  idList: string[]
   domRef: HTMLElement
   getDom: () => HTMLElement
 }
@@ -212,14 +215,25 @@ const recordBlockDomNeedRenderWhiteBoard = debounce(() => {
     const nodeId = target.dataset.nodeId
     const whiteBoardItem = wbEmbedBlockDomTargetList.value.find(item => item.domRef === target)
     if (!whiteBoardItem) {
+      const idList = [nodeId]
+      let parent = target.parentElement
+      while (parent) {
+        const parentNodeId = parent.dataset.nodeId || parent.dataset.id
+        if (parentNodeId) {
+          idList.push(parentNodeId)
+        }
+        parent = parent.parentElement
+      }
       wbEmbedBlockDomTargetList.value.push({
         whiteBoardId,
         nodeId,
+        idList,
         domRef: target as HTMLElement,
         getDom: () => target as HTMLElement,
       })
     }
   })
+  console.log('wbEmbedBlockDomTargetList.value is ', wbEmbedBlockDomTargetList.value)
 }, 100)
 
 const watchBlockNeedRenderWhiteBoard = () => {

@@ -1,6 +1,6 @@
 <template>
   <!-- 在块下方渲染的占位区域 -->
-  <Teleport :to="enProtyleCustomAreaRef" v-if="enProtyleCustomAreaRef">
+  <Teleport :to="enProtyleCustomAreaRef" v-if="enProtyleCustomAreaRef" :disabled="!enProtyleCustomAreaRef">
     <div
       class="enProtyleCustomAreaContainer enCancelShowCommentListDom"
       ref="enProtyleCustomAreaContainerRef"
@@ -10,15 +10,17 @@
     </div>
   </Teleport>
 
-  <!-- 实际显示白板的区域 -->
-  <Teleport :to="enProtyleActualAreaRef" v-if="enProtyleActualAreaRef">
-    <div
-      class="enProtyleActualAreaContainer"
-      ref="enProtyleActualAreaContainerRef"
-    >
-      <slot></slot>
-    </div>
-  </Teleport>
+  <template v-if="enProtyleActualAreaRef">
+    <!-- 实际显示白板的区域 -->
+    <Teleport :to="enProtyleActualAreaRef" :disabled="!enProtyleActualAreaRef">
+      <div
+        class="enProtyleActualAreaContainer"
+        ref="enProtyleActualAreaContainerRef"
+      >
+          <slot></slot>
+      </div>
+    </Teleport>
+  </template>
 </template>
 
 <script lang="ts">
@@ -27,10 +29,11 @@ export const enProtyleActualAreaClassName = 'enProtyleActualArea'
 
 const enProtyleCustomAreaContainerOffset = 0
 const arcoResizeBoxOffset = 6
+
+let count = 0
 </script>
 
 <script setup lang="ts">
-import { debounce } from '@/utils';
 import { appendTargetDomAsClassOrder, unWatchDomChange, watchDomChange } from '@/utils/DOM';
 import { getColorStringWarn } from '@/utils/Log';
 import { onBeforeUnmount, onMounted, ref } from 'vue';
@@ -49,22 +52,25 @@ const enProtyleActualAreaContainerRef = ref<HTMLElement | null>(null)
 
 const protyleContentRef = ref<HTMLElement | null>(null)
 
-const registerDom = debounce(() => {
+const registerDom = () => {
   const dom = props.getTargetBlockDom()
   if (!dom) {
     // enLog(`${getColorStringWarn('Render Protyle Custom Area Failed: ')} can not get target dom`)
     return
   }
+  count++
   const enProtyleCustomAreaDom = appendTargetDomAsClassOrder(
-    enProtyleCustomAreaClassName + '-' + dom.dataset.nodeId,
+    `${enProtyleCustomAreaClassName}-${count}`,
     dom
   )
   const isSameDom = enProtyleCustomAreaDom === enProtyleCustomAreaRef.value
   if (isSameDom) {
-    // enLog(`${getColorStringWarn('No need to update Protyle Custom Area: ')} is same dom`)
+    enLog(`${getColorStringWarn('No need to update Protyle Custom Area: ')} is same dom`)
     return
   }
   enProtyleCustomAreaDom.classList.add(enProtyleCustomAreaClassName)
+  enProtyleCustomAreaDom.dataset.enTargetNodeId = dom.dataset.nodeId
+  enProtyleCustomAreaDom.dataset.enId = `${count}`
   enProtyleCustomAreaRef.value = enProtyleCustomAreaDom
 
   let parent = dom.parentElement
@@ -78,14 +84,16 @@ const registerDom = debounce(() => {
   }
 
   const enProtyleActualDom = appendTargetDomAsClassOrder(
-    enProtyleActualAreaClassName + '-' + dom.dataset.nodeId,
+    `${enProtyleActualAreaClassName}-${count}`,
     parent
   )
   enProtyleActualDom.classList.add(enProtyleActualAreaClassName)
+  enProtyleActualDom.dataset.enTargetNodeId = dom.dataset.nodeId
+  enProtyleActualDom.dataset.enId = `${count}`
   enProtyleActualAreaRef.value = enProtyleActualDom
 
   protyleContentRef.value = parent
-}, 200)
+}
 
 const cancelMouseDown = (event: MouseEvent) => {
   event.stopPropagation()
@@ -118,24 +126,35 @@ const moveActualAreaToCustomArea = () => {
   const protyleRect = protyleContentRef.value.getBoundingClientRect()
   const offsetX = customRect.left - protyleRect.left + (enProtyleCustomAreaContainerOffset / 2)
   const offsetY = customRect.top - protyleRect.top + (enProtyleCustomAreaContainerOffset / 2)
-  enProtyleActualAreaContainerRef.value.style.transform = `translate(${offsetX}px, ${offsetY}px)`
+  // enProtyleActualAreaContainerRef.value.style.transform = `translate(${offsetX}px, ${offsetY}px)`
+  enProtyleActualAreaContainerRef.value.style.left = `${offsetX}px`
+  enProtyleActualAreaContainerRef.value.style.top = `${offsetY}px`
 }
 
 const enable = () => {
-  watchDomChange(registerDom)
+  registerDom()
   watchDomChange(matchActualAreaToCustomArea)
 }
 
 const disable = () => {
   // 注销事件
-  unWatchDomChange(registerDom)
   unWatchDomChange(matchActualAreaToCustomArea)
 
+  // 删除思源移动block时拷贝的dom
+  const enCustomAreaId = enProtyleCustomAreaRef.value?.dataset.enId
+  const oldCustomAreaDomCopiedBySiyuan = document.querySelector(`.${enProtyleCustomAreaClassName}-${enCustomAreaId}`)
+  oldCustomAreaDomCopiedBySiyuan?.remove()
+
   // 注销 ref
+  enProtyleCustomAreaRef.value?.remove()
   enProtyleCustomAreaRef.value = null
+
+  enProtyleCustomAreaContainerRef.value?.remove()
   enProtyleCustomAreaContainerRef.value = null
 
+  enProtyleActualAreaRef.value?.remove()
   enProtyleActualAreaRef.value = null
+  enProtyleActualAreaContainerRef.value?.remove()
   enProtyleActualAreaContainerRef.value = null
 
   protyleContentRef.value = null
@@ -177,5 +196,6 @@ onBeforeUnmount(() => {
   box-sizing: border-box;
 
   pointer-events: auto;
+  position: absolute;
 }
 </style>
