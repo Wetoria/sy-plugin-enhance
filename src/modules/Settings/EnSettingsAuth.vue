@@ -82,7 +82,13 @@
           1、点击上方按钮<icon-copy /> 复制思源账号信息
         </a-typography-text>
         <a-typography-text>
-          2、前往爱发电购买，购买时，在备注中粘贴你的思源账号信息
+          2、前往<a href="https://afdian.com/item/f906479eafc411efa26352540025c377">爱发电</a>购买，购买时，在留言中粘贴你的思源账号信息
+        </a-typography-text>
+        <a-typography-text>
+          <a href="https://ifdian.net/order/create?product_type=1&plan_id=f906479eafc411efa26352540025c377&sku=%5B%7B%22sku_id%22%3A%22f90dd522afc411ef9ba052540025c377%22%2C%22count%22%3A1%7D%5D&viokrz_ex=0">Lv.1 订阅直通车</a>
+        </a-typography-text>
+        <a-typography-text>
+          <a href="https://ifdian.net/order/create?product_type=1&plan_id=f906479eafc411efa26352540025c377&sku=%5B%7B%22sku_id%22%3A%22f915377cafc411ef99fe52540025c377%22%2C%22count%22%3A1%7D%5D&viokrz_ex=0">Lv.2 订阅直通车</a>
         </a-typography-text>
         <a-typography-text>
           3、在下方输入爱发电订单号
@@ -103,11 +109,11 @@
           二、联系作者授权
         </a-typography-text>
         <a-typography-text>
-          对于不希望使用爱发电购买授权的用户，可以通过联系作者授权的方式进行订阅。
+          对于不希望使用爱发电购买授权的用户，可以<a href="https://simplest-frontend.feishu.cn/wiki/wikcnHmIs4HagSlJPiti2VESQEh#share-GT12dWEr9opouaxYW6wcpkiGn6c">点击此处联系作者</a>进行订阅。
         </a-typography-text>
         <a-divider orientation="center">其他说明</a-divider>
         <a-typography-text>
-          如果已经订阅了低版本，想升级，请联系作者了解补差价升级。
+          如果已经订阅了低版本，想升级，请<a href="https://simplest-frontend.feishu.cn/wiki/wikcnHmIs4HagSlJPiti2VESQEh#share-GT12dWEr9opouaxYW6wcpkiGn6c">点击此处联系作者</a>了解补差价升级。
         </a-typography-text>
       </a-space>
       <!-- <a-typography-paragraph copyable>
