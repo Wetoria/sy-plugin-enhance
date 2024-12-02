@@ -3,41 +3,18 @@
 </template>
 
 <script setup lang="ts">
+import { updateBlock } from '@/api';
 import { usePlugin } from '@/main';
 import { getClosetSiyuanNodeByDom } from '@/utils/Siyuan';
-import { upDownHint } from '@/utils/Siyuan/utils';
+import { setPosition, upDownHint } from '@/utils/Siyuan/utils';
 import { Protyle } from 'siyuan';
+import { createWhiteBoard, generateWhiteBoardId, getWhiteBoardListBySearchValue } from './EnModuleWhiteBoard.vue';
+import { onBeforeUnmount, onMounted } from 'vue';
 
 const plugin = usePlugin()
 
-const slashId = 'EnWhiteBoard'
-const cbValue = `plugin\u200b${plugin.name}\u200b${slashId}`
-
-function getWhiteBoardListBySearchValue(searchValue: string) {
-  const testData = [
-  ]
-
-  for (let i = 1; i < 21; i++) {
-    testData.push({
-      value: cbValue,
-      id: `whiteboard-${i}`,
-      html: `
-        <div
-          class="b3-list-item__text en-whiteboard-selector-item"
-          data-en-whiteboard-id="whiteboard-${i}"
-          data-en-whiteboard-name="白板 ${i}"
-        >
-          白板 ${i}
-        </div>
-      `,
-    })
-  }
-
-  return testData.filter(item => {
-    const included = item.id.includes(searchValue)
-    return included
-  })
-}
+const slashId_WhiteBoard = 'EnWhiteBoard'
+const cbValue = `plugin\u200b${plugin.name}\u200b${slashId_WhiteBoard}`
 
 function markItem(hint: any, item: HTMLElement) {
   hint.element.querySelector('.b3-list-item--focus')?.classList.remove('b3-list-item--focus')
@@ -46,23 +23,40 @@ function markItem(hint: any, item: HTMLElement) {
 }
 
 async function renderWhiteBoardListIntoProtyleHint(protyle: Protyle, searchValue: string = '') {
-  const hint = protyle.protyle.hint
+  const hint: any = protyle.protyle.hint
 
   const result = await getWhiteBoardListBySearchValue(searchValue)
-  result.unshift({
+
+  const hintItems = []
+  hintItems.push({
     value: cbValue,
     id: 'new',
     html: `
       <div
         class="b3-list-item__text en-whiteboard-selector-item"
         data-en-whiteboard-id="new"
-        data-en-whiteboard-name="${searchValue}"
+        data-en-whiteboard-name="${searchValue || '新白板'}"
       >
         新增白板${searchValue ? ` ${searchValue}` : ''}
       </div>
     `,
   })
-  hint.genHTML(result, protyle.protyle, true, "hint");
+  result.forEach((item) => {
+    hintItems.push({
+      value: cbValue,
+      id: item.whiteBoardId,
+      html: `
+        <div
+          class="b3-list-item__text en-whiteboard-selector-item"
+          data-en-whiteboard-id="${item.whiteBoardId}"
+          data-en-whiteboard-name="${item.whiteBoardName}"
+        >
+          ${item.whiteBoardName}
+        </div>
+      `,
+    })
+  })
+  hint.genHTML(hintItems, protyle.protyle, true, "hint");
 
   const newHintInputWrapperDom = document.createElement('div') as HTMLDivElement
   newHintInputWrapperDom.classList.add('en-whiteboard-hint-input-wrapper')
@@ -112,7 +106,7 @@ async function renderWhiteBoardListIntoProtyleHint(protyle: Protyle, searchValue
 
   hint.element.firstElementChild?.insertAdjacentElement('afterbegin', newHintInputWrapperDom)
   hint.element.firstElementChild?.addEventListener('click', (event) => {
-    if (event.target?.classList.contains('b3-list-item')) {
+    if ((event.target as HTMLElement)?.classList.contains('b3-list-item')) {
       markItem(hint, event.target as HTMLElement)
     } else {
       let target = event.target as HTMLElement
@@ -125,51 +119,88 @@ async function renderWhiteBoardListIntoProtyleHint(protyle: Protyle, searchValue
       }
     }
   })
-
   newHintInputDom.focus()
+  const siyuanNode = hint.siyuanNode
+  const siyuanNodeRect = siyuanNode?.getBoundingClientRect()
+  setPosition(hint.element, siyuanNodeRect?.left, siyuanNodeRect?.bottom);
 }
 
 function createOrInsertWhiteBoard(protyle: Protyle) {
-  const hint = protyle.protyle.hint
+  const hint: any = protyle.protyle.hint
 
   const selectedWhiteBoard = hint.element.querySelector('.b3-list-item--focus')
-  const whiteBoardItem = selectedWhiteBoard?.querySelector('.en-whiteboard-selector-item')
-  const whiteBoardId = whiteBoardItem?.dataset.enWhiteboardId
+  const whiteBoardItem: HTMLElement = selectedWhiteBoard?.querySelector('.en-whiteboard-selector-item')
+  let whiteBoardId = whiteBoardItem?.dataset.enWhiteboardId
+  const whiteBoardName = whiteBoardItem?.dataset.enWhiteboardName
 
-  const range = protyle.protyle.toolbar.range as Range
-  const siyuanNode = getClosetSiyuanNodeByDom(range.startContainer as HTMLElement)
-  const nodeId = siyuanNode?.dataset.nodeId
-  console.log('siyuanNode is ', siyuanNode, nodeId, whiteBoardItem, whiteBoardId)
+  const isCreateNew = whiteBoardId === 'new'
+  if (isCreateNew) {
+    whiteBoardId = generateWhiteBoardId()
+  }
+
+  const result = `选择的白板id：${whiteBoardId}<br/>选择的白板名称：${whiteBoardName ? ` ${whiteBoardName}` : '[后续应该自动生成白板的名称]'}<br/>选择的块id：${hint.enBlockId}。`
+  const testHtml =
+`<div>
+  <div style="display: none;">
+    ${result}
+  </div>
+</div>
+
+{: custom-en-ref-whiteboard-id="${whiteBoardId}" alias="en-wb-${whiteBoardName}" }
+`
+  createWhiteBoard({
+    whiteBoardId,
+    whiteBoardName,
+  })
+  updateBlock('markdown', testHtml, hint.enBlockId)
   hint.enCreatingOrSelectingWhiteBoard = false
   hint.enWhiteboardFinished = true
+  hint.enBlockId = ''
 }
 
-plugin.protyleSlash.push({
-  filter: [
-    'en whiteboard',
-    'whiteboard',
-    'enwhiteboard',
-    '白板',
-  ],
-  html: `<div class="b3-list-item__first"><span class="b3-list-item__text">EN｜白板</span></div>`,
-  id: slashId,
-  callback(protyle: Protyle) {
-    const hint = protyle.protyle.hint
-    console.log('hint flag is ', hint.enWhiteboardFinished, hint.enCreatingOrSelectingWhiteBoard)
+onMounted(() => {
+  plugin.protyleSlash.push({
+    filter: [
+      'en whiteboard',
+      'whiteboard',
+      'enwhiteboard',
+      'enwb',
+      'wb',
+      'baiban',
+      'enbaiban',
+      'huaban',
+      '画板',
+      '白板',
+    ],
+    html: `<div class="b3-list-item__first"><span class="b3-list-item__text">EN｜白板</span></div>`,
+    id: slashId_WhiteBoard,
+    callback(protyle: Protyle) {
+      const hint: any = protyle.protyle.hint
 
-    if (!hint.enCreatingOrSelectingWhiteBoard) {
-      hint.enCreatingOrSelectingWhiteBoard = true
-      hint.enWhiteboardFinished = false
-      renderWhiteBoardListIntoProtyleHint(protyle)
-    } else {
-      // 如果以外中断（点击隐藏了），则重新渲染
-      if (!hint.enWhiteboardFinished) {
+      if (!hint.enCreatingOrSelectingWhiteBoard) {
+        hint.enCreatingOrSelectingWhiteBoard = true
+        hint.enWhiteboardFinished = false
+        const range = protyle.protyle.toolbar.range as Range
+        const siyuanNode = getClosetSiyuanNodeByDom(range.startContainer as HTMLElement)
+        const nodeId = siyuanNode?.dataset.nodeId
+
+        hint.siyuanNode = siyuanNode
+        hint.enBlockId = nodeId
         renderWhiteBoardListIntoProtyleHint(protyle)
       } else {
-        createOrInsertWhiteBoard(protyle)
+        // 如果以外中断（点击隐藏了），则重新渲染
+        if (!hint.enWhiteboardFinished) {
+          renderWhiteBoardListIntoProtyleHint(protyle)
+        } else {
+          createOrInsertWhiteBoard(protyle)
+        }
       }
     }
-  }
+  })
+})
+
+onBeforeUnmount(() => {
+  plugin.protyleSlash = plugin.protyleSlash.filter((item) => item.id !== slashId_WhiteBoard)
 })
 </script>
 

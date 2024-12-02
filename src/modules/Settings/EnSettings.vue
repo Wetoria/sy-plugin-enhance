@@ -17,8 +17,12 @@
     @close="onDrawerCLose"
   >
     <template #title>
-      <div class="SyEnhancerDialogTitle" @click="onTitleClicked">
-        {{plugin.i18n.pluginName}}
+      <div class="enSettingsTitle row flexCenter">
+        <div class="SyEnhancerDialogTitle" @click="onTitleClicked">
+          {{plugin.i18n.pluginName}}
+        </div>
+        <EnSettingsAuth
+        />
       </div>
     </template>
 
@@ -92,6 +96,7 @@ import { EnSyncModuleData, EnSyncModuleDataRef, getModuleRefByNamespace, updateM
 import { getColorStringError } from '@/utils/Log';
 import { flushModuleConfigs } from '@/modules/Settings/ModuleConfigs';
 import { addCommand } from '@/utils/Commands';
+import EnSettingsAuth, { authModuleData } from './EnSettingsAuth.vue';
 
 const plugin = usePlugin()
 
@@ -231,10 +236,15 @@ export const switchID = (time) => {
   settings.value.l = settings.value.v
   settings.value.v = v
 }
-export const isFree = computed(() => settings.value.v === 0)
-export const isPro = computed(() => settings.value.v === 1)
-export const isVip = computed(() => settings.value.v === 2)
-export const isNotFree = computed(() => settings.value.v >= 1)
+export const isFree = computed(() => {
+  return authModuleData.value.lv === 0 && settings.value.v === 0
+})
+export const isNotFree = computed(() => !isFree.value)
+
+export const isPro = computed(() => settings.value.v === 1 || authModuleData.value.lv === 1)
+export const isVip = computed(() => {
+  return settings.value.v === 2 || authModuleData.value.lv === 99
+})
 
 watchEffect(() => {
   console.log('flag is ', isFree.value, isPro.value, isVip.value, isNotFree.value)
