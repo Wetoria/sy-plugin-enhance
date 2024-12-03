@@ -219,6 +219,11 @@ const updateAuthSubscription = async (showMessage = true) => {
   }
   if (!siyuanAccount.value.userId) {
     enLog('Auth subscription update canceled, userId is empty')
+    if (showMessage) {
+      Notification.error({
+        content: `Enhance｜请先登录思源`,
+      })
+    }
     return
   }
   // TODO 发起请求更新订阅状态
