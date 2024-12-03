@@ -1,6 +1,6 @@
 <template>
   <!-- 在块下方渲染的占位区域 -->
-  <Teleport :to="enProtyleCustomAreaRef" v-if="enProtyleCustomAreaRef" :disabled="!enProtyleCustomAreaRef">
+  <Teleport :to="enProtyleCustomAreaRef" v-if="enProtyleCustomAreaRef">
     <div
       class="enProtyleCustomAreaContainer enCancelShowCommentListDom"
       ref="enProtyleCustomAreaContainerRef"
@@ -12,12 +12,13 @@
 
   <template v-if="enProtyleActualAreaRef">
     <!-- 实际显示白板的区域 -->
-    <Teleport :to="enProtyleActualAreaRef" :disabled="!enProtyleActualAreaRef">
+    <Teleport :to="fullScreen == 'siyuan' ? 'body' : enProtyleActualAreaRef">
       <div
         class="enProtyleActualAreaContainer"
         ref="enProtyleActualAreaContainerRef"
+        :data-en_fullscreen="fullScreen"
       >
-          <slot></slot>
+        <slot></slot>
       </div>
     </Teleport>
   </template>
@@ -36,13 +37,16 @@ let count = 0
 <script setup lang="ts">
 import { appendTargetDomAsClassOrder, unWatchDomChange, watchDomChange } from '@/utils/DOM';
 import { getColorStringWarn } from '@/utils/Log';
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
 interface IProps {
   getTargetBlockDom: () => HTMLElement
+  // 主要还是文档 doc 和思源 siyuan 占满了。系统级别的还是暂时不考虑了。
+  fullScreen?: 'doc' | 'siyuan' | 'system' | undefined
 }
 
 const props = defineProps<IProps>()
+const disableAutoMatch = computed(() => !!props.fullScreen)
 
 const enProtyleCustomAreaRef = ref<HTMLElement | null>(null)
 const enProtyleCustomAreaContainerRef = ref<HTMLElement | null>(null)
@@ -102,6 +106,9 @@ const cancelMouseDown = (event: MouseEvent) => {
 }
 
 const matchActualAreaToCustomArea = () => {
+  if (disableAutoMatch.value) {
+    return
+  }
   copyCustomAreaStyleToActualArea()
   moveActualAreaToCustomArea()
 }
@@ -209,5 +216,26 @@ onBeforeUnmount(() => {
 
   pointer-events: auto;
   position: absolute;
+
+  &[data-en_fullscreen="doc"] {
+    width: 100% !important;
+    height: 100% !important;
+
+    top: 0px !important;
+    left: 0px !important;
+
+    z-index: 10;
+  }
+
+  &[data-en_fullscreen="siyuan"] {
+    width: 100% !important;
+    height: calc(100% - 32px) !important;
+
+    position: fixed;
+    top: 32px !important;
+    left: 0px !important;
+
+    z-index: 10;
+  }
 }
 </style>
