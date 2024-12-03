@@ -2,7 +2,7 @@
   <EnProtyleCustomArea
     :getTargetBlockDom="data.getDom"
   >
-    <template #customArea>
+    <div class="EnWhiteBoardRenderContainer">
       <a-resize-box
         :directions="['bottom']"
         :style="{
@@ -10,12 +10,8 @@
         }"
         v-model:height="whiteBoardConfig.embedOptions[data.nodeId].height"
       >
-        <div class="EnWhiteBoardCustomAreaPlaceholder">
-        </div>
+        {{ data.whiteBoardId }} - {{ data.nodeId }}
       </a-resize-box>
-    </template>
-    <div class="EnWhiteBoardRenderContainer">
-      {{ data.whiteBoardId }} - {{ data.nodeId }}
     </div>
   </EnProtyleCustomArea>
 </template>

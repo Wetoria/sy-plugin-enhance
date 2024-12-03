@@ -110,12 +110,24 @@ const copyCustomAreaStyleToActualArea = () => {
   if (!enProtyleCustomAreaContainerRef.value || !enProtyleActualAreaContainerRef.value) {
     return
   }
-  const customStyle = window.getComputedStyle(enProtyleCustomAreaContainerRef.value)
 
+  // 拷贝 custom 区域的宽度到 actual 区域
+  const customStyle = window.getComputedStyle(enProtyleCustomAreaContainerRef.value)
   const actualAreaWidth = `calc(${customStyle.width} - ${enProtyleCustomAreaContainerOffset}px)`
-  const actualAreaHeight = `calc(${customStyle.height} - ${enProtyleCustomAreaContainerOffset}px - ${arcoResizeBoxOffset}px)`
   enProtyleActualAreaContainerRef.value.style.width = actualAreaWidth
-  enProtyleActualAreaContainerRef.value.style.height = actualAreaHeight
+
+  // const actualAreaHeight = `calc(${customStyle.height} - ${enProtyleCustomAreaContainerOffset}px - ${arcoResizeBoxOffset}px)`
+  // enProtyleActualAreaContainerRef.value.style.height = actualAreaHeight
+
+
+  // 拷贝 actual 区域的高度到 custom 区域
+  const actualStyle = window.getComputedStyle(enProtyleActualAreaContainerRef.value)
+
+  // const customAreaWidth = `calc(${actualStyle.width} + ${enProtyleCustomAreaContainerOffset}px)`
+  // enProtyleCustomAreaContainerRef.value.style.width = customAreaWidth
+
+  const customAreaHeight = `calc(${actualStyle.height} + ${enProtyleCustomAreaContainerOffset}px`
+  enProtyleCustomAreaContainerRef.value.style.height = customAreaHeight
 }
 
 const moveActualAreaToCustomArea = () => {
