@@ -88,10 +88,15 @@
             </div>
             <div class="EnWhiteBoardControlArea EnWhiteBoardControlArea__Left">
             </div>
-            <VueFlow :nodes="nodes" :edges="edges">
+            <VueFlow :nodes="nodes" :edges="edges" fit-view-on-init :minZoom="0.2">
               <!-- bind your custom node type to a component by using slots, slot names are always `node-<type>` -->
               <template #node-special="specialNodeProps">
                 <SpecialNode v-bind="specialNodeProps" />
+              </template>
+              <template #node-EnWhiteBoardCard="node">
+                <EnWhiteBoardCard
+                  v-bind="node"
+                />
               </template>
 
               <!-- bind your custom edge type to a component by using slots, slot names are always `edge-<type>` -->
@@ -132,6 +137,7 @@ import { computed, ref, watchEffect } from 'vue';
 import SpecialNode from './SpecialNode.vue';
 import SpecialEdge from './SpecialEdge.vue';
 import { VueFlow } from '@vue-flow/core';
+import EnWhiteBoardCard from './EnWhiteBoardCard.vue';
 
 const props = defineProps<{
   data: EnWhiteBoardBlockDomTarget
@@ -200,6 +206,25 @@ const nodes = ref([
       hello: 'world',
     },
   },
+  {
+    id: '6',
+    parentNode: '5',
+    expandParent: true,
+    position: { x: 110, y: 110 },
+    data: {
+      label: 'Node 6',
+      hello: 'world',
+    },
+  },
+  {
+    id: '5',
+    type: 'EnWhiteBoardCard', // <-- this is the custom node type name
+    position: { x: 300, y: 300 },
+    data: {
+      label: 'Node 5',
+      hello: 'world',
+    },
+  },
 ])
 
 // these are our edges
@@ -265,6 +290,13 @@ const edges = ref([
       flex: 1;
 
       position: relative;
+
+      .FullScreenButtonGroup {
+        opacity: 0;
+      }
+      &:hover .FullScreenButtonGroup {
+        opacity: 1;
+      }
     }
 
     .EnWhiteBoardControlArea {

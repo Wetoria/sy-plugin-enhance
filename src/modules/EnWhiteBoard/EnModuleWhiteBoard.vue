@@ -270,4 +270,16 @@ watchEffect(() => {
 
 /* import the default theme, this is optional but generally recommended */
 @import '@vue-flow/core/dist/theme-default.css';
+
+@import '@vue-flow/node-resizer/dist/style.css';
+
+body {
+  --en-whiteboard-card-radius: 4px;
+
+  --en-whiteboard-resizer-color: rgb(var(--primary-6));
+  --en-whiteboard-resizer-width: 4px;
+
+  --en-whiteboard-handle-color: rgb(var(--primary-6));
+  --en-whiteboard-handle-size: 8px;
+}
 </style>
