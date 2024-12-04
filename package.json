@@ -1,12 +1,12 @@
 {
   "name": "sy-plugin-enhance",
-  "version": "0.2.6",
   "type": "module",
+  "version": "0.2.6",
   "description": "This is a plugin based on vite and vue for Siyuan (https://b3log.org/siyuan)",
-  "repository": "",
-  "homepage": "",
   "author": "",
   "license": "MIT",
+  "homepage": "",
+  "repository": "",
   "scripts": {
     "make-link": "node  --no-warnings ./scripts/make_dev_link.js",
     "clear-normalize": "echo > node_modules/@arco-design/web-vue/es/style/normalize.less && echo > node_modules/@arco-design/web-vue/lib/style/normalize.less",
@@ -15,18 +15,24 @@
     "commitAndTag": "git add ./plugin.json && git commit -m 'update version' && git push && node ./autoTag.js",
     "build": "npm run clear-normalize && vite build"
   },
+  "dependencies": {
+    "@arco-design/web-vue": "^2.53.3",
+    "@vue-flow/core": "^1.41.5",
+    "@vue-flow/node-resizer": "^1.4.0",
+    "any-touch": "2.2.0",
+    "chalk": "^5.3.0",
+    "dayjs": "^1.11.10",
+    "vue": "^3.4.27"
+  },
   "devDependencies": {
+    "@antfu/eslint-config": "^3.11.2",
     "@arco-plugins/vite-vue": "^1.4.5",
     "@types/node": "^20.2.0",
-    "@typescript-eslint/eslint-plugin": "^7.15.0",
-    "@typescript-eslint/parser": "^7.15.0",
     "@vitejs/plugin-vue": "^4.5.0",
     "@vitejs/plugin-vue-jsx": "^4.0.0",
-    "@vue/eslint-config-prettier": "^8.0.0",
-    "@vue/eslint-config-typescript": "^12.0.0",
     "@vue/tsconfig": "^0.4.0",
-    "eslint": "^8.56.0",
-    "eslint-plugin-vue": "^9.24.1",
+    "eslint": "^9.15.0",
+    "eslint-plugin-format": "^0.1.2",
     "fast-glob": "^3.2.12",
     "glob": "^7.2.3",
     "less": "^4.2.0",
@@ -39,14 +45,5 @@
     "vite": "^4.3.7",
     "vite-plugin-static-copy": "^0.15.0",
     "vite-plugin-zip-pack": "^1.0.5"
-  },
-  "dependencies": {
-    "@arco-design/web-vue": "^2.53.3",
-    "@vue-flow/core": "^1.41.5",
-    "@vue-flow/node-resizer": "^1.4.0",
-    "any-touch": "2.2.0",
-    "chalk": "^5.3.0",
-    "dayjs": "^1.11.10",
-    "vue": "^3.4.27"
   }
 }
