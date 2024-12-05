@@ -1,5 +1,5 @@
 import { request } from '@/api'
-import { todayStr } from './Date';
+import { todayStr } from './Date'
 // import { request } from './DailyNoteHelper';
 
 function getDocPath(noteId) {
@@ -37,9 +37,9 @@ export function getDailyNote(notebookId: NotebookId) {
       and fcontent = '${today}'
       limit 1
     `,
-  };
+  }
   return request(
     "/api/query/sql",
     data,
-  );
+  )
 }

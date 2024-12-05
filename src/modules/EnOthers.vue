@@ -24,12 +24,12 @@
 
 
 <script setup lang="ts">
-import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue';
-import EnSettingsTeleportModule from './Settings/EnSettingsTeleportModule.vue';
-import { watchEffect } from 'vue';
-import { moduleEnableStatusSwitcher } from '@/utils';
-import { EnModule } from '@/modules/Settings/EnSettings.vue';
-import { useSettingModuleInSetup } from '@/utils/SyncDataHooks';
+import { EnModule } from '@/modules/Settings/EnSettings.vue'
+import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
+import { moduleEnableStatusSwitcher } from '@/utils'
+import { useSettingModuleInSetup } from '@/utils/SyncDataHooks'
+import { watchEffect } from 'vue'
+import EnSettingsTeleportModule from './Settings/EnSettingsTeleportModule.vue'
 
 
 // #region 基本的模块配置
@@ -58,7 +58,6 @@ const {
 watchEffect(() => {
   moduleEnableStatusSwitcher('EnOther', moduleOptions.value.useVipStyle)
 })
-
 </script>
 
 <style lang="scss" scoped>

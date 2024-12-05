@@ -1,6 +1,13 @@
-import { EnModule, useSettingModule, useSettingModuleData } from '@/modules/Settings/EnSettings.vue'
+import {
+  EnModule,
+  useSettingModule,
+  useSettingModuleData,
+} from '@/modules/Settings/EnSettings.vue'
 import { onBeforeMount } from 'vue'
-import { loadModuleDataByNamespace, updateModuleDataByNamespaceWithLoadFile } from './SyncData'
+import {
+  loadModuleDataByNamespace,
+  updateModuleDataByNamespaceWithLoadFile,
+} from './SyncData'
 
 export function useSettingModuleInSetup<T extends EnModule>(props: T) {
   const moduleRes = useSettingModuleInScript(props)
@@ -30,7 +37,6 @@ export function useSettingModuleInScript<T extends EnModule>(props: T) {
     defaultData,
   })
   const moduleOptions = useSettingModuleData<T>(moduleName)
-
 
   const load = async () => {
     return await loadModuleDataByNamespace(moduleName)

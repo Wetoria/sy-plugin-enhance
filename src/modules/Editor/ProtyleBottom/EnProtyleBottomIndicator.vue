@@ -1,21 +1,21 @@
 <template>
   <div
+    ref="indicatorRef"
     class="enhanceToBottomIndicator"
     :data-node-id="blockId"
-    ref="indicatorRef"
   ></div>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref } from "vue"
 
 defineProps<{
-  blockId: string;
-}>();
+  blockId: string
+}>()
 </script>
 
 <script lang="ts">
-const indicatorRef = ref<HTMLDivElement>();
+const indicatorRef = ref<HTMLDivElement>()
 
 export function jumpToProtyleBottom(docId) {
   if (!docId) {

@@ -11,17 +11,22 @@
       :alignCenter="false"
     >
       <template #title>
-        <div class="row flexAlignCenter" style="width: 100%;">
+        <div
+          class="row flexAlignCenter"
+          style="width: 100%;"
+        >
           <template v-if="!selectedCommentIdList.length">
             <div class="flexAlignCenter">
               添加评论
             </div>
             <a-divider direction="vertical" />
-            <div class="flexAlignCenter">日记笔记本：</div>
+            <div class="flexAlignCenter">
+              日记笔记本：
+            </div>
             <div>
               <EnNotebookSelector
-                :notebookList="openedNotebookList.data"
                 v-model="moduleOptions.dailyNoteNotebookId"
+                :notebook-list="openedNotebookList.data"
               />
             </div>
           </template>
@@ -35,7 +40,10 @@
       <div
         class="enCommentContainerContent"
       >
-        <a-spin dot :loading="isCommenting">
+        <a-spin
+          dot
+          :loading="isCommenting"
+        >
           <EnProtyle
             :blockId="currentBlockId"
             :options="{
@@ -66,11 +74,11 @@
       </div>
     </a-modal>
     <a-button
-      class="enCommentButton"
       v-show="commentButtonIsShown"
+      class="enCommentButton"
       :style="{
-        top: commentButtonPosition.y + 'px',
-        left: commentButtonPosition.x + 'px',
+        top: `${commentButtonPosition.y}px`,
+        left: `${commentButtonPosition.x}px`,
       }"
       @click="onClickCommentButton"
       @mouseenter="onMouseEnterCommentButton"
@@ -83,21 +91,55 @@
 </template>
 
 <script setup lang="ts">
-import { deleteBlock, flushTransactions, getBlockAttrs, setBlockAttrs, sql } from '@/api';
-import EnNotebookSelector from '@/components/EnNotebookSelector.vue';
-import EnProtyle from '@/components/EnProtyle.vue';
-import { usePlugin } from '@/main';
-import { appendBlockIntoDailyNote, useDailyNote } from '@/modules/DailyNote/DailyNote.vue';
-import { debounce, generateShortUUID } from '@/utils';
-import { addCommand } from '@/utils/Commands';
-import { getSelectionCopy, positionModalWithTranslate, targetIsInnerOf, targetIsOutsideOf, useRegisterStyle } from '@/utils/DOM';
-import { useSiyuanDatabaseIndexCommit, useSiyuanEventLoadedProtyleStatic, useSiyuanEventTransactions, useSiyuanEventWsMain } from '@/utils/EventBusHooks';
-import { getColorStringWarn } from '@/utils/Log';
-import { useMousePostion } from '@/utils/Mouse';
-import { getClosetSiyuanNodeByDom, useCurrentProtyle } from '@/utils/Siyuan'
-import dayjs from 'dayjs';
-import { Protyle, showMessage } from 'siyuan';
-import { computed, onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue';
+import type { Protyle } from 'siyuan'
+import {
+  deleteBlock,
+  flushTransactions,
+  getBlockAttrs,
+  setBlockAttrs,
+  sql,
+} from '@/api'
+import EnNotebookSelector from '@/components/EnNotebookSelector.vue'
+import EnProtyle from '@/components/EnProtyle.vue'
+import { usePlugin } from '@/main'
+import {
+  appendBlockIntoDailyNote,
+  useDailyNote,
+} from '@/modules/DailyNote/DailyNote.vue'
+import {
+  debounce,
+  generateShortUUID,
+} from '@/utils'
+import { addCommand } from '@/utils/Commands'
+import {
+  getSelectionCopy,
+  positionModalWithTranslate,
+  targetIsInnerOf,
+  targetIsOutsideOf,
+  useRegisterStyle,
+} from '@/utils/DOM'
+import {
+  useSiyuanDatabaseIndexCommit,
+  useSiyuanEventLoadedProtyleStatic,
+  useSiyuanEventTransactions,
+  useSiyuanEventWsMain,
+} from '@/utils/EventBusHooks'
+import { getColorStringWarn } from '@/utils/Log'
+import { useMousePostion } from '@/utils/Mouse'
+import {
+  getClosetSiyuanNodeByDom,
+  useCurrentProtyle,
+} from '@/utils/Siyuan'
+import dayjs from 'dayjs'
+import { showMessage } from 'siyuan'
+import {
+  computed,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  watch,
+  watchEffect,
+} from 'vue'
 
 const plugin = usePlugin()
 
@@ -236,7 +278,6 @@ const commentByNodeIdAndText = async (nodeId: string, text: string) => {
   return commentId
 }
 
-
 const lastCommentParams = ref({
   commentId: '',
   text: '',
@@ -268,12 +309,12 @@ const createCommentIntoDailyNote = async (commentId: string, text: string) => {
     const transaction = doOperations[0]
     const {
       id,
-    } = transaction;
+    } = transaction
 
     const newCommentNodeId = id
 
     await setBlockAttrs(newCommentNodeId, {
-      'custom-en-comment-ref-id': commentId
+      'custom-en-comment-ref-id': commentId,
     })
 
     lastCommentParams.value = {
@@ -422,7 +463,7 @@ const convertIntoSuperBlockAndComment = async (selectedNodes: HTMLElement[]) => 
 
 // 对单个块进行评论
 const commentForSingleBlockByNodeId = async (nodeId: string, adjustTarget: HTMLElement) => {
-  const sqlStmt = `select * from blocks where id = '${nodeId}'`;
+  const sqlStmt = `select * from blocks where id = '${nodeId}'`
   const mdRes = await sql(sqlStmt) as any[]
 
   const blockMarkdown = mdRes[0]?.markdown
@@ -432,18 +473,18 @@ const commentForSingleBlockByNodeId = async (nodeId: string, adjustTarget: HTMLE
     return
   }
 
-  const lines = blockMarkdown.replace(/^{{{row(\s*\n*\s*)*/, '').replace(/(\s*\n*\s*)*}}}$/, '').split('\n');
-  let newMarkdown = '';
-  lines.forEach(line => {
-    newMarkdown += `${line}\n    > `;
-  });
-  const unblankLines = lines.filter(i => i.trim())
+  const lines = blockMarkdown.replace(/^\{\{\{row(\s*)*/, '').replace(/(\s*)*\}\}\}$/, '').split('\n')
+  let newMarkdown = ''
+  lines.forEach((line) => {
+    newMarkdown += `${line}\n    > `
+  })
+  const unblankLines = lines.filter((i) => i.trim())
   const isBiggerThan3Lines = unblankLines.length > 3
 
-  //@ts-expect-error window.siyuan?.config
+  // @ts-expect-error window.siyuan?.config
   const blockRefDynamicAnchorTextMaxLen = window.siyuan?.config.editor.blockRefDynamicAnchorTextMaxLen || 96
   const splicedContent = blockContent.length > blockRefDynamicAnchorTextMaxLen
-    ? blockContent.slice(0, blockRefDynamicAnchorTextMaxLen) + '...'
+    ? `${blockContent.slice(0, blockRefDynamicAnchorTextMaxLen)}...`
     : blockContent
   const finalMd = `((${nodeId} "${splicedContent}"))\n    > 原文内容${isBiggerThan3Lines ? '(已折叠)' : ''}\n    > ${newMarkdown}\n    {: style="" fold="${isBiggerThan3Lines ? '1' : '0'}" }`
 
@@ -489,18 +530,18 @@ const commentForInlineText = async () => {
   for (let i = 0; i < commentElements.length; i++) {
     const commentElement = commentElements[i] as HTMLElement
     const nodeTypes = commentElement.dataset.type.split(/\s+/)
-    idList.push(nodeTypes.filter(i => i.startsWith('en-comment-id-')))
+    idList.push(nodeTypes.filter((i) => i.startsWith('en-comment-id-')))
   }
 
   const findCommonIDs = (arrays) => {
-    const [first, ...rest] = arrays;
-    return first.filter(id => rest.every(arr => arr.includes(id)));
-  };
+    const [first, ...rest] = arrays
+    return first.filter((id) => rest.every((arr) => arr.includes(id)))
+  }
 
-  const commonIDs = findCommonIDs(idList);
+  const commonIDs = findCommonIDs(idList)
 
   const notSubOfParentIdList = []
-  const sameId = commonIDs.find(id => {
+  const sameId = commonIDs.find((id) => {
     if (!id.includes(nodeId)) {
       notSubOfParentIdList.push(id)
       return false
@@ -516,9 +557,9 @@ const commentForInlineText = async () => {
     selectText += commentElement.innerText
   }
 
-  protyle?.toolbar?.setInlineMark(protyle, 'en-comment-temp', "range");
+  protyle?.toolbar?.setInlineMark(protyle, 'en-comment-temp', 'range')
 
-  const enCommentId = sameId ? sameId : getCommentIdByNodeId(nodeId)
+  const enCommentId = sameId || getCommentIdByNodeId(nodeId)
 
   await commentByCommentIdAndText(enCommentId, `((${nodeId} "${selectText}"))`)
   // 清理临时标记
@@ -631,9 +672,9 @@ const {
 })
 
 addCommand({
-  langKey: "En_Comment_EnableBtn",
+  langKey: 'En_Comment_EnableBtn',
   langText: '开关评论按钮',
-  hotkey: "",
+  hotkey: '',
   callback: () => {
     if (eventBinded.value) {
       hideCommentButton()
@@ -642,7 +683,7 @@ addCommand({
       bindEvent()
     }
   },
-});
+})
 
 const onClickCommentButton = () => {
   hideCommentButton()
@@ -658,9 +699,9 @@ const onMouseEnterCommentButton = () => {
 // #region 插件快捷键相关
 
 addCommand({
-  langKey: "En_Comment",
+  langKey: 'En_Comment',
   langText: '评论当前选中内容(<a class="enCommentUsageLinkBtn" href="https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse#share-ZMuedaqblocvljxlmFbcHFKcnPd" target="_blank">使用说明</a>)',
-  hotkey: "",
+  hotkey: '',
   editorCallback: () => {
     if (popoverVisible.value) {
       popoverVisible.value = false
@@ -668,7 +709,7 @@ addCommand({
       startComment()
     }
   },
-});
+})
 const onClickCommentUsageLinkBtn = (event: MouseEvent) => {
   const target = event.target as HTMLElement
   if (target.classList.contains('enCommentUsageLinkBtn')) {
@@ -691,11 +732,11 @@ const commentIdList = ref([])
 const styleDomRef = useRegisterStyle('en-line-comment-style')
 // 监听 commentIdList 的变化，更新样式
 watchEffect(() => {
-  const lineSelectorList = commentIdList.value.map(i => {
+  const lineSelectorList = commentIdList.value.map((i) => {
     const nodeId = getNodeIdByCommentId(i)
     return `[data-node-id="${nodeId}"] [data-type~="${i}"]`
   })
-  const blockSelectorList = commentIdList.value.map(i => {
+  const blockSelectorList = commentIdList.value.map((i) => {
     const nodeId = getNodeIdByCommentId(i)
     return `[data-node-id="${nodeId}"][custom-en-comment-id~="${i}"]`
   })
@@ -752,7 +793,7 @@ watchEffect(() => {
 const getAllCommentIds = async () => {
   const sqlStmt = `select * from attributes where name = 'custom-en-comment-ref-id'  and value like 'en-comment-id-%' limit 9999999`
   const res = await sql(sqlStmt)
-  commentIdList.value = res.map(i => i.value)
+  commentIdList.value = res.map((i) => i.value)
 }
 
 const offLoadedProtyleStatic = useSiyuanEventLoadedProtyleStatic(() => {
@@ -776,9 +817,9 @@ onBeforeUnmount(() => {
 // #region 点击评论，显示历史评论列表
 
 const selectedCommentIdList = ref<Array<{
-  commentId: string;
-  commentForNodeId: string;
-  commentBlockId: string;
+  commentId: string
+  commentForNodeId: string
+  commentBlockId: string
 }>>([])
 const isCommentNode = (target: HTMLElement) => {
   return target?.getAttribute('custom-en-comment-id') || target?.dataset?.type?.includes('en-comment-id')
@@ -805,15 +846,15 @@ const onClickComment = async (event: MouseEvent) => {
   }
 
   const allCommentIdForCommentNodes: Array<{
-    commentId: string;
-    commentForNodeId: string;
-    commentBlockId?: string;
+    commentId: string
+    commentForNodeId: string
+    commentBlockId?: string
   }> = []
   allCommentNodes.forEach((node) => {
     const customAttrCommentId = node.getAttribute('custom-en-comment-id')
 
     if (!customAttrCommentId) {
-      const commentIdListInDataType = node.dataset.type.split(' ').filter(i => i.startsWith('en-comment-id-'))
+      const commentIdListInDataType = node.dataset.type.split(' ').filter((i) => i.startsWith('en-comment-id-'))
       commentIdListInDataType.forEach((id) => {
         const nodeId = getNodeIdByCommentId(id)
         allCommentIdForCommentNodes.push({
@@ -835,7 +876,7 @@ const onClickComment = async (event: MouseEvent) => {
 
   const idListWhichHasComment = []
   allCommentIdForCommentNodes.forEach((id) => {
-    if (commentIdList.value.includes(id.commentId) && !idListWhichHasComment.find(i => i.commentId === id.commentId && i.commentForNodeId === id.commentForNodeId)) {
+    if (commentIdList.value.includes(id.commentId) && !idListWhichHasComment.find((i) => i.commentId === id.commentId && i.commentForNodeId === id.commentForNodeId)) {
       idListWhichHasComment.push(id)
     }
   })
@@ -851,12 +892,12 @@ const onClickComment = async (event: MouseEvent) => {
 
   // doNotShowCommentButton = true
 
-  const queryCommentBlockIdSql = `select * from attributes where name = 'custom-en-comment-ref-id' and value in ('${idListWhichHasComment.map(i => i.commentId).join("','")}')`
+  const queryCommentBlockIdSql = `select * from attributes where name = 'custom-en-comment-ref-id' and value in ('${idListWhichHasComment.map((i) => i.commentId).join("','")}')`
   const commentBlockIdRes = await sql(queryCommentBlockIdSql)
 
   selectedCommentIdList.value = []
   idListWhichHasComment.forEach((id) => {
-    const commentBlockId = commentBlockIdRes.find(i => i.value === id.commentId)?.block_id
+    const commentBlockId = commentBlockIdRes.find((i) => i.value === id.commentId)?.block_id
     if (commentBlockId) {
       id.commentBlockId = commentBlockId
       selectedCommentIdList.value.push(id)
@@ -883,7 +924,7 @@ onBeforeUnmount(() => {
 </style>
 
 <style lang="scss">
-:root{
+:root {
   --en-comment-background-color: var(--b3-font-color11, #65b84d);
   --en-comment-underline-color: var(--b3-card-success-color, rgb(183, 223, 185));
   // --en-comment-line-underline-color: var(--b3-theme-success, #65b84d);
@@ -950,8 +991,8 @@ onBeforeUnmount(() => {
           overflow-y: auto;
 
           .protyle-content {
-        padding-bottom: unset !important;
-      }
+            padding-bottom: unset !important;
+          }
         }
       }
     }

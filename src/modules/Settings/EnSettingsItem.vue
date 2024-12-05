@@ -55,15 +55,15 @@
 </template>
 
 <script lang="ts" setup>
-import { usePlugin } from '@/main';
-import { computed } from 'vue';
+import { usePlugin } from '@/main'
+import { computed } from 'vue'
 
+defineProps<{
+  mode?: 'horizontal' | 'vertical'
+}>()
 const plugin = usePlugin()
 const isMobile = computed(() => plugin.isMobile)
 
-defineProps<{
-  mode?: 'horizontal' | 'vertical';
-}>()
 </script>
 
 <style lang="scss" scoped>

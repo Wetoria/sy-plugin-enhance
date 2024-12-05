@@ -19,8 +19,8 @@
       </template>
       <template #opt>
         <EnNotebookSelector
-          :notebookList="openedNotebookList.data"
           v-model="moduleOptions.dailyNoteNotebookId"
+          :notebookList="openedNotebookList.data"
         />
       </template>
     </EnSettingsItem>
@@ -45,25 +45,34 @@
 
 
 <script setup lang="tsx">
-import { usePlugin } from '@/main';
+import {
+  lsNotebooks,
+  request,
+} from '@/api'
+import EnNotebookSelector from '@/components/EnNotebookSelector.vue'
+import { usePlugin } from '@/main'
+import EnQuickNote from '@/modules/DailyNote/QuickNote/EnQuickNote.vue'
+import { addCommand } from '@/utils/Commands'
+import { targetIsInnerOf } from '@/utils/DOM'
+import {
+  useSiyuanNotebookMount,
+  useSiyuanNotebookUnmount,
+} from '@/utils/EventBusHooks'
+import { getColorStringWarn } from '@/utils/Log'
+import { openDocById } from '@/utils/Note'
+import { useSyncModuleData } from '@/utils/SyncData'
+import { useSettingModuleInScript } from '@/utils/SyncDataHooks'
 import {
   showMessage,
-} from "siyuan";
-import { lsNotebooks, request } from '@/api';
-import { openDocById } from '@/utils/Note';
-import { onBeforeMount, onMounted } from 'vue';
-import EnSettingsItem from '../Settings/EnSettingsItem.vue';
-import EnNotebookSelector from '@/components/EnNotebookSelector.vue';
-import EnSettingsTeleportModule from '../Settings/EnSettingsTeleportModule.vue';
-import EnQuickNote from '@/modules/DailyNote/QuickNote/EnQuickNote.vue';
-import { EnModule } from '../Settings/EnSettings.vue';
-import { targetIsInnerOf } from '@/utils/DOM';
-import { useSyncModuleData } from '@/utils/SyncData';
-import { useSiyuanNotebookMount, useSiyuanNotebookUnmount } from '@/utils/EventBusHooks';
-import { getColorStringWarn } from '@/utils/Log';
-import { useSettingModuleInScript } from '@/utils/SyncDataHooks';
-import EnQuickNoteMobile from './QuickNote/EnQuickNoteMobile.vue';
-import { addCommand } from '@/utils/Commands';
+} from "siyuan"
+import {
+  onBeforeMount,
+  onMounted,
+} from 'vue'
+import { EnModule } from '../Settings/EnSettings.vue'
+import EnSettingsItem from '../Settings/EnSettingsItem.vue'
+import EnSettingsTeleportModule from '../Settings/EnSettingsTeleportModule.vue'
+import EnQuickNoteMobile from './QuickNote/EnQuickNoteMobile.vue'
 
 const plugin = usePlugin()
 
@@ -77,17 +86,17 @@ onMounted(() => {
     langText: "前一篇日记",
     hotkey: "⌥⌘↑",
     callback: () => {
-      jumpToPrevDailyNote();
+      jumpToPrevDailyNote()
     },
-  });
+  })
   addCommand({
     langKey: "En_DailyNote_GoNext",
     langText: "后一篇日记",
     hotkey: "⌥⌘↓",
     callback: () => {
-      jumpToNextDailyNote();
+      jumpToNextDailyNote()
     },
-  });
+  })
 })
 onMounted(() => {
   updateOpenedNotebookList()
@@ -132,7 +141,7 @@ const openedNotebookList = useSyncModuleData({
 export async function updateOpenedNotebookList() {
   const res = await lsNotebooks()
   enLog(`${getColorStringWarn(`Loaded notebook list: `)}`, res)
-  openedNotebookList.value.data = res?.notebooks?.filter(i => !i.closed) || []
+  openedNotebookList.value.data = res?.notebooks?.filter((i) => !i.closed) || []
 }
 
 
@@ -168,7 +177,7 @@ export const ModuleDailyNoteConfig = moduleConfig
 // TODO 思源的笔记本列表更新不及时，等以后提案了响应式以后，再考虑要不要优化吧。
 export async function notebookIsOpened(notebookId: string) {
   await updateOpenedNotebookList()
-  return openedNotebookList.value.data.some(i => i.id === notebookId)
+  return openedNotebookList.value.data.some((i) => i.id === notebookId)
 }
 
 export function useDailyNote() {
@@ -186,27 +195,27 @@ export async function appendBlockIntoDailyNote(
 ): Promise<IResdoOperations[]> {
   if (!notebook) {
     showMessage('[Enhance 插件] 请先选择创建日记的笔记本')
-    return Promise.reject('[Enhance 插件] 请先选择创建日记的笔记本')
+    return Promise.reject(new Error('[Enhance 插件] 请先选择创建日记的笔记本'))
   }
   const notebookIsClosed = await !notebookIsOpened(moduleOptions.value.dailyNoteNotebookId)
   if (notebookIsClosed) {
     showMessage('[Enhance 插件] 请先打开日记所在的笔记本')
-    return Promise.reject('[Enhance 插件] 请先打开日记所在的笔记本')
+    return Promise.reject(new Error('[Enhance 插件] 请先打开日记所在的笔记本'))
   }
   const payload = {
     dataType,
     data,
     notebook,
-  };
-  const url = "/api/block/appendDailyNoteBlock";
-  return request(url, payload);
+  }
+  const url = "/api/block/appendDailyNoteBlock"
+  return request(url, payload)
 }
 
 export async function getNewDailyNoteBlockId() {
   const res = await appendBlockIntoDailyNote(
     'markdown',
     '',
-    moduleOptions.value.dailyNoteNotebookId
+    moduleOptions.value.dailyNoteNotebookId,
   )
   const blockId = getAppendedDailyNoteBlockId(res)
   return blockId
@@ -217,18 +226,18 @@ async function getCurrentDocAttr(currentDocId) {
     stmt: `
       select
         *
-      FROM	attributes
+      FROM attributes
       WHERE
         block_id = '${currentDocId}'
         and name like 'custom-dailynote-%'
       ORDER BY
         value desc
-    `
-  };
-  const url = "/api/query/sql";
-  return request(url, data).then(function (data) {
+    `,
+  }
+  const url = "/api/query/sql"
+  return request(url, data).then((data) => {
     return data
-  });
+  })
 
 }
 
@@ -243,33 +252,33 @@ async function getSlideDailyNote(next = true, newDate: string) {
       A.value ${next ? "asc" : "desc"}
     limit 1
     `,
-  };
-  const url = "/api/query/sql";
-  return request(url, data).then(function (data) {
+  }
+  const url = "/api/query/sql"
+  return request(url, data).then((data) => {
     if (data && data.length === 1) {
-      return data[0];
+      return data[0]
     }
-    return null;
-  });
+    return null
+  })
 }
 
 export async function jumpToPrevDailyNote() {
-  jumpTo(false);
+  jumpTo(false)
 }
 
 export async function jumpToNextDailyNote() {
-  jumpTo();
+  jumpTo()
 }
 
 export function getCurrentDocTitleDomByDom(dom: HTMLElement) {
   const plugin = usePlugin()
   const currentDocTitleDom: HTMLDivElement = plugin.isMobile
     ? dom.querySelector(
-        "#editor:not(.fn__none) .protyle-background"
-      )
+      "#editor:not(.fn__none) .protyle-background",
+    )
     : dom.querySelector(
-        ".protyle:not(.fn__none) .protyle-title"
-      );
+      ".protyle:not(.fn__none) .protyle-title",
+    )
   return currentDocTitleDom
 }
 
@@ -278,31 +287,31 @@ async function jumpTo(next = true) {
 
   const currentDocTitleDom: HTMLDivElement = plugin.isMobile
     ? document.querySelector(
-        "#editor:not(.fn__none) .protyle-background"
-      )
+      "#editor:not(.fn__none) .protyle-background",
+    )
     : document.querySelector(
-        ".protyle:not(.fn__none) .protyle-title"
-      );
+      ".protyle:not(.fn__none) .protyle-title",
+    )
   if (!currentDocTitleDom) {
-    showMessage("请先打开一篇文档");
-    return;
+    showMessage("请先打开一篇文档")
+    return
   }
-  const currentDocId = currentDocTitleDom.dataset.nodeId;
+  const currentDocId = currentDocTitleDom.dataset.nodeId
   if (!currentDocId) {
-    return;
+    return
   }
   const docAttr = await getCurrentDocAttr(currentDocId)
 
   if (!docAttr.length) {
-    showMessage("请打开一篇日记");
-    return;
+    showMessage("请打开一篇日记")
+    return
   }
 
-  const prevDailyNoteInfo = await getSlideDailyNote(next, next ? docAttr[0].value : docAttr[docAttr.length - 1].value);
+  const prevDailyNoteInfo = await getSlideDailyNote(next, next ? docAttr[0].value : docAttr[docAttr.length - 1].value)
 
   if (!prevDailyNoteInfo) {
-    showMessage(`未找到${next ? "下" : "上"}一篇日记`);
-    return;
+    showMessage(`未找到${next ? "下" : "上"}一篇日记`)
+    return
   }
 
   openDocById(prevDailyNoteInfo.id)

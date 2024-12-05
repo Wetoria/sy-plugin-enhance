@@ -1,21 +1,25 @@
-import { resolve } from "path";
-import { defineConfig, loadEnv } from "vite";
-import minimist from "minimist";
-import { viteStaticCopy } from "vite-plugin-static-copy";
-import livereload from "rollup-plugin-livereload";
-import zipPack from "vite-plugin-zip-pack";
-import fg from "fast-glob";
-import vue from "@vitejs/plugin-vue";
-import { vitePluginForArco } from "@arco-plugins/vite-vue";
+/* eslint-disable node/prefer-global/process */
+import { resolve } from "node:path"
+import { vitePluginForArco } from "@arco-plugins/vite-vue"
+import vue from "@vitejs/plugin-vue"
 import vueJsx from '@vitejs/plugin-vue-jsx'
+import fg from "fast-glob"
+import minimist from "minimist"
+import livereload from "rollup-plugin-livereload"
+import {
+  defineConfig,
+  loadEnv,
+} from "vite"
+import { viteStaticCopy } from "vite-plugin-static-copy"
+import zipPack from "vite-plugin-zip-pack"
 
-const args = minimist(process.argv.slice(2));
-const isWatch = args.watch || args.w || false;
+const args = minimist(process.argv.slice(2))
+const isWatch = args.watch || args.w || false
 const devDistDir = "./dev"
-const distDir = isWatch ? devDistDir : "./dist";
+const distDir = isWatch ? devDistDir : "./dist"
 
-console.log("isWatch=>", isWatch);
-console.log("distDir=>", distDir);
+console.log("isWatch=>", isWatch)
+console.log("distDir=>", distDir)
 
 export default defineConfig({
   resolve: {
@@ -31,7 +35,7 @@ export default defineConfig({
       style: true,
       modifyVars: {
         'font-family': 'var(--b3-font-family)',
-      }
+      },
     }),
     viteStaticCopy({
       targets: [
@@ -95,16 +99,16 @@ export default defineConfig({
           ? [
               livereload(devDistDir),
               {
-                //监听静态资源文件
+                // 监听静态资源文件
                 name: "watch-external",
                 async buildStart() {
                   const files = await fg([
                     "src/i18n/*.json",
                     "./README*.md",
                     "./plugin.json",
-                  ]);
+                  ])
                   for (const file of files) {
-                    this.addWatchFile(file);
+                    this.addWatchFile(file)
                   }
                 },
               },
@@ -126,11 +130,11 @@ export default defineConfig({
         entryFileNames: "[name].js",
         assetFileNames: (assetInfo) => {
           if (assetInfo.name === "style.css") {
-            return "index.css";
+            return "index.css"
           }
-          return assetInfo.name;
+          return assetInfo.name
         },
       },
     },
   },
-});
+})

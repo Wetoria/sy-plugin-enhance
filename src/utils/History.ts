@@ -1,12 +1,16 @@
-import { computed, onMounted, ref, watchEffect } from 'vue';
-import { openDocById } from './Note';
-import { showMessage } from 'siyuan';
-import { usePlugin } from '@/main';
+import { usePlugin } from '@/main'
+import { showMessage } from 'siyuan'
+import {
+  computed,
+  onMounted,
+  ref,
+} from 'vue'
+import { openDocById } from './Note'
 
 let lastEditShownStatus
 export function useDocHistory() {
   const docHistory = ref([])
-  const currentDocIndex = ref(-1);
+  const currentDocIndex = ref(-1)
   const isNewset = computed(() => !docHistory.value.length || currentDocIndex.value === docHistory.value.length - 1)
   const isOldest = computed(() => !docHistory.value.length || currentDocIndex.value === 0)
 
@@ -39,7 +43,7 @@ export function useDocHistory() {
 
   onMounted(() => {
     plugin.eventBus.on('loaded-protyle-static', ({ detail }) => {
-      const currentDocId = detail?.protyle?.block?.id;
+      const currentDocId = detail?.protyle?.block?.id
 
       const lastDocId = docHistory.value[currentDocIndex.value]
       if (lastDocId !== currentDocId) {
@@ -62,10 +66,10 @@ export function useDocHistory() {
 
             if (editorIsHidden) {
               docHistory.value = []
-              currentDocIndex.value = docHistory.value.length - 1;
+              currentDocIndex.value = docHistory.value.length - 1
             }
           }
-          lastEditShownStatus = editorIsHidden;
+          lastEditShownStatus = editorIsHidden
         }
       }, 100)
     })

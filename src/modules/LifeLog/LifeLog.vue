@@ -37,21 +37,53 @@
   </EnSettingsTeleportModule>
 </template>
 
-<script setup lang="ts">
-import { onMounted, watchEffect } from 'vue';
-import { queryAllByDom } from '@/utils/DOM';
-import { usePlugin } from '@/main';
-import { EnhanceIOperation, SyDomNodeTypes, onEditorUpdate } from '../../utils/Siyuan'
-import { batchGetBlockAttrs, batchSetBlockAttrs, flushTransactions, sql } from '@/api'
-import { Protyle } from 'siyuan'
+<script lang="ts">import {
+  batchGetBlockAttrs,
+  batchSetBlockAttrs,
+  flushTransactions,
+  sql,
+} from '@/api'
+import { usePlugin } from '@/main'
+import { moduleEnableStatusSwitcher } from '@/utils'
+import { queryAllByDom } from '@/utils/DOM'
+import { getColorStringWarn } from '@/utils/Log'
+import { useSettingModuleInSetup } from '@/utils/SyncDataHooks'
 import dayjs from 'dayjs'
-import EnSettingsTeleportModule from '../Settings/EnSettingsTeleportModule.vue';
-import EnSettingsItem from '../Settings/EnSettingsItem.vue';
-import { reloadLifeLogData } from './EnLifeLogDailyNoteGraph.vue';
-import { moduleEnableStatusSwitcher } from '@/utils';
-import { EnModule } from '../Settings/EnSettings.vue';
-import { useSettingModuleInSetup } from '@/utils/SyncDataHooks';
-import { getColorStringWarn } from '@/utils/Log';
+import { Protyle } from 'siyuan'
+import {
+  onMounted,
+  watchEffect,
+} from 'vue'
+import {
+  EnhanceIOperation,
+  onEditorUpdate,
+  SyDomNodeTypes,
+} from '../../utils/Siyuan'
+import { EnModule } from '../Settings/EnSettings.vue'
+import EnSettingsItem from '../Settings/EnSettingsItem.vue'
+import EnSettingsTeleportModule from '../Settings/EnSettingsTeleportModule.vue'
+import { reloadLifeLogData } from './EnLifeLogDailyNoteGraph.vue'
+
+const lifelogPrefix = 'custom-lifelog-'
+const lifelogAttrTime = `${lifelogPrefix}time`
+const lifelogAttrDate = `${lifelogPrefix}date`
+const lifelogAttrType = `${lifelogPrefix}type`
+const lifelogAttrContent = `${lifelogPrefix}content`
+const lifelogAttrCreated = `${lifelogPrefix}created`
+const lifelogAttrUpdated = `${lifelogPrefix}updated`
+
+export interface ILifeLog {
+  [lifelogAttrTime]: string
+  [lifelogAttrDate]: string
+  [lifelogAttrType]: string
+  [lifelogAttrContent]: string
+  [lifelogAttrCreated]: string
+  [lifelogAttrUpdated]: string
+}
+</script>
+
+<script setup lang="ts">
+
 
 const plugin = usePlugin()
 
@@ -119,7 +151,7 @@ const listenerSticky = () => {
       })
       map.set(item, true)
     })
-  });
+  })
   observer.observe(document.body, {
     childList: true, // 观察目标子节点的变化，是否有添加或者删除
     subtree: true, // 观察后代节点，默认为 false
@@ -128,7 +160,7 @@ const listenerSticky = () => {
 
 onMounted(() => {
   markLifeLogBlock()
-  listenerSticky();
+  listenerSticky()
   plugin.protyleSlash.push({
     filter: [
       "add current time",
@@ -142,8 +174,8 @@ onMounted(() => {
     id: "enInsertCurrentTime",
     callback(protyle: Protyle) {
       const timestamp = dayjs().format('HH:mm')
-      protyle.insert(timestamp);
-    }
+      protyle.insert(timestamp)
+    },
   })
 })
 
@@ -155,7 +187,7 @@ watchEffect(() => {
 function markLifeLogBlock() {
 
   onEditorUpdate(async (operations: EnhanceIOperation[]) => {
-    let optList = operations.filter(i => i.text)
+    let optList = operations.filter((i) => i.text)
     optList.sort((a, b) => a.timestamp - b.timestamp)
 
     const optMap = {}
@@ -165,7 +197,7 @@ function markLifeLogBlock() {
     })
 
     optList = Object.values(optMap)
-    optList = optList.filter(i => i.nodeType === SyDomNodeTypes.NodeParagraph)
+    optList = optList.filter((i) => i.nodeType === SyDomNodeTypes.NodeParagraph)
 
     if (!optList.length) {
       enWarn(`LifeLog watched no paragraph`)
@@ -186,7 +218,7 @@ function markLifeLogBlock() {
       const content = opt.text
 
       // const isLifeLogParagraph = /^\d{2}:\d{2}\s+/.test(content)
-      const isLifeLogParagraph = /^\d{2}:\d{2}(:\d{2})?\s+[^\n\r]*?$/.test(content)
+      const isLifeLogParagraph = /^\d{2}:\d{2}(:\d{2})?\s+(?:\S[^\n\r]*)?$/.test(content)
 
       if (!isLifeLogParagraph) {
         enLog(`${getColorStringWarn('LifeLog is not a valid paragraph: ')}`, opt)
@@ -234,7 +266,7 @@ function markLifeLogBlock() {
 
 
 
-    const blockIds = validParagraphList.map(i => i.id)
+    const blockIds = validParagraphList.map((i) => i.id)
 
     const blockAttrsRes = await batchGetBlockAttrs(blockIds)
 
@@ -304,25 +336,6 @@ function markLifeLogBlock() {
   }, 1000)
 }
 
-</script>
-
-<script lang="ts">
-const lifelogPrefix = 'custom-lifelog-'
-const lifelogAttrTime = `${lifelogPrefix}time`
-const lifelogAttrDate = `${lifelogPrefix}date`
-const lifelogAttrType = `${lifelogPrefix}type`
-const lifelogAttrContent = `${lifelogPrefix}content`
-const lifelogAttrCreated = `${lifelogPrefix}created`
-const lifelogAttrUpdated = `${lifelogPrefix}updated`
-
-export interface ILifeLog {
-  [lifelogAttrTime]: string;
-  [lifelogAttrDate]: string;
-  [lifelogAttrType]: string;
-  [lifelogAttrContent]: string;
-  [lifelogAttrCreated]: string;
-  [lifelogAttrUpdated]: string;
-}
 </script>
 
 <style>

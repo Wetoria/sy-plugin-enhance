@@ -41,7 +41,7 @@
           当前时间为：
         </div>
         <div>
-          <a-input v-model="currentTime"/>
+          <a-input v-model="currentTime" />
         </div>
         <div>
           设置为区间：
@@ -111,9 +111,9 @@
             </div>
           </div>
           <div
-            class="ConfiguredBlockItem"
             v-for="(block, index) of nodeTimeBlockList"
             :key="`${block.startTime}~${block.endTime}`"
+            class="ConfiguredBlockItem"
           >
             <div class="ColIndex">
               {{ index + 1 }}
@@ -132,7 +132,7 @@
                 size="mini"
                 type="text"
                 status="danger"
-                @click="nodeTimeBlockList = nodeTimeBlockList.filter(i => i != block)"
+                @click="nodeTimeBlockList = nodeTimeBlockList.filter(i => i !== block)"
               >
                 <icon-close />
               </a-button>
@@ -145,6 +145,22 @@
 </template>
 
 <script lang="ts">
+import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
+import { SyDomNodeTypes } from '@/utils/Siyuan'
+import {
+  updateModuleDataByNamespaceWithLoadFile,
+  useSyncModuleData,
+} from '@/utils/SyncData'
+import { showMessage } from 'siyuan'
+import {
+  computed,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  watchEffect,
+} from 'vue'
+
+
 const moduleName = 'EnVideoAndAudioBlockPlay'
 export const Module_EnVideoAndAudioBlockPlay = moduleName
 
@@ -166,12 +182,12 @@ export async function loadModuleData_EnVideoAndAudioBlockPlay() {
 </script>
 
 <script setup lang="ts">
-import { SyDomNodeTypes } from '@/utils/Siyuan';
-import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue';
-import { useSettings } from '../Settings/EnSettings.vue';
-import { showMessage } from 'siyuan';
-import SyIcon from '@/components/SiyuanTheme/SyIcon.vue';
-import { updateModuleDataByNamespaceWithLoadFile, useSyncModuleData } from '@/utils/SyncData';
+
+const props = defineProps<{
+  el: HTMLSpanElement
+  nodeId: string
+  type: SyDomNodeTypes.NodeAudio | SyDomNodeTypes.NodeVideo
+}>()
 
 const iconMap = {
   [SyDomNodeTypes.NodeAudio]: 'iconRecord',
@@ -183,11 +199,6 @@ const typeMap = {
   [SyDomNodeTypes.NodeVideo]: 'video',
 }
 
-const props = defineProps<{
-  el: HTMLSpanElement
-  nodeId: string
-  type: SyDomNodeTypes.NodeAudio | SyDomNodeTypes.NodeVideo
-}>()
 
 const currentTime = ref<number>()
 const updateCurrentTimeByTarget = () => {
@@ -241,15 +252,15 @@ const target = ref<HTMLVideoElement | HTMLAudioElement>()
 const checkTimeBlockList = computed(() => isTempBlockTime.value ? [newBlock.value] : nodeTimeBlockList.value)
 const checkIsInValidBlock = () => {
   if (nodeBlockPlayConfig.value.enabledBlockPlay) {
-    const currentTargetTime = target.value.currentTime;
+    const currentTargetTime = target.value.currentTime
 
     if (checkTimeBlockList.value.length) {
       // 检查当前时间是否在任何一个允许的播放区间内
-      let inAllowedInterval = false;
+      let inAllowedInterval = false
       for (const interval of checkTimeBlockList.value) {
         if (currentTargetTime >= interval.startTime && currentTargetTime <= interval.endTime) {
-          inAllowedInterval = true;
-          break;
+          inAllowedInterval = true
+          break
         }
       }
 
@@ -259,8 +270,8 @@ const checkIsInValidBlock = () => {
         let nextTime = null
         for (const interval of checkTimeBlockList.value) {
           if (currentTargetTime < interval.startTime) {
-            nextTime = interval.startTime;
-            break;
+            nextTime = interval.startTime
+            break
           }
         }
         // 如果没有找到下一个区间，暂停视频
@@ -282,7 +293,7 @@ const checkIsInValidBlock = () => {
 const checkIsNeedLoop = () => {
   if (nodeBlockPlayConfig.value.enabledLoopPlay) {
     if (nodeBlockPlayConfig.value.enabledBlockPlay && checkTimeBlockList.value.length) {
-      const lastBlock = checkTimeBlockList.value[checkTimeBlockList.value.length - 1];
+      const lastBlock = checkTimeBlockList.value[checkTimeBlockList.value.length - 1]
       if (target.value.currentTime >= lastBlock.endTime) {
         target.value.currentTime = checkTimeBlockList.value[0].startTime
         target.value.play()
@@ -328,20 +339,20 @@ onMounted(() => {
   updateCurrentTimeByTarget()
 
 
-  videoOrAudioDom.addEventListener('seeking', updateCurrentTimeBySeek);
-  videoOrAudioDom.addEventListener('seeked', updateCurrentTimeBySeek);
-  videoOrAudioDom.addEventListener('timeupdate', updateCurrentTimeBySeek);
-  videoOrAudioDom.addEventListener('timeupdate', updateTempBlockTime);
-  videoOrAudioDom.addEventListener('timeupdate', checkIsInValidBlock);
-  videoOrAudioDom.addEventListener('ended', checkIsNeedLoop);
+  videoOrAudioDom.addEventListener('seeking', updateCurrentTimeBySeek)
+  videoOrAudioDom.addEventListener('seeked', updateCurrentTimeBySeek)
+  videoOrAudioDom.addEventListener('timeupdate', updateCurrentTimeBySeek)
+  videoOrAudioDom.addEventListener('timeupdate', updateTempBlockTime)
+  videoOrAudioDom.addEventListener('timeupdate', checkIsInValidBlock)
+  videoOrAudioDom.addEventListener('ended', checkIsNeedLoop)
 })
 onBeforeUnmount(() => {
-  target.value.removeEventListener('seeking', updateCurrentTimeBySeek);
-  target.value.removeEventListener('seeked', updateCurrentTimeBySeek);
-  target.value.removeEventListener('timeupdate', updateCurrentTimeBySeek);
-  target.value.removeEventListener('timeupdate', updateTempBlockTime);
-  target.value.removeEventListener('timeupdate', checkIsInValidBlock);
-  target.value.removeEventListener('ended', checkIsNeedLoop);
+  target.value.removeEventListener('seeking', updateCurrentTimeBySeek)
+  target.value.removeEventListener('seeked', updateCurrentTimeBySeek)
+  target.value.removeEventListener('timeupdate', updateCurrentTimeBySeek)
+  target.value.removeEventListener('timeupdate', updateTempBlockTime)
+  target.value.removeEventListener('timeupdate', checkIsInValidBlock)
+  target.value.removeEventListener('ended', checkIsNeedLoop)
 })
 
 const addNewBlock = () => {

@@ -1,22 +1,35 @@
 <template>
   <a-color-picker
     :modelValue="modelValue"
-    @change="handleChange"
     show-history
     show-preset
     :preset-colors="presetColors"
     v-bind="$attrs"
+    @change="handleChange"
   />
 </template>
 
 <script lang="ts" setup>
-import { siyuanBgColorList, siyuanColorList } from '@/modules/Editor/EnFont.vue';
-import { computed, onMounted, ref, watch } from 'vue';
+import {
+  siyuanBgColorList,
+  siyuanColorList,
+} from '@/modules/Editor/EnFont.vue'
+import {
+  computed,
+  onMounted,
+  ref,
+  watch,
+} from 'vue'
 
 const props = defineProps<{
   type: 'color' | 'bgColor'
-  defaultIndex?: number | string,
+  defaultIndex?: number | string
 }>()
+
+
+const modelValue = defineModel()
+const colorList = ref([])
+const bgColorList = ref([])
 
 const presetColors = computed(() => {
   if (props.type === 'color') {
@@ -29,9 +42,17 @@ const presetColors = computed(() => {
 
 const defaultValue = computed(() => presetColors.value[props.defaultIndex || 0])
 
-const modelValue = defineModel();
-const colorList = ref([])
-const bgColorList = ref([])
+let resetting = false
+const setDefaultColor = () => {
+  if (!modelValue.value) {
+    resetting = true
+    modelValue.value = defaultValue.value
+  }
+}
+
+watch(modelValue, () => {
+  setDefaultColor()
+})
 
 onMounted(() => {
   setTimeout(() => {
@@ -44,7 +65,7 @@ onMounted(() => {
 
     siyuanColorList.forEach((item) => {
       const key = item.replace('var(', '').replace(')', '')
-      const myColor = styles.getPropertyValue(key);
+      const myColor = styles.getPropertyValue(key)
       colorList.value.push(myColor)
     })
 
@@ -53,24 +74,12 @@ onMounted(() => {
 
     siyuanBgColorList.forEach((item) => {
       const key = item.replace('var(', '').replace(')', '')
-      const myColor = styles.getPropertyValue(key);
+      const myColor = styles.getPropertyValue(key)
       bgColorList.value.push(myColor)
     })
 
     setDefaultColor()
   }, 1000)
-})
-
-let resetting = false
-const setDefaultColor = () => {
-  if (!modelValue.value) {
-    resetting = true
-    modelValue.value = defaultValue.value
-  }
-}
-
-watch(modelValue, () => {
-  setDefaultColor()
 })
 
 const handleChange = (value) => {

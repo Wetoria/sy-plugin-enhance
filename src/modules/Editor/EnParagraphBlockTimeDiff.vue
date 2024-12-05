@@ -25,7 +25,7 @@
           <a-input v-model:modelValue="bindedId" />
         </div>
         <div class="row flexAlignCenter">
-          距目标块：{{  getDiffFormat(created, bindedCreated, '') }}
+          距目标块：{{ getDiffFormat(created, bindedCreated, '') }}
         </div>
       </div>
     </template>
@@ -33,16 +33,26 @@
 </template>
 
 <script setup lang="ts">
-import { getCreatedByDataset } from '@/utils/Siyuan';
-import { computed, ref, watchEffect } from 'vue';
+import { getDiffFormat } from '@/utils/Date'
+import { getCreatedByDataset } from '@/utils/Siyuan'
+import {
+  updateModuleDataByNamespaceWithLoadFile,
+  useSyncModuleData,
+} from '@/utils/SyncData'
 import dayjs, { Dayjs } from 'dayjs'
-import { getDiffFormat } from '@/utils/Date';
-import { updateModuleDataByNamespaceWithLoadFile, useSyncModuleData } from '@/utils/SyncData';
+import {
+  computed,
+  ref,
+  watchEffect,
+} from 'vue'
 
 interface ModuleOptions {
   [key: string]: string
 }
 
+const props = defineProps<{
+  nodeId: string
+}>()
 const moduleName = 'EnParagraphBlockTimeDiff'
 const module = useSyncModuleData<ModuleOptions>({
   namespace: moduleName,
@@ -55,10 +65,6 @@ const moduleOptions = computed(() => {
 updateModuleDataByNamespaceWithLoadFile(moduleName)
 
 
-
-const props = defineProps<{
-  nodeId: string
-}>()
 
 const getCreatedStr = (nodeId: string) => {
   if (!nodeId) {

@@ -3,18 +3,18 @@
     :to="element?.parentNode"
   >
     <div
-      class="EnLifeLogDailyNoteGraph"
       v-if="isDailyNote"
       ref="EnLifeLogDailyNoteGraphRef"
+      class="EnLifeLogDailyNoteGraph"
     >
       <div
         v-for="record of lifelogRecords"
-        class="EnLifeLogGraphItem"
         :key="record.block_id"
+        class="EnLifeLogGraphItem"
         :data-en_lifelog_diff="record.diff"
         :data-en_lifelog_diff_format="record.diffFormatted"
         :style="{
-          height: `${(record.diff / secondsOfADay) * 100}%`
+          height: `${(record.diff / secondsOfADay) * 100}%`,
         }"
       >
         <div
@@ -27,8 +27,8 @@
         </div>
         <div class="infos">
           <div
-            class="time info"
             v-if="(record.diff / secondsOfADay) > 0.01"
+            class="time info"
           >
             {{ record.endTime }}
           </div>
@@ -36,7 +36,7 @@
             {{
               [
                 record.record['custom-lifelog-type'],
-                record.record['custom-lifelog-content']
+                record.record['custom-lifelog-content'],
               ].filter(Boolean).join('：')
             }}
           </div>
@@ -66,7 +66,7 @@
       <div
         class="PromptCurrent"
         :style="{
-          top: `${((currentSecondDiff / secondsOfADay) * 100)}%`
+          top: `${((currentSecondDiff / secondsOfADay) * 100)}%`,
         }"
         :data-test="currentSecondDiff"
       >
@@ -81,13 +81,29 @@
   </Teleport>
 </template>
 
-<script setup lang="ts">
-import { sql } from '@/api';
-import dayjs from 'dayjs'
-import { computed, onBeforeUnmount, onMounted, onUpdated, ref, watchEffect } from 'vue';
-import { ILifeLog } from './LifeLog.vue';
+<script lang="ts">
+import { sql } from '@/api'
 import { diffFormat } from '@/utils/Date'
-import { queryAllByDom } from '@/utils/DOM';
+import { queryAllByDom } from '@/utils/DOM'
+import dayjs from 'dayjs'
+import {
+  computed,
+  onBeforeUnmount,
+  onMounted,
+  onUpdated,
+  ref,
+  watchEffect,
+} from 'vue'
+import { ILifeLog } from './LifeLog.vue'
+
+const dailyNoteId = ref('')
+export function reloadLifeLogData(newLifeLogParagraphId: string) {
+  dailyNoteId.value = newLifeLogParagraphId
+}
+</script>
+
+<script setup lang="ts">
+
 
 const props = defineProps<{
   element: HTMLDivElement
@@ -125,10 +141,10 @@ function checkHeight() {
 
 onMounted(() => {
   load()
-  window.addEventListener('resize', checkHeight);
+  window.addEventListener('resize', checkHeight)
 })
 onBeforeUnmount(() => {
-  window.removeEventListener('resize', checkHeight);
+  window.removeEventListener('resize', checkHeight)
 })
 onUpdated(() => {
   checkHeight()
@@ -139,8 +155,8 @@ setInterval(() => {
   current.value = dayjs()
 }, 1000)
 const currentSecondDiff = computed(() => {
-  const startOfToday = current.value.startOf('day');
-  const secondsUntilMidnight = current.value.diff(startOfToday, 'second');
+  const startOfToday = current.value.startOf('day')
+  const secondsUntilMidnight = current.value.diff(startOfToday, 'second')
   return secondsUntilMidnight
 })
 
@@ -149,21 +165,21 @@ function getDate(record: ILifeLog) {
 }
 
 function calcDiff(record: ILifeLog, secondRecord: ILifeLog) {
-  return dayjs(getDate(record) + ' ' + record['custom-lifelog-time'])
-    .diff(dayjs(getDate(secondRecord) + ' ' + secondRecord['custom-lifelog-time']), 'seconds')
+  return dayjs(`${getDate(record)} ${record['custom-lifelog-time']}`)
+    .diff(dayjs(`${getDate(secondRecord)} ${secondRecord['custom-lifelog-time']}`), 'seconds')
 }
 
 const lifelogRecords = ref<Array<{
-  block_id: string;
-  record: ILifeLog;
-  startTime?: string;
-  endTime?: string;
+  block_id: string
+  record: ILifeLog
+  startTime?: string
+  endTime?: string
   // 当天内的持续时间
-  diff?: number;
-  diffFormatted?: string;
+  diff?: number
+  diffFormatted?: string
   // 记录的完整持续时间，截止上一条记录。可能跨天。
-  totalDiff?: number;
-  totalDiffFormatted?: string;
+  totalDiff?: number
+  totalDiffFormatted?: string
 }>>([])
 const load = async () => {
   if (!isDailyNote.value) return
@@ -238,9 +254,9 @@ const load = async () => {
       return a.date === b.date ? 0 : a.date < b.date ? -1 : 1
     })
 
-    const yesterDayRecords = temp.filter(item => getDate(item.record) === yesterdayStr)
-    const tomorrowRecords = temp.filter(item => getDate(item.record) === tomorrowStr)
-    const todayRecords = temp.filter(item => getDate(item.record) === dailyNoteDateStr)
+    const yesterDayRecords = temp.filter((item) => getDate(item.record) === yesterdayStr)
+    const tomorrowRecords = temp.filter((item) => getDate(item.record) === tomorrowStr)
+    const todayRecords = temp.filter((item) => getDate(item.record) === dailyNoteDateStr)
 
     const lastYesterDayRecord = yesterDayRecords[yesterDayRecords.length - 1]
     const firstTomorrowRecord = tomorrowRecords[0]
@@ -274,15 +290,15 @@ const load = async () => {
       }
 
       const lastRecord = todayRecords[index - 1]
-      const lastRecordEndTimeDayjs = dayjs(getDate(lastRecord.record as ILifeLog) + ' ' + lastRecord.endTime)
+      const lastRecordEndTimeDayjs = dayjs(`${getDate(lastRecord.record as ILifeLog)} ${lastRecord.endTime}`)
 
       const startTime = lastRecord.endTime
       const endTime = item.endTime
-      const currentRecordStartTimeDayjs = dayjs(getDate(lastRecord.record as ILifeLog) + ' ' + startTime)
+      const currentRecordStartTimeDayjs = dayjs(`${getDate(lastRecord.record as ILifeLog)} ${startTime}`)
 
-      const diff = dayjs(getDate(item.record) + ' ' + endTime)
+      const diff = dayjs(`${getDate(item.record)} ${endTime}`)
         .diff(currentRecordStartTimeDayjs, 'seconds')
-      const totalDiff = dayjs(getDate(item.record) + ' ' + endTime)
+      const totalDiff = dayjs(`${getDate(item.record)} ${endTime}`)
         .diff(lastRecordEndTimeDayjs, 'seconds')
 
       return {
@@ -335,14 +351,6 @@ watchEffect(() => {
   }
 })
 
-</script>
-
-<script lang="ts">
-
-const dailyNoteId = ref('')
-export function reloadLifeLogData(newLifeLogParagraphId: string) {
-  dailyNoteId.value = newLifeLogParagraphId
-}
 </script>
 
 <style lang="scss" scoped>

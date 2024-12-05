@@ -1,31 +1,36 @@
 <template>
   <div
-    class="EnProtyleContainer"
     ref="protyleContainerRef"
+    class="EnProtyleContainer"
   >
     <div></div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { usePlugin } from '@/main';
-import { IProtyleOptions, Protyle } from 'siyuan';
-import { onMounted, ref, watch } from 'vue';
+import { usePlugin } from '@/main'
+import {
+  IProtyleOptions,
+  Protyle,
+} from 'siyuan'
+import {
+  onMounted,
+  ref,
+  watch,
+} from 'vue'
 
-
-const protyleContainerRef = ref<HTMLDivElement>()
-const protyleRef = ref<Protyle>()
 
 const props = defineProps<{
   blockId: string
   disableEnhance?: boolean
   options?: IProtyleOptions
 }>()
-
 const emits = defineEmits<{
   after: [protyle: Protyle]
   afterRender: [protyle: Protyle]
 }>()
+const protyleContainerRef = ref<HTMLDivElement>()
+const protyleRef = ref<Protyle>()
 
 const plugin = usePlugin()
 
@@ -39,7 +44,7 @@ const renderProtyle = () => {
     return
   }
   const {
-    options = {}
+    options = {},
   } = props
 
   const {
@@ -67,7 +72,7 @@ const renderProtyle = () => {
         emits('after', protyle)
       },
       ...rest,
-    }
+    },
   )
   emits('afterRender', protyleRef.value)
 }

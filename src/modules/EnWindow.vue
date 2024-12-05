@@ -3,9 +3,9 @@
     to="body"
   >
     <div
+      v-if="currentInWindow"
       class="enWindowContainer"
       :data-in-window="currentInWindow"
-      v-if="currentInWindow"
     >
       <div class="windowToolBarArea">
         <div
@@ -15,13 +15,21 @@
         </div>
         <div class="btns">
           <a-button
+            v-if="currentInWindow"
             type="text"
             status="normal"
             @click="switchPinStatus"
-            v-if="currentInWindow"
           >
-            <SyIcon v-if="pinned" name="iconUnpin" size="14" />
-            <SyIcon v-else name="iconPin" size="14" />
+            <SyIcon
+              v-if="pinned"
+              name="iconUnpin"
+              size="14"
+            />
+            <SyIcon
+              v-else
+              name="iconPin"
+              size="14"
+            />
           </a-button>
           <a-button
             type="text"
@@ -39,17 +47,129 @@
 </template>
 
 
-<script setup lang="ts">
+<script lang="ts">
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import { usePlugin } from '@/main'
-import { SyFrontendTypes } from '@/utils/Siyuan'
-import { computed, onMounted, ref } from 'vue'
-import { useSyncModuleData } from '@/utils/SyncData'
 import { getColorStringWarn } from '@/utils/Log'
+import { SyFrontendTypes } from '@/utils/Siyuan'
+import { useSyncModuleData } from '@/utils/SyncData'
+import {
+  computed,
+  onMounted,
+  ref,
+} from 'vue'
 
+
+const cannot = () => {
+  const canPlatform = [SyFrontendTypes.desktop, SyFrontendTypes['desktop-window']]
+  const plugin = usePlugin()
+  return !canPlatform.includes(plugin.platform)
+}
+
+interface IEnWindow {
+  width: number
+  height: number
+  x: number
+  y: number
+}
+
+export const isInWindow = (title) => {
+  const urlSearchParams = new URLSearchParams(location.search)
+  return urlSearchParams.has('enhance') && urlSearchParams.get('enhance') === 'true'
+    && urlSearchParams.has('enWindowTitle') && urlSearchParams.get('enWindowTitle') === title
+}
+
+export const createWindow = (title, queryStr?) => {
+  if (cannot()) {
+    return
+  }
+  const { BrowserWindow } = require('@electron/remote')
+
+  const module = useSyncModuleData({
+    namespace: `enWindow-${title}`,
+    defaultData: {
+      width: 1000,
+      height: 350,
+    },
+    needSync: false,
+  })
+  enLog(`${getColorStringWarn('EnWindow created:')} ${title}`)
+  enLog('', module.value)
+
+  const moduleOptions = computed(() => module.value.data as IEnWindow)
+
+  const {
+    width = 1000,
+    height = 350,
+    x,
+    y,
+  } = moduleOptions.value
+
+  const electronWindow = new BrowserWindow({
+    width,
+    height,
+    // x,
+    // y,
+    show: false,
+    resizable: true,
+    movable: true,
+    frame: false,
+    center: true,
+    title,
+    type: 'panel',
+    webPreferences: {
+      contextIsolation: false,
+      nodeIntegration: true,
+      webviewTag: true,
+      webSecurity: false,
+      nativeWindowOpen: true,
+    },
+  })
+
+  require("@electron/remote")
+    .require("@electron/remote/main")
+    .enable(electronWindow.webContents)
+
+  electronWindow.setTitle(title)
+
+  electronWindow.on('resize', () => {
+    const size = electronWindow.getSize() // 获取新的窗口大小
+    moduleOptions.value.width = size[0]
+    moduleOptions.value.height = size[1]
+  })
+
+  // 监听窗口位置变化事件
+  electronWindow.on('move', () => {
+    const position = electronWindow.getPosition() // 获取新的窗口位置
+    moduleOptions.value.x = position[0]
+    moduleOptions.value.y = position[1]
+  })
+
+  electronWindow.loadURL(
+    `${window.location.protocol}//${window.location.host}/stage/build/app/window.html?enhance=true&enWindowTitle=${title}&${queryStr ? `&${queryStr}` : ''}`,
+  )
+  return electronWindow
+}
+
+export function getWindow(title, currentInWindow = false) {
+  if (cannot() && !currentInWindow) {
+    return
+  }
+  require('@electron/remote/main').enable(window)
+  const { BrowserWindow } = require('@electron/remote')
+  const allWindows = BrowserWindow.getAllWindows()
+  const specificWindow = allWindows.find((window) => {
+    // 这里可以根据窗口的属性或其他特征来判断是否是你需要的窗口
+    return window.getTitle() === title
+  })
+  return specificWindow
+}
+</script>
+
+<script setup lang="ts">
 const props = defineProps<{
-  windowTitle: string;
-  createImmediate?: boolean;
+  windowTitle: string
+  createImmediate?: boolean
 }>()
 
 const emit = defineEmits([
@@ -97,8 +217,8 @@ defineExpose({
   isVisible: () => getEnWinRef().isVisible(),
   getWin: () => {
     return getEnWinRef()
-  }
-});
+  },
+})
 
 onMounted(() => {
   if (currentInWindow) {
@@ -121,115 +241,6 @@ window.addEventListener('beforeunload', () => {
     winRef.destroy()
   }
 })
-</script>
-
-<script lang="ts">
-
-const cannot = () => {
-  const canPlatform = [SyFrontendTypes.desktop, SyFrontendTypes['desktop-window']]
-  const plugin = usePlugin()
-  return !canPlatform.includes(plugin.platform)
-}
-
-interface IEnWindow {
-  width: number;
-  height: number;
-  x: number;
-  y: number;
-}
-
-export const isInWindow = (title) => {
-  const urlSearchParams = new URLSearchParams(location.search)
-  return urlSearchParams.has('enhance') && urlSearchParams.get('enhance') === 'true'
-    && urlSearchParams.has('enWindowTitle') && urlSearchParams.get('enWindowTitle') === title
-}
-
-export const createWindow = (title, queryStr?) => {
-  if (cannot()) {
-    return
-  }
-  const { BrowserWindow } = require('@electron/remote')
-
-  const module = useSyncModuleData({
-    namespace: `enWindow-${title}`,
-    defaultData: {
-      width: 1000,
-      height: 350,
-    },
-    needSync: false,
-  })
-  enLog(`${getColorStringWarn('EnWindow created:')} ${title}`)
-  enLog('', module.value)
-
-  const moduleOptions = computed(() => module.value.data as IEnWindow)
-
-  const {
-    width = 1000,
-    height = 350,
-    x,
-    y,
-  } = moduleOptions.value
-
-  const electronWindow = new BrowserWindow({
-    width,
-    height,
-    // x,
-    // y,
-    show: false,
-    resizable: true,
-    movable: true,
-    frame: false,
-    center: true,
-    title: title,
-    type: 'panel',
-    webPreferences: {
-      contextIsolation: false,
-      nodeIntegration: true,
-      webviewTag: true,
-      webSecurity: false,
-      nativeWindowOpen: true,
-    }
-  })
-
-  require("@electron/remote")
-      .require("@electron/remote/main")
-      .enable(electronWindow.webContents);
-
-  electronWindow.setTitle(title)
-
-  electronWindow.on('resize', () => {
-    const size = electronWindow.getSize(); // 获取新的窗口大小
-    moduleOptions.value.width = size[0]
-    moduleOptions.value.height = size[1]
-  });
-
-  // 监听窗口位置变化事件
-  electronWindow.on('move', () => {
-    const position = electronWindow.getPosition(); // 获取新的窗口位置
-    moduleOptions.value.x = position[0]
-    moduleOptions.value.y = position[1]
-  });
-
-  electronWindow.loadURL(
-    `${window.location.protocol}//${window.location.host}/stage/build/app/window.html?enhance=true&enWindowTitle=${title}&${queryStr ? `&${queryStr}` : ''}`
-  )
-  return electronWindow
-}
-
-export function getWindow(title, currentInWindow = false) {
-  if (cannot() && !currentInWindow) {
-    return
-  }
-  require('@electron/remote/main').enable(window);
-  const { BrowserWindow } = require('@electron/remote');
-  const allWindows = BrowserWindow.getAllWindows();
-  const specificWindow = allWindows.find(window => {
-    // 这里可以根据窗口的属性或其他特征来判断是否是你需要的窗口
-    return window.getTitle() === title;
-  });
-  return specificWindow
-}
-
 </script>
 
 <style lang="scss">

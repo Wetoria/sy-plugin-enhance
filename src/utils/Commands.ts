@@ -1,5 +1,5 @@
-import { usePlugin } from '@/main';
-import { ICommand } from 'siyuan';
+import { usePlugin } from '@/main'
+import { ICommand } from 'siyuan'
 
 const commandsKeyList: string[] = []
 
@@ -98,5 +98,5 @@ export function removeCommand(command: ICommand) {
   const plugin = usePlugin()
 
   plugin.commands = plugin.commands
-    .filter((i) => i.langKey !== command.langKey);
+    .filter((i) => i.langKey !== command.langKey)
 }

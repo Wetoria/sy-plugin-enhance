@@ -19,7 +19,10 @@
         </template>
       </a-overflow-list>
     </div>
-    <a-space :wrap="true" v-else>
+    <a-space
+      v-else
+      :wrap="true"
+    >
       <slot></slot>
       <a-tag @click="fold = true">
         <div class="flexAlignCenter enGap EnTagsController">
@@ -32,10 +35,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import SyIcon from "./SiyuanTheme/SyIcon.vue";
+import { ref } from "vue"
+import SyIcon from "./SiyuanTheme/SyIcon.vue"
 
-const fold = ref(true);
+const fold = ref(true)
 </script>
 
 <style lang="scss" scoped>

@@ -17,10 +17,10 @@
 <script setup lang="ts">
 defineProps<{
   options: Array<{
-    value: string;
-    text: string;
-  }>;
-  modelValue: string;
+    value: string
+    text: string
+  }>
+  modelValue: string
 }>()
 defineEmits(['update:modelValue'])
 </script>

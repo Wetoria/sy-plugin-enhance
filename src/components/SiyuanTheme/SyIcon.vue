@@ -5,7 +5,7 @@
         fontSize: size,
         width: size,
         height: size,
-        color: disabled ? 'var(--b3-empty-color)' : undefined
+        color: disabled ? 'var(--b3-empty-color)' : undefined,
       }"
       class="enSyIcon"
     >
@@ -19,7 +19,7 @@ defineProps({
   name: String,
   size: {
     type: [Number, String],
-    default: 12
+    default: 12,
   },
   disabled: Boolean,
 })

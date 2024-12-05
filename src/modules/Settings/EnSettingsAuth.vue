@@ -19,8 +19,8 @@
     <a-tag
       v-else
       color="arcoblue"
-      @click="openAuthModal"
       style="cursor: pointer;"
+      @click="openAuthModal"
     >
       {{ level }}
     </a-tag>
@@ -34,7 +34,10 @@
       <div>更新订阅状态</div>
     </template>
     <div>
-      <a-space direction="vertical" fill>
+      <a-space
+        direction="vertical"
+        fill
+      >
         <a-descriptions
           :data="[
             {
@@ -70,7 +73,9 @@
             </a-typography-text>
           </template>
         </a-descriptions>
-        <a-divider orientation="center">具体步骤</a-divider>
+        <a-divider orientation="center">
+          具体步骤
+        </a-divider>
         <a-typography-text type="primary">
           一、使用爱发电自行完成订阅
         </a-typography-text>
@@ -111,7 +116,9 @@
         <a-typography-text>
           对于不希望使用爱发电购买授权的用户，可以<a href="https://simplest-frontend.feishu.cn/wiki/wikcnHmIs4HagSlJPiti2VESQEh#share-GT12dWEr9opouaxYW6wcpkiGn6c">点击此处联系作者</a>进行订阅。
         </a-typography-text>
-        <a-divider orientation="center">其他说明</a-divider>
+        <a-divider orientation="center">
+          其他说明
+        </a-divider>
         <a-typography-text>
           如果已经订阅了低版本，想升级，请<a href="https://simplest-frontend.feishu.cn/wiki/wikcnHmIs4HagSlJPiti2VESQEh#share-GT12dWEr9opouaxYW6wcpkiGn6c">点击此处联系作者</a>了解补差价升级。
         </a-typography-text>
@@ -124,6 +131,17 @@
 </template>
 
 <script lang="ts">
+import { request } from '@/api'
+import { useSyncModuleData } from '@/utils/SyncData'
+import { Notification } from '@arco-design/web-vue'
+import dayjs from 'dayjs'
+import {
+  computed,
+  onMounted,
+  ref,
+  watch,
+} from 'vue'
+import { useSettings } from './EnSettings.vue'
 
 interface EnAuth {
   lv: number
@@ -145,12 +163,6 @@ export const authModuleData = computed(() => {
 </script>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
-import { useSettings } from './EnSettings.vue';
-import { useSyncModuleData } from '@/utils/SyncData';
-import dayjs from 'dayjs';
-import { request } from '@/api';
-import { Notification } from '@arco-design/web-vue';
 
 
 const settings = useSettings()
@@ -249,8 +261,8 @@ const updateAuthSubscription = async (showMessage = true) => {
       return false
     }
     const respData = res.data || {} as {
-      v: number,
-      e: string,
+      v: number
+      e: string
     }
     authModule.value.data = {
       lv: respData.v,

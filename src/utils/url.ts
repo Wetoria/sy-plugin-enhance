@@ -8,7 +8,7 @@ interface EnURLParams {
   type?: keyof typeof URL_TYPE_MAP
 }
 
-export interface EnVideoAndAudioUrlParams extends EnURLParams{
+export interface EnVideoAndAudioUrlParams extends EnURLParams {
   t?: string
   bid?: string
 }
@@ -18,7 +18,9 @@ export const urlSchemeCreator = (params: EnURLParams = {} as any) => {
   let base = `${basePluginUrlScheme}`
   if (keys.length) {
     base += '?'
-    base += keys.map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`).join('&')
+    base += keys.map((key) => {
+      return `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`
+    }).join('&')
   }
 
   return base
@@ -28,15 +30,20 @@ export function isPluginUrl(url: URL): boolean {
   return url.href.startsWith(basePluginUrlScheme)
 }
 
-export function isTargetPluginType(href: string, targetType: EnURLParams['type']): boolean {
+export function isTargetPluginType(
+  href: string,
+  targetType: EnURLParams['type'],
+): boolean {
   let result = false
   try {
     const linkUrl = new URL(href)
     const linkUrlSearchParams = linkUrl.searchParams
-    if (isPluginUrl(linkUrl) && linkUrlSearchParams.get('type') === targetType) {
+    if (isPluginUrl(linkUrl)
+      && linkUrlSearchParams.get('type') === targetType
+    ) {
       result = true
     }
-  } catch(err) {
+  } catch (err) {
     result = false
   }
   return result

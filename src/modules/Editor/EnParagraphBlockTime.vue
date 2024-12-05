@@ -8,9 +8,16 @@
 </template>
 
 <script setup lang="ts">
-import dayjs from 'dayjs';
-import { computed, ref, watchEffect } from 'vue';
-import { FORMAT_DATE, FORMAT_TIME } from './EnParagraphBlockAttrContainer.vue';
+import dayjs from 'dayjs'
+import {
+  computed,
+  ref,
+  watchEffect,
+} from 'vue'
+import {
+  FORMAT_DATE,
+  FORMAT_TIME,
+} from './EnParagraphBlockAttrContainer.vue'
 
 const props = defineProps<{
   pDom: HTMLDivElement
@@ -21,8 +28,14 @@ const props = defineProps<{
   defaultBlockType: 'created' | 'updated'
 }>()
 
+
+const showCreated = ref(props.defaultBlockType === 'created')
+watchEffect(() => {
+  showCreated.value = props.defaultBlockType === 'created'
+})
+
 const styledFormatted = computed(() => {
-  let value = showCreated.value ? props.created : props.updated
+  const value = showCreated.value ? props.created : props.updated
   if (!value) {
     return
   }
@@ -36,11 +49,6 @@ const styledFormatted = computed(() => {
       <span class="enBlockTimeHMS">${hms}</span>
     </span>
   `
-})
-
-const showCreated = ref(props.defaultBlockType === 'created')
-watchEffect(() => {
-  showCreated.value = props.defaultBlockType === 'created'
 })
 </script>
 
@@ -58,6 +66,7 @@ watchEffect(() => {
   }
 }
 </style>
+
 <style lang="scss">
 .protyle-wysiwyg[data-en_is_dailynote] {
   & .enBlockTimeYMD {

@@ -23,8 +23,8 @@
         <slot></slot>
       </div>
       <div
-        class="en_settings_module_footer"
         v-if="hasFooterSlot"
+        class="en_settings_module_footer"
       >
         <slot name="footer"></slot>
       </div>
@@ -40,10 +40,21 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, useSlots, watch } from 'vue';
-import { EnModule, EnSettingModule, resetModuleOptions, useSettingModuleData } from '@/modules/Settings/EnSettings.vue';
-import EnSettingsItemAreaHeading from '@/modules/Settings/EnSettingsItemAreaHeading.vue';
-import EnSettingsTeleport from '@/modules/Settings/EnSettingsTeleport.vue';
+import {
+  EnModule,
+  EnSettingModule,
+  resetModuleOptions,
+  useSettingModuleData,
+} from '@/modules/Settings/EnSettings.vue'
+import EnSettingsItemAreaHeading from '@/modules/Settings/EnSettingsItemAreaHeading.vue'
+import EnSettingsTeleport from '@/modules/Settings/EnSettingsTeleport.vue'
+import {
+  computed,
+  onMounted,
+  onUnmounted,
+  useSlots,
+  watch,
+} from 'vue'
 
 const props = defineProps<{
   name: string
@@ -52,23 +63,23 @@ const props = defineProps<{
   always?: boolean
 }>()
 
-const slots = useSlots();
+const slots = useSlots()
 const hasFooterSlot = computed(() => {
-  return !!slots.footer;
-});
+  return !!slots.footer
+})
 
 const module = computed(() => props.module)
 const moduleData = useSettingModuleData(props.name)
 const moduleBooleanOptionKeys = computed(() => {
   return Object.keys(moduleData.value || {})
-    .filter(key => typeof moduleData.value[key] === 'boolean')
+    .filter((key) => typeof moduleData.value[key] === 'boolean')
 })
 const hasBooleanOptions = computed(() => {
   return !!moduleBooleanOptionKeys.value.length
 })
 
 const moduleBooleanOptionsKeysWithoutEnabledAttr = computed(() => {
-  return moduleBooleanOptionKeys.value.filter(key => key !== 'enabled')
+  return moduleBooleanOptionKeys.value.filter((key) => key !== 'enabled')
 })
 const hasSubBooleanOptions = computed(() => {
   return !!moduleBooleanOptionsKeysWithoutEnabledAttr.value.length
@@ -128,7 +139,7 @@ onMounted(() => {
         moduleData.value.enabled = true
       }
     }
-  }, {deep: true})
+  }, { deep: true })
 
   onUnmounted(() => {
     unwatchFunc()

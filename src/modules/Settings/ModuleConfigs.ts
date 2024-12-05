@@ -1,6 +1,6 @@
-import { ModuleName_TestLogic } from '@/modules/Test/TestLogic.vue'
-import { EnModule } from '@/modules/Settings/EnSettings.vue'
 import { ModuleName_DailyNote } from '@/modules/DailyNote/DailyNote.vue'
+import { EnModule } from '@/modules/Settings/EnSettings.vue'
+import { ModuleName_TestLogic } from '@/modules/Test/TestLogic.vue'
 import { getModuleRefByNamespace } from '@/utils/SyncData'
 
 

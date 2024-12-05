@@ -12,10 +12,13 @@
       class="MobileNavContainer"
     >
       <div
-        class="NavList"
         ref="navListRef"
+        class="NavList"
       >
-        <div class="NavItem" @click="goBack">
+        <div
+          class="NavItem"
+          @click="goBack"
+        >
           <div class="NavItemIcon">
             <SyIcon
               name="iconBack"
@@ -24,7 +27,10 @@
             />
           </div>
         </div>
-        <div class="NavItem" @click="goForward">
+        <div
+          class="NavItem"
+          @click="goForward"
+        >
           <div class="NavItemIcon">
             <SyIcon
               name="iconForward"
@@ -33,7 +39,11 @@
             />
           </div>
         </div>
-        <div class="NavItem" @click="createTodayDailyNote" v-if="isNotFree">
+        <div
+          v-if="isNotFree"
+          class="NavItem"
+          @click="createTodayDailyNote"
+        >
           <div class="NavItemIcon">
             <SyIcon
               name="iconAdd"
@@ -42,7 +52,10 @@
             />
           </div>
         </div>
-        <div class="NavItem" @click="entryOpenSettings">
+        <div
+          class="NavItem"
+          @click="entryOpenSettings"
+        >
           <div class="NavItemIcon">
             <SyIcon
               :name="['iconHeart', 'iconVIP', 'iconSuper'][settings.v]"
@@ -100,7 +113,7 @@
         >
           <div class="NavItemIcon">
             <SyIcon
-              v-if="item.icon != 'iconMore'"
+              v-if="item.icon !== 'iconMore'"
               :name="item.icon"
               :disabled="item.disabled"
               size="18"
@@ -113,16 +126,47 @@
 </template>
 
 <script setup lang="ts">
-import { debounce } from '@/utils';
-import { usePlugin } from '@/main';
-import { ref, onMounted } from 'vue';
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
-import { computed } from 'vue';
+import { usePlugin } from '@/main'
+import {
+  jumpToNextDailyNote,
+  jumpToPrevDailyNote,
+} from '@/modules/DailyNote/DailyNote.vue'
+import { createTodayDailyNote } from '@/modules/DailyNote/QuickNote/EnQuickNoteMobile.vue'
+import {
+  entryOpenSettings,
+  isNotFree,
+  useSettings,
+} from '@/modules/Settings/EnSettings.vue'
+import { debounce } from '@/utils'
 import { useDocHistory } from '@/utils/History'
-import { entryOpenSettings, useSettings } from '@/modules/Settings/EnSettings.vue';
-import { jumpToNextDailyNote, jumpToPrevDailyNote } from '@/modules/DailyNote/DailyNote.vue';
-import { isNotFree } from '@/modules/Settings/EnSettings.vue';
-import { createTodayDailyNote } from '@/modules/DailyNote/QuickNote/EnQuickNoteMobile.vue';
+import {
+  computed,
+  onMounted,
+  ref,
+} from 'vue'
+
+const plugin = usePlugin()
+
+const lastScrollTop = ref(0)
+const showToolBar = ref(true)
+const onScroll = (event) => {
+  const currentScrollTop = (event.target as HTMLElement).scrollTop
+
+  if (currentScrollTop + 60 <= lastScrollTop.value) {
+    enLog('向上滚动')
+    showToolBar.value = true
+    lastScrollTop.value = currentScrollTop
+  } else if (currentScrollTop - 10 >= lastScrollTop.value) {
+    enLog('向下滚动')
+    showToolBar.value = false
+    lastScrollTop.value = currentScrollTop
+  }
+
+  if (currentScrollTop <= 0) {
+    showToolBar.value = true
+  }
+}
 
 onMounted(() => {
   if (!plugin.isMobile) {
@@ -141,7 +185,7 @@ onMounted(() => {
     handler()
     const observer = new MutationObserver(() => {
       run()
-    });
+    })
     if (editorDom) {
       observer.observe(editorDom, {
         childList: true, // 观察目标子节点的变化，是否有添加或者删除
@@ -153,28 +197,6 @@ onMounted(() => {
   }
 })
 
-const lastScrollTop = ref(0);
-const showToolBar = ref(true)
-const onScroll = (event) => {
-  const currentScrollTop = (event.target as HTMLElement).scrollTop
-
-  if (currentScrollTop + 60 <= lastScrollTop.value) {
-    enLog('向上滚动');
-    showToolBar.value = true
-    lastScrollTop.value = currentScrollTop;
-  } else if (currentScrollTop - 10 >= lastScrollTop.value) {
-    enLog('向下滚动');
-    showToolBar.value = false
-    lastScrollTop.value = currentScrollTop;
-  }
-
-  if (currentScrollTop <= 0) {
-    showToolBar.value = true
-  }
-
-}
-
-const plugin = usePlugin()
 const keyboardShown = ref(false)
 plugin.eventBus.on('mobile-keyboard-show', () => {
   showToolBar.value = false
@@ -201,12 +223,11 @@ const settings = useSettings()
 
 const navListRef = ref(null)
 const navList = ref<Array<{
-  icon: string;
-  label: string;
-  disabled?: boolean;
-  onClick?: () => void;
-}>>([
-])
+  icon: string
+  label: string
+  disabled?: boolean
+  onClick?: () => void
+}>>([])
 
 const openSiyuanSettings = () => {
   const toolbarMore = document.body.querySelector('#toolbarMore')

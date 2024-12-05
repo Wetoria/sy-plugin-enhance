@@ -1,5 +1,9 @@
 <template>
-  <EnSettingsTeleportModule :name="moduleName" :display="moduleDisplayName" :module="module">
+  <EnSettingsTeleportModule
+    :name="moduleName"
+    :display="moduleDisplayName"
+    :module="module"
+  >
     <EnSettingsItem>
       <div>
         显示段落块时间
@@ -26,8 +30,12 @@
         <a-select
           v-model="moduleOptions.defaultBlockType"
         >
-          <a-option value="created">创建时间</a-option>
-          <a-option value="updated">更新时间</a-option>
+          <a-option value="created">
+            创建时间
+          </a-option>
+          <a-option value="updated">
+            更新时间
+          </a-option>
         </a-select>
       </template>
     </EnSettingsItem>
@@ -41,9 +49,13 @@
         </div>
       </template>
       <template #opt>
-        <a-input-number class="input-demo" placeholder="Please Enter" mode="button"
+        <a-input-number
+          v-model="moduleOptions.blockTimeFontSize"
+          class="input-demo"
+          placeholder="Please Enter"
+          mode="button"
           :readOnly="plugin.isMobile"
-          v-model="moduleOptions.blockTimeFontSize" />
+        />
       </template>
     </EnSettingsItem>
 
@@ -51,8 +63,8 @@
   <div>
     <EnParagraphBlockAttrContainer
       v-for="paragraphBlock of paragraphListRef"
-      :el="paragraphBlock"
       :key="paragraphBlock.dataset.nodeId"
+      :el="paragraphBlock"
     >
       <template
         #default="{
@@ -64,8 +76,8 @@
         }"
       >
         <EnParagraphBlockTimeDiff
-          :nodeId="nodeId"
           v-if="isVip"
+          :nodeId="nodeId"
         />
         <!-- <EnParagraphBlockLock
           :pDom="paragraphBlock"
@@ -89,22 +101,34 @@
 </template>
 
 <script setup lang="ts">
-  import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue';
-  import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue';
-  import { onMounted, ref, watchEffect } from 'vue';
-  import { debounce, moduleEnableStatusSwitcher } from '@/utils';
-  import { queryAllByDom } from '@/utils/DOM';
-  import { SyDomNodeTypes } from '@/utils/Siyuan';
+import { usePlugin } from '@/main'
+import {
+  EnModule,
+  isVip,
+  useSettingModule,
+  useSettingModuleData,
+} from '@/modules/Settings/EnSettings.vue'
+import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
+import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue'
+import {
+  debounce,
+  moduleEnableStatusSwitcher,
+} from '@/utils'
+import { queryAllByDom } from '@/utils/DOM'
 
 
-  import EnParagraphBlockAttrContainer from './EnParagraphBlockAttrContainer.vue';
-  import EnParagraphBlockTime from './EnParagraphBlockTime.vue';
-  import { usePlugin } from '@/main';
-import { EnModule, isVip, useSettingModule, useSettingModuleData } from '@/modules/Settings/EnSettings.vue';
-import EnParagraphBlockTimeDiff from './EnParagraphBlockTimeDiff.vue';
-import { updateModuleDataByNamespaceWithLoadFile } from '@/utils/SyncData';
+import { SyDomNodeTypes } from '@/utils/Siyuan'
+import { updateModuleDataByNamespaceWithLoadFile } from '@/utils/SyncData'
+import {
+  onMounted,
+  ref,
+  watchEffect,
+} from 'vue'
+import EnParagraphBlockAttrContainer from './EnParagraphBlockAttrContainer.vue'
+import EnParagraphBlockTime from './EnParagraphBlockTime.vue'
+import EnParagraphBlockTimeDiff from './EnParagraphBlockTimeDiff.vue'
 
-  const plugin = usePlugin()
+const plugin = usePlugin()
 
 interface ModuleOptions extends EnModule {
   enableBlockTime: boolean
@@ -139,75 +163,75 @@ const moduleOptions = useSettingModuleData<ModuleOptions>(moduleName)
 
 updateModuleDataByNamespaceWithLoadFile(moduleName)
 
-  const paragraphListRef = ref<HTMLDivElement[]>([])
+const paragraphListRef = ref<HTMLDivElement[]>([])
 
-  const appendEnProtyleAttrContainer = (dom: HTMLDivElement) => {
-    const exist = !!dom.querySelector('.enProtyleAttrContainer')
-    if (exist) {
-      return
+const appendEnProtyleAttrContainer = (dom: HTMLDivElement) => {
+  const exist = !!dom.querySelector('.enProtyleAttrContainer')
+  if (exist) {
+    return
+  }
+  const span = document.createElement('span')
+  span.className = 'enProtyleAttrContainer'
+  span.contentEditable = 'false'
+  const protyleAttr = dom.querySelector('.protyle-attr')
+  if (!protyleAttr) return
+
+  protyleAttr.appendChild(span)
+}
+
+const FOCUS_CLASS_NAME = 'block-focus'
+const lasFocusDom = ref<HTMLDivElement>()
+const bindClickFocusEvent = (dom: HTMLDivElement) => {
+  // @ts-expect-error bindedFocusEvent
+  if (dom.bindedFocusEvent) {
+    return
+  }
+  dom.addEventListener('click', () => {
+    if (lasFocusDom.value) {
+      lasFocusDom.value.classList.toggle(FOCUS_CLASS_NAME, false)
     }
-    const span = document.createElement('span')
-    span.className = 'enProtyleAttrContainer'
-    span.contentEditable = 'false'
-    const protyleAttr = dom.querySelector('.protyle-attr')
-    if (!protyleAttr) return
+    if (dom.dataset.enBlockLocked == 'locked') {
+      dom.classList.toggle(FOCUS_CLASS_NAME, true)
+    }
+    lasFocusDom.value = dom
+  })
+  // @ts-expect-error bindedFocusEvent
+  dom.bindedFocusEvent = true
+}
 
-    protyleAttr.appendChild(span)
+watchEffect(() => {
+  const paragraphList = paragraphListRef.value
+
+  paragraphList.forEach((dom: HTMLDivElement) => {
+    appendEnProtyleAttrContainer(dom)
+
+    bindClickFocusEvent(dom)
+  })
+})
+
+function insertBlockTime() {
+  const handler = () => {
+    const paragraphList = queryAllByDom(document.body, `.protyle:not(.EnDisableProtyleEnhance) [data-type="${SyDomNodeTypes.NodeParagraph}"]`) as HTMLDivElement[]
+    paragraphListRef.value = paragraphList
   }
 
-  const FOCUS_CLASS_NAME = 'block-focus'
-  const lasFocusDom = ref<HTMLDivElement>()
-  const bindClickFocusEvent = (dom: HTMLDivElement) => {
-    // @ts-expect-error bindedFocusEvent
-    if (dom.bindedFocusEvent) {
-      return
-    }
-    dom.addEventListener('click', () => {
-      if (lasFocusDom.value) {
-        lasFocusDom.value.classList.toggle(FOCUS_CLASS_NAME, false)
-      }
-      if (dom.dataset.enBlockLocked == 'locked') {
-        dom.classList.toggle(FOCUS_CLASS_NAME, true)
-      }
-      lasFocusDom.value = dom
-    })
-    // @ts-expect-error bindedFocusEvent
-    dom.bindedFocusEvent = true
-  }
-
-  watchEffect(() => {
-    const paragraphList = paragraphListRef.value
-
-    paragraphList.forEach((dom: HTMLDivElement) => {
-      appendEnProtyleAttrContainer(dom)
-
-      bindClickFocusEvent(dom)
-    })
+  handler()
+  const observer = new MutationObserver(debounce(handler, 300))
+  observer.observe(document.documentElement, {
+    childList: true, // 观察目标子节点的变化，是否有添加或者删除
+    subtree: true, // 观察后代节点，默认为 false
+    attributes: true,
   })
-
-  function insertBlockTime() {
-    const handler = () => {
-      const paragraphList = queryAllByDom(document.body, `.protyle:not(.EnDisableProtyleEnhance) [data-type="${SyDomNodeTypes.NodeParagraph}"]`) as HTMLDivElement[]
-      paragraphListRef.value = paragraphList
-    }
-
-    handler()
-    const observer = new MutationObserver(debounce(handler, 300));
-    observer.observe(document.documentElement, {
-      childList: true, // 观察目标子节点的变化，是否有添加或者删除
-      subtree: true, // 观察后代节点，默认为 false
-      attributes: true,
-    })
-  }
-  onMounted(() => {
-    insertBlockTime();
-  })
+}
+onMounted(() => {
+  insertBlockTime()
+})
 
 
-  watchEffect(() => {
-    moduleEnableStatusSwitcher('EnParagraphBlock', moduleOptions.value.enabled)
-    document.documentElement.style.setProperty('--timeFontSize', `${moduleOptions.value.blockTimeFontSize}px`)
-  })
+watchEffect(() => {
+  moduleEnableStatusSwitcher('EnParagraphBlock', moduleOptions.value.enabled)
+  document.documentElement.style.setProperty('--timeFontSize', `${moduleOptions.value.blockTimeFontSize}px`)
+})
 </script>
 
 <style lang="scss">

@@ -3,13 +3,25 @@
 </template>
 
 <script setup lang="ts">
-import { usePlugin } from '@/main';
-import { debounce, moduleEnableStatusSwitcher } from '@/utils';
-import { IProtyle } from 'siyuan';
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import { addCommand } from '@/utils/Commands';
-import { unWatchDomChange, watchDomChange } from '@/utils/DOM';
-import { useCurrentProtyle } from '@/utils/Siyuan';
+import { usePlugin } from '@/main'
+import {
+  debounce,
+  moduleEnableStatusSwitcher,
+} from '@/utils'
+import { addCommand } from '@/utils/Commands'
+import {
+  unWatchDomChange,
+  watchDomChange,
+} from '@/utils/DOM'
+import { useCurrentProtyle } from '@/utils/Siyuan'
+import { IProtyle } from 'siyuan'
+import {
+  computed,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  watch,
+} from 'vue'
 
 const plugin = usePlugin()
 
@@ -98,20 +110,8 @@ interface IStyle {
 }
 
 const currentFontStyle = ref<IStyle>()
-const enableBrush = () => {
-  document.addEventListener('keydown', escapeEvent)
 
-  document.addEventListener('mouseup', pasteStyleOnMouseUp)
-}
 
-const cancelBrush = () => {
-  currentFontStyle.value = null
-
-  document.removeEventListener('keydown', escapeEvent)
-  document.removeEventListener('mouseup', pasteStyleOnMouseUp)
-}
-
-const brushing = computed(() => !!currentFontStyle.value)
 
 const escapeEvent = (event) => {
   if (event.code === 'Escape') {
@@ -122,7 +122,7 @@ const escapeEvent = (event) => {
 }
 
 const pasteStyleOnMouseUp = (event) => {
-  const selection = window.getSelection();
+  const selection = window.getSelection()
 
   if (selection.isCollapsed) {
     return
@@ -132,6 +132,23 @@ const pasteStyleOnMouseUp = (event) => {
   }, 30)
 }
 
+const cancelBrush = () => {
+  currentFontStyle.value = null
+
+  document.removeEventListener('keydown', escapeEvent)
+  document.removeEventListener('mouseup', pasteStyleOnMouseUp)
+}
+
+const enableBrush = () => {
+  document.addEventListener('keydown', escapeEvent)
+
+  document.addEventListener('mouseup', pasteStyleOnMouseUp)
+}
+
+
+const brushing = computed(() => !!currentFontStyle.value)
+
+
 const switchEnableStatus = () => {
   moduleEnableStatusSwitcher('EnFormatBrush', brushing.value)
   if (brushing.value) {
@@ -140,19 +157,19 @@ const switchEnableStatus = () => {
 }
 
 const convertStyleByRange = () => {
-  const selection = window.getSelection();
+  const selection = window.getSelection()
 
   if (!selection.rangeCount) {
     return
   }
   // 获取选区的第一个范围
-  const range = selection.getRangeAt(0);
+  const range = selection.getRangeAt(0)
 
   // 获取选区的开始容器
-  const startContainer = range.startContainer;
+  const startContainer = range.startContainer
 
   // 获取包含选区开始的元素
-  const element = (startContainer.nodeType === Node.ELEMENT_NODE ? startContainer : startContainer.parentElement) as HTMLElement;
+  const element = (startContainer.nodeType === Node.ELEMENT_NODE ? startContainer : startContainer.parentElement) as HTMLElement
 
   // console.log('element is ', element)
   // const tagNames = [
@@ -173,11 +190,11 @@ const convertStyleByRange = () => {
   })
 
   const elDataType = element.dataset.type || ''
-  let validFontStyleDataType = elDataType.split(' ').filter(i => FONT_STYLE_INLINE_TYPE.includes(i))
+  let validFontStyleDataType = elDataType.split(' ').filter((i) => FONT_STYLE_INLINE_TYPE.includes(i))
   validFontStyleDataType = Array.from(new Set(validFontStyleDataType))
   tempStyle.dataType = validFontStyleDataType || []
 
-  tempStyle.selection = {} as any;
+  tempStyle.selection = {} as any
   SELECTION_KEYS.forEach((key) => {
     tempStyle.selection[key] = selection[key]
   })
@@ -200,14 +217,14 @@ const isSameStyle = (style1: IStyle, style2: IStyle) => {
   // 检查 style 对象的键和值是否一致
   for (const key of style1Keys) {
     if (!style2Keys.includes(key) || style1.style[key] !== style2.style[key]) {
-      return false;
+      return false
     }
   }
 
   // 检查 dataType 数组的元素是否一致
   for (const type of style1.dataType) {
     if (!style2.dataType.includes(type)) {
-      return false;
+      return false
     }
   }
 
@@ -244,11 +261,11 @@ const pasteCurrentStyle = (protyle: IProtyle = currentProtyle.value) => {
 
   // const oldElement = siyuanNode.outerHTML
 
-  protyle?.toolbar?.setInlineMark(protyle, 'clear', "range");
-  protyle?.toolbar?.setInlineMark(protyle, 'clear', "range");
+  protyle?.toolbar?.setInlineMark(protyle, 'clear', "range")
+  protyle?.toolbar?.setInlineMark(protyle, 'clear', "range")
 
   currentFontStyle.value.dataType.forEach((item) => {
-    protyle?.toolbar?.setInlineMark(protyle, item, "range");
+    protyle?.toolbar?.setInlineMark(protyle, item, "range")
   })
 
   const specialStyle = [
@@ -262,19 +279,19 @@ const pasteCurrentStyle = (protyle: IProtyle = currentProtyle.value) => {
         protyle?.toolbar?.setInlineMark(protyle, 'text', "range", {
           type: 'style4',
           color: "",
-        });
+        })
       } else {
         protyle?.toolbar?.setInlineMark(protyle, 'text', "range", {
           type: 'style2',
           color: "",
-        });
+        })
       }
       return
     }
     protyle?.toolbar?.setInlineMark(protyle, 'text', "range", {
       type: key,
       color: currentFontStyle.value.style[key],
-    });
+    })
   })
 }
 
@@ -353,7 +370,7 @@ const registerToolbarBrush = debounce(() => {
 
 
 const getAriaLabel = () => {
-  const cmd = plugin.commands.find(i => i.langKey === 'En_FormatBrush_Enable')
+  const cmd = plugin.commands.find((i) => i.langKey === 'En_FormatBrush_Enable')
   const enableLabels = [`开启格式刷`]
   if (cmd && (cmd.customHotkey || cmd.hotkey)) {
     enableLabels.push(`(${cmd.customHotkey || cmd.hotkey})`)
@@ -402,14 +419,14 @@ watch(brushing, () => {
 
 onMounted(() => {
   commands.forEach((command) => {
-    addCommand(command);
+    addCommand(command)
   })
   watchDomChange(registerToolbarBrush)
-});
+})
 onBeforeUnmount(() => {
-  plugin.commands = plugin.commands.filter((i) => !commands.find(cmd => cmd.langKey === i.langKey));
+  plugin.commands = plugin.commands.filter((i) => !commands.find((cmd) => cmd.langKey === i.langKey))
   unWatchDomChange(registerToolbarBrush)
-});
+})
 </script>
 
 <style lang="scss">

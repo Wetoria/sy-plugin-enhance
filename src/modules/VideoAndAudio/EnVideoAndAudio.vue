@@ -1,9 +1,9 @@
 <template>
   <div>
     <EnWindow
+      ref="enWinRef"
       :windowTitle="winTitle"
       createImmediate
-      ref="enWinRef"
     >
       <div
         class="EnEVAWindowContainer"
@@ -28,17 +28,29 @@
 </template>
 
 <script setup lang="ts">
-import { usePlugin } from '@/main';
-import { debounce } from '@/utils';
-import { queryAllByDom } from '@/utils/DOM';
-import { Protyle, showMessage } from 'siyuan';
-import { useProWatcher } from '@/modules/Settings/EnSettings.vue';
-import { SyFrontendTypes } from '@/utils/Siyuan';
-import EnWindow, { isInWindow } from '@/modules/EnWindow.vue';
-import { onMounted, ref } from 'vue';
-import EnVideoAndAudioBlockPlay from './EnVideoAndAudioBlockPlay.vue';
-import { EnVideoAndAudioUrlParams, urlSchemeCreator, URL_TYPE_MAP, isTargetPluginType, convertSiyuanLinkIntoNormal } from '@/utils/url';
-import { addCommand } from '@/utils/Commands';
+import { usePlugin } from '@/main'
+import EnWindow, { isInWindow } from '@/modules/EnWindow.vue'
+import { useProWatcher } from '@/modules/Settings/EnSettings.vue'
+import { debounce } from '@/utils'
+import { addCommand } from '@/utils/Commands'
+import { queryAllByDom } from '@/utils/DOM'
+import { SyFrontendTypes } from '@/utils/Siyuan'
+import {
+  convertSiyuanLinkIntoNormal,
+  EnVideoAndAudioUrlParams,
+  isTargetPluginType,
+  URL_TYPE_MAP,
+  urlSchemeCreator,
+} from '@/utils/url'
+import {
+  Protyle,
+  showMessage,
+} from 'siyuan'
+import {
+  onMounted,
+  ref,
+} from 'vue'
+import EnVideoAndAudioBlockPlay from './EnVideoAndAudioBlockPlay.vue'
 
 const plugin = usePlugin()
 
@@ -82,7 +94,7 @@ const recordVideoOrAudioRef = (videoOrAudioElement: HTMLVideoElement | HTMLAudio
     return
   }
 
-  videoAndAudioList.value = videoAndAudioList.value.filter(i => document.body.contains(i.el))
+  videoAndAudioList.value = videoAndAudioList.value.filter((i) => document.body.contains(i.el))
 
 
   let existAttrContainer = attrEl.querySelector(`.${attrContainerClassName}`)
@@ -92,7 +104,7 @@ const recordVideoOrAudioRef = (videoOrAudioElement: HTMLVideoElement | HTMLAudio
     attrEl.insertBefore(existAttrContainer, attrEl.firstChild)
   }
 
-  const existInList = videoAndAudioList.value.find(i => i.el == existAttrContainer)
+  const existInList = videoAndAudioList.value.find((i) => i.el == existAttrContainer)
   if (!existInList) {
     videoAndAudioList.value.push({
       el: existAttrContainer,
@@ -204,7 +216,7 @@ const getCurrentVideoTimeLink = () => {
     return
   }
   const {
-    link
+    link,
   } = getVideoTimeLink(currentTarget, currentSiyuanNode)
   return link
 }
@@ -231,7 +243,7 @@ const copyCurrentVideoTimeLink = async () => {
   try {
     await navigator.clipboard.writeText(link)
     showMessage('已复制当前视频/音频的时间戳链接')
-  } catch(err) {
+  } catch (err) {
     enError(err)
   }
 }
@@ -240,7 +252,7 @@ const copyCurrentVideoTimeLinkMD = async () => {
   try {
     await navigator.clipboard.writeText(link)
     showMessage('已复制当前视频/音频的时间戳(Markdown)链接')
-  } catch(err) {
+  } catch (err) {
     enError(err)
   }
 }
@@ -258,7 +270,7 @@ const isTargetSiyuanNode = (type) => ['NodeVideo', 'NodeAudio'].includes(type)
 const onOpenContextMenu = ({ detail }) => {
   const plugin = usePlugin()
   const {
-    blockElements
+    blockElements,
   } = detail
   if (blockElements.length != 1) {
     return
@@ -314,7 +326,7 @@ const onOpenContextMenu = ({ detail }) => {
         },
       },
     ],
-  });
+  })
 }
 
 const getEVAParamsByUrl = (url) => {
@@ -361,6 +373,7 @@ const setVideoTime = ({
 
   const videoOrAudioNode = videoNode || audioNode
 
+  // eslint-disable-next-line regexp/no-unused-capturing-group
   const validTimeStrReg = /^(\d+(\.\d+)?(:\d+(\.\d+)?)?(:\d+(\.\d+)?)?)((~|-)(\d+(\.\d+)?(:\d+(\.\d+)?)?(:\d+(\.\d+)?)?))?$/
   const isValidTimeStr = validTimeStrReg.test(time)
 
@@ -402,7 +415,7 @@ const jumpToBlock = (url) => {
   plugin.eventBus.on('loaded-protyle-static', () => {
     setVideoTime({
       bid,
-      time
+      time,
     })
   })
   flag = setInterval(() => {
@@ -438,8 +451,8 @@ const protyleSlashList = [
     id: "insertCurrentVideoOrAudioTimestamp",
     callback(protyle: Protyle) {
       const timestamp = getCurrentVideoTimeLinkMd()
-      protyle.insert(timestamp);
-    }
+      protyle.insert(timestamp)
+    },
   },
 ]
 
@@ -454,7 +467,7 @@ const commands = [
     },
   },
 ]
-const observer = new MutationObserver(debounce(handler, 500));
+const observer = new MutationObserver(debounce(handler, 500))
 const enable = () => {
   handler()
   observer.observe(document.body, {
@@ -463,7 +476,7 @@ const enable = () => {
   })
 
   commands.forEach((command) => {
-    addCommand(command);
+    addCommand(command)
   })
 
   plugin.protyleSlash.push(...protyleSlashList)
@@ -474,8 +487,8 @@ const enable = () => {
 
 const disable = () => {
   observer.disconnect()
-  plugin.protyleSlash = plugin.protyleSlash.filter(i => !protyleSlashList.find(j => j != i))
-  plugin.commands = plugin.commands.filter(i => !commands.find(j => j.langKey == i.langKey))
+  plugin.protyleSlash = plugin.protyleSlash.filter((i) => !protyleSlashList.find((j) => j != i))
+  plugin.commands = plugin.commands.filter((i) => !commands.find((j) => j.langKey == i.langKey))
   plugin.eventBus.off('click-blockicon', onOpenContextMenu)
   plugin.eventBus.off('open-siyuan-url-plugin', onOpenUrlScheme)
 }
@@ -513,7 +526,7 @@ const initProtyle = async () => {
       const contentElement = protyle.protyle.contentElement
       contentElement.classList.toggle('EnDisableProtyleEnhance', true)
       protyle.protyle.element.classList.toggle('EnEVAProtyle', true)
-    }
+    },
   })
 }
 useProWatcher({

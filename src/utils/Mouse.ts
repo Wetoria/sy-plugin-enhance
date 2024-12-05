@@ -1,5 +1,9 @@
-import { onBeforeUnmount, onMounted, ref } from 'vue';
-import { debounce } from '.';
+import {
+  onBeforeUnmount,
+  onMounted,
+  ref,
+} from 'vue'
+import { debounce } from '.'
 
 const currentMousePosition = ref({
   clientX: 0,

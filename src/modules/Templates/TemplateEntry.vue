@@ -1,5 +1,9 @@
 <template>
-  <EnSettingsTeleportModule :name="moduleTamplatesName" :display="moduleTemplatesDisplayName" :module="module">
+  <EnSettingsTeleportModule
+    :name="moduleTamplatesName"
+    :display="moduleTemplatesDisplayName"
+    :module="module"
+  >
     <EnSettingsItem>
       <div>
         康奈尔颜色
@@ -103,13 +107,13 @@
 </template>
 
 <script setup lang="ts">
-import TemplateCornell from './TemplateCornell.vue';
-import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue';
-import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue';
-import EnColorPicker from '@/components/EnColorPicker.vue';
-import { EnModule } from '../Settings/EnSettings.vue';
-import { useSettingModuleInScript } from '@/utils/SyncDataHooks';
-import { onBeforeMount } from 'vue';
+import EnColorPicker from '@/components/EnColorPicker.vue'
+import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
+import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue'
+import { useSettingModuleInScript } from '@/utils/SyncDataHooks'
+import { onBeforeMount } from 'vue'
+import { EnModule } from '../Settings/EnSettings.vue'
+import TemplateCornell from './TemplateCornell.vue'
 
 
 onBeforeMount(async () => {
@@ -155,7 +159,7 @@ const moduleConfig: ISettingModuleOptions = {
     summaryTitleColor: '',
     summaryBgColor: '',
     summaryFontColor: '',
-  }
+  },
 }
 
 const {

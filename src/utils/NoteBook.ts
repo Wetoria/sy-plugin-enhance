@@ -1,10 +1,10 @@
-import { lsNotebooks } from '@/api';
-import { ref } from 'vue';
+import { lsNotebooks } from '@/api'
+import { ref } from 'vue'
 
-let currentNoteBook = ref()
+const currentNoteBook = ref()
 export function useCurrentNoteBook() {
   if (!currentNoteBook.value) {
-    lsNotebooks().then((resp: IReslsNotebooks) => {
+    lsNotebooks().then((resp) => {
       const {
         notebooks = [],
       } = resp
@@ -12,13 +12,13 @@ export function useCurrentNoteBook() {
         return
       }
 
-      const openedNotebookList = notebooks.filter(i => !i.closed)
+      const openedNotebookList = notebooks.filter((i) => !i.closed)
 
       if (!openedNotebookList.length || openedNotebookList.length !== 1) {
         return
       }
 
-      currentNoteBook.value = openedNotebookList[0];
+      currentNoteBook.value = openedNotebookList[0]
     })
   }
 

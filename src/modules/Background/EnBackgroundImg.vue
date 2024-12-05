@@ -1,7 +1,7 @@
 <template>
   <Teleport
-    to="html"
     v-if="moduleOptions.enableBackgroundImg"
+    to="html"
   >
     <div class="enBackground"></div>
   </Teleport>
@@ -24,6 +24,7 @@
       </div>
       <template #opt>
         <a-input-number
+          v-model="moduleOptions.opacity"
           class="input-demo"
           placeholder="Please Enter"
           mode="button"
@@ -32,7 +33,6 @@
           :step="0.01"
           :max="1"
           :min="0.1"
-          v-model="moduleOptions.opacity"
         />
       </template>
     </EnSettingsItem>
@@ -40,13 +40,17 @@
 </template>
 
 <script setup lang="ts">
-import EnSettingsTeleportModule from '../Settings/EnSettingsTeleportModule.vue';
-import { watchEffect } from 'vue';
-import EnSettingsItem from '../Settings/EnSettingsItem.vue';
-import { usePlugin } from '@/main';
-import { EnModule, useSettingModule, useSettingModuleData } from '@/modules/Settings/EnSettings.vue';
-import { moduleEnableStatusSwitcher } from '@/utils';
-import { updateModuleDataByNamespaceWithLoadFile } from '@/utils/SyncData';
+import { usePlugin } from '@/main'
+import {
+  EnModule,
+  useSettingModule,
+  useSettingModuleData,
+} from '@/modules/Settings/EnSettings.vue'
+import { moduleEnableStatusSwitcher } from '@/utils'
+import { updateModuleDataByNamespaceWithLoadFile } from '@/utils/SyncData'
+import { watchEffect } from 'vue'
+import EnSettingsItem from '../Settings/EnSettingsItem.vue'
+import EnSettingsTeleportModule from '../Settings/EnSettingsTeleportModule.vue'
 
 const plugin = usePlugin()
 
@@ -66,7 +70,7 @@ const defaultData: ModuleOptions = {
   moduleDisplayName,
 
   enableBackgroundImg: false,
-  opacity: 0.9
+  opacity: 0.9,
 }
 const module = useSettingModule<ModuleOptions>(moduleName, {
   defaultData,

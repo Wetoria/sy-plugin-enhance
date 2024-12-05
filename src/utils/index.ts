@@ -1,9 +1,14 @@
-import { App, createApp, onMounted, ref } from 'vue';
-import SyIcon from '@/components/SiyuanTheme/SyIcon.vue';
+import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
+import {
+  App,
+  createApp,
+  onMounted,
+  ref,
+} from 'vue'
 
 let mountedVueDoms = []
 
-export let mountedVueMap = new WeakMap<HTMLDivElement, App>()
+export const mountedVueMap = new WeakMap<HTMLDivElement, App>()
 function saveDom(div, app) {
   mountedVueMap.set(div, app)
   mountedVueDoms.push(div)
@@ -13,17 +18,18 @@ export function clearAllVueComponents() {
   const list = [...mountedVueDoms]
   list.forEach((div) => {
     unmout(div)
+    mountedVueMap.delete(div)
   })
-  mountedVueMap = new WeakMap()
+  mountedVueDoms = []
 }
 
 export function loadComponentAppendToBody(component) {
-  const div = document.createElement('div');
+  const div = document.createElement('div')
   div.id = 'enApp'
-  const app = createApp(component);
-  app.mount(div);
+  const app = createApp(component)
+  app.mount(div)
   app.component('SyIcon', SyIcon)
-  document.body.appendChild(div);
+  document.body.appendChild(div)
   saveDom(div, app)
   return div
 }
@@ -34,25 +40,25 @@ export function unmout(div: HTMLDivElement) {
     const temp = mountedVueMap.get(div)
     temp.unmount()
     mountedVueMap.delete(div)
-    mountedVueDoms = mountedVueDoms.filter(i => i != div)
+    mountedVueDoms = mountedVueDoms.filter((i) => i != div)
   }
 }
 
 export function getDomByVueComponent(component, options = {
-  props: {}
+  props: {},
 }) {
-  const div = document.createElement('div');
+  const div = document.createElement('div')
   const {
     // useArco
-    props = {}
+    props = {},
   } = options
-  const app = createApp(component, props);
+  const app = createApp(component, props)
   // if (useArco) {
   //   app.use(ArcoVue);
   // }
-  app.mount(div);
+  app.mount(div)
   saveDom(div, app)
-  return div;
+  return div
 }
 
 let flag
@@ -69,7 +75,8 @@ export function useMobileKeyBoardShown() {
         if (keyboardToolbar) {
           if (!registered) {
             const ob1 = new MutationObserver(() => {
-              keyboardShown.value = !keyboardToolbar.classList.contains('fn__none')
+              keyboardShown.value =
+                !keyboardToolbar.classList.contains('fn__none')
             })
             ob1.observe(keyboardToolbar, {
               attributes: true,
@@ -86,10 +93,14 @@ export function useMobileKeyBoardShown() {
       subtree: true, // 观察后代节点，默认为 false
     })
   })
-  return keyboardShown;
+  return keyboardShown
 }
 
-export function recursionTree(tree, parent, callback: (curNode, parentNode?) => void) {
+export function recursionTree(
+  tree,
+  parent,
+  callback: (curNode, parentNode?) => void,
+) {
   if (!tree || !tree.length) {
     return
   }
@@ -99,7 +110,11 @@ export function recursionTree(tree, parent, callback: (curNode, parentNode?) => 
   })
 }
 
-export function recursionTreeCanBreakChildren(tree, parent, callback: (curNode, parentNode?) => boolean) {
+export function recursionTreeCanBreakChildren(
+  tree,
+  parent,
+  callback: (curNode, parentNode?) => boolean,
+) {
   if (!tree || !tree.length) {
     return
   }
@@ -112,10 +127,13 @@ export function recursionTreeCanBreakChildren(tree, parent, callback: (curNode, 
   })
 }
 
-export function reomveDuplicated(list, compare = (cur, itemInResult) => (cur.id === itemInResult.id)) {
+export function reomveDuplicated(
+  list,
+  compare = (cur, itemInResult) => (cur.id === itemInResult.id),
+) {
   const result = []
   list.forEach((item) => {
-    const exist = result.find(i => compare(i, item))
+    const exist = result.find((i) => compare(i, item))
     if (!exist) {
       result.push(item)
     }
@@ -135,7 +153,10 @@ export function debounce(fn, time = 500) {
   }
 }
 
-export function moduleEnableStatusSwitcher(moduleName: string, enabled: boolean) {
+export function moduleEnableStatusSwitcher(
+  moduleName: string,
+  enabled: boolean,
+) {
   const moduleStr = document.documentElement.dataset.en_enabled_module || ''
   let enabledModules = moduleStr.split(/\s+/)
   if (enabled) {
@@ -143,16 +164,16 @@ export function moduleEnableStatusSwitcher(moduleName: string, enabled: boolean)
       enabledModules.push(moduleName)
     }
   } else {
-    enabledModules = enabledModules.filter(i => i != moduleName)
+    enabledModules = enabledModules.filter((i) => i != moduleName)
   }
   const newModuleStr = enabledModules.filter(Boolean).join(' ')
   document.documentElement.dataset.en_enabled_module = newModuleStr
 }
 
 export function generateShortUUID() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      const r = Math.random() * 16 | 0;
-      const v = c === 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
-  }).slice(0, 8); // 取前8个字符
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = Math.random() * 16 | 0
+    const v = c === 'x' ? r : (r & 0x3 | 0x8)
+    return v.toString(16)
+  }).slice(0, 8) // 取前8个字符
 }

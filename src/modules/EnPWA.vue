@@ -1,6 +1,13 @@
 <template>
-  <Teleport to="html" v-if="moduleOptions.enabled">
-    <div class="enPWAContainer" id="enPWAContainer">
+  <Teleport
+    v-if="moduleOptions.enabled"
+    to="html"
+    disabled
+  >
+    <div
+      id="enPWAContainer"
+      class="enPWAContainer"
+    >
       <div
         class="enPWAPadding1"
       ></div>
@@ -23,11 +30,11 @@
       </div>
       <template #opt>
         <a-input-number
+          v-model="moduleOptions.statusBarHeight"
           class="input-demo"
           placeholder="Please Enter"
           mode="button"
           :readOnly="plugin.isMobile"
-          v-model="moduleOptions.statusBarHeight"
         />
       </template>
     </EnSettingsItem>
@@ -37,26 +44,38 @@
       </div>
       <template #opt>
         <a-input-number
+          v-model="moduleOptions.toolBarHeight"
           class="input-demo"
           placeholder="Please Enter"
           mode="button"
           :readOnly="plugin.isMobile"
-          v-model="moduleOptions.toolBarHeight"
         />
       </template>
     </EnSettingsItem>
   </EnSettingsTeleportModule>
-  <div id="testv" v-if="settings.isDebugging"></div>
+  <div
+    v-if="settings.isDebugging"
+    id="testv"
+  ></div>
 </template>
 
 <script setup lang="ts">
-import { useEnhancer } from '@/modules/GlobalStatus';
-import { computed, onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue';
-import EnSettingsTeleportModule from './Settings/EnSettingsTeleportModule.vue';
-import EnSettingsItem from './Settings/EnSettingsItem.vue';
-import { usePlugin } from '@/main';
-import { EnModule, useSettings } from './Settings/EnSettings.vue';
-import { useSettingModuleInSetup } from '@/utils/SyncDataHooks';
+import { usePlugin } from '@/main'
+import { useEnhancer } from '@/modules/GlobalStatus'
+import { useSettingModuleInSetup } from '@/utils/SyncDataHooks'
+import {
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  watch,
+  watchEffect,
+} from 'vue'
+import {
+  EnModule,
+  useSettings,
+} from './Settings/EnSettings.vue'
+import EnSettingsItem from './Settings/EnSettingsItem.vue'
+import EnSettingsTeleportModule from './Settings/EnSettingsTeleportModule.vue'
 
 const plugin = usePlugin()
 const EnhancerState = useEnhancer()
@@ -65,8 +84,8 @@ const settings = useSettings()
 // #region 基本的模块配置
 
 interface ISettingModuleOptions extends EnModule {
-  statusBarHeight: number;
-  toolBarHeight: number;
+  statusBarHeight: number
+  toolBarHeight: number
 }
 
 const moduleConfig: ISettingModuleOptions = {
@@ -88,9 +107,15 @@ const {
 // #endregion 基本的模块配置
 
 watchEffect(() => {
-  const root = document.documentElement;
-  root.style.setProperty('--en-status-height', moduleOptions.value.statusBarHeight + 'px')
-  root.style.setProperty('--en-toolbar-height', moduleOptions.value.toolBarHeight + 'px')
+  const root = document.documentElement
+  root.style.setProperty(
+    '--en-status-height',
+    `${moduleOptions.value.statusBarHeight}px`,
+  )
+  root.style.setProperty(
+    '--en-toolbar-height',
+    `${moduleOptions.value.toolBarHeight}px`,
+  )
 })
 
 watchEffect(() => {
@@ -124,7 +149,7 @@ onMounted(() => {
 onViewportChange((newViewport) => {
   if (newViewport.height != window.innerHeight) {
     // @ts-expect-error keyboardToolbar
-    window.keyboardToolbar.style.top = newViewport.offsetTop + newViewport.height - 42 + 'px'
+    window.keyboardToolbar.style.top = `${newViewport.offsetTop + newViewport.height - 42}px`
   } else {
     // @ts-expect-error keyboardToolbar
     window.keyboardToolbar.style.top = 'unset'
@@ -136,9 +161,9 @@ onViewportChange((newViewport) => {
   // @ts-expect-error testv
   if (window.testv) {
     // @ts-expect-error testv
-    window.testv.style.height = newViewport.height - 5 + 'px'
+    window.testv.style.height = `${newViewport.height - 5}px`
     // @ts-expect-error testv
-    window.testv.style.top = newViewport.offsetTop + 'px'
+    window.testv.style.top = `${newViewport.offsetTop}px`
   }
 })
 </script>
@@ -161,18 +186,18 @@ const viewportRef = ref<{
   [key in viewportKeys]: any;
 }>({} as any)
 export function useViewport() {
-  let pendingUpdate = false;
+  let pendingUpdate = false
   function viewportHandler() {
-    if (pendingUpdate) return;
-    pendingUpdate = true;
+    if (pendingUpdate) return
+    pendingUpdate = true
 
     requestAnimationFrame(() => {
-      pendingUpdate = false;
+      pendingUpdate = false
 
       Object.values(viewportKeys).forEach((key) => {
         viewportRef.value[key] = window.visualViewport[key]
       })
-    });
+    })
   }
   onMounted(() => {
     if (!listened) {

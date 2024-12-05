@@ -1,8 +1,15 @@
 import { usePlugin } from '@/main'
+import { debounce } from '@/utils'
+import {
+  IOperation,
+  IProtyle,
+} from 'siyuan'
+import {
+  onMounted,
+  onUnmounted,
+  ref,
+} from 'vue'
 import { queryAllByDom } from './DOM'
-import { debounce } from '.'
-import { IOperation, IProtyle } from 'siyuan'
-import { onMounted, onUnmounted, ref } from 'vue'
 
 export enum SyFrontendTypes {
   // 桌面端
@@ -106,7 +113,7 @@ export function getChildNodeList(node: HTMLElement) {
 export const isBlockRef = (node) => ['doc', 'block_Ref'].includes(node._type)
 
 export const getParentNode = (list, node) => {
-  return list.find(i => i.id === node.parent_id)
+  return list.find((i) => i.id === node.parent_id)
 }
 
 
@@ -204,12 +211,12 @@ export function hasTargetBlockRefIdAndName(markdown, defBlockId, content) {
 }
 
 export function chainHasTargetBlockRefIdAndName(chain, defBlockId, content?) {
-  return chain.some(i => hasTargetBlockRefIdAndName(i._markdown, defBlockId, content))
+  return chain.some((i) => hasTargetBlockRefIdAndName(i._markdown, defBlockId, content))
 }
 
 export function chainHasRefNode(chain, node) {
   if (node._type === 'doc') {
-    return chain.some(i => i.id === node.id)
+    return chain.some((i) => i.id === node.id)
   } else {
     return chainHasTargetBlockRefIdAndName(chain, node.id, node.name)
   }
@@ -234,9 +241,9 @@ export function getTreeChainPathOfDoc(chainList) {
 }
 
 export interface EnhanceIOperation extends Pick<IOperation, 'action' | 'data' | 'id'> {
-  text: string;
-  timestamp: number;
-  nodeType: '' | SyDomNodeTypes;
+  text: string
+  timestamp: number
+  nodeType: '' | SyDomNodeTypes
 }
 
 function convertIOperationIntoDoOperation(data: IOperation, timestamp: number) {
@@ -246,7 +253,7 @@ function convertIOperationIntoDoOperation(data: IOperation, timestamp: number) {
     id: data.id,
     text: '',
     data: data.data,
-    nodeType: ''
+    nodeType: '',
   }
   if (data.data) {
     let dom = document.createElement('div')
@@ -285,7 +292,7 @@ export function onEditorUpdate(
         } = item
         doOperations.forEach((doOperation) => {
           doOperationList.push(
-            convertIOperationIntoDoOperation(doOperation, timestamp)
+            convertIOperationIntoDoOperation(doOperation, timestamp),
           )
         })
       })
@@ -299,7 +306,8 @@ export function onEditorUpdate(
 }
 
 export function getCreatedByDataset(id: string) {
-  if (!id) return
+  if (!id)
+    return
   const createdStr = id.split('-')[0]
   return createdStr
 }
@@ -327,7 +335,7 @@ export function useCurrentProtyle() {
 
 export function getClosetSiyuanNodeByDom(dom: HTMLElement) {
   let siyuanNode = dom as HTMLElement
-  while(siyuanNode != null && !siyuanNode?.dataset?.nodeId) {
+  while (siyuanNode != null && !siyuanNode?.dataset?.nodeId) {
     siyuanNode = siyuanNode.parentElement
   }
   return siyuanNode

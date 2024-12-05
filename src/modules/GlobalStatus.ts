@@ -1,12 +1,12 @@
-import { usePlugin } from '@/main';
-import { ref } from 'vue';
+import { usePlugin } from '@/main'
+import { ref } from 'vue'
 
-interface EnhancerState {
-  isSync: boolean;
-  isStandalone: boolean;
+interface IEnhancerState {
+  isSync: boolean
+  isStandalone: boolean
 }
 
-let EnhancerState = ref<EnhancerState>({} as EnhancerState)
+const EnhancerState = ref<IEnhancerState>({} as IEnhancerState)
 
 export function useEnhancer() {
   const plugin = usePlugin()

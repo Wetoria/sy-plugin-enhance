@@ -18,11 +18,13 @@
   >
     <template #title>
       <div class="enSettingsTitle row flexCenter">
-        <div class="SyEnhancerDialogTitle" @click="onTitleClicked">
-          {{plugin.i18n.pluginName}}
+        <div
+          class="SyEnhancerDialogTitle"
+          @click="onTitleClicked"
+        >
+          {{ plugin.i18n.pluginName }}
         </div>
-        <EnSettingsAuth
-        />
+        <EnSettingsAuth />
       </div>
     </template>
 
@@ -33,10 +35,11 @@
       <div :class="`enSettingsModuleSelectorList ${!plugin.isMobile ? 'isNotMobile' : ''}`">
         <div
           v-for="(moduleInfo, index) of settingModulesList"
-          :class="['moduleSelectorItem', {
-            'moduleSelectorItem__Actived': index === currentModuleIndex,
-          }]"
           :key="moduleInfo.moduleName"
+          class="moduleSelectorItem"
+          :class="[{
+            moduleSelectorItem__Actived: index === currentModuleIndex,
+          }]"
           :data-en-setting-module-index="index"
           @click="onSelectModule(index)"
         >
@@ -78,123 +81,51 @@
         </span>
         <span>
           使用说明：
-          <a href="https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse">{{plugin.version ? `v${plugin.version}` : ''}}</a>
+          <a href="https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse">{{ plugin.version ? `v${plugin.version}` : '' }}</a>
         </span>
       </div>
     </template>
   </a-drawer>
 </template>
 
-<script setup lang="ts">
-import EnDivider from '@/components/EnDivider.vue';
-import { usePlugin } from '@/main';
-import { computed, ref, watchEffect, watch, onMounted, ComputedRef, Ref } from 'vue';
-import AnyTouch from 'any-touch';
-import { debounce, moduleEnableStatusSwitcher } from '@/utils';
-import { onCountClick } from '@/utils/DOM';
-import { EnSyncModuleData, EnSyncModuleDataRef, getModuleRefByNamespace, updateModuleDataByNamespaceWithLoadFile, useSyncModuleData } from '@/utils/SyncData';
-import { getColorStringError } from '@/utils/Log';
-import { flushModuleConfigs } from '@/modules/Settings/ModuleConfigs';
-import { addCommand } from '@/utils/Commands';
-import EnSettingsAuth, { authModuleData } from './EnSettingsAuth.vue';
-
-const plugin = usePlugin()
-
-
-const onTitleClicked = onCountClick((count) => {
-  if (count >= 10) {
-    settings.value.isDebugging = !settings.value.isDebugging
-  }
-})
-
-watchEffect(() => {
-  moduleEnableStatusSwitcher('EnDebugging', settings.value.isDebugging)
-})
-
-const getSettingDrawer = () => document.querySelector('.arco-drawer') as HTMLDivElement
-
-const onDrawerOpen = () => {
-  const el: HTMLDivElement = document.querySelector('.enSettingDrawer');
-  const settingDom = getSettingDrawer()
-  if (!el || !settingDom) {
-    return
-  }
-
-  const at = new AnyTouch(el, {
-    preventDefault: false,
-  });
-  const drawerBody: HTMLDivElement = el.querySelector('.arco-drawer-body')
-
-  const drawerBodyScrollTopOnStart = ref(0)
-  at.on('panstart', () => {
-    drawerBodyScrollTopOnStart.value = drawerBody.scrollTop
-  })
-  at.on('pan', (e) => {
-    if (!settingDom) {
-      return
-    }
-
-    if (drawerBody.scrollTop > 0) {
-      return
-    }
-
-    const dis = e.displacementY - drawerBodyScrollTopOnStart.value
-    const movableDis = dis > 0 ? dis : 0
-    settingDom.style.transform = `translateY(${movableDis}px)`
-  });
-  at.on('panend', (e) => {
-    if (!settingDom) {
-      return
-    }
-
-    const dis = e.displacementY - drawerBodyScrollTopOnStart.value
-    if (dis > 200) {
-      settingDom.style.transform = `translateY(100%)`
-      editingSettings.value = false
-    } else {
-      settingDom.style.transform = 'unset'
-    }
-  })
-}
-
-const resetAllModule = () => {
-  const moduleValues = Object.keys(settings.value.modules)
-  moduleValues.forEach((moduleName) => {
-    const moduleRef = getModuleRefByNamespace(moduleName)
-    resetModuleOptions(moduleRef)
-  })
-}
-
-const onDrawerCLose = () => {
-
-}
-
-const onTouchMove = (e: TouchEvent) => {
-  e.stopImmediatePropagation()
-  e.stopPropagation()
-}
-
-onMounted(() => {
-  flushModuleConfigs()
-
-  addCommand({
-    langKey: "En_OpenSettings",
-    langText: "打开设置",
-    hotkey: "",
-    callback: () => {
-      switchSettingsDisplay();
-    },
-  });
-})
-</script>
 
 <script lang="ts">
+
+import EnDivider from '@/components/EnDivider.vue'
+import { usePlugin } from '@/main'
+import { flushModuleConfigs } from '@/modules/Settings/ModuleConfigs'
+import {
+  debounce,
+  moduleEnableStatusSwitcher,
+} from '@/utils'
+import { addCommand } from '@/utils/Commands'
+import { onCountClick } from '@/utils/DOM'
+import { getColorStringError } from '@/utils/Log'
+import {
+  EnSyncModuleData,
+  EnSyncModuleDataRef,
+  getModuleRefByNamespace,
+  updateModuleDataByNamespaceWithLoadFile,
+  useSyncModuleData,
+} from '@/utils/SyncData'
+import AnyTouch from 'any-touch'
+import {
+  computed,
+  ComputedRef,
+  onMounted,
+  ref,
+  Ref,
+  watch,
+  watchEffect,
+} from 'vue'
+import EnSettingsAuth, { authModuleData } from './EnSettingsAuth.vue'
+
 interface EnSettings {
   isDebugging: boolean
   v: 0 | 1 | 2
   l: 0 | 1 | 2
 
-  boxId: string;
+  boxId: string
 
   modules: {
     [module: string]: boolean
@@ -228,7 +159,7 @@ export function useSettings() {
 
 export const switchID = (time) => {
   let v = settings.value.v
-  if (11 <= time && time < 20) {
+  if (time >= 11 && time < 20) {
     v = v > 0 ? 0 : 1
   } else if (time >= 20) {
     v = 2
@@ -322,7 +253,7 @@ export async function loadSettings() {
 
 }
 
-const editingSettings = ref(false);
+const editingSettings = ref(false)
 
 const settingRefKeys = ref<string[]>([])
 const settingsRefMap = ref({})
@@ -394,7 +325,7 @@ const onSettingListScroll = (e: Event) => {
 
   if (closestModule) {
     const moduleName = closestModule.getAttribute('data-en-setting-ref-module-name')
-    const moduleIndex = settingModulesList.value.findIndex(m => m.moduleName === moduleName)
+    const moduleIndex = settingModulesList.value.findIndex((m) => m.moduleName === moduleName)
     if (moduleIndex !== -1) {
       currentModuleIndex.value = moduleIndex
       const el = document.querySelector(`[data-en-setting-module-index="${moduleIndex}"]`) as HTMLDivElement
@@ -424,7 +355,7 @@ export function registerSettingRef(refName: string) {
 export function unregisterSettingRef(refName: string) {
   settingRefKeys.value = settingRefKeys.value.filter((key) => {
     if (key === refName) {
-      return
+      return false
     }
     return true
   })
@@ -440,7 +371,7 @@ const switchSettingsDisplay = () => {
 }
 
 export const openSettings = () => {
-  editingSettings.value = true;
+  editingSettings.value = true
 }
 
 export const entryOpenSettings = onCountClick((time) => {
@@ -452,14 +383,14 @@ export const entryOpenSettings = onCountClick((time) => {
 })
 
 export const closeSettings = () => {
-  editingSettings.value = false;
+  editingSettings.value = false
 }
 
 
 export const useProWatcher = (props: {
-  onChange?: (enabled: boolean) => void,
-  onEnabled?: () => void,
-  onDisabled?: () => void,
+  onChange?: (enabled: boolean) => void
+  onEnabled?: () => void
+  onDisabled?: () => void
 }) => {
   const {
     onChange = () => {},
@@ -484,6 +415,98 @@ export const useProWatcher = (props: {
   })
 }
 
+</script>
+
+<script setup lang="ts">
+
+const plugin = usePlugin()
+
+
+const onTitleClicked = onCountClick((count) => {
+  if (count >= 10) {
+    settings.value.isDebugging = !settings.value.isDebugging
+  }
+})
+
+watchEffect(() => {
+  moduleEnableStatusSwitcher('EnDebugging', settings.value.isDebugging)
+})
+
+const getSettingDrawer = () => document.querySelector('.arco-drawer') as HTMLDivElement
+
+const onDrawerOpen = () => {
+  const el: HTMLDivElement = document.querySelector('.enSettingDrawer')
+  const settingDom = getSettingDrawer()
+  if (!el || !settingDom) {
+    return
+  }
+
+  const at = new AnyTouch(el, {
+    preventDefault: false,
+  })
+  const drawerBody: HTMLDivElement = el.querySelector('.arco-drawer-body')
+
+  const drawerBodyScrollTopOnStart = ref(0)
+  at.on('panstart', () => {
+    drawerBodyScrollTopOnStart.value = drawerBody.scrollTop
+  })
+  at.on('pan', (e) => {
+    if (!settingDom) {
+      return
+    }
+
+    if (drawerBody.scrollTop > 0) {
+      return
+    }
+
+    const dis = e.displacementY - drawerBodyScrollTopOnStart.value
+    const movableDis = dis > 0 ? dis : 0
+    settingDom.style.transform = `translateY(${movableDis}px)`
+  })
+  at.on('panend', (e) => {
+    if (!settingDom) {
+      return
+    }
+
+    const dis = e.displacementY - drawerBodyScrollTopOnStart.value
+    if (dis > 200) {
+      settingDom.style.transform = `translateY(100%)`
+      editingSettings.value = false
+    } else {
+      settingDom.style.transform = 'unset'
+    }
+  })
+}
+
+const resetAllModule = () => {
+  const moduleValues = Object.keys(settings.value.modules)
+  moduleValues.forEach((moduleName) => {
+    const moduleRef = getModuleRefByNamespace(moduleName)
+    resetModuleOptions(moduleRef)
+  })
+}
+
+const onDrawerCLose = () => {
+
+}
+
+const onTouchMove = (e: TouchEvent) => {
+  e.stopImmediatePropagation()
+  e.stopPropagation()
+}
+
+onMounted(() => {
+  flushModuleConfigs()
+
+  addCommand({
+    langKey: "En_OpenSettings",
+    langText: "打开设置",
+    hotkey: "",
+    callback: () => {
+      switchSettingsDisplay()
+    },
+  })
+})
 </script>
 
 <style lang="scss" scoped>

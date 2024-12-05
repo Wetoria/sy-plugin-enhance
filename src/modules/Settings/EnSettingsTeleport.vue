@@ -1,12 +1,18 @@
 <template>
-  <Teleport :to="settingRef" v-if="settingRef">
+  <Teleport
+    v-if="settingRef"
+    :to="settingRef"
+  >
     <slot></slot>
   </Teleport>
 </template>
 
 <script setup lang="ts">
-import { onUnmounted } from 'vue';
-import { registerSettingRef, unregisterSettingRef } from '@/modules/Settings/EnSettings.vue';
+import {
+  registerSettingRef,
+  unregisterSettingRef,
+} from '@/modules/Settings/EnSettings.vue'
+import { onUnmounted } from 'vue'
 
 const props = defineProps<{
   name: string

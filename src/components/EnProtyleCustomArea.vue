@@ -1,9 +1,12 @@
 <template>
   <!-- 在块下方渲染的占位区域 -->
-  <Teleport :to="enProtyleCustomAreaRef" v-if="enProtyleCustomAreaRef">
+  <Teleport
+    v-if="enProtyleCustomAreaRef"
+    :to="enProtyleCustomAreaRef"
+  >
     <div
-      class="enProtyleCustomAreaContainer enCancelShowCommentListDom"
       ref="enProtyleCustomAreaContainerRef"
+      class="enProtyleCustomAreaContainer enCancelShowCommentListDom"
       @mousedown="cancelMouseDown"
     >
       <slot name="customArea"></slot>
@@ -12,10 +15,10 @@
 
   <template v-if="enProtyleActualAreaRef">
     <!-- 实际显示白板的区域 -->
-    <Teleport :to="fullScreen == 'siyuan' ? 'body' : enProtyleActualAreaRef">
+    <Teleport :to="fullScreen === 'siyuan' ? 'body' : enProtyleActualAreaRef">
       <div
-        class="enProtyleActualAreaContainer"
         ref="enProtyleActualAreaContainerRef"
+        class="enProtyleActualAreaContainer"
         :data-en_fullscreen="fullScreen"
       >
         <slot></slot>
@@ -25,19 +28,29 @@
 </template>
 
 <script lang="ts">
+import {
+  appendTargetDomAsClassOrder,
+  unWatchDomChange,
+  watchDomChange,
+} from '@/utils/DOM'
+import { getColorStringWarn } from '@/utils/Log'
+import {
+  computed,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+} from 'vue'
+
 export const enProtyleCustomAreaClassName = 'enProtyleCustomArea'
 export const enProtyleActualAreaClassName = 'enProtyleActualArea'
-
-const enProtyleCustomAreaContainerOffset = 0
-const arcoResizeBoxOffset = 6
-
-let count = 0
 </script>
 
 <script setup lang="ts">
-import { appendTargetDomAsClassOrder, unWatchDomChange, watchDomChange } from '@/utils/DOM';
-import { getColorStringWarn } from '@/utils/Log';
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+
+const props = defineProps<IProps>()
+const enProtyleCustomAreaContainerOffset = 0
+
+let count = 0
 
 interface IProps {
   getTargetBlockDom: () => HTMLElement
@@ -45,7 +58,6 @@ interface IProps {
   fullScreen?: 'doc' | 'siyuan' | 'system' | undefined
 }
 
-const props = defineProps<IProps>()
 const disableAutoMatch = computed(() => !!props.fullScreen)
 
 const enProtyleCustomAreaRef = ref<HTMLElement | null>(null)
@@ -65,7 +77,7 @@ const registerDom = () => {
   count++
   const enProtyleCustomAreaDom = appendTargetDomAsClassOrder(
     `${enProtyleCustomAreaClassName}-${count}`,
-    dom
+    dom,
   )
   const isSameDom = enProtyleCustomAreaDom === enProtyleCustomAreaRef.value
   if (isSameDom) {
@@ -89,7 +101,7 @@ const registerDom = () => {
 
   const enProtyleActualDom = appendTargetDomAsClassOrder(
     `${enProtyleActualAreaClassName}-${count}`,
-    parent
+    parent,
   )
   enProtyleActualDom.classList.add(enProtyleActualAreaClassName)
   enProtyleActualDom.dataset.enTargetNodeId = dom.dataset.nodeId

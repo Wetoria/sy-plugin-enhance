@@ -1,7 +1,7 @@
 <template>
   <span
-    class="enBlockLockContainer"
     v-if="enabled"
+    class="enBlockLockContainer"
     @click="() => manualSwitchLockStatus()"
   >
     <SyIcon
@@ -16,9 +16,15 @@
 </template>
 
 <script setup lang="ts">
-import dayjs from 'dayjs';
-import { onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue';
-import SyIcon from '@/components/SiyuanTheme/SyIcon.vue';
+import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
+import dayjs from 'dayjs'
+import {
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  watch,
+  watchEffect,
+} from 'vue'
 
 const props = defineProps<{
   pDom: HTMLDivElement
@@ -57,7 +63,7 @@ const LOCK_STATUS = {
   locked: 'locked',
   unlocked: 'unlocked',
 }
-const locked  = ref<typeof LOCK_STATUS[keyof typeof LOCK_STATUS]>(LOCK_STATUS.unlocked)
+const locked = ref<typeof LOCK_STATUS[keyof typeof LOCK_STATUS]>(LOCK_STATUS.unlocked)
 const lockedTypes = [LOCK_STATUS.locked]
 
 const manualSwitchLockStatus = () => {

@@ -1,6 +1,11 @@
 <template>
-  <div class="ProtyleBottomContainer" v-if="!disabled">
-    <div v-if="settings.isDebugging">Protyle Bottom Area</div>
+  <div
+    v-if="!disabled"
+    class="ProtyleBottomContainer"
+  >
+    <div v-if="settings.isDebugging">
+      Protyle Bottom Area
+    </div>
     <EnLifeLogProtyleGraph
       :element="protyleBottom.element"
     />
@@ -15,12 +20,19 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
-import EnProtyleBottomIndicator from './EnProtyleBottomIndicator.vue';
-import { IProtyle } from 'siyuan/types';
-import EnProtyleBottomBackLink from './BackLink/EnProtyleBottomBackLink.vue';
-import EnLifeLogProtyleGraph from "@/modules/LifeLog/EnLifeLogDailyNoteGraph.vue";
-import { useSettings } from '@/modules/Settings/EnSettings.vue';
+import EnLifeLogProtyleGraph from "@/modules/LifeLog/EnLifeLogDailyNoteGraph.vue"
+import { useSettings } from '@/modules/Settings/EnSettings.vue'
+import { IProtyle } from 'siyuan/types'
+import {
+  computed,
+  onMounted,
+} from 'vue'
+import EnProtyleBottomBackLink from './BackLink/EnProtyleBottomBackLink.vue'
+import EnProtyleBottomIndicator from './EnProtyleBottomIndicator.vue'
+
+const props = defineProps<{
+  protyleBottom: IProtyleBottom
+}>()
 
 const settings = useSettings()
 
@@ -29,10 +41,6 @@ interface IProtyleBottom {
   element: HTMLDivElement
   enArea: HTMLDivElement
 }
-const props = defineProps<{
-  protyleBottom: IProtyleBottom
-}>()
-
 const protyleBottom = computed(() => props.protyleBottom)
 const protyle = computed(() => protyleBottom.value.detail.protyle as IProtyle)
 const disabled = computed(() => protyleBottom.value.element.classList.contains('EnDisableProtyleEnhance'))
@@ -40,15 +48,15 @@ const disabled = computed(() => protyleBottom.value.element.classList.contains('
 const checkProtyleContentPadding = () => {
   const {
     element,
-    enArea: div
+    enArea: div,
   } = props.protyleBottom
   const wysiwyg: HTMLDivElement = element.querySelector('.protyle-wysiwyg')
   if (wysiwyg) {
     const bindPadding = () => {
       const leftPadding = Number(wysiwyg.style.paddingLeft.replace('px', ''))
       const rightPadding = Number(wysiwyg.style.paddingRight.replace('px', ''))
-      div.style.paddingLeft = (leftPadding - 8) + 'px'
-      div.style.paddingRight = (rightPadding - 8) + 'px'
+      div.style.paddingLeft = `${leftPadding - 8}px`
+      div.style.paddingRight = `${rightPadding - 8}px`
       // IMP 改成可以配置的
       wysiwyg.style.paddingBottom = '68px'
     }

@@ -1,56 +1,56 @@
 {
-    "compilerOptions": {
-        "target": "ESNext",
-        "useDefineForClassFields": true,
-        "module": "ESNext",
-        "lib": [
-            "ES2020",
-            "DOM",
-            "DOM.Iterable"
-        ],
-        "skipLibCheck": true,
-        /* Bundler mode */
-        "importHelpers": true,
-        "esModuleInterop": true,
-        "moduleResolution": "Node",
-        "allowImportingTsExtensions": true,
-        "allowSyntheticDefaultImports": true,
-        "resolveJsonModule": true,
-        "isolatedModules": true,
-        "noEmit": true,
-        "jsx": "preserve",
-        /* Linting */
-        "strict": false,
-        "noUnusedLocals": true,
-        "noUnusedParameters": true,
-        "noFallthroughCasesInSwitch": true,
-        "allowJs": true,
-        "checkJs": true,
-        "types": [
-            "node",
-            "vite/client"
-        ],
-        "baseUrl": ".",
-        "paths": {
-            "@/*": ["./src/*"],
-            "@/libs/*": ["./src/libs/*"],
-        }
+  "compilerOptions": {
+    "target": "ESNext",
+    "jsx": "preserve",
+    "lib": [
+      "ES2020",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "useDefineForClassFields": true,
+    "baseUrl": ".",
+    "module": "ESNext",
+    /* Bundler mode */
+    "moduleResolution": "Node",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@/libs/*": ["./src/libs/*"]
     },
-    "include": [
-        "tools/**/*.ts",
-        "src/**/*.ts",
-        "src/**/*.d.ts",
-        "src/**/*.tsx",
-        "src/**/*.vue"
+    "resolveJsonModule": true,
+    "types": [
+      "node",
+      "vite/client"
     ],
-    "exclude": [
-        "node_modules",
-        "src/abandon",
-    ],
-    "references": [
-        {
-            "path": "./tsconfig.node.json"
-        }
-    ],
-    "root": "."
+    "allowImportingTsExtensions": true,
+    "allowJs": true,
+    "checkJs": true,
+    /* Linting */
+    "strict": false,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "importHelpers": true,
+    "noEmit": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "skipLibCheck": true
+  },
+  "references": [
+    {
+      "path": "./tsconfig.node.json"
+    }
+  ],
+  "include": [
+    "tools/**/*.ts",
+    "src/**/*.ts",
+    "src/**/*.d.ts",
+    "src/**/*.tsx",
+    "src/**/*.vue"
+  ],
+  "exclude": [
+    "node_modules",
+    "src/abandon"
+  ],
+  "root": "."
 }

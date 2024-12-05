@@ -1,13 +1,18 @@
-import VPlugin from '.';
+import { reactive } from 'vue'
 
-import { clearAllVueComponents, loadComponentAppendToBody } from './utils';
-import { registerProtyleBottomArea } from './utils/DOM';
+import VPlugin from '.'
+import AppVue from './App.vue'
 
-import AppVue from './App.vue';
-import { reactive } from 'vue';
-import { loadSettings } from './modules/Settings/EnSettings.vue';
-import { initWebsocket } from './utils/SyncData';
-import { loadModuleData_EnVideoAndAudioBlockPlay } from './modules/VideoAndAudio/EnVideoAndAudioBlockPlay.vue';
+import { loadSettings } from './modules/Settings/EnSettings.vue'
+import {
+  loadModuleData_EnVideoAndAudioBlockPlay,
+} from './modules/VideoAndAudio/EnVideoAndAudioBlockPlay.vue'
+import {
+  clearAllVueComponents,
+  loadComponentAppendToBody,
+} from './utils'
+import { registerProtyleBottomArea } from './utils/DOM'
+import { initWebsocket } from './utils/SyncData'
 
 let pluginRef: VPlugin = null
 export function registerPlugin(plugin) {
@@ -16,19 +21,19 @@ export function registerPlugin(plugin) {
   window.en_plugin = pluginRef
 }
 export function usePlugin() {
-  return pluginRef;
+  return pluginRef
 }
 
-const loadVueApp = () => {
+function loadVueApp() {
   loadComponentAppendToBody(AppVue)
 }
 
-const loadModuleDataBeforeApp = async () => {
+async function loadModuleDataBeforeApp() {
   await loadModuleData_EnVideoAndAudioBlockPlay()
 }
 
 export async function init(plugin: VPlugin) {
-  registerPlugin(plugin);
+  registerPlugin(plugin)
   await initWebsocket()
   await loadSettings()
   await loadModuleDataBeforeApp()

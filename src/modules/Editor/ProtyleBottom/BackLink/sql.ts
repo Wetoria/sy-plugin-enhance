@@ -1,7 +1,7 @@
 import { sql } from '@/api'
 
 function removeExtraSpaces(sqlString) {
-  return sqlString.replace(/\s+/g,' ').trim();
+  return sqlString.replace(/\s+/g, ' ').trim()
 }
 
 function queryBySqlStmt(str) {
@@ -23,12 +23,12 @@ export function sqlOfGetContainerBlockIds(nodeIds: string[], needHeading = false
 
   const sqlStmt = `
     SELECT CASE
-        WHEN type IN (${containerBlockTypes.map(i => `'${i}'`).join(',')}) THEN id
+        WHEN type IN (${containerBlockTypes.map((i) => `'${i}'`).join(',')}) THEN id
         ELSE parent_id
     END AS ref_id
     FROM blocks
     WHERE id IN (
-      ${nodeIds.map(i => `'${i}'`).join(',')}
+      ${nodeIds.map((i) => `'${i}'`).join(',')}
     )
   `
 
@@ -50,7 +50,7 @@ export async function getParentNodesBySql(nodeIds: string[]) {
       subtype
     FROM blocks
     WHERE id in (
-      ${nodeIds.map(i => `'${i}'`).join(',')}
+      ${nodeIds.map((i) => `'${i}'`).join(',')}
     )
     UNION
     SELECT c.id, c.parent_id, c.root_id, c.content, c.fcontent, c.markdown, c.type, c.subtype
@@ -77,7 +77,7 @@ export async function getChildNodesBySql(nodeIds: string[]) {
       subtype
     FROM blocks
     WHERE id in (
-      ${nodeIds.map(i => `'${i}'`).join(',')}
+      ${nodeIds.map((i) => `'${i}'`).join(',')}
     )
     UNION
     SELECT c.id, c.parent_id, c.root_id, c.content, c.fcontent, c.markdown, c.type, c.subtype

@@ -1,5 +1,5 @@
 .idea
-.vscode
+# .vscode
 .DS_Store
 pnpm-lock.yaml
 package.zip

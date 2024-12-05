@@ -1,7 +1,7 @@
 <template>
   <Teleport
-    :to="pProtyleAttrRef"
     v-if="pProtyleAttrRef"
+    :to="pProtyleAttrRef"
   >
     <slot
       :created="created"
@@ -13,10 +13,33 @@
   </Teleport>
 </template>
 
+<script lang="ts">
+import { debounce } from '@/utils'
+import dayjs from 'dayjs'
+import {
+  computed,
+  ref,
+  watch,
+} from 'vue'
+
+export const FORMAT_DATE = 'YYYY/MM/DD'
+export const FORMAT_TIME = 'HH:mm:ss'
+export const FORMAT_DATE_TIME = `${FORMAT_DATE} ${FORMAT_TIME}`
+
+export const getNodeId = (pDom) => {
+  return pDom.dataset.nodeId
+}
+
+export const getUpdated = (pDom) => {
+  const updateTimeStr = pDom.getAttribute('updated')
+  if (!updateTimeStr) {
+    return
+  }
+  return dayjs(updateTimeStr)
+}
+</script>
+
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
-import dayjs from 'dayjs';
-import { debounce } from '@/utils';
 
 const props = defineProps<{
   el: HTMLSpanElement
@@ -71,24 +94,6 @@ watch(() => props.el, () => {
   watchParagraphAttrChange()
 }, { immediate: true })
 
-</script>
-
-<script lang="ts">
-export const FORMAT_DATE = 'YYYY/MM/DD'
-export const FORMAT_TIME = 'HH:mm:ss'
-export const FORMAT_DATE_TIME = `${FORMAT_DATE} ${FORMAT_TIME}`
-
-export const getNodeId = (pDom) => {
-  return pDom.dataset.nodeId
-}
-
-export const getUpdated = (pDom) => {
-  const updateTimeStr = pDom.getAttribute('updated')
-  if (!updateTimeStr) {
-    return
-  }
-  return dayjs(updateTimeStr)
-}
 </script>
 
 <style lang="scss">

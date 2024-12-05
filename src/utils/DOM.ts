@@ -1,12 +1,17 @@
-import { onBeforeUnmount, onMounted, reactive, ref } from 'vue'
-import { usePlugin } from '@/main';
+import { usePlugin } from '@/main'
+import {
+  onBeforeUnmount,
+  onMounted,
+  reactive,
+  ref,
+} from 'vue'
 
 
 /**
  * In order to convert query resutl into Array
  * @param dom
  * @param selector
- * @returns
+ * @returns Array<HTMLElement>
  */
 export function queryAllByDom(dom: HTMLElement, selector: string) {
   return dom ? [...dom.querySelectorAll(selector)] : []
@@ -17,11 +22,12 @@ export function querySelectorByBody(str) {
 }
 
 export function hideGutterOnTarget(target) {
-  if (!target) return
-  target.querySelectorAll(".protyle-gutters").forEach(item => {
-    item.classList.add("fn__none");
-    item.innerHTML = "";
-  });
+  if (!target)
+    return
+  target.querySelectorAll(".protyle-gutters").forEach((item) => {
+    item.classList.add("fn__none")
+    item.innerHTML = ""
+  })
 }
 
 export const protyleBottomMap = ref(new Map())
@@ -29,9 +35,9 @@ export function registerProtyleBottomArea() {
   const plugin = usePlugin()
   plugin.eventBus.on('loaded-protyle-static', (event) => {
     const {
-      detail
+      detail,
     } = event
-    const element = detail.protyle.contentElement;
+    const element = detail.protyle.contentElement
     if (!element) {
       return
     }
@@ -40,7 +46,7 @@ export function registerProtyleBottomArea() {
     const wysiwygEl: HTMLDivElement = element.querySelector('.protyle-wysiwyg')
     if (wysiwygEl) {
       const attrs = wysiwygEl.getAttributeNames()
-      const containsDailyNoteAttr = attrs.find(i => i.startsWith('custom-dailynote'))
+      const containsDailyNoteAttr = attrs.find((i) => i.startsWith('custom-dailynote'))
       if (containsDailyNoteAttr) {
         wysiwygEl.dataset.en_is_dailynote = 'true'
         wysiwygEl.dataset.en_dailynote_date = wysiwygEl.getAttribute(containsDailyNoteAttr)
@@ -57,7 +63,7 @@ export function registerProtyleBottomArea() {
     }
     const div = document.createElement('div')
     protyleBottomMap.value.set(element, reactive({
-      detail: detail,
+      detail,
       element,
       enArea: div,
     }))
@@ -67,9 +73,9 @@ export function registerProtyleBottomArea() {
 
   plugin.eventBus.on("destroy-protyle", (event) => {
     const {
-      detail
+      detail,
     } = event
-    const element = detail.protyle.contentElement;
+    const element = detail.protyle.contentElement
     if (protyleBottomMap.value.has(element)) {
       protyleBottomMap.value.delete(element)
     }
@@ -106,35 +112,35 @@ export function positionModalWithTranslate(targetElement, modalElement) {
   // 垂直方向增加偏移，水平方向上不偏移
   const offset = 8
   // 获取目标元素的位置
-  const targetRect = targetElement.getBoundingClientRect();
-  const modalRect = modalElement.getBoundingClientRect();
+  const targetRect = targetElement.getBoundingClientRect()
+  const modalRect = modalElement.getBoundingClientRect()
 
   // 计算 modal 初始的 translate 位置 (假设显示在目标元素的下方)
-  let translateX = targetRect.left;
-  let translateY = targetRect.bottom + offset;
+  let translateX = targetRect.left
+  let translateY = targetRect.bottom + offset
 
   // 调整 modal 的位置，防止超出屏幕
-  const windowWidth = window.innerWidth;
-  const windowHeight = window.innerHeight;
+  const windowWidth = window.innerWidth
+  const windowHeight = window.innerHeight
 
   // 如果 modal 的右边超出了窗口宽度
   if (targetRect.left + modalRect.width > windowWidth) {
-    translateX = targetRect.left - modalRect.width;
+    translateX = targetRect.left - modalRect.width
   }
 
   // 如果 modal 的左边超出了窗口左边界
   if (translateX < 0) {
-    translateX = offset;
+    translateX = offset
   }
 
   // 如果 modal 的底部超出了窗口高度
   if (targetRect.bottom + modalRect.height > windowHeight) {
-    translateY = targetRect.top - modalRect.height - offset;
+    translateY = targetRect.top - modalRect.height - offset
   }
 
   // 如果 modal 的顶部超出了窗口顶部
   if (translateY < 0) {
-    translateY = offset;
+    translateY = offset
   }
 
   return {
@@ -162,13 +168,13 @@ let observer = null
 let observeCallbackList = []
 
 export function unWatchDomChange(callback: () => void) {
-  observeCallbackList = observeCallbackList.filter(i => i !== callback)
+  observeCallbackList = observeCallbackList.filter((i) => i !== callback)
   callback = null
 }
 
 export function watchDomChange(callback?: () => void) {
   if (callback) {
-    const listener = observeCallbackList.find(i => i === callback)
+    const listener = observeCallbackList.find((i) => i === callback)
     if (!listener) {
       observeCallbackList.push(callback)
     }
@@ -177,7 +183,7 @@ export function watchDomChange(callback?: () => void) {
 
 export function registerGlobalObserver() {
   observer = new MutationObserver(() => {
-    observeCallbackList.forEach(i => i())
+    observeCallbackList.forEach((i) => i())
   })
   const observe = () => {
     observer.observe(document.body, {
@@ -240,19 +246,19 @@ export function appendTargetDomAsClassOrder(className: AppendDomClassOrder | str
     enWarn('Append Target need a targetDom')
     return
   }
-  const indexInOrder = appendDomClassOrder.findIndex(i => i === className)
+  const indexInOrder = appendDomClassOrder.findIndex((i) => i === className)
 
 
   // 如果 className 不在 appendDomClassOrder 中，则认为它在最后
   const finalIndex = indexInOrder > -1 ? indexInOrder : 999
-  const children = targetDom.children;
-  let existDomInTargetDom;
+  const children = targetDom.children
+  let existDomInTargetDom
 
   // 从后往前查找已存在的同类元素
   for (let i = children.length - 1; i >= 0; i--) {
     if (children[i].classList.contains(className)) {
-      existDomInTargetDom = children[i];
-      break;
+      existDomInTargetDom = children[i]
+      break
     }
   }
 
@@ -266,9 +272,9 @@ export function appendTargetDomAsClassOrder(className: AppendDomClassOrder | str
   result.classList.add(className)
 
   if (finalIndex < children.length) {
-    targetDom.insertBefore(result, children[finalIndex]);
+    targetDom.insertBefore(result, children[finalIndex])
   } else {
-    targetDom.appendChild(result);
+    targetDom.appendChild(result)
   }
   return result
 }

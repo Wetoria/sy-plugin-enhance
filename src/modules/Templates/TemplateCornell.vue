@@ -5,14 +5,17 @@
       v-model:visible="configModalVisible"
       :footer="false"
       :mask-style="{
-        backgroundColor: 'rgba(0,0,0,0)'
+        backgroundColor: 'rgba(0,0,0,0)',
       }"
       draggable
     >
       <template #title>
         设置康奈尔模板的配色
       </template>
-      <a-space direction="vertical" fill>
+      <a-space
+        direction="vertical"
+        fill
+      >
         <div>
           设置康奈尔
         </div>
@@ -119,16 +122,24 @@
 </template>
 
 <script setup lang="ts">
-import { usePlugin } from '@/main';
-import { Protyle } from 'siyuan';
-import { moduleTamplatesName, ModuleTemplatesOptions } from './TemplateEntry.vue';
-import { computed, onMounted, Ref, ref, watchEffect } from 'vue';
-import { queryAllByDom } from '@/utils/DOM';
-import { SyDomNodeTypes } from '@/utils/Siyuan';
-import { debounce } from '@/utils';
-import SyIcon from '@/components/SiyuanTheme/SyIcon.vue';
-import EnColorPicker from '@/components/EnColorPicker.vue';
-import { useSettingModule } from '../Settings/EnSettings.vue';
+import EnColorPicker from '@/components/EnColorPicker.vue'
+import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
+import { usePlugin } from '@/main'
+import { debounce } from '@/utils'
+import { queryAllByDom } from '@/utils/DOM'
+import { SyDomNodeTypes } from '@/utils/Siyuan'
+import { Protyle } from 'siyuan'
+import {
+  computed,
+  onMounted,
+  ref,
+  watchEffect,
+} from 'vue'
+import { useSettingModule } from '../Settings/EnSettings.vue'
+import {
+  moduleTamplatesName,
+  ModuleTemplatesOptions,
+} from './TemplateEntry.vue'
 
 const plugin = usePlugin()
 
@@ -171,7 +182,7 @@ const getRef = (dom) => {
 
 const appendEnProtyleAttrContainer = (dom: HTMLDivElement) => {
   const children = dom.children as any as HTMLDivElement[]
-  const protyleAttr = Array.prototype.find.call(children, i => i.classList.contains('protyle-attr'))
+  const protyleAttr = Array.prototype.find.call(children, (i) => i.classList.contains('protyle-attr'))
   if (!protyleAttr) {
     return
   }
@@ -201,7 +212,7 @@ function insertBlockTime() {
   }
 
   handler()
-  const observer = new MutationObserver(debounce(handler, 300));
+  const observer = new MutationObserver(debounce(handler, 300))
   observer.observe(document.documentElement, {
     childList: true, // 观察目标子节点的变化，是否有添加或者删除
     subtree: true, // 观察后代节点，默认为 false
@@ -209,7 +220,7 @@ function insertBlockTime() {
   })
 }
 onMounted(() => {
-  insertBlockTime();
+  insertBlockTime()
 })
 
 plugin.protyleSlash.push({
@@ -223,8 +234,8 @@ plugin.protyleSlash.push({
   callback(protyle: Protyle) {
     const iProtyle = protyle.protyle
     enLog('id is ', iProtyle.selectElement)
-    protyle.insert(`{{{row\n{{{col\n{{{row\n线索\n{: style="" }\n{: style="" }\n}}}\n{{{row\n笔记\n{: style="" }\n{: style="" }\n}}}\n}}}\n{{{row\n总结\n{: style="" }\n{: style="" }\n}}}\n}}}\n{: custom-iscornell="true" }`);
-  }
+    protyle.insert(`{{{row\n{{{col\n{{{row\n线索\n{: style="" }\n{: style="" }\n}}}\n{{{row\n笔记\n{: style="" }\n{: style="" }\n}}}\n}}}\n{{{row\n总结\n{: style="" }\n{: style="" }\n}}}\n}}}\n{: custom-iscornell="true" }`)
+  },
 })
 </script>
 

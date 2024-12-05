@@ -4,7 +4,7 @@
       v-model:visible="modalVisible"
       :footer="false"
       :mask-style="{
-        backgroundColor: 'rgba(0,0,0,0)'
+        backgroundColor: 'rgba(0,0,0,0)',
       }"
       :width="580"
       @ok="handleOk"
@@ -51,7 +51,7 @@
           <a-select
             v-model="currentFontSize"
             :style="{
-              width: '100%'
+              width: '100%',
             }"
           >
             <a-option
@@ -80,14 +80,14 @@
           </span>
           <a-button
             type="primary"
-            @click="createCommand"
             size="mini"
+            @click="createCommand"
           >
             添加样式快捷键
           </a-button>
           <a-button
-            @click="clearCurrentFontStyle"
             size="mini"
+            @click="clearCurrentFontStyle"
           >
             清除样式
           </a-button>
@@ -131,15 +131,87 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import { usePlugin } from "@/main";
-import { addCommand, removeCommand } from '@/utils/Commands';
-import { ICommand, showMessage } from 'siyuan';
-import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from "vue";
-import { EnModule, isFree } from '../Settings/EnSettings.vue';
-import { useSettingModuleInSetup } from '@/utils/SyncDataHooks';
+<script lang="ts">
+import { usePlugin } from "@/main"
+import {
+  addCommand,
+  removeCommand,
+} from '@/utils/Commands'
+import { useSettingModuleInSetup } from '@/utils/SyncDataHooks'
+import {
+  ICommand,
+  showMessage,
+} from 'siyuan'
+import {
+  computed,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  watchEffect,
+} from "vue"
+import {
+  EnModule,
+  isFree,
+} from '../Settings/EnSettings.vue'
 
-const plugin = usePlugin();
+export interface ICommandItem {
+  key: string
+  color: string
+  bgColor: string
+  fontSize: string
+}
+
+export const siyuanColorList = [
+  "var(--b3-font-color1)",
+  "var(--b3-font-color2)",
+  "var(--b3-font-color3)",
+  "var(--b3-font-color4)",
+  "var(--b3-font-color5)",
+  "var(--b3-font-color6)",
+  "var(--b3-font-color7)",
+  "var(--b3-font-color8)",
+  "var(--b3-font-color9)",
+  "var(--b3-font-color10)",
+  "var(--b3-font-color11)",
+  "var(--b3-font-color12)",
+  "var(--b3-font-color13)",
+]
+
+export const siyuanBgColorList = [
+  "var(--b3-font-background1)",
+  "var(--b3-font-background2)",
+  "var(--b3-font-background3)",
+  "var(--b3-font-background4)",
+  "var(--b3-font-background5)",
+  "var(--b3-font-background6)",
+  "var(--b3-font-background7)",
+  "var(--b3-font-background8)",
+  "var(--b3-font-background9)",
+  "var(--b3-font-background10)",
+  "var(--b3-font-background11)",
+  "var(--b3-font-background12)",
+  "var(--b3-font-background13)",
+]
+
+export const fontSizeList = [
+  '12px',
+  '13px',
+  '14px',
+  '15px',
+  '16px',
+  '19px',
+  '22px',
+  '24px',
+  '29px',
+  '32px',
+  '40px',
+  '48px',
+]
+</script>
+
+<script setup lang="ts">
+
+const plugin = usePlugin()
 
 
 const parentDatasetKey = 'en_cmd_font_style'
@@ -148,7 +220,7 @@ const colorCommandHTML = `
   <div data-${parentDatasetKey}>
     <span>点击创建字体快捷键</span>
   </div>
-`;
+`
 
 const command: ICommand = {
   langKey: "En_FontStyle",
@@ -156,8 +228,8 @@ const command: ICommand = {
   hotkey: "",
   callback() {
     switchModalVisibleStatus()
-  }
-};
+  },
+}
 
 const modalVisible = ref(false)
 const handleOk = () => {
@@ -222,8 +294,8 @@ const addCommandsByList = () => {
       fontSize,
     } = item
     addCommand({
-    langKey: `${key}`,
-    langText: `
+      langKey: `${key}`,
+      langText: `
       <div data-${EnFontStyleItem} style="display: flex; align-items: center; gap: var(--en-gap);">
         <span>
           字体快捷键:
@@ -243,18 +315,42 @@ const addCommandsByList = () => {
         </span>
       </div>
     `,
-    hotkey: "",
-    editorCallback(protyle) {
-      protyle?.toolbar?.setInlineMark(protyle, "EnFont text", "range", {type: 'color', color: color });
-      protyle?.toolbar?.setInlineMark(protyle, "EnFont text", "range", {type: 'backgroundColor', color: bgColor });
-      protyle?.toolbar?.setInlineMark(protyle, "EnFont text", "range", {type: 'fontSize', color: fontSize });
-    }
-  });
+      hotkey: "",
+      editorCallback(protyle) {
+        protyle?.toolbar?.setInlineMark(
+          protyle,
+          "EnFont text",
+          "range",
+          {
+            type: 'color',
+            color,
+          },
+        )
+        protyle?.toolbar?.setInlineMark(
+          protyle,
+          "EnFont text",
+          "range",
+          {
+            type: 'backgroundColor',
+            color: bgColor,
+          },
+        )
+        protyle?.toolbar?.setInlineMark(
+          protyle,
+          "EnFont text",
+          "range",
+          {
+            type: 'fontSize',
+            color: fontSize,
+          },
+        )
+      },
+    })
   })
 }
 
 const removeConfiggedFont = (item: ICommandItem) => {
-  moduleOptions.value.configgedFontStyleList = configgedFontStyleList.value.filter(i => i.key !== item.key)
+  moduleOptions.value.configgedFontStyleList = configgedFontStyleList.value.filter((i) => i.key !== item.key)
 }
 
 watchEffect(() => {
@@ -291,78 +387,22 @@ const switchModalVisibleStatus = () => {
 }
 
 const handleClickStyle = (event) => {
-  const target = event.target as HTMLElement;
+  const target = event.target as HTMLElement
   if (target?.parentElement) {
     if (parentDatasetKey in target.parentElement.dataset) {
       switchModalVisibleStatus()
     }
   }
-};
-
-onMounted(() => {
-  addCommand(command);
-  document.documentElement.addEventListener("click", handleClickStyle, true);
-});
-onBeforeUnmount(() => {
-  removeCommand(command)
-  document.documentElement.removeEventListener("click", handleClickStyle, true);
-});
-</script>
-
-<script lang="ts">
-export interface ICommandItem {
-  key: string
-  color: string
-  bgColor: string
-  fontSize: string
 }
 
-export const siyuanColorList = [
-  "var(--b3-font-color1)",
-  "var(--b3-font-color2)",
-  "var(--b3-font-color3)",
-  "var(--b3-font-color4)",
-  "var(--b3-font-color5)",
-  "var(--b3-font-color6)",
-  "var(--b3-font-color7)",
-  "var(--b3-font-color8)",
-  "var(--b3-font-color9)",
-  "var(--b3-font-color10)",
-  "var(--b3-font-color11)",
-  "var(--b3-font-color12)",
-  "var(--b3-font-color13)",
-];
-
-export const siyuanBgColorList = [
-  "var(--b3-font-background1)",
-  "var(--b3-font-background2)",
-  "var(--b3-font-background3)",
-  "var(--b3-font-background4)",
-  "var(--b3-font-background5)",
-  "var(--b3-font-background6)",
-  "var(--b3-font-background7)",
-  "var(--b3-font-background8)",
-  "var(--b3-font-background9)",
-  "var(--b3-font-background10)",
-  "var(--b3-font-background11)",
-  "var(--b3-font-background12)",
-  "var(--b3-font-background13)",
-];
-
-export const fontSizeList = [
-  '12px',
-  '13px',
-  '14px',
-  '15px',
-  '16px',
-  '19px',
-  '22px',
-  '24px',
-  '29px',
-  '32px',
-  '40px',
-  '48px',
-]
+onMounted(() => {
+  addCommand(command)
+  document.documentElement.addEventListener("click", handleClickStyle, true)
+})
+onBeforeUnmount(() => {
+  removeCommand(command)
+  document.documentElement.removeEventListener("click", handleClickStyle, true)
+})
 </script>
 
 <style lang="scss" scoped>

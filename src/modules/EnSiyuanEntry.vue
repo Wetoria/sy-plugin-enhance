@@ -1,16 +1,22 @@
 <template>
   <Teleport
-    :to="entryRef"
     v-if="entryRef"
+    :to="entryRef"
   >
     <use :xlink:href="`#${['iconHeart', 'iconVIP', 'iconSuper'][settings.v]}`"></use>
   </Teleport>
 </template>
 
 <script setup lang="ts">
-import { usePlugin } from '@/main';
-import { entryOpenSettings, useSettings } from '@/modules/Settings/EnSettings.vue';
-import { onMounted, ref } from 'vue';
+import { usePlugin } from '@/main'
+import {
+  entryOpenSettings,
+  useSettings,
+} from '@/modules/Settings/EnSettings.vue'
+import {
+  onMounted,
+  ref,
+} from 'vue'
 
 const settings = useSettings()
 
@@ -23,7 +29,7 @@ const registerTopBar = () => {
     title: plugin.i18n.pluginName,
     position: "right",
     callback: entryOpenSettings,
-  }) as HTMLDivElement;
+  }) as HTMLDivElement
   const svgEl = el.querySelector('svg')
   if (!svgEl) {
     return
@@ -34,7 +40,6 @@ const registerTopBar = () => {
 onMounted(() => {
   registerTopBar()
 })
-
 </script>
 
 <style lang="scss" scoped>
