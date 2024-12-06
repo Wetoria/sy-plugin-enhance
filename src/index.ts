@@ -31,6 +31,8 @@ export default class EnhancePlugin extends Plugin {
   public isElectron: boolean
   public platform: SyFrontendTypes
   public readonly version = version
+  // @ts-expect-error fix siyuan i18n type doesn't match
+  declare readonly i18n: I18nType
 
   async onload() {
     enSuccess(`Plugin script loaded, ready to init plugin logics`)
