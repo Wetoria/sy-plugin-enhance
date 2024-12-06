@@ -75,6 +75,9 @@ interface EnSyncModule<T> {
   needSave?: EnSyncModuleProps<T>['needSave']
   // 不保存的标记，为 true 则不调用思源插件的保存逻辑
   doNotSave?: boolean
+
+  loaded?: boolean
+  loadingFlag?: any
 }
 
 export function getModuleStorageKey(namespace: Namespace) {
@@ -255,6 +258,15 @@ export function useSyncModuleData<T>({
   }
   dataRef.value = getInitModuleData(defaultData)
 
+  if (needSave) {
+    // 标记模块没有加载
+    syncDataRefMap[namespace].loadingFlag = setTimeout(() => {
+      if (!syncDataRefMap[namespace].loaded) {
+        enWarn(`${getColorStringWarn(`Module ${getNamespaceLogString(namespace)} was not loaded from file. You seem forget to load it.`)}`)
+      }
+    }, 5000)
+  }
+
   enLog(`${getColorStringWarn('Module registered:')} ${getNamespaceLogString(namespace)}.`)
   enLog(`Module map data is: `, syncDataRefMap)
   enLog(`The Module data is: `, JSON.parse(JSON.stringify(dataRef.value)))
@@ -295,6 +307,7 @@ export async function loadModuleDataByNamespace<T>(namespace: Namespace) {
   const res: EnSyncModuleData<T> = await plugin.loadData(storageKey)
   enLog(`${getColorStringWarn('Loaded module data')} of ${getNamespaceLogString(namespace)} is: `, res)
 
+  clearTimeout(syncDataRefMap[namespace].loadingFlag)
   const dataRef = syncDataRefMap[namespace]?.dataRef
 
   if (!dataRef) {
