@@ -35,9 +35,13 @@
     </EnSettingsItem>
 
   </EnSettingsTeleportModule>
+  <template v-if="moduleOptions.enabled">
+
+  </template>
 </template>
 
-<script lang="ts">import {
+<script lang="ts">
+import {
   batchGetBlockAttrs,
   batchSetBlockAttrs,
   flushTransactions,
@@ -84,9 +88,7 @@ export interface ILifeLog {
 
 <script setup lang="ts">
 
-
 const plugin = usePlugin()
-
 
 // #region 基本的模块配置
 

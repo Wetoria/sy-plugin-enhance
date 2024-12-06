@@ -4,7 +4,6 @@
   >
     <div
       id="SyEnhancerApp"
-      ref="SyEnhancerAppRef"
       class="SyEnhancerApp"
     >
       <ArcoTheme />
@@ -15,34 +14,7 @@
 
       </div>
 
-      <!-- 全平台 -->
-      <template>
-        <!-- 这里的顺序，决定了设置中的模块显示顺序 -->
-        <EnSettings />
-        <EnSiyuanEntry />
-        <DailyNote />
-        <EnEditor />
-        <EnBackgroundImg v-if="isVip" />
-        <EnOthers />
-
-        <LifeLog />
-        <EnVideoAndAudio v-if="isNotFree" />
-        <EnFormatBrush v-if="isNotFree" />
-        <EnFont />
-        <TemplateEntry />
-      </template>
-
-      <!-- 仅移动端 -->
-      <template v-if="plugin.isMobile">
-        <EnPWA />
-        <EnMobileNav />
-
-      </template>
-
-      <!-- 仅桌面端 -->
-      <template v-else>
-        <EnComment v-if="isNotFree && !isInEnWindow" />
-      </template>
+      <ModuleControl />
 
       <!-- <FixedDocArea v-if="!plugin.isMobile" /> -->
     </div>
@@ -50,43 +22,27 @@
 </template>
 
 <script setup lang="ts">
-import type { Protyle } from 'siyuan'
-import { showMessage } from 'siyuan'
+import { request } from '@/api'
+import { usePlugin } from '@/main'
+
+import ArcoTheme from '@/modules/ArcoTheme.vue'
+import { getCurrentDocTitleDomByDom } from '@/modules/DailyNote/DailyNote.vue'
+import ModuleControl from '@/modules/EnModuleControl/ModuleControl.vue'
+import TestLogic from '@/modules/Test/TestLogic.vue'
+
+import { moduleEnableStatusSwitcher } from '@/utils'
+import { registerGlobalObserver } from '@/utils/DOM'
+
+import {
+  Protyle,
+  showMessage,
+} from 'siyuan'
 import {
   onMounted,
-  ref,
   watchEffect,
 } from 'vue'
-import { request } from './api'
-
-import { usePlugin } from './main'
-import ArcoTheme from './modules/ArcoTheme.vue'
-import EnBackgroundImg from './modules/Background/EnBackgroundImg.vue'
-import DailyNote, { getCurrentDocTitleDomByDom } from './modules/DailyNote/DailyNote.vue'
-import EnComment from './modules/Editor/Comment/EnComment.vue'
-import EnEditor from './modules/Editor/EnEditor.vue'
-import EnFont from './modules/Editor/EnFont.vue'
-import EnFormatBrush from './modules/EnFormatBrush/EnFormatBrush.vue'
-import EnMobileNav from './modules/EnMobileNav.vue'
-import EnOthers from './modules/EnOthers.vue'
-import EnPWA from './modules/EnPWA.vue'
-import EnSiyuanEntry from './modules/EnSiyuanEntry.vue'
-
-import { isInWindow } from './modules/EnWindow.vue'
-import LifeLog from './modules/LifeLog/LifeLog.vue'
-import EnSettings, {
-  isNotFree,
-  isVip,
-} from './modules/Settings/EnSettings.vue'
-import TemplateEntry from './modules/Templates/TemplateEntry.vue'
-import TestLogic from './modules/Test/TestLogic.vue'
-import EnVideoAndAudio from './modules/VideoAndAudio/EnVideoAndAudio.vue'
-import { moduleEnableStatusSwitcher } from './utils'
-import { registerGlobalObserver } from './utils/DOM'
 
 const plugin = usePlugin()
-
-const isInEnWindow = ref(isInWindow('QuickNote') || isInWindow('EnVideoAndAudio'))
 
 watchEffect(() => {
   moduleEnableStatusSwitcher('EnhancerIsMobile', plugin.isMobile)

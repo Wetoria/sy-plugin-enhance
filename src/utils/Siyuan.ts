@@ -39,6 +39,27 @@ export enum SyDomNodeTypes {
   BreadCrumb = 'protyle-breadcrumb__bar',
 }
 
+export const defaultToolbar = [
+  "block-ref",
+  "a",
+  "|",
+  "text",
+  "strong",
+  "em",
+  "u",
+  "s",
+  "mark",
+  "sup",
+  "sub",
+  "clear",
+  "|",
+  "code",
+  "kbd",
+  "tag",
+  "inline-math",
+  "inline-memo",
+]
+
 export function getSyDomNodeType(node: HTMLElement) {
   return node.dataset.type as SyDomNodeTypes
 }

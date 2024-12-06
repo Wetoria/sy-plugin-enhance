@@ -1,13 +1,13 @@
-import { ModuleName_DailyNote } from '@/modules/DailyNote/DailyNote.vue'
 import { EnModule } from '@/modules/Settings/EnSettings.vue'
 import { ModuleName_TestLogic } from '@/modules/Test/TestLogic.vue'
+import { EN_CONSTANTS } from '@/utils/Constants'
 import { getModuleRefByNamespace } from '@/utils/SyncData'
 
 
 // 在此处配置模块顺序
 const moduleOrder = [
   ModuleName_TestLogic,
-  ModuleName_DailyNote,
+  EN_CONSTANTS.DAILY_NOTE_MODULE,
 ]
 
 

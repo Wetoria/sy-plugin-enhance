@@ -83,6 +83,7 @@
 
 <script lang="ts">
 import { sql } from '@/api'
+import { ILifeLog } from '@/modules/LifeLog/EnModuleLifeLog.vue'
 import { diffFormat } from '@/utils/Date'
 import { queryAllByDom } from '@/utils/DOM'
 import dayjs from 'dayjs'
@@ -94,7 +95,6 @@ import {
   ref,
   watchEffect,
 } from 'vue'
-import { ILifeLog } from './LifeLog.vue'
 
 const dailyNoteId = ref('')
 export function reloadLifeLogData(newLifeLogParagraphId: string) {
