@@ -52,7 +52,10 @@ import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import { usePlugin } from '@/main'
 import { getColorStringWarn } from '@/utils/Log'
 import { SyFrontendTypes } from '@/utils/Siyuan'
-import { useSyncModuleData } from '@/utils/SyncData'
+import {
+  updateModuleDataByNamespaceWithLoadFile,
+  useSyncModuleData,
+} from '@/utils/SyncData'
 import {
   computed,
   onMounted,
@@ -99,7 +102,7 @@ export const createWindow = (title, queryStr?) => {
   const moduleOptions = computed(() => module.value.data as IEnWindow)
 
   const {
-    width = 1000,
+    width = 500,
     height = 350,
     x,
     y,
@@ -108,8 +111,8 @@ export const createWindow = (title, queryStr?) => {
   const electronWindow = new BrowserWindow({
     width,
     height,
-    // x,
-    // y,
+    x,
+    y,
     show: false,
     resizable: true,
     movable: true,
@@ -220,7 +223,7 @@ defineExpose({
   },
 })
 
-onMounted(() => {
+onMounted(async () => {
   if (currentInWindow) {
     document.documentElement.dataset.enWindow = "true"
 
@@ -229,6 +232,15 @@ onMounted(() => {
       pinned.value = isAlwaysOnTop
     })
   } else {
+    useSyncModuleData({
+      namespace: `enWindow-${props.windowTitle}`,
+      defaultData: {
+        width: 500,
+        height: 350,
+      },
+      needSync: false,
+    })
+    await updateModuleDataByNamespaceWithLoadFile(`enWindow-${props.windowTitle}`)
     if (props.createImmediate) {
       createEnWindow()
     }
