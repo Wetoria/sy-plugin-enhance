@@ -114,7 +114,6 @@ import {
   ComputedRef,
   onMounted,
   ref,
-  Ref,
   watch,
   watchEffect,
 } from 'vue'
@@ -479,8 +478,7 @@ const onDrawerOpen = () => {
 }
 
 const resetAllModule = () => {
-  const moduleValues = Object.keys(settings.value.modules)
-  moduleValues.forEach((moduleName) => {
+  settingRefKeys.value.forEach((moduleName) => {
     const moduleRef = getModuleRefByNamespace(moduleName)
     resetModuleOptions(moduleRef)
   })
