@@ -54,7 +54,6 @@ import EnSettings, {
 import TemplateEntry from '@/modules/Templates/TemplateEntry.vue'
 import EnVideoAndAudio from '@/modules/VideoAndAudio/EnVideoAndAudio.vue'
 import {
-  EN_CONSTANTS,
   EN_MODULE_LIST,
 } from '@/utils/Constants'
 
@@ -81,7 +80,6 @@ export function useModule<T extends EnModule>(moduleName: EN_MODULE_LIST, module
   // 如果没有默认值，视为加载模块
   if (isLoadModule) {
     const moduleRef: EnSyncModuleDataRef<T> = inject(moduleName)
-      || inject(EN_CONSTANTS.MODULE_PROVIDER_KEY)
       || getModuleRefByNamespace<T>(moduleName)
 
     // 这个时候，如果模块不存在，需要抛出错误
@@ -100,7 +98,6 @@ export function useModule<T extends EnModule>(moduleName: EN_MODULE_LIST, module
   const moduleRes = useSettingModuleInSetup<T>(moduleOptions)
 
   provide(moduleName, moduleRes)
-  provide(EN_CONSTANTS.MODULE_PROVIDER_KEY, moduleRes)
 
   return moduleRes
 }
