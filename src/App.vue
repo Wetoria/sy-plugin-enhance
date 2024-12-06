@@ -4,8 +4,8 @@
   >
     <div
       id="SyEnhancerApp"
-      class="SyEnhancerApp"
       ref="SyEnhancerAppRef"
+      class="SyEnhancerApp"
     >
       <ArcoTheme />
       <div class="displayArea">
@@ -27,7 +27,7 @@
 
         <LifeLog />
         <EnVideoAndAudio v-if="isNotFree" />
-        <EnFormatBrush v-if="isNotFree"  />
+        <EnFormatBrush v-if="isNotFree" />
         <EnFont />
         <TemplateEntry />
       </template>
@@ -50,31 +50,39 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watchEffect } from 'vue';
-import { usePlugin } from './main';
-import EnSiyuanEntry from './modules/EnSiyuanEntry.vue';
+import type { Protyle } from 'siyuan'
+import { showMessage } from 'siyuan'
+import {
+  onMounted,
+  ref,
+  watchEffect,
+} from 'vue'
+import { request } from './api'
 
+import { usePlugin } from './main'
+import ArcoTheme from './modules/ArcoTheme.vue'
+import EnBackgroundImg from './modules/Background/EnBackgroundImg.vue'
+import DailyNote, { getCurrentDocTitleDomByDom } from './modules/DailyNote/DailyNote.vue'
+import EnComment from './modules/Editor/Comment/EnComment.vue'
+import EnEditor from './modules/Editor/EnEditor.vue'
+import EnFont from './modules/Editor/EnFont.vue'
+import EnFormatBrush from './modules/EnFormatBrush/EnFormatBrush.vue'
+import EnMobileNav from './modules/EnMobileNav.vue'
+import EnOthers from './modules/EnOthers.vue'
+import EnPWA from './modules/EnPWA.vue'
+import EnSiyuanEntry from './modules/EnSiyuanEntry.vue'
 
-import LifeLog from './modules/LifeLog/LifeLog.vue';
-import ArcoTheme from './modules/ArcoTheme.vue';
-import EnPWA from './modules/EnPWA.vue';
-import DailyNote, { getCurrentDocTitleDomByDom } from './modules/DailyNote/DailyNote.vue';
-import EnSettings, { isPro, isVip, isNotFree } from './modules/Settings/EnSettings.vue';
-import EnOthers from './modules/EnOthers.vue';
-import EnBackgroundImg from './modules/Background/EnBackgroundImg.vue';
-import EnEditor from './modules/Editor/EnEditor.vue';
-import EnMobileNav from './modules/EnMobileNav.vue';
-import EnVideoAndAudio from './modules/VideoAndAudio/EnVideoAndAudio.vue';
-import EnFormatBrush from './modules/EnFormatBrush/EnFormatBrush.vue';
-import EnFont from './modules/Editor/EnFont.vue';
-import { Protyle, showMessage } from 'siyuan';
-import { request } from './api';
-import TemplateEntry from './modules/Templates/TemplateEntry.vue';
-import { moduleEnableStatusSwitcher } from './utils';
-import EnComment from './modules/Editor/Comment/EnComment.vue';
-import { isInWindow } from './modules/EnWindow.vue';
-import TestLogic from './modules/Test/TestLogic.vue';
-import { registerGlobalObserver } from './utils/DOM';
+import { isInWindow } from './modules/EnWindow.vue'
+import LifeLog from './modules/LifeLog/LifeLog.vue'
+import EnSettings, {
+  isNotFree,
+  isVip,
+} from './modules/Settings/EnSettings.vue'
+import TemplateEntry from './modules/Templates/TemplateEntry.vue'
+import TestLogic from './modules/Test/TestLogic.vue'
+import EnVideoAndAudio from './modules/VideoAndAudio/EnVideoAndAudio.vue'
+import { moduleEnableStatusSwitcher } from './utils'
+import { registerGlobalObserver } from './utils/DOM'
 
 const plugin = usePlugin()
 
@@ -95,11 +103,11 @@ onMounted(() => {
   }
   plugin.protyleSlash.push({
     filter: [
-      "插入当前反链 MOC",
+      '插入当前反链 MOC',
       'insert current moc',
     ],
     html: `<div class="b3-list-item__first"><span class="b3-list-item__text">${'插入当前反链 MOC'}</span></div>`,
-    id: "enInsertMocCurrent",
+    id: 'enInsertMocCurrent',
     callback(protyle: Protyle) {
       const titleDom = getCurrentDocTitleDomByDom(protyle.protyle.contentElement)
       if (!titleDom) {
@@ -123,7 +131,7 @@ onMounted(() => {
         const result = insertMD.join('\n')
         protyle.insert(result)
       })
-    }
+    },
   })
 })
 </script>
@@ -131,7 +139,7 @@ onMounted(() => {
 <style lang="scss">
 :root {
   --sky-blue: #00bfff;
-  --sky-blue-blur: #00bfff7F;
+  --sky-blue-blur: #00bfff7f;
 
   --en-gap: 8px;
   // --b3-theme-background: #000;
