@@ -99,6 +99,7 @@ import {
   moduleEnableStatusSwitcher,
 } from '@/utils'
 import { addCommand } from '@/utils/Commands'
+import { EN_MODULE_LIST } from '@/utils/Constants'
 import { onCountClick } from '@/utils/DOM'
 import { getColorStringError } from '@/utils/Log'
 import {
@@ -189,7 +190,7 @@ watchEffect(() => {
  */
 export interface EnModule {
   enabled: boolean
-  readonly moduleName: string
+  readonly moduleName: EN_MODULE_LIST
   readonly moduleDisplayName: string
   sort?: number
 }

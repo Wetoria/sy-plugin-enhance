@@ -123,6 +123,7 @@ export default antfu(
       'ts/explicit-function-return-type': 'off',
       'ts/no-require-imports': 'off',
       'ts/no-use-before-define': 'warn',
+      'ts/prefer-literal-enum-member': 'off',
       'ts/strict-boolean-expressions': 'off',
 
       'unused-imports/no-unused-vars': 'warn',
