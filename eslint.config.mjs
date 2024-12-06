@@ -1,4 +1,6 @@
 import antfu from '@antfu/eslint-config'
+import perfectionist from 'eslint-plugin-perfectionist'
+import i18nPlugin from './src/utils/eslint/i18n-validate-keys.mjs'
 
 export default antfu(
   {
@@ -36,6 +38,53 @@ export default antfu(
       'src/**/*.ts',
     ],
     rules: {
+    },
+  },
+  {
+    files: [
+      'src/i18n/*.json',
+      'src/i18n/types.d.ts',
+      'src/utils/Constants.ts',
+    ],
+    plugins: {
+      i18n: i18nPlugin,
+      perfectionist,
+    },
+    rules: {
+      'i18n/validate-keys': 'error',
+      'perfectionist/sort-enums': 'error',
+      'perfectionist/sort-interfaces': [
+        'error',
+        {
+          type: 'alphabetical',
+          order: 'asc',
+          ignoreCase: true,
+          specialCharacters: 'keep',
+          ignorePattern: [],
+          partitionByComment: false,
+          partitionByNewLine: false,
+          newlinesBetween: 'ignore',
+          groupKind: 'mixed',
+          groups: [],
+          customGroups: {},
+        },
+      ],
+      'perfectionist/sort-objects': [
+        'error',
+        {
+          type: 'alphabetical',
+          order: 'asc',
+          ignoreCase: true,
+          specialCharacters: 'keep',
+          partitionByComment: false,
+          partitionByNewLine: false,
+          newlinesBetween: 'ignore',
+          styledComponents: true,
+          ignorePattern: [],
+          groups: [],
+          customGroups: {},
+        },
+      ],
     },
   },
   {

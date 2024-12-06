@@ -1,9 +1,9 @@
 {
-  "pluginName": "Sy-Enhancer",
-  "displayName": "Video and Audio Timestamp Tools",
-  "pinVideo": "Pin Video or Audio",
-  "unpinVideo": "Unpin Video or Audio",
   "copyVideoTimestamp": "Copy video or audio timestamp (url)",
   "copyVideoTimestampMarkdown": "Copy video or audio timestamp (markdown)",
-  "base": "base"
+  "displayName": "Video and Audio Timestamp Tools",
+  "pinVideo": "Pin Video or Audio",
+  "pluginName": "Sy-Enhancer",
+  "unpinVideo": "Unpin Video or Audio",
+  "z_base": "Z-Base"
 }
