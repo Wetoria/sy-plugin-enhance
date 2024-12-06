@@ -202,7 +202,7 @@ const getSiyuanAccount = () => {
   } = window?.siyuan?.user || {}
 
   if (!userId) {
-    enWarn('思源账号获取失败')
+    enLog('思源账号获取失败')
     return
   }
   siyuanAccount.value = {

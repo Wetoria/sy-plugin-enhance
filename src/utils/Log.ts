@@ -33,6 +33,8 @@ export function getColorStringError(text: string) {
 window.enError = enError
 
 export function enSuccess(...args: [string, ...any[]]) {
+  if (!isDeveloping)
+    return
   const [first, ...rest] = args
   console.log(`${chalk.bgGreen.whiteBright(` ${prefix} ${first} `)}`, ...rest)
 }
