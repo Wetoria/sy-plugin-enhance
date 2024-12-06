@@ -13,8 +13,6 @@ export function enLog(...args: [string, ...any[]]) {
 window.enLog = enLog
 
 export function enWarn(...args: [string, ...any[]]) {
-  if (!isDeveloping)
-    return
   const [first, ...rest] = args
   console.log(`${chalk.bgYellowBright.yellow(` ${prefix} ${first} `)}`)
   console.warn(...rest)
@@ -25,10 +23,8 @@ export function getColorStringWarn(text: string) {
 window.enWarn = enWarn
 
 export function enError(...args: [string, ...any[]]) {
-  if (!isDeveloping)
-    return
   const [first, ...rest] = args
-  console.log(`${chalk.bgRed.redBright(` ${prefix} ${first} `)}`)
+  console.log(`${chalk.bgRed.whiteBright(` ${prefix} ${first} `)}`)
   console.error(...rest)
 }
 export function getColorStringError(text: string) {
@@ -37,10 +33,8 @@ export function getColorStringError(text: string) {
 window.enError = enError
 
 export function enSuccess(...args: [string, ...any[]]) {
-  if (!isDeveloping)
-    return
   const [first, ...rest] = args
-  console.log(`${chalk.bgGreen.greenBright(` ${prefix} ${first} `)}`, ...rest)
+  console.log(`${chalk.bgGreen.whiteBright(` ${prefix} ${first} `)}`, ...rest)
 }
 export function getColorStringSuccess(text: string) {
   return chalk.bold.greenBright(text)
