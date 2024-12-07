@@ -108,17 +108,12 @@
 
 <script setup lang="ts">
 import EnColorPicker from '@/components/EnColorPicker.vue'
+import { useModule } from '@/modules/EnModuleControl/ModuleProvide'
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
 import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue'
-import { useSettingModuleInScript } from '@/utils/SyncDataHooks'
-import { onBeforeMount } from 'vue'
 import { EnModule } from '../Settings/EnSettings.vue'
 import TemplateCornell from './TemplateCornell.vue'
 
-
-onBeforeMount(async () => {
-  await loadAndUpdate()
-})
 
 </script>
 
@@ -142,40 +137,37 @@ interface ISettingModuleOptions extends EnModule {
   }
 }
 
-const moduleConfig: ISettingModuleOptions = {
-  enabled: false,
-  moduleName: 'EnTemplates',
-  moduleDisplayName: '模板',
-
-  cornell: {
-    noteTitleColor: '',
-    noteBgColor: '',
-    noteFontColor: '',
-
-    clueTitleColor: '',
-    clueBgColor: '',
-    clueFontColor: '',
-
-    summaryTitleColor: '',
-    summaryBgColor: '',
-    summaryFontColor: '',
-  },
-}
-
 const {
-  moduleName,
-  moduleDisplayName,
   module,
   moduleOptions,
-  loadAndUpdate,
-} = useSettingModuleInScript<ISettingModuleOptions>(moduleConfig)
+} = useModule<ISettingModuleOptions>('EnTemplates', {
+  defaultData: {
+    enabled: false,
+    moduleName: 'EnTemplates',
+    moduleDisplayName: '模板',
+
+    cornell: {
+      noteTitleColor: '',
+      noteBgColor: '',
+      noteFontColor: '',
+
+      clueTitleColor: '',
+      clueBgColor: '',
+      clueFontColor: '',
+
+      summaryTitleColor: '',
+      summaryBgColor: '',
+      summaryFontColor: '',
+    },
+  },
+})
 
 // #endregion 基本的模块配置
 
 
 export type ModuleTemplatesOptions = ISettingModuleOptions
-export const moduleTamplatesName = moduleName
-export const moduleTemplatesDisplayName = moduleDisplayName
+export const moduleTamplatesName = moduleOptions.value.moduleName
+export const moduleTemplatesDisplayName = moduleOptions.value.moduleDisplayName
 </script>
 
 <style lang="scss" scoped>

@@ -1,7 +1,7 @@
 import chalk from 'chalk'
 
 const prefix = '[SEP by Wetoria]'
-const isDeveloping = false
+const isDeveloping = true
 
 
 export function enLog(...args: [string, ...any[]]) {
@@ -19,7 +19,7 @@ export function enWarn(...args: [string, ...any[]]) {
   const [first, ...rest] = args
   console.groupCollapsed(`${chalk.bgYellowBright.yellow(` ${prefix} ${first} `)}`)
   if (rest.length > 0) {
-  console.warn(...rest)
+    console.warn(...rest)
   }
   console.groupEnd()
 }
@@ -32,7 +32,7 @@ export function enError(...args: [string, ...any[]]) {
   const [first, ...rest] = args
   console.groupCollapsed(`${chalk.bgRed.whiteBright(` ${prefix} ${first} `)}`)
   if (rest.length > 0) {
-  console.error(...rest)
+    console.error(...rest)
   }
   console.groupEnd()
 }

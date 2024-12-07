@@ -1,7 +1,7 @@
 <template>
   <EnSettingsTeleportModule
-    :name="moduleName"
-    :display="moduleDisplayName"
+    :name="moduleOptions.moduleName"
+    :display="moduleOptions.moduleDisplayName"
     :module="module"
   >
     <EnSettingsItem>
@@ -24,10 +24,14 @@
 
 
 <script setup lang="ts">
+import { useModule } from '@/modules/EnModuleControl/ModuleProvide'
 import { EnModule } from '@/modules/Settings/EnSettings.vue'
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
 import { moduleEnableStatusSwitcher } from '@/utils'
-import { useSettingModuleInSetup } from '@/utils/SyncDataHooks'
+import {
+  EN_CONSTANTS,
+  EN_MODULE_LIST,
+} from '@/utils/Constants'
 import { watchEffect } from 'vue'
 import EnSettingsTeleportModule from './Settings/EnSettingsTeleportModule.vue'
 
@@ -38,25 +42,26 @@ interface ISettingModuleOptions extends EnModule {
   useVipStyle: boolean
 }
 
-const moduleConfig: ISettingModuleOptions = {
-  enabled: false,
-  moduleName: 'EnOther',
-  moduleDisplayName: '其他设置',
-
-  useVipStyle: false,
-}
-
 const {
-  moduleName,
-  moduleDisplayName,
   module,
   moduleOptions,
-} = useSettingModuleInSetup<ISettingModuleOptions>(moduleConfig)
+} = useModule<ISettingModuleOptions>(EN_MODULE_LIST.EN_OTHER, {
+  defaultData: {
+    enabled: false,
+    moduleName: EN_MODULE_LIST.EN_OTHER,
+    moduleDisplayName: EN_CONSTANTS.EN_OTHER_DISPLAY,
+
+    useVipStyle: false,
+  },
+})
 
 // #endregion 基本的模块配置
 
 watchEffect(() => {
-  moduleEnableStatusSwitcher('EnOther', moduleOptions.value.useVipStyle)
+  moduleEnableStatusSwitcher(
+    EN_MODULE_LIST.EN_OTHER,
+    moduleOptions.value.useVipStyle,
+  )
 })
 </script>
 

@@ -55,7 +55,7 @@ import EnQuickNote from '@/modules/DailyNote/QuickNote/EnQuickNote.vue'
 import {
   useGlobalData,
   useModule,
-} from '@/modules/EnModuleControl/ModuleDataProvide.vue'
+} from '@/modules/EnModuleControl/ModuleProvide'
 import { addCommand } from '@/utils/Commands'
 import {
   EN_CONSTANTS,

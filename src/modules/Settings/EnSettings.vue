@@ -151,8 +151,6 @@ const syncSettings = useSyncModuleData({
 const settings = computed(() => syncSettings.value.data)
 
 
-const STORAGE_KEY = 'SyEnhancerSettings'
-
 export function useSettings() {
   return settings
 }
@@ -190,7 +188,7 @@ watchEffect(() => {
  */
 export interface EnModule {
   enabled: boolean
-  readonly moduleName: EN_MODULE_LIST
+  readonly moduleName: EN_MODULE_LIST | string
   readonly moduleDisplayName: string
   sort?: number
 }

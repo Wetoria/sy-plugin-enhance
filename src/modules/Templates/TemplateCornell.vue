@@ -125,6 +125,7 @@
 import EnColorPicker from '@/components/EnColorPicker.vue'
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import { usePlugin } from '@/main'
+import { useModule } from '@/modules/EnModuleControl/ModuleProvide'
 import { debounce } from '@/utils'
 import { queryAllByDom } from '@/utils/DOM'
 import { SyDomNodeTypes } from '@/utils/Siyuan'
@@ -135,16 +136,17 @@ import {
   ref,
   watchEffect,
 } from 'vue'
-import { useSettingModule } from '../Settings/EnSettings.vue'
 import {
-  moduleTamplatesName,
   ModuleTemplatesOptions,
 } from './TemplateEntry.vue'
 
 const plugin = usePlugin()
 
-const module = useSettingModule(moduleTamplatesName)
-const cornellOptions = computed(() => (module.value.data as ModuleTemplatesOptions).cornell)
+const {
+  module,
+  moduleOptions,
+} = useModule('EnTemplates')
+const cornellOptions = computed(() => (moduleOptions.value as ModuleTemplatesOptions).cornell)
 
 const resetColors = () => {
 

@@ -41,7 +41,7 @@
 
 <script setup lang="ts">
 import { usePlugin } from '@/main'
-import { useModule } from '@/modules/EnModuleControl/ModuleDataProvide.vue'
+import { useModule } from '@/modules/EnModuleControl/ModuleProvide'
 import {
   EnModule,
 } from '@/modules/Settings/EnSettings.vue'

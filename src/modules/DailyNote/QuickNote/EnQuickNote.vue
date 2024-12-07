@@ -42,7 +42,7 @@ import {
   getNewDailyNoteBlockId,
   useDailyNote,
 } from '@/modules/DailyNote/DailyNote.vue'
-import { useGlobalData } from '@/modules/EnModuleControl/ModuleDataProvide.vue'
+import { useGlobalData } from '@/modules/EnModuleControl/ModuleProvide'
 import EnWindow, { isInWindow } from '@/modules/EnWindow.vue'
 import { addCommand } from '@/utils/Commands'
 import { EN_CONSTANTS } from '@/utils/Constants'

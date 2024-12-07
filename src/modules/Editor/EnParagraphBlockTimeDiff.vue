@@ -33,7 +33,7 @@
 </template>
 
 <script lang="ts">
-import { useGlobalData } from '@/modules/EnModuleControl/ModuleDataProvide.vue'
+import { useGlobalData } from '@/modules/EnModuleControl/ModuleProvide'
 import { EN_CONSTANTS } from '@/utils/Constants'
 import { getDiffFormat } from '@/utils/Date'
 import { getCreatedByDataset } from '@/utils/Siyuan'

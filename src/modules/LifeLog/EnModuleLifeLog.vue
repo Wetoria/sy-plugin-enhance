@@ -1,7 +1,7 @@
 <template>
   <EnSettingsTeleportModule
-    :name="moduleName"
-    :display="moduleDisplayName"
+    :name="moduleOptions.moduleName"
+    :display="moduleOptions.moduleDisplayName"
     :module="module"
   >
     <EnSettingsItem>
@@ -48,10 +48,10 @@ import {
   sql,
 } from '@/api'
 import { usePlugin } from '@/main'
+import { useModule } from '@/modules/EnModuleControl/ModuleProvide'
 import { moduleEnableStatusSwitcher } from '@/utils'
 import { queryAllByDom } from '@/utils/DOM'
 import { getColorStringWarn } from '@/utils/Log'
-import { useSettingModuleInSetup } from '@/utils/SyncDataHooks'
 import dayjs from 'dayjs'
 import { Protyle } from 'siyuan'
 import {
@@ -97,22 +97,19 @@ interface ISettingModuleOptions extends EnModule {
   showLifeLogFlag: boolean
 }
 
-const moduleConfig: ISettingModuleOptions = {
-  enabled: false,
-  moduleName: 'EnLifeLog',
-  moduleDisplayName: 'LifeLog',
-
-  enableLifeLog: false,
-  showLifeLogFlag: false,
-}
-
 const {
-  moduleName,
-  moduleDisplayName,
   module,
   moduleOptions,
-} = useSettingModuleInSetup<ISettingModuleOptions>(moduleConfig)
+} = useModule<ISettingModuleOptions>('EnLifeLog', {
+  defaultData: {
+    enabled: false,
+    moduleName: 'EnLifeLog',
+    moduleDisplayName: 'LifeLog',
 
+    enableLifeLog: false,
+    showLifeLogFlag: false,
+  },
+})
 // #endregion 基本的模块配置
 
 

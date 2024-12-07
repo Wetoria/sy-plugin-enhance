@@ -106,7 +106,7 @@ import {
   appendBlockIntoDailyNote,
   useDailyNote,
 } from '@/modules/DailyNote/DailyNote.vue'
-import { useGlobalData } from '@/modules/EnModuleControl/ModuleDataProvide.vue'
+import { useGlobalData } from '@/modules/EnModuleControl/ModuleProvide'
 import {
   debounce,
   generateShortUUID,

@@ -133,11 +133,11 @@
 
 <script lang="ts">
 import { usePlugin } from "@/main"
+import { useModule } from '@/modules/EnModuleControl/ModuleProvide'
 import {
   addCommand,
   removeCommand,
 } from '@/utils/Commands'
-import { useSettingModuleInSetup } from '@/utils/SyncDataHooks'
 import {
   ICommand,
   showMessage,
@@ -264,18 +264,17 @@ const clearCurrentFontStyle = () => {
 interface ISettingModuleOptions extends EnModule {
   configgedFontStyleList: ICommandItem[]
 }
-
-const moduleConfig: ISettingModuleOptions = {
-  enabled: false,
-  moduleName: 'EnFont',
-  moduleDisplayName: '字体样式快捷键',
-
-  configgedFontStyleList: [],
-}
-
 const {
   moduleOptions,
-} = useSettingModuleInSetup<ISettingModuleOptions>(moduleConfig)
+} = useModule<ISettingModuleOptions>('EnFont', {
+  defaultData: {
+    enabled: false,
+    moduleName: 'EnFont',
+    moduleDisplayName: '字体样式快捷键',
+
+    configgedFontStyleList: [],
+  },
+})
 
 // #endregion 基本的模块配置
 

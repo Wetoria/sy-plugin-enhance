@@ -20,8 +20,8 @@
     </div>
   </Teleport>
   <EnSettingsTeleportModule
-    :name="moduleName"
-    :display="moduleDisplayName"
+    :name="moduleOptions.moduleName"
+    :display="moduleOptions.moduleDisplayName"
     :module="module"
   >
     <EnSettingsItem mode="vertical">
@@ -61,8 +61,8 @@
 
 <script setup lang="ts">
 import { usePlugin } from '@/main'
+import { useModule } from '@/modules/EnModuleControl/ModuleProvide'
 import { useEnhancer } from '@/modules/GlobalStatus'
-import { useSettingModuleInSetup } from '@/utils/SyncDataHooks'
 import {
   onBeforeUnmount,
   onMounted,
@@ -88,22 +88,19 @@ interface ISettingModuleOptions extends EnModule {
   toolBarHeight: number
 }
 
-const moduleConfig: ISettingModuleOptions = {
-  enabled: false,
-  moduleName: 'EnPWA',
-  moduleDisplayName: '移动端 PWA 适配',
-
-  statusBarHeight: 56,
-  toolBarHeight: 30,
-}
-
 const {
-  moduleName,
-  moduleDisplayName,
   module,
   moduleOptions,
-} = useSettingModuleInSetup<ISettingModuleOptions>(moduleConfig)
+} = useModule<ISettingModuleOptions>('EnPWA', {
+  defaultData: {
+    enabled: false,
+    moduleName: 'EnPWA',
+    moduleDisplayName: '移动端 PWA 适配',
 
+    statusBarHeight: 56,
+    toolBarHeight: 30,
+  },
+})
 // #endregion 基本的模块配置
 
 watchEffect(() => {
