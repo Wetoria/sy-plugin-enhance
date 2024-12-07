@@ -53,17 +53,17 @@ export interface EnSyncModuleData<T> {
  */
 export type EnSyncModuleDataRef<T> = Ref<EnSyncModuleData<T>>
 
-interface EnSyncModuleDataMsg<T> {
-  // 当前 app 的 appId
-  appId: string
 
-  // 当前同步的数据的命名空间
-  namespace: Namespace
-
-  // 当前同步的数据
-  data: EnSyncModuleData<T>
-}
-
+/**
+ * 同步模块的数据结构
+ * @field dataRef 数据引用 EnSyncModuleDataRef
+ * @field needSync - 是否需要多终端同步
+ * @field doNotSync - 内部标记，为 true 则不发送更新
+ * @field needSave - 是否需要保存至本地文件
+ * @field doNotSave - 内部标记，为 true 则不调用思源插件的保存逻辑
+ * @field loaded - 是否加载完成
+ * @field loadingFlag - 提示是否加载的定时器 id
+ */
 interface EnSyncModule<T> {
   dataRef: EnSyncModuleDataRef<T>
 
@@ -81,6 +81,7 @@ interface EnSyncModule<T> {
 }
 
 export function getModuleStorageKey(namespace: Namespace) {
+  // 前缀 SEP 不能改，否则旧版本的数据会有问题
   return `SEP-${namespace}`
 }
 
@@ -90,10 +91,6 @@ interface EnSyncDataRefMap {
 }
 export const syncDataRefMap: EnSyncDataRefMap = {}
 window.en_SyncDataRefMap = syncDataRefMap
-
-const getNamespaceLogString = (namespace: string) => {
-  return `${chalk.bgCyanBright.cyan.bold(` [${namespace}] `)}`
-}
 
 export const markAsDoNotSave = (namespace: string, value = true) => {
   const mapData = getModuleByNamespace(namespace)
@@ -105,22 +102,44 @@ export const markAsDoNotSync = (namespace: string, value = true) => {
 }
 
 
+const getNamespaceLogString = (namespace: string) => {
+  return `${chalk.bgCyanBright.cyan.bold(` [${namespace}] `)}`
+}
+
 
 // #region socket logics
 
 const socketRef = ref<WebSocket>()
 const socketIsOpen = () => {
-  // enLog(`Socket is open: ${socketRef.value?.readyState == WebSocket.OPEN}`)
-  // enLog(`Socket ref is: `, socketRef.value)
-  // enLog(`Socket readyState is: `, socketRef.value?.readyState)
   return socketRef.value && socketRef.value?.readyState == WebSocket.OPEN
 }
 const socketIsClosed = () => !socketIsOpen()
 
+
+/**
+ * 同步模块的数据消息结构
+ * @field appId - 当前 app 的 appId
+ * @field namespace - 当前同步的数据的命名空间
+ * @field data - 当前同步的数据
+ */
+interface EnSyncModuleDataMsg<T> {
+  // 当前 app 的 appId
+  appId: string
+
+  // 当前同步的数据的命名空间
+  namespace: Namespace
+
+  // 当前同步的数据
+  data: EnSyncModuleData<T>
+}
+
 const getSyncDataByWebSocket = (event) => {
   try {
     const msg = JSON.parse(event.data) as EnSyncModuleDataMsg<any>
-    enLog(`${getColorStringWarn('Received module data of')} [${getNamespaceLogString(msg.namespace)}] from other device: `, JSON.parse(JSON.stringify(msg.data)))
+    enLog(
+      `${getColorStringWarn('Received module data of')} [${getNamespaceLogString(msg.namespace)}] from other device: `,
+      JSON.parse(JSON.stringify(msg.data)),
+    )
     // 当前 app 的数据不处理
     if (msg.appId == window.siyuan.ws.app.appId) {
       return
@@ -169,6 +188,8 @@ const sendToSyncByData = <T>(namespace: string, data: EnSyncModuleData<T>) => {
   const msgStr = JSON.stringify(msgData)
   socketRef.value.send(msgStr)
 }
+
+
 let connecting = false
 export const initWebsocket = () => {
   return new Promise((resolve) => {
@@ -236,6 +257,8 @@ export const saveModuleDataByNamespace = async (namespace: Namespace) => {
   enLog(`${getColorStringWarn('Saved Module Data: ')} ${getNamespaceLogString(namespace)}`)
 }
 
+
+
 // 根据 namespace 注册全局 module 数据
 export function useSyncModuleData<T>({
   namespace,
@@ -271,9 +294,13 @@ export function useSyncModuleData<T>({
   enLog(`Module map data is: `, syncDataRefMap)
   enLog(`The Module data is: `, JSON.parse(JSON.stringify(dataRef.value)))
 
+
+
   const saveData = debounce(async () => {
     await saveModuleDataByNamespace(namespace)
   })
+
+
 
   const syncDataByWebsocket = debounce(() => {
     if (!needSync) {
@@ -284,19 +311,26 @@ export function useSyncModuleData<T>({
     sendToSyncByData<T>(namespace, dataRef.value)
   })
 
+
+  // 监听数据变化，执行保存和同步的逻辑
   watch(dataRef, () => {
     const mapData = getModuleByNamespace(namespace)
+
     enLog(`${getColorStringWarn(`Watched module data changed:`)} ${getNamespaceLogString(namespace)}`)
     enLog(`The module flag is [DoNotSave: ${mapData.doNotSave}, DoNotSync: ${mapData.doNotSync}].`)
     enLog(`The Data is: `, JSON.parse(JSON.stringify(dataRef.value)))
+
     saveData()
     syncDataByWebsocket()
   }, {
     deep: true,
   })
 
+
   return dataRef
 }
+
+
 
 // 根据 namespace 加载 module 数据
 export async function loadModuleDataByNamespace<T>(namespace: Namespace) {
@@ -338,12 +372,21 @@ export async function loadModuleDataByNamespace<T>(namespace: Namespace) {
   return dataRef
 }
 
+
+// 根据 namespace 更新加载文件并更新数据
 export async function updateModuleDataByNamespaceWithLoadFile<T>(namespace: string) {
   const module = getModuleByNamespace<T>(namespace)
   const res = await loadModuleDataByNamespace<T>(namespace)
   module.dataRef.value = res.value
 }
 
+
+/**
+ * 根据 namespace 获取 module
+ *
+ * 获取 ref 使用 getModuleRefByNamespace
+ * @returns EnSyncModule<T>
+ */
 export function getModuleByNamespace<T>(namespace: string): EnSyncModule<T> {
   const module = syncDataRefMap[namespace]
   if (!module) {
@@ -353,6 +396,11 @@ export function getModuleByNamespace<T>(namespace: string): EnSyncModule<T> {
   return module
 }
 
+
+/**
+ * 根据 namespace 获取 module 的数据引用
+ * @returns EnSyncModuleDataRef<T>
+ */
 export function getModuleRefByNamespace<T>(namespace: string): EnSyncModuleDataRef<T> {
   return getModuleByNamespace<T>(namespace).dataRef
 }
