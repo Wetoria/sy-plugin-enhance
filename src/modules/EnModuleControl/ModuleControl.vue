@@ -79,20 +79,32 @@ export function useModule<T extends EnModule>(moduleName: EN_MODULE_LIST, module
   const isLoadModule = !moduleOptions
   // 如果没有默认值，视为加载模块
   if (isLoadModule) {
-    const moduleRef: EnSyncModuleDataRef<T> = inject(moduleName)
-      || getModuleRefByNamespace<T>(moduleName)
-
-    // 这个时候，如果模块不存在，需要抛出错误
-    if (!moduleRef) {
-      throw new ReferenceError(`Module ${moduleName} was not found.`)
+    // 组件树中获取
+    const injectedModule = inject(moduleName) as {
+      module: EnSyncModuleDataRef<T>
+      moduleOptions: ComputedRef<T>
+    }
+    if (injectedModule) {
+      return {
+        module: injectedModule.module,
+        moduleOptions: injectedModule.moduleOptions,
+      }
     }
 
-    return {
-      module: moduleRef,
-      // 适配用 provide 提供的 module
-      // 可能会出现 moduleRef.value 为 undefined 的情况
-      moduleOptions: computed(() => moduleRef.value?.data),
+    // 从全局模块数据中获取
+    const refInModuleMap = getModuleRefByNamespace<T>(moduleName)
+
+    if (refInModuleMap) {
+      return {
+        module: refInModuleMap,
+        // 适配用 provide 提供的 module
+        // 可能会出现 moduleRef.value 为 undefined 的情况
+        moduleOptions: computed(() => refInModuleMap.value?.data),
+      }
     }
+
+    // 如果两种方式都未获取到 module，需要抛出错误，中断处理
+    throw new ReferenceError(`Module ${moduleName} was not found.`)
   }
 
   const moduleRes = useSettingModuleInSetup<T>(moduleOptions)
