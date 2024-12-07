@@ -46,9 +46,7 @@ const autoLoadModuledata = async () => {
     return !module.loaded && module.needSave
   })
   enLog('needLoadNamespaces', needLoadNamespaces)
-  for (const namespace of needLoadNamespaces) {
-    await loadModuleDataByNamespace(namespace)
-  }
+  await Promise.all(needLoadNamespaces.map((namespace) => loadModuleDataByNamespace(namespace)))
   moduleDataLoaded.value = true
 }
 
