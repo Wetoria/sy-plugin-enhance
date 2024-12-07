@@ -106,7 +106,7 @@ import {
   EnSyncModuleData,
   EnSyncModuleDataRef,
   getModuleRefByNamespace,
-  updateModuleDataByNamespaceWithLoadFile,
+  loadModuleDataByNamespace,
   useSyncModuleData,
 } from '@/utils/SyncData'
 import AnyTouch from 'any-touch'
@@ -249,7 +249,7 @@ export async function loadSettings() {
     namespace,
     defaultData: defaultSettings,
   })
-  await updateModuleDataByNamespaceWithLoadFile(namespace)
+  await loadModuleDataByNamespace(namespace)
 
 }
 
@@ -420,6 +420,8 @@ export const useProWatcher = (props: {
 <script setup lang="ts">
 
 const plugin = usePlugin()
+
+enSuccess('Settings Module Loaded')
 
 
 const onTitleClicked = onCountClick((count) => {

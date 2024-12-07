@@ -53,7 +53,7 @@ import { usePlugin } from '@/main'
 import { getColorStringWarn } from '@/utils/Log'
 import { SyFrontendTypes } from '@/utils/Siyuan'
 import {
-  updateModuleDataByNamespaceWithLoadFile,
+  loadModuleDataByNamespace,
   useSyncModuleData,
 } from '@/utils/SyncData'
 import {
@@ -240,7 +240,7 @@ onMounted(async () => {
       },
       needSync: false,
     })
-    await updateModuleDataByNamespaceWithLoadFile(`enWindow-${props.windowTitle}`)
+    await loadModuleDataByNamespace(`enWindow-${props.windowTitle}`)
     if (props.createImmediate) {
       createEnWindow()
     }

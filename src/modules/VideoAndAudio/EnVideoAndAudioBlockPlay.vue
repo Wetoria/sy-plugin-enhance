@@ -148,7 +148,7 @@
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import { SyDomNodeTypes } from '@/utils/Siyuan'
 import {
-  updateModuleDataByNamespaceWithLoadFile,
+  loadModuleDataByNamespace,
   useSyncModuleData,
 } from '@/utils/SyncData'
 import { showMessage } from 'siyuan'
@@ -177,7 +177,7 @@ const useEnVideoAndAudioBlockPlayModule = () => {
 
 export async function loadModuleData_EnVideoAndAudioBlockPlay() {
   useEnVideoAndAudioBlockPlayModule()
-  await updateModuleDataByNamespaceWithLoadFile(moduleName)
+  await loadModuleDataByNamespace(moduleName)
 }
 </script>
 

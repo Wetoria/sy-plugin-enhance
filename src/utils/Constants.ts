@@ -3,20 +3,37 @@ export enum EN_CONSTANTS {
   BACKGROUND_IMG = 'EnBackgroundImg',
   BACKGROUND_IMG_DISPLAY = '背景图',
 
+  CMD_KEY_EN_OPEN_QUICK_NOTE = 'En_OpenQuickNote',
+
   DAILY_NOTE = 'DailyNote',
   DAILY_NOTE_DISPLAY = '日记',
 
+  EN_TEST_LOGIC = 'TestLogic',
+
   MODULE_PROVIDER_KEY = 'EnModule',
+
+  NOTEBOOK_LIST_OPENED = 'NOTEBOOK_LIST_OPENED',
+
+  PARAGRAPH_BLOCK_TIME_DIFF = 'EnParagraphBlockTimeDiff',
+
+  QUICK_NOTE = 'QuickNote',
 
   SETTINGS = 'EnSettings',
   SETTINGS_ITEM_MODE_HORIZONTAL = 'horizontal',
   SETTINGS_ITEM_MODE_VERTICAL = 'vertical',
 }
 
+export enum EN_COMMAND_KEYS {
+  EN_OPEN_QUICK_NOTE = EN_CONSTANTS.CMD_KEY_EN_OPEN_QUICK_NOTE,
+}
+
+
 /* eslint-disable perfectionist/sort-enums */
 export enum EN_MODULE_LIST {
   SETTINGS = EN_CONSTANTS.SETTINGS,
-  // eslint-enable perfectionist/sort-enums
+
+  EN_TEST_LOGIC = EN_CONSTANTS.EN_TEST_LOGIC,
+
   BACKGROUND_IMG = EN_CONSTANTS.BACKGROUND_IMG,
   DAILY_NOTE = EN_CONSTANTS.DAILY_NOTE,
 }

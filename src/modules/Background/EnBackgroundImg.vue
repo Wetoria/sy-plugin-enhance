@@ -6,8 +6,8 @@
     <div class="enBackground"></div>
   </Teleport>
   <EnSettingsTeleportModule
-    :name="moduleName"
-    :display="moduleDisplayName"
+    :name="moduleOptions.moduleName"
+    :display="moduleOptions.moduleDisplayName"
     :module="module"
   >
     <EnSettingsItem>
@@ -41,48 +41,40 @@
 
 <script setup lang="ts">
 import { usePlugin } from '@/main'
+import { useModule } from '@/modules/EnModuleControl/ModuleDataProvide.vue'
 import {
   EnModule,
-  useSettingModule,
-  useSettingModuleData,
 } from '@/modules/Settings/EnSettings.vue'
 import { moduleEnableStatusSwitcher } from '@/utils'
-import { updateModuleDataByNamespaceWithLoadFile } from '@/utils/SyncData'
+import { EN_MODULE_LIST } from '@/utils/Constants'
 import { watchEffect } from 'vue'
 import EnSettingsItem from '../Settings/EnSettingsItem.vue'
 import EnSettingsTeleportModule from '../Settings/EnSettingsTeleportModule.vue'
 
 const plugin = usePlugin()
 
-// #region 初始化设置模块
-
-const moduleName = 'EnBackgroundImg'
-const moduleDisplayName = '背景图'
-
-interface ModuleOptions extends EnModule {
+const {
+  module,
+  moduleOptions,
+} = useModule<{
   enableBackgroundImg: boolean
   opacity: number
-}
+} & EnModule>(EN_MODULE_LIST.BACKGROUND_IMG, {
+  defaultData: {
+    enabled: true,
+    moduleName: EN_MODULE_LIST.BACKGROUND_IMG,
+    moduleDisplayName: EN_MODULE_LIST.BACKGROUND_IMG,
 
-const defaultData: ModuleOptions = {
-  enabled: true,
-  moduleName,
-  moduleDisplayName,
-
-  enableBackgroundImg: false,
-  opacity: 0.9,
-}
-const module = useSettingModule<ModuleOptions>(moduleName, {
-  defaultData,
+    enableBackgroundImg: false,
+    opacity: 0.9,
+  },
 })
-const moduleOptions = useSettingModuleData<ModuleOptions>(moduleName)
-
-// #endregion 初始化设置模块
-
-updateModuleDataByNamespaceWithLoadFile(moduleName)
 
 watchEffect(() => {
-  moduleEnableStatusSwitcher('EnBackgroundImg', moduleOptions.value.enableBackgroundImg)
+  moduleEnableStatusSwitcher(
+    EN_MODULE_LIST.BACKGROUND_IMG,
+    moduleOptions.value.enableBackgroundImg,
+  )
   document.documentElement.style.setProperty('--en-opacity', `${moduleOptions.value.opacity}`)
 })
 </script>

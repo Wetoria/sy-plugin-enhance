@@ -42,9 +42,10 @@ import {
   getNewDailyNoteBlockId,
   useDailyNote,
 } from '@/modules/DailyNote/DailyNote.vue'
+import { useGlobalData } from '@/modules/EnModuleControl/ModuleDataProvide.vue'
 import EnWindow, { isInWindow } from '@/modules/EnWindow.vue'
 import { addCommand } from '@/utils/Commands'
-import { useSyncModuleData } from '@/utils/SyncData'
+import { EN_CONSTANTS } from '@/utils/Constants'
 import { Protyle } from 'siyuan'
 import {
   computed,
@@ -74,12 +75,9 @@ const enWinRef = ref()
 
 // #region 在打开的窗口中
 
-const openedNotebookList = useSyncModuleData({
-  namespace: 'dailyNoteOpenedNotebookList',
-  defaultData: [],
-  needSave: false,
-  needSync: false,
-})
+const {
+  module: openedNotebookList,
+} = useGlobalData(EN_CONSTANTS.NOTEBOOK_LIST_OPENED)
 const {
   moduleOptions,
 } = useDailyNote()

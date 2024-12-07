@@ -32,39 +32,34 @@
   </a-trigger>
 </template>
 
-<script setup lang="ts">
+<script lang="ts">
+import { useGlobalData } from '@/modules/EnModuleControl/ModuleDataProvide.vue'
+import { EN_CONSTANTS } from '@/utils/Constants'
 import { getDiffFormat } from '@/utils/Date'
 import { getCreatedByDataset } from '@/utils/Siyuan'
-import {
-  updateModuleDataByNamespaceWithLoadFile,
-  useSyncModuleData,
-} from '@/utils/SyncData'
+
+
 import dayjs, { Dayjs } from 'dayjs'
 import {
   computed,
   ref,
-  watchEffect,
+  watch,
 } from 'vue'
 
-interface ModuleOptions {
+const {
+  moduleOptions,
+} = useGlobalData<{
   [key: string]: string
-}
+}>(EN_CONSTANTS.PARAGRAPH_BLOCK_TIME_DIFF, {
+  defaultData: {},
+})
+</script>
+
+<script setup lang="ts">
 
 const props = defineProps<{
   nodeId: string
 }>()
-const moduleName = 'EnParagraphBlockTimeDiff'
-const module = useSyncModuleData<ModuleOptions>({
-  namespace: moduleName,
-  defaultData: {},
-})
-const moduleOptions = computed(() => {
-  return module.value.data
-})
-
-updateModuleDataByNamespaceWithLoadFile(moduleName)
-
-
 
 const getCreatedStr = (nodeId: string) => {
   if (!nodeId) {
@@ -82,7 +77,7 @@ const created = computed<Dayjs | undefined>(() => {
 })
 
 const bindedId = ref(moduleOptions.value[props.nodeId])
-watchEffect(() => {
+watch(bindedId, () => {
   moduleOptions.value[props.nodeId] = bindedId.value
 })
 

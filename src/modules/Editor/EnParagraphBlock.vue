@@ -118,7 +118,7 @@ import { queryAllByDom } from '@/utils/DOM'
 
 
 import { SyDomNodeTypes } from '@/utils/Siyuan'
-import { updateModuleDataByNamespaceWithLoadFile } from '@/utils/SyncData'
+import { loadModuleDataByNamespace } from '@/utils/SyncData'
 import {
   onMounted,
   ref,
@@ -161,7 +161,7 @@ const module = useSettingModule<ModuleOptions>(moduleName, {
 })
 const moduleOptions = useSettingModuleData<ModuleOptions>(moduleName)
 
-updateModuleDataByNamespaceWithLoadFile(moduleName)
+loadModuleDataByNamespace(moduleName)
 
 const paragraphListRef = ref<HTMLDivElement[]>([])
 

@@ -6,7 +6,6 @@ import {
 import { onBeforeMount } from 'vue'
 import {
   loadModuleDataByNamespace,
-  updateModuleDataByNamespaceWithLoadFile,
 } from './SyncData'
 
 export function useSettingModuleInSetup<T extends EnModule>(props: T) {
@@ -43,7 +42,7 @@ export function useSettingModuleInScript<T extends EnModule>(props: T) {
   }
 
   const loadAndUpdate = async () => {
-    await updateModuleDataByNamespaceWithLoadFile(moduleName)
+    await loadModuleDataByNamespace(moduleName)
   }
 
   return {

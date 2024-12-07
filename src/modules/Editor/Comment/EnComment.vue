@@ -106,11 +106,13 @@ import {
   appendBlockIntoDailyNote,
   useDailyNote,
 } from '@/modules/DailyNote/DailyNote.vue'
+import { useGlobalData } from '@/modules/EnModuleControl/ModuleDataProvide.vue'
 import {
   debounce,
   generateShortUUID,
 } from '@/utils'
 import { addCommand } from '@/utils/Commands'
+import { EN_CONSTANTS } from '@/utils/Constants'
 import {
   getSelectionCopy,
   positionModalWithTranslate,
@@ -122,7 +124,6 @@ import {
   useSiyuanDatabaseIndexCommit,
   useSiyuanEventLoadedProtyleStatic,
   useSiyuanEventTransactions,
-  useSiyuanEventWsMain,
 } from '@/utils/EventBusHooks'
 import { getColorStringWarn } from '@/utils/Log'
 import { useMousePostion } from '@/utils/Mouse'
@@ -146,7 +147,9 @@ const plugin = usePlugin()
 const currentProtyle = useCurrentProtyle()
 
 const {
-  openedNotebookList,
+  module: openedNotebookList,
+} = useGlobalData(EN_CONSTANTS.NOTEBOOK_LIST_OPENED)
+const {
   moduleOptions,
 } = useDailyNote()
 const dailyNoteNotebookId = computed(() => moduleOptions.value.dailyNoteNotebookId)

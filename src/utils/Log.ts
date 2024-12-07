@@ -8,14 +8,20 @@ export function enLog(...args: [string, ...any[]]) {
   if (!isDeveloping)
     return
   const [first, ...rest] = args
-  console.log(`${chalk.bgWhite.whiteBright(` ${prefix} `)} ${first}`, ...rest)
+  // console.log()
+  console.groupCollapsed(`${chalk.bgWhite.whiteBright(` ${prefix} `)} ${first}`, ...rest)
+  console.trace()
+  console.groupEnd()
 }
 window.enLog = enLog
 
 export function enWarn(...args: [string, ...any[]]) {
   const [first, ...rest] = args
-  console.log(`${chalk.bgYellowBright.yellow(` ${prefix} ${first} `)}`)
+  console.groupCollapsed(`${chalk.bgYellowBright.yellow(` ${prefix} ${first} `)}`)
+  if (rest.length > 0) {
   console.warn(...rest)
+  }
+  console.groupEnd()
 }
 export function getColorStringWarn(text: string) {
   return chalk.bold.yellow(text)
@@ -24,8 +30,11 @@ window.enWarn = enWarn
 
 export function enError(...args: [string, ...any[]]) {
   const [first, ...rest] = args
-  console.log(`${chalk.bgRed.whiteBright(` ${prefix} ${first} `)}`)
+  console.groupCollapsed(`${chalk.bgRed.whiteBright(` ${prefix} ${first} `)}`)
+  if (rest.length > 0) {
   console.error(...rest)
+  }
+  console.groupEnd()
 }
 export function getColorStringError(text: string) {
   return chalk.bold.redBright(text)
@@ -36,7 +45,11 @@ export function enSuccess(...args: [string, ...any[]]) {
   if (!isDeveloping)
     return
   const [first, ...rest] = args
-  console.log(`${chalk.bgGreen.whiteBright(` ${prefix} ${first} `)}`, ...rest)
+  console.groupCollapsed(`${chalk.bgGreen.whiteBright(` ${prefix} ${first} `)}`, ...rest)
+  if (rest.length > 0) {
+    console.trace()
+  }
+  console.groupEnd()
 }
 export function getColorStringSuccess(text: string) {
   return chalk.bold.greenBright(text)

@@ -36,7 +36,7 @@ export interface EnSyncModuleProps<T> {
   needSync?: boolean
 }
 
-type Namespace = string
+export type Namespace = string
 
 /**
  * 同步模块的数据结构
@@ -77,6 +77,7 @@ interface EnSyncModule<T> {
   doNotSave?: boolean
 
   loaded?: boolean
+  loading?: boolean
   loadingFlag?: any
 }
 
@@ -331,14 +332,32 @@ export function useSyncModuleData<T>({
 }
 
 
-
 // 根据 namespace 加载 module 数据
 export async function loadModuleDataByNamespace<T>(namespace: Namespace) {
+  enLog(`${getColorStringWarn('Triggered to load module data')} of ${getNamespaceLogString(namespace)}`)
   const plugin = usePlugin()
   const storageKey = getModuleStorageKey(namespace)
 
+  const loading = syncDataRefMap[namespace]?.loading
+  if (loading) {
+    enLog(`${getColorStringWarn('Module data is loading')} of ${getNamespaceLogString(namespace)}`)
+    return
+  }
+
+  // 如果已经加载过了，则不重新加载了
+  const loaded = syncDataRefMap[namespace]?.loaded
+  if (loaded) {
+    enLog(`${getColorStringWarn('Module data already loaded')} of ${getNamespaceLogString(namespace)}`)
+    return syncDataRefMap[namespace]?.dataRef
+  }
+
   enLog(`${getColorStringWarn('Ready to load module data')} of ${getNamespaceLogString(namespace)} from file [${storageKey}]`)
+  syncDataRefMap[namespace].loading = true
   const res: EnSyncModuleData<T> = await plugin.loadData(storageKey)
+  syncDataRefMap[namespace].loading = false
+
+
+  syncDataRefMap[namespace].loaded = true
   enLog(`${getColorStringWarn('Loaded module data')} of ${getNamespaceLogString(namespace)} is: `, res)
 
   clearTimeout(syncDataRefMap[namespace].loadingFlag)
@@ -349,8 +368,10 @@ export async function loadModuleDataByNamespace<T>(namespace: Namespace) {
     return
   }
 
+
+  // 如果加载为空，则保存默认值到文件里
   if (!res) {
-    enWarn(`${getColorStringWarn('Module data not found')} for ${getNamespaceLogString(namespace)}`)
+    enWarn(`${getColorStringWarn('Module data was not saved ')} for ${getNamespaceLogString(namespace)}`)
     enWarn(`Ready to save and return default data.`)
     await saveModuleDataByNamespace(namespace)
     enSuccess(`Saved default Module data. for ${getNamespaceLogString(namespace)}`)
@@ -368,16 +389,19 @@ export async function loadModuleDataByNamespace<T>(namespace: Namespace) {
 
   markAsDoNotSave(namespace)
   markAsDoNotSync(namespace)
+  // 这里会重新更新数据
   dataRef.value = mergedRes
   return dataRef
 }
 
-
-// 根据 namespace 更新加载文件并更新数据
-export async function updateModuleDataByNamespaceWithLoadFile<T>(namespace: string) {
+/**
+ * 重新加载 module 数据
+ * @param {Namespace} namespace
+ */
+export async function reloadModuleDataByNamespace<T>(namespace: Namespace) {
   const module = getModuleByNamespace<T>(namespace)
-  const res = await loadModuleDataByNamespace<T>(namespace)
-  module.dataRef.value = res.value
+  module.loaded = false
+  return loadModuleDataByNamespace<T>(namespace)
 }
 
 

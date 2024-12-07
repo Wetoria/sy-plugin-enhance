@@ -6,9 +6,9 @@
     :bordered="false"
   >
     <a-collapse-item
+      key="bottomBackLinkArea"
       class="backlinkAreaCollapse"
       :header="`反链 (${backlinkRes.linkRefsCount})`"
-      key="bottomBackLinkArea"
     >
       <template #extra>
         <div>
@@ -19,15 +19,17 @@
             <SyIcon name="iconContract" />
           </a-button> -->
           <a-button
-            @click.stop="refresh"
             type="text"
             size="mini"
+            @click.stop="refresh"
           >
             <SyIcon name="iconRefresh" />
           </a-button>
           <a-button
-            @click.stop="switchFilterShown" type="text" size="mini"
             v-if="enableBacklinkFilter"
+            type="text"
+            size="mini"
+            @click.stop="switchFilterShown"
           >
             <SyIcon name="iconFilter" />
           </a-button>
@@ -42,9 +44,9 @@
         :currentDocId="currentDocId"
       />
       <a-collapse
+        v-model:activeKey="activedBacklinkKeys"
         class="backlinkDocsArea backlinkList"
         :bordered="false"
-        v-model:activeKey="activedBacklinkKeys"
       >
         <!-- <a-empty v-if="!backlinks.length">
           <template #image>
@@ -53,7 +55,10 @@
           No data
         </a-empty> -->
         <template v-if="backlinks.length">
-          <ul class="b3-list b3-list--background" ref="backlinkListDomRef">
+          <ul
+            ref="backlinkListDomRef"
+            class="b3-list b3-list--background"
+          >
             <template
               v-for="backlink of backlinkRes.backlinks"
             >
@@ -70,15 +75,15 @@
       </a-collapse>
     </a-collapse-item>
     <a-collapse-item
+      key="bottomBackMentionsArea"
       class="backlinkAreaCollapse"
       :header="`提及 (${backlinkRes.mentionsCount})`"
-      key="bottomBackMentionsArea"
     >
       <a-collapse
-        class="backlinkDocsArea backlinkList"
         ref="mentionListDomRef"
-        :bordered="false"
         v-model:activeKey="activedMentionsKeys"
+        class="backlinkDocsArea backlinkList"
+        :bordered="false"
       >
         <template v-if="backmentions.length">
           <ul class="b3-list b3-list--background">
@@ -154,12 +159,12 @@
       </template>
       <template #opt>
         <a-input-number
+          v-model="moduleOptions.sqlLimit"
           class="input-demo"
           placeholder="Please Enter"
           mode="button"
           :min="1"
           :readOnly="plugin.isMobile"
-          v-model="moduleOptions.sqlLimit"
         />
       </template>
     </EnSettingsItem>
@@ -167,6 +172,29 @@
 </template>
 
 <script lang="ts">
+import { request } from '@/api'
+import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
+import { usePlugin } from '@/main'
+import {
+  EnModule,
+  useSettingModule,
+  useSettingModuleData,
+  useSettings,
+} from "@/modules/Settings/EnSettings.vue"
+import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
+import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue'
+import { loadModuleDataByNamespace } from '@/utils/SyncData'
+import { IProtyle } from 'siyuan'
+import {
+  computed,
+  ref,
+  watch,
+  watchEffect,
+} from 'vue'
+import EnProtyleBottomBackLinkDoc from './EnProtyleBottomBackLinkDoc.vue'
+import EnProtyleBottomBackLinkFilterArea, { FilterProperties } from './EnProtyleBottomBackLinkFilterArea.vue'
+import EnProtyleBottomBackMention from './EnProtyleBottomBackMention.vue'
+
 export interface IBacklink {
   id: string
   box: string
@@ -200,7 +228,16 @@ export interface BottomBacklinkModuleOptions extends EnModule {
     }
   }
 }
+</script>
 
+<script setup lang="ts">
+
+const props = defineProps<{
+  detail: {
+    protyle: IProtyle
+  }
+  element: HTMLDivElement
+}>()
 const moduleName = 'EnBottomBacklink'
 const moduleDisplayName = '底部反链'
 
@@ -219,29 +256,13 @@ const defaultOptions: BottomBacklinkModuleOptions = {
   },
 }
 
-</script>
-
-<script setup lang="ts">
-import { EnModule, useSettingModule, useSettingModuleData, useSettings } from "@/modules/Settings/EnSettings.vue";
-import EnProtyleBottomBackLinkFilterArea, { FilterProperties } from './EnProtyleBottomBackLinkFilterArea.vue';
-import EnProtyleBottomBackLinkDoc from './EnProtyleBottomBackLinkDoc.vue';
-import EnProtyleBottomBackMention from './EnProtyleBottomBackMention.vue';
-import { request } from '@/api';
-import { IProtyle } from 'siyuan';
-import { computed, ref, watch, watchEffect } from 'vue';
-import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
-import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue';
-import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue';
-import { usePlugin } from '@/main';
-import { updateModuleDataByNamespaceWithLoadFile } from '@/utils/SyncData';
-
 const plugin = usePlugin()
 
 const module = useSettingModule<BottomBacklinkModuleOptions>(moduleName, {
   defaultData: defaultOptions,
 })
 const moduleOptions = useSettingModuleData<BottomBacklinkModuleOptions>(moduleName)
-updateModuleDataByNamespaceWithLoadFile(moduleName)
+loadModuleDataByNamespace(moduleName)
 
 watch(() => moduleOptions.value.sqlLimit, () => {
   if (!moduleOptions.value.sqlLimit) {
@@ -250,26 +271,19 @@ watch(() => moduleOptions.value.sqlLimit, () => {
 }, { immediate: true })
 
 interface Node {
-  id: string;
-  parent_id: string;
-  name: string;
-  treePath: string;
-  _type: 'doc' | 'block_Ref';
+  id: string
+  parent_id: string
+  name: string
+  treePath: string
+  _type: 'doc' | 'block_Ref'
 }
-
-const props = defineProps<{
-  detail: {
-    protyle: IProtyle
-  },
-  element: HTMLDivElement
-}>()
 
 const protyle = computed(() => props.detail.protyle as IProtyle)
 const currentDocId = computed(() => protyle.value?.block?.id)
 
 const enableBacklinkFilter = computed(() => moduleOptions.value.enableBacklinkFilter)
 
-const settings = useSettings();
+const settings = useSettings()
 
 // TODO 需要调整设置逻辑
 const showFilterArea = ref(moduleOptions.value.defaultShowBacklinkFilter || settings.value.isDebugging)
@@ -296,7 +310,7 @@ const defaultRes = {
   k: '',
   mk: '',
   linkRefsCount: 0,
-  mentionsCount: 0
+  mentionsCount: 0,
 }
 const backlinkRes = ref<{
   backlinks: IBacklink[]
@@ -322,7 +336,7 @@ const getData = async () => {
   backlinkRes.value = Object.assign({}, defaultRes)
   const res = await request('/api/ref/getBacklink2', searchParams.value)
   // IMP 如果性能有问题了，考虑在 id 相同的情况下，不进行更新
-  backlinkRes.value = res;
+  backlinkRes.value = res
 }
 
 watch(searchParams, async () => {

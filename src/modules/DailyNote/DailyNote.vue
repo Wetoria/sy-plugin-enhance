@@ -52,7 +52,15 @@ import {
 import EnNotebookSelector from '@/components/EnNotebookSelector.vue'
 import { usePlugin } from '@/main'
 import EnQuickNote from '@/modules/DailyNote/QuickNote/EnQuickNote.vue'
+import {
+  useGlobalData,
+  useModule,
+} from '@/modules/EnModuleControl/ModuleDataProvide.vue'
 import { addCommand } from '@/utils/Commands'
+import {
+  EN_CONSTANTS,
+  EN_MODULE_LIST,
+} from '@/utils/Constants'
 import { targetIsInnerOf } from '@/utils/DOM'
 import {
   useSiyuanNotebookMount,
@@ -60,13 +68,10 @@ import {
 } from '@/utils/EventBusHooks'
 import { getColorStringWarn } from '@/utils/Log'
 import { openDocById } from '@/utils/Note'
-import { useSyncModuleData } from '@/utils/SyncData'
-import { useSettingModuleInScript } from '@/utils/SyncDataHooks'
 import {
   showMessage,
 } from "siyuan"
 import {
-  onBeforeMount,
   onMounted,
 } from 'vue'
 import { EnModule } from '../Settings/EnSettings.vue'
@@ -76,9 +81,6 @@ import EnQuickNoteMobile from './QuickNote/EnQuickNoteMobile.vue'
 
 const plugin = usePlugin()
 
-onBeforeMount(async () => {
-  await loadAndUpdate()
-})
 
 onMounted(() => {
   addCommand({
@@ -131,13 +133,14 @@ onMounted(() => {
 // 打开的笔记本列表
 // const openedNotebookList = ref([])
 
-export const namespace_DailyNoteOpenedNotebookList = 'dailyNoteOpenedNotebookList'
-const openedNotebookList = useSyncModuleData({
-  namespace: namespace_DailyNoteOpenedNotebookList,
+const {
+  module: openedNotebookList,
+} = useGlobalData(EN_CONSTANTS.NOTEBOOK_LIST_OPENED, {
   defaultData: [],
   needSave: false,
   needSync: false,
 })
+
 export async function updateOpenedNotebookList() {
   const res = await lsNotebooks()
   enLog(`${getColorStringWarn(`Loaded notebook list: `)}`, res)
@@ -151,27 +154,24 @@ interface ISettingModuleOptions extends EnModule {
   dailyNoteNotebookId: string
 }
 
-const moduleConfig: ISettingModuleOptions = {
-  enabled: false,
-  moduleName: 'DailyNote',
-  moduleDisplayName: 'Daily Note',
-
-  dailyNoteNotebookId: '',
-}
-
 const {
-  moduleName,
-  moduleDisplayName,
   module,
   moduleOptions,
-  loadAndUpdate,
-} = useSettingModuleInScript<ISettingModuleOptions>(moduleConfig)
+} = useModule<ISettingModuleOptions>(EN_MODULE_LIST.DAILY_NOTE, {
+  defaultData: {
+    enabled: false,
+    moduleName: EN_MODULE_LIST.DAILY_NOTE,
+    moduleDisplayName: EN_CONSTANTS.DAILY_NOTE_DISPLAY,
+
+    dailyNoteNotebookId: '',
+  },
+})
+
+const moduleName = moduleOptions.value.moduleName
+const moduleDisplayName = moduleOptions.value.moduleDisplayName
 
 // #endregion 基本的模块配置
 
-export type DailyNoteModuleOptions = ISettingModuleOptions
-export const ModuleName_DailyNote = moduleName
-export const ModuleDailyNoteConfig = moduleConfig
 
 
 // TODO 思源的笔记本列表更新不及时，等以后提案了响应式以后，再考虑要不要优化吧。
@@ -197,8 +197,9 @@ export async function appendBlockIntoDailyNote(
     showMessage('[Enhance 插件] 请先选择创建日记的笔记本')
     return Promise.reject(new Error('[Enhance 插件] 请先选择创建日记的笔记本'))
   }
-  const notebookIsClosed = await !notebookIsOpened(moduleOptions.value.dailyNoteNotebookId)
-  if (notebookIsClosed) {
+  const notebookOpened = await notebookIsOpened(moduleOptions.value.dailyNoteNotebookId)
+  const notebookClosed = !notebookOpened
+  if (notebookClosed) {
     showMessage('[Enhance 插件] 请先打开日记所在的笔记本')
     return Promise.reject(new Error('[Enhance 插件] 请先打开日记所在的笔记本'))
   }
