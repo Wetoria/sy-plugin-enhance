@@ -758,7 +758,6 @@ watchEffect(() => {
       }
     }
     ${blockSelectorList.join(', ')} {
-      &,
       [data-type="NodeParagraph"],
       [data-type="NodeHeading"] {
         & > div:first-child {
