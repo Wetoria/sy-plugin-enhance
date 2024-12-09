@@ -18,13 +18,13 @@
       <template #desc>
         <div>
           :root {<br>
-          --en-comment-background-color: var(--b3-font-color11, #65b84d);<br>
-          --en-comment-underline-color: var(--b3-card-success-color, rgb(183, 223, 185));<br>
-          --en-comment-line-underline-color: var(--en-comment-underline-color);<br>
-          --en-comment-style: underline;<br>
-          --en-comment-underline-width: 2px;<br>
+          &nbsp;&nbsp;--en-comment-background-color: var(--b3-font-color11, #65b84d);<br>
+          &nbsp;&nbsp;--en-comment-underline-color: var(--b3-card-success-color, rgb(183, 223, 185));<br>
+          &nbsp;&nbsp;--en-comment-line-underline-color: var(--en-comment-underline-color);<br>
+          &nbsp;&nbsp;--en-comment-style: underline;<br>
+          &nbsp;&nbsp;--en-comment-underline-width: 2px;<br>
 
-          --en-comment-text-shadow: 0px -5px 24px var(--en-comment-background-color);<br>
+          &nbsp;&nbsp;--en-comment-text-shadow: 0px -5px 24px var(--en-comment-background-color);<br>
           }
         </div>
       </template>
@@ -207,6 +207,7 @@ import { getColorStringWarn } from '@/utils/Log'
 import { useMousePostion } from '@/utils/Mouse'
 import {
   getClosetSiyuanNodeByDom,
+  SyDomNodeTypes,
   useCurrentProtyle,
 } from '@/utils/Siyuan'
 import dayjs from 'dayjs'
@@ -240,8 +241,6 @@ const {
   module,
   moduleOptions,
 } = useModule<{
-  underlineColor: string
-
   customStyleBlock: string
   customStyleInline: string
 } & EnModule>('EnComment', {
@@ -250,7 +249,6 @@ const {
     moduleName: 'EnComment',
     moduleDisplayName: '批注',
 
-    underlineColor: '#000000',
     customStyleBlock: `& {
   [data-type="NodeParagraph"],
   [data-type="NodeHeading"] {
@@ -435,6 +433,7 @@ const lastCommentParams = ref({
 watch(dailyNoteNotebookId, async () => {
   if (popoverVisible.value) {
     if (currentBlockId.value) {
+      // IMP 最好是移动，而不是删除以后再新建
       await deleteBlock(currentBlockId.value)
       createCommentIntoDailyNote(lastCommentParams.value.commentId, lastCommentParams.value.text)
     }
@@ -458,10 +457,21 @@ const createCommentIntoDailyNote = async (commentId: string, text: string) => {
     const transaction = doOperations[0]
     const {
       id,
+      data,
     } = transaction
 
-    const newCommentNodeId = id
+    let tempDom = document.createElement('div')
+    tempDom.innerHTML = data
 
+    tempDom = tempDom.firstElementChild as HTMLDivElement
+    const listItemNode = tempDom.firstElementChild as HTMLDivElement
+    const isListItemNode = listItemNode?.dataset.type === SyDomNodeTypes.NodeListItem
+
+    if (!isListItemNode) {
+      enWarn('Get List Item Node id Failed.')
+    }
+
+    const newCommentNodeId = isListItemNode ? listItemNode.dataset.nodeId : id
     await setBlockAttrs(newCommentNodeId, {
       'custom-en-comment-ref-id': commentId,
     })
