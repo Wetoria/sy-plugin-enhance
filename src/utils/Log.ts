@@ -1,7 +1,7 @@
 import chalk from 'chalk'
 
 const prefix = '[SEP by Wetoria]'
-const isDeveloping = true
+const isDeveloping = false
 
 
 export function enLog(...args: [string, ...any[]]) {

@@ -6,7 +6,7 @@
     <template
       v-if="isMobile"
     >
-      <template v-if="!mode || mode == 'horizontal'">
+      <template v-if="!mode || mode === 'horizontal'">
         <div class="settingItemDescArea">
           <div class="settingTitle">
             <slot></slot>
@@ -19,7 +19,7 @@
           <slot name="opt"></slot>
         </div>
       </template>
-      <template v-else-if="mode == 'vertical'">
+      <template v-else-if="mode === 'vertical'">
         <div
           class="settingItemDescArea flexColumn"
           style="
@@ -37,19 +37,27 @@
           </div>
         </div>
       </template>
+      <template v-else-if="mode === 'manual'">
+        <slot></slot>
+      </template>
     </template>
     <template v-else>
-      <div class="settingItemDescArea">
-        <div class="settingTitle">
-          <slot></slot>
+      <template v-if="mode && mode === 'manual'">
+        <slot></slot>
+      </template>
+      <template v-else>
+        <div class="settingItemDescArea">
+          <div class="settingTitle">
+            <slot></slot>
+          </div>
+          <div class="settingDesc">
+            <slot name="desc"></slot>
+          </div>
         </div>
-        <div class="settingDesc">
-          <slot name="desc"></slot>
+        <div class="settingItemOptionArea">
+          <slot name="opt"></slot>
         </div>
-      </div>
-      <div class="settingItemOptionArea">
-        <slot name="opt"></slot>
-      </div>
+      </template>
     </template>
   </div>
 </template>
@@ -59,7 +67,7 @@ import { usePlugin } from '@/main'
 import { computed } from 'vue'
 
 defineProps<{
-  mode?: 'horizontal' | 'vertical'
+  mode?: 'horizontal' | 'vertical' | 'manual'
 }>()
 const plugin = usePlugin()
 const isMobile = computed(() => plugin.isMobile)
