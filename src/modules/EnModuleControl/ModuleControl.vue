@@ -16,6 +16,7 @@
     <EnFormatBrush v-if="isNotFree" />
     <EnFont />
     <TemplateEntry />
+    <EnComment v-if="isNotFree && !isInEnWindow" />
 
     <!-- 仅移动端 -->
     <template v-if="plugin.isMobile">
@@ -26,7 +27,6 @@
 
     <!-- 仅桌面端 -->
     <template v-else>
-      <EnComment v-if="isNotFree && !isInEnWindow" />
     </template>
   </ModuleDataProvide>
 </template>
@@ -36,7 +36,7 @@ import { usePlugin } from '@/main'
 
 import EnBackgroundImg from '@/modules/Background/EnBackgroundImg.vue'
 import DailyNote from '@/modules/DailyNote/DailyNote.vue'
-import EnComment from '@/modules/Editor/Comment/EnComment.vue'
+import EnComment from '@/modules/Editor/Comment/EnCommentModule.vue'
 import EnEditor from '@/modules/Editor/EnEditor.vue'
 import EnFont from '@/modules/Editor/EnFont.vue'
 import EnFormatBrush from '@/modules/EnFormatBrush/EnFormatBrush.vue'

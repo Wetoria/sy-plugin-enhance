@@ -1,77 +1,4 @@
-<!-- eslint-disable vue/require-v-for-key -->
 <template>
-  <EnSettingsTeleportModule
-    :module="module"
-    :name="moduleOptions.moduleName"
-    :display="moduleOptions.moduleDisplayName"
-    always
-  >
-    <!-- 下划线样式 -->
-    <!-- 下划线宽度 -->
-    <!-- 下划线颜色 -->
-    <!-- 行内批注颜色 -->
-    <!-- 行内批注背景颜色 -->
-    <EnSettingsItem>
-      <div>
-        默认配置
-      </div>
-      <template #desc>
-        <div>
-          :root {<br>
-          &nbsp;&nbsp;--en-comment-background-color: var(--b3-font-color11, #65b84d);<br>
-          &nbsp;&nbsp;--en-comment-underline-color: var(--b3-card-success-color, rgb(183, 223, 185));<br>
-          &nbsp;&nbsp;--en-comment-line-underline-color: var(--en-comment-underline-color);<br>
-          &nbsp;&nbsp;--en-comment-style: underline;<br>
-          &nbsp;&nbsp;--en-comment-underline-width: 2px;<br>
-
-          &nbsp;&nbsp;--en-comment-text-shadow: 0px -5px 24px var(--en-comment-background-color);<br>
-          }
-        </div>
-      </template>
-    </EnSettingsItem>
-    <EnSettingsItem
-      mode="manual"
-    >
-      <div
-        class="flexColumn"
-        style="width: 100%;"
-        @mousemove.capture="cancelSettingMouseMoveEvent"
-        @mousedown.capture="cancelSettingMouseMoveEvent"
-      >
-        <div
-          class="settingTitle"
-        >
-          自定义样式（块）
-        </div>
-        <div>
-          <a-textarea
-            v-model="moduleOptions.customStyleBlock"
-          />
-        </div>
-      </div>
-    </EnSettingsItem>
-    <EnSettingsItem
-      mode="manual"
-    >
-      <div
-        class="flexColumn"
-        style="width: 100%;"
-        @mousemove.capture="cancelSettingMouseMoveEvent"
-        @mousedown.capture="cancelSettingMouseMoveEvent"
-      >
-        <div
-          class="settingTitle"
-        >
-          自定义样式（行内）
-        </div>
-        <div>
-          <a-textarea
-            v-model="moduleOptions.customStyleInline"
-          />
-        </div>
-      </div>
-    </EnSettingsItem>
-  </EnSettingsTeleportModule>
   <div>
     <a-modal
       v-model:visible="popoverVisible"
@@ -131,6 +58,7 @@
             <div class="historyCommentList">
               <div
                 v-for="item of selectedCommentIdList"
+                :key="item.commentBlockId"
               >
                 <EnProtyle
                   :blockId="item.commentBlockId"
@@ -173,7 +101,6 @@ import {
 } from '@/api'
 import EnNotebookSelector from '@/components/EnNotebookSelector.vue'
 import EnProtyle from '@/components/EnProtyle.vue'
-import { usePlugin } from '@/main'
 import {
   appendBlockIntoDailyNote,
   useDailyNote,
@@ -183,8 +110,6 @@ import {
   useModule,
 } from '@/modules/EnModuleControl/ModuleProvide'
 import { EnModule } from '@/modules/Settings/EnSettings.vue'
-import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
-import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue'
 import {
   debounce,
   generateShortUUID,
@@ -220,8 +145,6 @@ import {
   watch,
   watchEffect,
 } from 'vue'
-
-const plugin = usePlugin()
 
 const currentProtyle = useCurrentProtyle()
 
@@ -297,11 +220,6 @@ const {
   },
 })
 
-
-const cancelSettingMouseMoveEvent = (e: MouseEvent) => {
-  e.stopImmediatePropagation()
-  e.stopPropagation()
-}
 
 const messageFlag = ref(null)
 const stopMessage = () => {
@@ -936,8 +854,12 @@ onBeforeUnmount(() => {
 // #region 点击评论，显示历史评论列表
 
 const selectedCommentIdList = ref<Array<{
+  // 评论的目标块中的 id
   commentId: string
+  // 评论的目标思源块 id
   commentForNodeId: string
+
+  // 写下评论的块 id：列表（旧版）、列表项（新版）
   commentBlockId: string
 }>>([])
 const isCommentNode = (target: HTMLElement) => {
@@ -1037,104 +959,9 @@ onBeforeUnmount(() => {
 
 // #endregion 点击评论，显示历史评论列表
 
+
 </script>
 
 <style lang="scss" scoped>
 
-.settingTitle {
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  height: 28px;
-}
-</style>
-
-<style lang="scss">
-:root {
-  --en-comment-background-color: var(--b3-font-color11, #65b84d);
-  --en-comment-underline-color: var(--b3-card-success-color, rgb(183, 223, 185));
-  // --en-comment-line-underline-color: var(--b3-theme-success, #65b84d);
-  --en-comment-line-underline-color: var(--en-comment-underline-color);
-  --en-comment-style: underline;
-  --en-comment-underline-width: 2px;
-
-  --en-comment-text-shadow: 0px -5px 24px var(--en-comment-background-color);
-}
-.enCommentContainerModal {
-  pointer-events: none;
-
-  & .arco-modal-wrapper {
-    pointer-events: none;
-    text-align: unset;
-    overflow: hidden;
-  }
-
-  .enCommentContainer {
-    pointer-events: auto;
-    top: 0;
-    vertical-align: top;
-    min-height: 98px;
-    background: var(--b3-theme-background);
-    border: 1px solid var(--b3-border-color);
-    transform: translate(100vw, 100vh);
-
-    .arco-modal-header {
-      padding: 0 16px;
-      border-bottom: 1px solid var(--b3-border-color);
-      height: 36px;
-    }
-
-    .arco-modal-body {
-      padding: 0;
-    }
-
-    .enCommentContainerContent {
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      overflow: auto;
-
-      .protyle-content {
-        padding-bottom: unset !important;
-      }
-
-      .protyle-wysiwyg {
-        padding: 6px 16px !important;
-      }
-
-      .enCommentContainerContentHistoryCommentList {
-        display: flex;
-        flex-direction: column;
-        // gap: var(--en-gap);
-
-        .historyCommentList {
-          display: flex;
-          flex-direction: column;
-          // gap: var(--en-gap);
-
-          max-height: 20vh;
-          overflow: hidden;
-          overflow-y: auto;
-
-          .protyle-content {
-            padding-bottom: unset !important;
-          }
-        }
-      }
-    }
-  }
-}
-
-.arco-btn.enCommentButton {
-  position: fixed;
-  pointer-events: auto;
-  background: var(--b3-theme-background);
-  z-index: 1000;
-  border: 1px solid var(--b3-border-color);
-
-  &:hover {
-    background: var(--b3-theme-background);
-    border: 1px solid var(--b3-theme-on-background);
-  }
-}
 </style>
