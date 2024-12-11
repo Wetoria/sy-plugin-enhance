@@ -1,131 +1,139 @@
 <template>
-  <div
-    class="enToolbar"
-    :style="{
-      // visibility: showToolBar ? 'visible' : 'hidden'
-      opacity: showToolBar ? 1 : 0,
-      pointerEvents: showToolBar ? undefined : 'none',
-      transition: keyboardShown ? 'all 0.1s linear' : 'all 0.3s linear',
-    }"
-  >
+  <Teleport to="body">
     <div
-      class="MobileNavContainer"
+      class="enToolbar"
+      :style="{
+        // visibility: showToolBar ? 'visible' : 'hidden'
+        opacity: showToolBar ? 1 : 0,
+        pointerEvents: showToolBar ? undefined : 'none',
+        transition: keyboardShown ? 'all 0.1s linear' : 'all 0.3s linear',
+      }"
     >
       <div
-        ref="navListRef"
-        class="NavList"
+        class="MobileNavContainer"
       >
         <div
-          class="NavItem"
-          @click="goBack"
+          ref="navListRef"
+          class="NavList"
         >
-          <div class="NavItemIcon">
-            <SyIcon
-              name="iconBack"
-              :disabled="isOldest"
-              size="18"
-            />
-          </div>
-        </div>
-        <div
-          class="NavItem"
-          @click="goForward"
-        >
-          <div class="NavItemIcon">
-            <SyIcon
-              name="iconForward"
-              :disabled="isNewset"
-              size="18"
-            />
-          </div>
-        </div>
-        <div
-          v-if="isNotFree"
-          class="NavItem"
-          @click="createTodayDailyNote"
-        >
-          <div class="NavItemIcon">
-            <SyIcon
-              name="iconAdd"
-              :disabled="isNewset"
-              size="18"
-            />
-          </div>
-        </div>
-        <div
-          class="NavItem"
-          @click="entryOpenSettings"
-        >
-          <div class="NavItemIcon">
-            <SyIcon
-              :name="['iconHeart', 'iconVIP', 'iconSuper'][settings.v]"
-              :disabled="isNewset"
-              size="18"
-            />
-          </div>
-        </div>
-        <a-dropdown position="tr">
-          <div class="NavItem">
+          <div
+            class="NavItem"
+            @click="goBack"
+          >
             <div class="NavItemIcon">
-              <icon-menu size="18" />
+              <SyIcon
+                name="iconBack"
+                :disabled="isOldest"
+                size="18"
+              />
+            </div>
+          </div>
+          <div
+            class="NavItem"
+            @click="goForward"
+          >
+            <div class="NavItemIcon">
+              <SyIcon
+                name="iconForward"
+                :disabled="isNewset"
+                size="18"
+              />
+            </div>
+          </div>
+          <div
+            v-if="isNotFree"
+            class="NavItem"
+            @click="createTodayDailyNote"
+          >
+            <div class="NavItemIcon">
+              <SyIcon
+                name="iconAdd"
+                :disabled="isNewset"
+                size="18"
+              />
+            </div>
+          </div>
+          <div
+            class="NavItem"
+            @click="entryOpenSettings"
+          >
+            <div class="NavItemIcon">
+              <SyIcon
+                :name="['iconHeart', 'iconVIP', 'iconSuper'][settings.v]"
+                :disabled="isNewset"
+                size="18"
+              />
             </div>
           </div>
 
-          <template #content>
-            <a-doption
-              @click="openSiyuanSettings"
-            >
-              <div class="flexAlignCenter enGap">
-                <SyIcon
-                  name="iconSiYuan"
-                  size="18"
-                />
-                思源设置
+          <!-- 更多内容 -->
+          <a-dropdown position="tr">
+            <div class="NavItem">
+              <div class="NavItemIcon">
+                <icon-menu size="18" />
               </div>
-            </a-doption>
-            <a-doption
-              @click="jumpToPrevDailyNote()"
-            >
-              <div class="flexAlignCenter enGap">
-                <icon-backward size="18" />
-                前一篇日记
+            </div>
+
+            <template #content>
+              <div
+                ref="EnNavMoreRef"
+              >
+                <a-doption
+                  @click="openSiyuanSettings"
+                >
+                  <div class="flexAlignCenter enGap">
+                    <SyIcon
+                      name="iconSiYuan"
+                      size="18"
+                    />
+                    思源设置
+                  </div>
+                </a-doption>
+                <a-doption
+                  @click="jumpToPrevDailyNote()"
+                >
+                  <div class="flexAlignCenter enGap">
+                    <icon-backward size="18" />
+                    前一篇日记
+                  </div>
+                </a-doption>
+                <a-doption
+                  @click="jumpToNextDailyNote()"
+                >
+                  <div class="flexAlignCenter enGap">
+                    <icon-forward size="18" />
+                    后一篇日记
+                  </div>
+                </a-doption>
               </div>
-            </a-doption>
-            <a-doption
-              @click="jumpToNextDailyNote()"
-            >
-              <div class="flexAlignCenter enGap">
-                <icon-forward size="18" />
-                后一篇日记
-              </div>
-            </a-doption>
-          </template>
-        </a-dropdown>
-        <div
-          v-for="item of navList"
-          :key="item.label"
-          class="NavItem"
-          @click="() => {
-            if (item.onClick) {
-              item.onClick()
-            }
-          }"
-        >
-          <div class="NavItemIcon">
-            <SyIcon
-              v-if="item.icon !== 'iconMore'"
-              :name="item.icon"
-              :disabled="item.disabled"
-              size="18"
-            />
+            </template>
+          </a-dropdown>
+          <div
+            v-for="item of navList"
+            :key="item.label"
+            class="NavItem"
+            @click="() => {
+              if (item.onClick) {
+                item.onClick()
+              }
+            }"
+          >
+            <div class="NavItemIcon">
+              <SyIcon
+                v-if="item.icon !== 'iconMore'"
+                :name="item.icon"
+                :disabled="item.disabled"
+                size="18"
+              />
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
+  </Teleport>
 </template>
 
-<script setup lang="ts">
+<script lang="ts">
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import { usePlugin } from '@/main'
 import {
@@ -139,12 +147,18 @@ import {
   useSettings,
 } from '@/modules/Settings/EnSettings.vue'
 import { debounce } from '@/utils'
+import { watchDomChange } from '@/utils/DOM'
 import { useDocHistory } from '@/utils/History'
 import {
   computed,
   onMounted,
   ref,
 } from 'vue'
+
+export const EnNavMoreRef = ref(null)
+</script>
+
+<script setup lang="ts">
 
 const plugin = usePlugin()
 
@@ -168,33 +182,23 @@ const onScroll = (event) => {
   }
 }
 
+const bindedProtyleContent = ref(null)
 onMounted(() => {
   if (!plugin.isMobile) {
     return
   }
 
-  const editorDom = document.body.querySelector('#editor') as HTMLElement
-  if (editorDom) {
-    const handler = () => {
+  watchDomChange(debounce(() => {
+    const editorDom = document.body.querySelector('#editor') as HTMLElement
+    if (editorDom) {
       const contentDom = editorDom.querySelector('.protyle-content')
-      if (contentDom) {
+      if (contentDom && bindedProtyleContent.value !== contentDom) {
+        bindedProtyleContent.value?.removeEventListener('scroll', onScroll)
         contentDom.addEventListener('scroll', onScroll)
+        bindedProtyleContent.value = contentDom
       }
     }
-    const run = debounce(handler, 500)
-    handler()
-    const observer = new MutationObserver(() => {
-      run()
-    })
-    if (editorDom) {
-      observer.observe(editorDom, {
-        childList: true, // 观察目标子节点的变化，是否有添加或者删除
-        subtree: true, // 观察后代节点，默认为 false
-        attributes: true,
-      })
-    }
-
-  }
+  }, 300))
 })
 
 const keyboardShown = ref(false)
@@ -260,7 +264,7 @@ html[data-theme-mode="light"] {
   box-shadow: 0px 0px 2px #c1c1c17f;
   // background-color: #1A1A1A;
   background-color: var(--hack-tool-bar-bg-color);
-  z-index: 1;
+  z-index: 3;
 }
 </style>
 
@@ -274,7 +278,6 @@ html[data-theme-mode="light"] {
   overflow: hidden;
   box-sizing: border-box;
   width: 100%;
-  z-index: 1;
   // border: 1px solid red;
 
   .NavList {
