@@ -161,64 +161,11 @@ const defaultInserNewLine = true
 const appendType: 'daily-note' | 'cur-doc' | 'target-doc' = 'daily-note'
 
 const {
-  module,
   moduleOptions,
 } = useModule<{
   customStyleBlock: string
   customStyleInline: string
-} & EnModule>('EnComment', {
-  defaultData: {
-    enabled: true,
-    moduleName: 'EnComment',
-    moduleDisplayName: '批注',
-
-    customStyleBlock: `& {
-  [data-type="NodeParagraph"],
-  [data-type="NodeHeading"] {
-    & > div:first-child {
-      text-decoration: var(--en-comment-style);
-      text-decoration-color: var(--en-comment-underline-color);
-      text-decoration-thickness: var(--en-comment-underline-width);
-      text-shadow: var(--en-comment-text-shadow);
-
-      & * {
-        text-decoration: var(--en-comment-style);
-        text-decoration-color: var(--en-comment-underline-color);
-        text-decoration-thickness: var(--en-comment-underline-width);
-        text-shadow: var(--en-comment-text-shadow);
-      }
-
-      img {
-        border: var(--en-comment-underline-width) solid var(--en-comment-underline-color);
-      }
-    }
-  }
-
-  [data-type="NodeWidget"],
-  [data-type="NodeBlockQueryEmbed"],
-  [data-type="NodeHTMLBlock"],
-  [data-type="NodeCodeBlock"],
-  [data-type="NodeVideo"] video,
-  [data-type="NodeAudio"] audio,
-  [data-type="NodeIFrame"] {
-    border: var(--en-comment-underline-width) solid var(--en-comment-underline-color);
-  }
-}`,
-    customStyleInline: `& {
-  text-decoration: var(--en-comment-style);
-  text-decoration-color: var(--en-comment-line-underline-color);
-  text-decoration-thickness: var(--en-comment-underline-width);
-  text-shadow: var(--en-comment-text-shadow);
-
-  & * {
-    text-decoration: var(--en-comment-style);
-    text-decoration-color: var(--en-comment-line-underline-color);
-    text-decoration-thickness: var(--en-comment-underline-width);
-    text-shadow: var(--en-comment-text-shadow);
-  }
-}`,
-  },
-})
+} & EnModule>('EnComment')
 
 
 const messageFlag = ref(null)
@@ -594,7 +541,12 @@ const commentForInlineText = async () => {
   } = selection
   const siyuanNode = getClosetSiyuanNodeByDom(focusNode as HTMLElement)
   const nodeId = siyuanNode.dataset.nodeId
+  const contentEditableDiv = siyuanNode.firstElementChild
+  const isReadonly = contentEditableDiv.getAttribute('contenteditable') === 'false'
 
+  if (isReadonly) {
+    contentEditableDiv.setAttribute('contenteditable', 'true')
+  }
   // 获取临时注释元素
   protyle.toolbar?.setInlineMark(protyle, 'en-comment-temp', 'range')
 
@@ -654,6 +606,9 @@ const commentForInlineText = async () => {
   const firstComment = document.querySelector(`[data-type~="${enCommentId}"]`)
   if (firstComment) {
     recordAdjustCommentModalTargetElement(firstComment as HTMLElement)
+  }
+  if (isReadonly) {
+    contentEditableDiv.setAttribute('contenteditable', 'false')
   }
 }
 
