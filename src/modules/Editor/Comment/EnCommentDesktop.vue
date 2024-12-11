@@ -125,7 +125,6 @@ import {
 } from '@/utils/DOM'
 import {
   useSiyuanDatabaseIndexCommit,
-  useSiyuanEventLoadedProtyleStatic,
   useSiyuanEventTransactions,
 } from '@/utils/EventBusHooks'
 import { getColorStringWarn } from '@/utils/Log'
@@ -516,7 +515,9 @@ const commentForSingleBlockByNodeId = async (nodeId: string, adjustTarget: HTMLE
   const currentBlockCommentIdAttr = blockAttrs['custom-en-comment-id']
   let currentBlockCommentIdList = currentBlockCommentIdAttr ? currentBlockCommentIdAttr.split(' ') : []
 
-  const currentBlockCommentId = currentBlockCommentIdList.length ? currentBlockCommentIdList[0] : getCommentIdByNodeId(nodeId)
+  const currentBlockCommentId = currentBlockCommentIdList.length
+    ? (currentBlockCommentIdList.find((cId) => cId.includes(nodeId)) || getCommentIdByNodeId(nodeId))
+    : getCommentIdByNodeId(nodeId)
 
   currentBlockCommentIdList.push(currentBlockCommentId)
   currentBlockCommentIdList = Array.from(new Set(currentBlockCommentIdList))
@@ -788,7 +789,7 @@ const getAllCommentIds = async () => {
   commentIdList.value = res.map((i) => i.value)
 }
 
-const offLoadedProtyleStatic = useSiyuanEventLoadedProtyleStatic(() => {
+onMounted(() => {
   getAllCommentIds()
 })
 
@@ -799,7 +800,6 @@ const offTransactions = useSiyuanEventTransactions(() => {
   }, 1000)
 })
 onBeforeUnmount(() => {
-  offLoadedProtyleStatic()
   offTransactions()
 })
 
