@@ -1,20 +1,10 @@
 <template>
 
-  <a-drawer
+  <EnDrawer
+    v-model:visible="editingSettings"
     class="enSettingDrawer"
-    :visible="editingSettings"
-    :unmountOnClose="false"
-    :drawer-style="{
-      maxHeight: '80vh',
-      height: 'unset',
-      borderTopLeftRadius: '8px',
-      borderTopRightRadius: '8px',
-    }"
-    height="unset"
-    placement="bottom"
+    :scrollTarget="enSettingsMainContentRef"
     @cancel="closeSettings"
-    @open="onDrawerOpen"
-    @close="onDrawerCLose"
   >
     <template #title>
       <div class="enSettingsTitle row flexCenter">
@@ -30,7 +20,6 @@
 
     <div
       class="enSettingsMain"
-      @touchmove="onTouchMove"
     >
       <div :class="`enSettingsModuleSelectorList ${!plugin.isMobile ? 'isNotMobile' : ''}`">
         <div
@@ -47,6 +36,7 @@
         </div>
       </div>
       <div
+        ref="enSettingsMainContentRef"
         class="flexColumn enSettingsMainContent"
         @scroll="onSettingListScroll"
       >
@@ -85,13 +75,14 @@
         </span>
       </div>
     </template>
-  </a-drawer>
+  </EnDrawer>
 </template>
 
 
 <script lang="ts">
 
 import EnDivider from '@/components/EnDivider.vue'
+import EnDrawer from '@/components/EnDrawer.vue'
 import { usePlugin } from '@/main'
 import { flushModuleConfigs } from '@/modules/Settings/ModuleConfigs'
 import {
@@ -109,7 +100,6 @@ import {
   loadModuleDataByNamespace,
   useSyncModuleData,
 } from '@/utils/SyncData'
-import AnyTouch from 'any-touch'
 import {
   computed,
   ComputedRef,
@@ -421,6 +411,7 @@ const plugin = usePlugin()
 
 enSuccess('Settings Module Loaded')
 
+const enSettingsMainContentRef = ref(null)
 
 const onTitleClicked = onCountClick((count) => {
   if (count >= 10) {
@@ -432,66 +423,11 @@ watchEffect(() => {
   moduleEnableStatusSwitcher('EnDebugging', settings.value.isDebugging)
 })
 
-const getSettingDrawer = () => document.querySelector('.arco-drawer') as HTMLDivElement
-
-const onDrawerOpen = () => {
-  const el: HTMLDivElement = document.querySelector('.enSettingDrawer')
-  const settingDom = getSettingDrawer()
-  if (!el || !settingDom) {
-    return
-  }
-
-  const at = new AnyTouch(el, {
-    preventDefault: false,
-  })
-  const drawerBody: HTMLDivElement = el.querySelector('.arco-drawer-body')
-
-  const drawerBodyScrollTopOnStart = ref(0)
-  at.on('panstart', () => {
-    drawerBodyScrollTopOnStart.value = drawerBody.scrollTop
-  })
-  at.on('pan', (e) => {
-    if (!settingDom) {
-      return
-    }
-
-    if (drawerBody.scrollTop > 0) {
-      return
-    }
-
-    const dis = e.displacementY - drawerBodyScrollTopOnStart.value
-    const movableDis = dis > 0 ? dis : 0
-    settingDom.style.transform = `translateY(${movableDis}px)`
-  })
-  at.on('panend', (e) => {
-    if (!settingDom) {
-      return
-    }
-
-    const dis = e.displacementY - drawerBodyScrollTopOnStart.value
-    if (dis > 200) {
-      settingDom.style.transform = `translateY(100%)`
-      editingSettings.value = false
-    } else {
-      settingDom.style.transform = 'unset'
-    }
-  })
-}
-
 const resetAllModule = () => {
   settingRefKeys.value.forEach((moduleName) => {
     const moduleRef = getModuleRefByNamespace(moduleName)
     resetModuleOptions(moduleRef)
   })
-}
-
-const onDrawerCLose = () => {
-
-}
-
-const onTouchMove = (e: TouchEvent) => {
-  e.stopImmediatePropagation()
-  e.stopPropagation()
 }
 
 onMounted(() => {
@@ -604,6 +540,7 @@ onMounted(() => {
 }
 
 .enSettingsMainContent {
+  overscroll-behavior: none;
   overflow: hidden;
   overflow-y: auto;
   padding-bottom: 32px;
