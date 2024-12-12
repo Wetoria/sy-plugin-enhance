@@ -105,6 +105,8 @@ const {
     moduleDisplayName: '批注',
 
     customStyleBlock: `& {
+  &[data-type="NodeParagraph"],
+  &[data-type="NodeHeading"],
   [data-type="NodeParagraph"],
   [data-type="NodeHeading"] {
     & > div:first-child {

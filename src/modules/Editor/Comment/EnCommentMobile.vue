@@ -218,17 +218,18 @@ const adjustBtnsPosition = () => {
 }
 
 const recordCurrentBlock = (event: MouseEvent) => {
-  let target = event.target as HTMLElement
-  while (target && !target.dataset.nodeId) {
-    target = target.parentElement as HTMLElement
-  }
+  const target = event.target as HTMLElement
+  // while (target && !target.dataset.nodeId) {
+  //   target = target.parentElement as HTMLElement
+  // }
 
   lastClickedElement.value = currentClickedElement.value
-  if (target?.dataset.nodeId) {
-    currentClickedElement.value = target
-  } else {
-    currentClickedElement.value = null
-  }
+  currentClickedElement.value = target
+  // if (target?.dataset.nodeId) {
+  //   currentClickedElement.value = target
+  // } else {
+  //   currentClickedElement.value = null
+  // }
 
   adjustBtnsPosition()
 }
@@ -529,8 +530,7 @@ const startComment = async () => {
 
   if (selectedNodes.length === 0) {
     // 防止 selection 更新不及时
-    const selection = window.getSelection()
-    const siyuanNode = getClosetSiyuanNodeByDom(selection.focusNode as HTMLElement)
+    const siyuanNode = getClosetSiyuanNodeByDom(currentClickedElement.value)
 
     if (!siyuanNode) {
       enWarn('siyuanNode was not found')
@@ -679,12 +679,7 @@ const commentForSingleBlockByNodeId = async (nodeId: string, adjustTarget: HTMLE
 const commentForInlineText = async () => {
   const protyle = currentProtyle.value
 
-  const selection = window.getSelection()
-
-  const {
-    focusNode,
-  } = selection
-  const siyuanNode = getClosetSiyuanNodeByDom(focusNode as HTMLElement)
+  const siyuanNode = getClosetSiyuanNodeByDom(currentClickedElement.value)
   const nodeId = siyuanNode.dataset.nodeId
   const contentEditableDiv = siyuanNode.firstElementChild
   const isReadonly = contentEditableDiv.getAttribute('contenteditable') === 'false'
@@ -793,7 +788,7 @@ const offTransactions = useSiyuanEventTransactions(() => {
   // 防止数据库还没更新完
   setTimeout(() => {
     getAllCommentIds()
-  }, 1000)
+  }, 2000)
 })
 onBeforeUnmount(() => {
   offTransactions()
@@ -921,12 +916,12 @@ const onClickComment = async (event: MouseEvent) => {
 const showCommentHistoryList = () => {
   getCommentHistoryByDom(currentClickedElement.value)
 }
-onMounted(() => {
-  document.addEventListener('click', onClickComment, true)
-})
-onBeforeUnmount(() => {
-  document.removeEventListener('click', onClickComment, true)
-})
+// onMounted(() => {
+//   document.addEventListener('click', onClickComment, true)
+// })
+// onBeforeUnmount(() => {
+//   document.removeEventListener('click', onClickComment, true)
+// })
 
 // #endregion 点击评论，显示历史评论列表
 
