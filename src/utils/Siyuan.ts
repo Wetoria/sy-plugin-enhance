@@ -11,6 +11,8 @@ import {
 } from 'vue'
 import { queryAllByDom } from './DOM'
 
+export const SiyuanSelectClassName = 'protyle-wysiwyg--select'
+
 export enum SyFrontendTypes {
   // 桌面端
   'desktop' = 'desktop',

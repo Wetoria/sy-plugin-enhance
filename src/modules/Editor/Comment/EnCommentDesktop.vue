@@ -2,7 +2,7 @@
   <div>
     <a-modal
       v-model:visible="popoverVisible"
-      class="enCommentContainerModal"
+      class="enCommentContainerModal enCommentContainerModalDesktop"
       modal-class="enCommentContainer"
       draggable
       :footer="false"
@@ -917,6 +917,83 @@ onBeforeUnmount(() => {
 
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
+.enCommentContainerModalDesktop {
+  pointer-events: none;
 
+  & .arco-modal-wrapper {
+    pointer-events: none;
+    text-align: unset;
+    overflow: hidden;
+  }
+
+  .enCommentContainer {
+    pointer-events: auto;
+    top: 0;
+    vertical-align: top;
+    min-height: 98px;
+    max-width: 45vw;
+    background: var(--b3-theme-background);
+    border: 1px solid var(--b3-border-color);
+    transform: translate(100vw, 100vh);
+
+    .arco-modal-header {
+      padding: 0 16px;
+      border-bottom: 1px solid var(--b3-border-color);
+      height: 36px;
+    }
+
+    .arco-modal-body {
+      padding: 0;
+    }
+
+    .enCommentContainerContent {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: auto;
+
+      .protyle-content {
+        padding-bottom: unset !important;
+      }
+
+      .protyle-wysiwyg {
+        padding: 6px 16px !important;
+      }
+
+      .enCommentContainerContentHistoryCommentList {
+        display: flex;
+        flex-direction: column;
+        // gap: var(--en-gap);
+
+        .historyCommentList {
+          display: flex;
+          flex-direction: column;
+          // gap: var(--en-gap);
+
+          max-height: 20vh;
+          overflow: hidden;
+          overflow-y: auto;
+
+          .protyle-content {
+            padding-bottom: unset !important;
+          }
+        }
+      }
+    }
+  }
+}
+
+.arco-btn.enCommentButton {
+  position: fixed;
+  pointer-events: auto;
+  background: var(--b3-theme-background);
+  z-index: 1000;
+  border: 1px solid var(--b3-border-color);
+
+  &:hover {
+    background: var(--b3-theme-background);
+    border: 1px solid var(--b3-theme-on-background);
+  }
+}
 </style>

@@ -10,6 +10,7 @@
       borderTopLeftRadius: '8px',
       borderTopRightRadius: '8px',
     }"
+    :footer="footer"
     height="unset"
     placement="bottom"
     v-bind="$attrs"
@@ -42,6 +43,7 @@ const props = defineProps<{
   needHide?: (dis: number, drawer: HTMLDivElement) => boolean
   scrollTarget?: HTMLDivElement | Ref<HTMLDivElement> | (() => HTMLDivElement)
   disabled?: boolean | (() => boolean)
+  footer?: boolean
 } & Omit<Partial<DrawerConfig>, 'visible' | 'onOpen'>>()
 
 const emit = defineEmits<{
@@ -122,6 +124,9 @@ const onTouchMove = (e: TouchEvent) => {
 
 <style lang="scss">
 .EnDrawer {
+  .arco-drawer {
+    border-top: 1px solid var(--color-neutral-3);
+  }
   .arco-drawer-body {
     overscroll-behavior: none;
     padding: 0px 0px;
