@@ -117,6 +117,7 @@ const escapeEvent = (event) => {
   if (event.code === 'Escape') {
     event.preventDefault()
     event.stopImmediatePropagation()
+    event.stopPropagation()
     cancelBrush()
   }
 }
@@ -135,12 +136,12 @@ const pasteStyleOnMouseUp = (event) => {
 const cancelBrush = () => {
   currentFontStyle.value = null
 
-  document.removeEventListener('keydown', escapeEvent)
+  document.removeEventListener('keydown', escapeEvent, true)
   document.removeEventListener('mouseup', pasteStyleOnMouseUp)
 }
 
 const enableBrush = () => {
-  document.addEventListener('keydown', escapeEvent)
+  document.addEventListener('keydown', escapeEvent, true)
 
   document.addEventListener('mouseup', pasteStyleOnMouseUp)
 }
