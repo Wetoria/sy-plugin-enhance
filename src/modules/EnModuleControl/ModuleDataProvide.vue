@@ -43,7 +43,7 @@ const autoLoadModuledata = async () => {
   const namespaces = Object.keys(syncDataRefMap)
   const needLoadNamespaces = namespaces.filter((namespace) => {
     const module = syncDataRefMap[namespace]
-    return !module.loaded && module.needSave
+    return module.autoLoad && !module.loaded && module.needSave
   })
   enLog('needLoadNamespaces', needLoadNamespaces)
   await Promise.all(needLoadNamespaces.map((namespace) => loadModuleDataByNamespace(namespace)))

@@ -34,6 +34,9 @@ export interface EnSyncModuleProps<T> {
 
   /** 是否需要多终端同步 */
   needSync?: boolean
+
+  /** 是否自动加载 */
+  autoLoad?: boolean
 }
 
 export type Namespace = string
@@ -76,6 +79,7 @@ interface EnSyncModule<T> {
   // 不保存的标记，为 true 则不调用思源插件的保存逻辑
   doNotSave?: boolean
 
+  autoLoad?: boolean
   loaded?: boolean
   loading?: boolean
   loadingFlag?: any
@@ -266,6 +270,7 @@ export function useSyncModuleData<T>({
   defaultData = {} as T,
   needSave = true,
   needSync = true,
+  autoLoad = true,
 }: EnSyncModuleProps<T>): EnSyncModuleDataRef<T> {
 
   const exist = syncDataRefMap[namespace]?.dataRef
@@ -279,6 +284,7 @@ export function useSyncModuleData<T>({
     dataRef,
     needSave,
     needSync,
+    autoLoad,
   }
   dataRef.value = getInitModuleData(defaultData)
 
