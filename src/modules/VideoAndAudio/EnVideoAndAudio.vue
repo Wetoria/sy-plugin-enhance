@@ -487,7 +487,10 @@ const enable = () => {
 
 const disable = () => {
   observer.disconnect()
-  plugin.protyleSlash = plugin.protyleSlash.filter((i) => !protyleSlashList.find((j) => j != i))
+  plugin.protyleSlash = plugin.protyleSlash.filter((i) => {
+    const isTargetSlash = protyleSlashList.find((j) => j.id == i.id)
+    return !isTargetSlash
+  })
   plugin.commands = plugin.commands.filter((i) => !commands.find((j) => j.langKey == i.langKey))
   plugin.eventBus.off('click-blockicon', onOpenContextMenu)
   plugin.eventBus.off('open-siyuan-url-plugin', onOpenUrlScheme)
