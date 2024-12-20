@@ -278,3 +278,49 @@ export function appendTargetDomAsClassOrder(className: AppendDomClassOrder | str
   }
   return result
 }
+
+
+export const highlightText = (text: string, keyword: string) => {
+  if (!keyword) return text
+
+  // 将搜索关键词转换为字符数组
+  const searchChars = Array.from(keyword.toLowerCase())
+  const textChars = Array.from(text)
+
+  // 记录每个字符是否需要高亮
+  const highlights = Array.from({ length: textChars.length }).fill(false)
+
+  // 查找所有匹配的字符位置
+  let textIdx = 0
+  for (const char of searchChars) {
+    while (textIdx < textChars.length) {
+      if (textChars[textIdx].toLowerCase() === char) {
+        highlights[textIdx] = true
+        textIdx++
+        break
+      }
+      textIdx++
+    }
+  }
+
+  // 生成高亮HTML，将相邻的高亮字符合并
+  let result = ''
+  let isInHighlight = false
+
+  for (let i = 0; i < textChars.length; i++) {
+    if (highlights[i] && !isInHighlight) {
+      result += '<mark class="en-search-highlight">'
+      isInHighlight = true
+    } else if (!highlights[i] && isInHighlight) {
+      result += '</mark>'
+      isInHighlight = false
+    }
+    result += textChars[i]
+  }
+
+  if (isInHighlight) {
+    result += '</mark>'
+  }
+
+  return result
+}

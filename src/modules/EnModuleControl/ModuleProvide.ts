@@ -14,7 +14,9 @@ import {
   onMounted,
 } from 'vue'
 
-interface GlobalData<T> {
+window.en_plugin_global = {}
+
+export interface GlobalData<T> {
   module: EnSyncModuleDataRef<T>
   moduleOptions: ComputedRef<T>
 }
@@ -42,7 +44,6 @@ export function useModule<T extends EnModule>(
 ): GlobalData<T> {
   const globalData = useGlobalData<T>(moduleName, options)
   onMounted(() => {
-    console.log('test onmouted ', moduleName)
     loadModuleDataByNamespace(moduleName)
   })
   return globalData

@@ -69,6 +69,7 @@ export type EnSyncModuleDataRef<T> = Ref<EnSyncModuleData<T>>
  */
 interface EnSyncModule<T> {
   dataRef: EnSyncModuleDataRef<T>
+  unwatch: () => void
 
   needSync?: EnSyncModuleProps<T>['needSync']
   // 为 true 则不发送更新
@@ -91,11 +92,14 @@ export function getModuleStorageKey(namespace: Namespace) {
 }
 
 
+
 interface EnSyncDataRefMap {
   [key: string]: EnSyncModule<any>
 }
 export const syncDataRefMap: EnSyncDataRefMap = {}
 window.en_SyncDataRefMap = syncDataRefMap
+
+
 
 export const markAsDoNotSave = (namespace: string, value = true) => {
   const mapData = getModuleByNamespace(namespace)
@@ -107,8 +111,9 @@ export const markAsDoNotSync = (namespace: string, value = true) => {
 }
 
 
+
 const getNamespaceLogString = (namespace: string) => {
-  return `${chalk.bgCyanBright.cyan.bold(` [${namespace}] `)}`
+  return `${chalk.cyan.bold(` [${namespace}] `)}`
 }
 
 
@@ -243,6 +248,11 @@ function getInitModuleData(defaultData) {
 export const saveModuleDataByNamespace = async (namespace: Namespace) => {
   const mapData = getModuleByNamespace(namespace)
 
+  if (!mapData) {
+    enError(`Module was not registered: ${getNamespaceLogString(namespace)}`)
+    return
+  }
+
   if (!mapData.needSave) {
     enLog(`Module ${getNamespaceLogString(namespace)} do not need to save. Cancel to save.`)
     return
@@ -280,18 +290,20 @@ export function useSyncModuleData<T>({
   }
 
   const dataRef = ref<EnSyncModuleDataRef<T>>({} as any)
-  syncDataRefMap[namespace] = {
+  const mapData: EnSyncModule<T> = {
     dataRef,
     needSave,
     needSync,
     autoLoad,
+    unwatch: () => {},
   }
+  syncDataRefMap[namespace] = mapData
   dataRef.value = getInitModuleData(defaultData)
 
-  if (needSave) {
+  if (needSave && autoLoad) {
     // 标记模块没有加载
-    syncDataRefMap[namespace].loadingFlag = setTimeout(() => {
-      if (!syncDataRefMap[namespace].loaded) {
+    mapData.loadingFlag = setTimeout(() => {
+      if (!mapData.loaded) {
         enWarn(`${getColorStringWarn(`Module ${getNamespaceLogString(namespace)} was not loaded from file. You seem forget to load it.`)}`)
       }
     }, 5000)
@@ -320,7 +332,7 @@ export function useSyncModuleData<T>({
 
 
   // 监听数据变化，执行保存和同步的逻辑
-  watch(dataRef, () => {
+  const unwatch = watch(dataRef, () => {
     const mapData = getModuleByNamespace(namespace)
 
     enLog(`${getColorStringWarn(`Watched module data changed:`)} ${getNamespaceLogString(namespace)}`)
@@ -332,7 +344,7 @@ export function useSyncModuleData<T>({
   }, {
     deep: true,
   })
-
+  mapData.unwatch = unwatch
 
   return dataRef
 }
@@ -343,6 +355,11 @@ export async function loadModuleDataByNamespace<T>(namespace: Namespace) {
   enLog(`${getColorStringWarn('Triggered to load module data')} of ${getNamespaceLogString(namespace)}`)
   const plugin = usePlugin()
   const storageKey = getModuleStorageKey(namespace)
+
+  if (!syncDataRefMap[namespace]) {
+    enError(`Module was not registered: ${getNamespaceLogString(namespace)}`)
+    return
+  }
 
   const loading = syncDataRefMap[namespace]?.loading
   if (loading) {
@@ -433,4 +450,15 @@ export function getModuleByNamespace<T>(namespace: string): EnSyncModule<T> {
  */
 export function getModuleRefByNamespace<T>(namespace: string): EnSyncModuleDataRef<T> {
   return getModuleByNamespace<T>(namespace).dataRef
+}
+
+
+/**
+ * Test
+ */
+export function unuseModuleByNamespace(namespace: string) {
+  enLog(`${getColorStringWarn('Unuse module')} ${getNamespaceLogString(namespace)}`)
+  const mapData = getModuleByNamespace(namespace)
+  mapData.unwatch()
+  delete syncDataRefMap[namespace]
 }

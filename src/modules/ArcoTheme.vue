@@ -19,5 +19,15 @@ onMounted(() => {
 </script>
 
 <style lang="scss">
+html {
+  .arco-resizebox-trigger-icon-wrapper {
+    // background-color: var(--b3-theme-background-light);
+    background-color: var(--b3-theme-surface);
+    border-radius: var(--b3-border-radius);
 
+    &:hover {
+      background-color: var(--b3-theme-background-light);
+    }
+  }
+}
 </style>

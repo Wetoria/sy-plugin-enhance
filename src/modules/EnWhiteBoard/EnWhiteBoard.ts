@@ -1,0 +1,313 @@
+import {
+  GlobalData,
+  useGlobalData,
+  useModule,
+} from '@/modules/EnModuleControl/ModuleProvide'
+import { EnModule } from '@/modules/Settings/EnSettings.vue'
+import {
+  generateUUIDWithTimestamp,
+} from '@/utils'
+import {
+  EN_CONSTANTS,
+  EN_MODULE_LIST,
+} from '@/utils/Constants'
+import { isSequentialMatch } from '@/utils/String'
+import {
+  EnSyncModuleDataRef,
+  loadModuleDataByNamespace,
+  unuseModuleByNamespace,
+} from '@/utils/SyncData'
+import { Notification } from '@arco-design/web-vue'
+import lodash from 'lodash'
+import {
+  computed,
+  ComputedRef,
+  reactive,
+  ref,
+  Ref,
+} from 'vue'
+
+
+
+export function generateWhiteBoardId() {
+  const shortUUID = generateUUIDWithTimestamp()
+  return `en-whiteboard-id-${shortUUID}`
+}
+
+
+export interface EnWhiteBoardBlockDomTarget {
+  whiteBoardId: string
+  nodeId: string
+  idList: string[]
+  domRef: HTMLElement
+  // 返回 html 块元素
+  getDom: () => HTMLElement
+}
+
+
+
+export interface EnWhiteBoardSetting extends EnModule {
+  embedBlockMinHeight: number
+  siderLeftWidthDefault: number
+  siderLeftShowDefault: boolean
+  siderRightWidthDefault: number
+  siderRightShowDefault: boolean
+}
+export function useWhiteBoardModule(): {
+  module: EnSyncModuleDataRef<EnWhiteBoardSetting>
+  moduleOptions: ComputedRef<EnWhiteBoardSetting>
+} {
+  return useModule<EnWhiteBoardSetting>(EN_MODULE_LIST.EN_WHITE_BOARD)
+}
+
+
+export const Module_EnWhiteBoardIndexMap = EN_CONSTANTS.EN_WHITE_BOARD_INDEX_MAP
+
+export interface EnWhiteBoardIndexMap {
+  [key: string]: {
+    // 方便后续新增加相关字段
+    whiteBoardId: string
+    whiteBoardName: string
+  }
+}
+
+
+export const EN_WHITEBOARD_CONFIG_BASE_PATH = `${EN_CONSTANTS.WHITEBOARD_BASE_PATH}/`
+export function getWhiteBoardConfigPathById(whiteBoardId: string) {
+  return `${EN_WHITEBOARD_CONFIG_BASE_PATH}${whiteBoardId}`
+}
+
+export interface EnWhiteBoardConfig {
+  id: string
+  name: string
+
+  // 白板嵌入时的配置
+  // 比如不同文档下渲染同一个白板，可以分别配置一个高度
+  // 每一个嵌入的白板有一个单独的配置
+  embedOptions: {
+    // 如果以后想每个 tab、window 都展示不同的效果，可以在这里扩展
+    // 比如生成 wb-tab-id-xxx 和 wb-window-id-xxx
+    [id: string]: {
+      // 嵌入的白板高度
+      height: number
+
+      SiderLeftShow: boolean
+      SiderLeftWidth: number
+      SiderLeftWidthLast?: number
+
+      SiderRightShow: boolean
+      SiderRightWidth: number
+      SiderRightWidthLast?: number
+    }
+  }
+
+  // 白板的配置
+  // 所有白板都使用同一个渲染配置
+  // 如果是嵌入的白板，就不让显示侧边栏了，除非展开显示
+  boardOptions: {
+    keepEmbedOptionsSame: boolean
+  }
+}
+
+interface ConfigList {
+  [id: string]: GlobalData<EnWhiteBoardConfig>
+}
+export const whiteBoardRef: {
+  // 每一个白板的配置。包括数据等
+  // 这个对象不应该存储，而是应该存储每一个 EnWhiteBoardConfig
+  configList: Ref<ConfigList>
+  indexMap: GlobalData<EnWhiteBoardIndexMap>
+} = {
+  configList: ref({}),
+  indexMap: null,
+}
+export const whiteBoardConfigList = computed<ConfigList>(() => whiteBoardRef.configList.value)
+
+window.en_plugin_global.whiteBoardRef = whiteBoardRef
+
+
+export function getWhiteBoardListBySearchValue(searchValue: string) {
+  if (!whiteBoardRef.indexMap) {
+    return []
+  }
+  const testData = Object.values(whiteBoardRef.indexMap.moduleOptions.value)
+  const searchChars = Array.from(searchValue)
+
+  // 将结果分为精确匹配和模糊匹配两组
+  const exactMatches: typeof testData = []
+  const sequentialMatches: typeof testData = []
+
+  testData.forEach((item) => {
+    const exactMatch = item.whiteBoardName.includes(searchValue)
+      || item.whiteBoardId.includes(searchValue)
+    const sequentialMatch = isSequentialMatch(item.whiteBoardName, searchChars)
+      || isSequentialMatch(item.whiteBoardId, searchChars)
+
+    if (exactMatch) {
+      exactMatches.push(item)
+    } else if (sequentialMatch) {
+      sequentialMatches.push(item)
+    }
+  })
+
+  // 合并两组结果
+  return [...exactMatches, ...sequentialMatches]
+}
+
+
+
+const defaultWhiteBoardConfig: EnWhiteBoardConfig = {
+  id: '',
+  name: '',
+
+  embedOptions: {},
+
+  boardOptions: {
+    keepEmbedOptionsSame: false,
+  },
+}
+
+function getDefaultEmbedOptions(): EnWhiteBoardConfig['embedOptions']['id'] {
+  const { moduleOptions } = useWhiteBoardModule()
+  return {
+    height: moduleOptions.value.embedBlockMinHeight,
+    SiderLeftShow: moduleOptions.value.siderLeftShowDefault,
+    SiderLeftWidth: moduleOptions.value.siderLeftWidthDefault,
+    SiderRightShow: moduleOptions.value.siderRightShowDefault,
+    SiderRightWidth: moduleOptions.value.siderRightWidthDefault,
+  }
+}
+
+async function createWhiteBoardConfig({
+  whiteBoardId,
+  whiteBoardName,
+  embedNodeId,
+}: {
+  whiteBoardId: string
+  whiteBoardName: string
+  embedNodeId?: string
+}) {
+  const newDefaultConfig = lodash.cloneDeep(defaultWhiteBoardConfig)
+  newDefaultConfig.id = whiteBoardId
+  newDefaultConfig.name = whiteBoardName
+
+  if (embedNodeId) {
+    newDefaultConfig.embedOptions[embedNodeId] = getDefaultEmbedOptions()
+  }
+
+  const newConfig = await loadWhiteBoardConfigById(whiteBoardId, newDefaultConfig)
+  return newConfig
+}
+
+function deleteWhiteBoardConfigById(whiteBoardId: string) {
+  const path = getWhiteBoardConfigPathById(whiteBoardId)
+  unuseModuleByNamespace(path)
+  delete whiteBoardRef.configList.value[whiteBoardId]
+}
+
+export async function loadWhiteBoardConfigById(whiteBoardId: string, defaultData: EnWhiteBoardConfig = defaultWhiteBoardConfig) {
+  const path = getWhiteBoardConfigPathById(whiteBoardId)
+  const config = useGlobalData<EnWhiteBoardConfig>(path, {
+    defaultData,
+    autoLoad: false,
+  })
+  await loadModuleDataByNamespace(path)
+
+  whiteBoardRef.configList.value[whiteBoardId] = config
+  return config
+}
+
+export function getWhiteBoardConfigRefById(whiteBoardId: string, embedTargetId: string) {
+  const embedWhiteBoardConfigRef = computed(() => {
+    const config = whiteBoardConfigList.value && whiteBoardConfigList.value[whiteBoardId]
+    // globaData 是非响应式的，所以这里得包装一下，防止下面的计算属性不能正确更新。
+    return reactive(config)
+  })
+  const embedWhiteBoardConfigData = computed<EnWhiteBoardConfig>(() => {
+    // 如果上面不用 reactive 进行包装，这里的 .value 将是一个非响应式数据，会出现上面的变了，这里没有更新。
+    return embedWhiteBoardConfigRef.value?.moduleOptions
+  })
+  const embedBlockOptions = computed<undefined | EnWhiteBoardConfig['embedOptions']['id']>(() => {
+    return embedWhiteBoardConfigData.value?.embedOptions[embedTargetId]
+  })
+  return {
+    embedWhiteBoardConfigRef,
+    embedWhiteBoardConfigData,
+    embedBlockOptions,
+  }
+}
+
+
+export async function createWhiteBoard({
+  whiteBoardId,
+  whiteBoardName,
+  embedNodeId,
+}: {
+  whiteBoardId: string
+  whiteBoardName: string
+  embedNodeId?: string
+}) {
+  whiteBoardRef.indexMap.moduleOptions.value[whiteBoardId] = {
+    whiteBoardId,
+    whiteBoardName,
+  }
+  whiteBoardRef.configList.value[whiteBoardId] = await createWhiteBoardConfig({
+    whiteBoardId,
+    whiteBoardName,
+    embedNodeId,
+  })
+}
+
+export async function embedWhiteBoard({
+  whiteBoardId,
+  whiteBoardName,
+  embedNodeId,
+  isNew,
+}: {
+  whiteBoardId: string
+  whiteBoardName: string
+  embedNodeId?: string
+  isNew: boolean
+}) {
+  const exist = whiteBoardRef.indexMap.moduleOptions.value[whiteBoardId]
+
+  // 不太可能出现，但还是留着这个
+  if (isNew && exist) {
+    Notification.warning({
+      content: `Find duplicated Whiteboard, Please contact the author.`,
+    })
+  }
+
+  let config
+  if (exist) {
+    config = await loadWhiteBoardConfigById(whiteBoardId)
+    console.log('config is ', config)
+    const newEmbedOptions = getDefaultEmbedOptions()
+    config.moduleOptions.value.embedOptions[embedNodeId] = newEmbedOptions
+  } else {
+    config = await createWhiteBoard({
+      whiteBoardId,
+      whiteBoardName,
+      embedNodeId,
+    })
+  }
+  return config
+}
+
+
+export function loadWhiteBoard() {
+  whiteBoardRef.indexMap = useGlobalData<EnWhiteBoardIndexMap>(Module_EnWhiteBoardIndexMap, {
+    defaultData: {},
+    autoLoad: false,
+  })
+  loadModuleDataByNamespace(Module_EnWhiteBoardIndexMap)
+}
+
+export function unloadWhiteBoard() {
+  unuseModuleByNamespace(Module_EnWhiteBoardIndexMap)
+  whiteBoardRef.indexMap = null
+
+  Object.keys(whiteBoardRef.configList.value).forEach((whiteBoardId) => {
+    deleteWhiteBoardConfigById(whiteBoardId)
+  })
+}

@@ -1,9 +1,6 @@
 <template>
   <div
-    :class="[
-      'EnWhiteBoardCardContainer',
-      'vue-flow__node-default',
-    ]"
+    class="EnWhiteBoardCardContainer vue-flow__node-default"
   >
     <NodeResizer
       :min-width="100"
@@ -17,22 +14,29 @@
       {{ x }} {{ y }}
     </div>
 
-    <Handle type="source" :position="Position.Bottom" />
+    <Handle
+      type="source"
+      :position="Position.Bottom"
+    />
   </div>
 </template>
 
 <script lang="ts">
 
-interface EnWhiteBoardNodeData {
-  nodeId: string
-}
-
 </script>
 
 <script setup lang="ts">
-import { Handle, Position, type NodeProps } from '@vue-flow/core'
+import {
+  Handle,
+  type NodeProps,
+  Position,
+} from '@vue-flow/core'
 import { NodeResizer } from '@vue-flow/node-resizer'
-import { computed } from 'vue';
+import { computed } from 'vue'
+
+interface EnWhiteBoardNodeData {
+  nodeId: string
+}
 
 const props = defineProps<NodeProps<EnWhiteBoardNodeData>>()
 // const node = computed(() => props.node)

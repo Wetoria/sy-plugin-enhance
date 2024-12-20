@@ -1,7 +1,7 @@
 <template>
   <!-- 只用来控制模块的导入 -->
-  <!-- 数据加载在 ModuleDataProvide 中 -->
-  <ModuleDataProvide>
+  <!-- 数据加载在 ModuleDataProvider 中 -->
+  <ModuleDataProvider>
     <!-- 全平台 -->
     <!-- 这里的顺序，决定了设置中的模块显示顺序 -->
     <EnSettings />
@@ -28,7 +28,7 @@
     <!-- 仅桌面端 -->
     <template v-else>
     </template>
-  </ModuleDataProvide>
+  </ModuleDataProvider>
 </template>
 
 <script setup lang="ts">
@@ -41,7 +41,7 @@ import EnEditor from '@/modules/Editor/EnEditor.vue'
 import EnFont from '@/modules/Editor/EnFont.vue'
 import EnFormatBrush from '@/modules/EnFormatBrush/EnFormatBrush.vue'
 import EnMobileNav from '@/modules/EnMobileNav.vue'
-import ModuleDataProvide from '@/modules/EnModuleControl/ModuleDataProvide.vue'
+import ModuleDataProvider from '@/modules/EnModuleControl/ModuleDataProvider.vue'
 import EnOthers from '@/modules/EnOthers.vue'
 import EnPWA from '@/modules/EnPWA.vue'
 import EnSiyuanEntry from '@/modules/EnSiyuanEntry.vue'

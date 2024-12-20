@@ -3,18 +3,29 @@
 </template>
 
 <script setup lang="ts">
-import { updateBlock } from '@/api';
-import { usePlugin } from '@/main';
-import { getClosetSiyuanNodeByDom } from '@/utils/Siyuan';
-import { setPosition, upDownHint } from '@/utils/Siyuan/utils';
-import { Protyle } from 'siyuan';
-import { createWhiteBoard, generateWhiteBoardId, getWhiteBoardListBySearchValue } from './EnModuleWhiteBoard.vue';
-import { onBeforeUnmount, onMounted } from 'vue';
+import type { Protyle } from 'siyuan'
+import { updateBlock } from '@/api'
+import { usePlugin } from '@/main'
+import {
+  embedWhiteBoard,
+  generateWhiteBoardId,
+  getWhiteBoardListBySearchValue,
+} from '@/modules/EnWhiteBoard/EnWhiteBoard'
+import { highlightText } from '@/utils/DOM'
+import { getClosetSiyuanNodeByDom } from '@/utils/Siyuan'
+import {
+  setPosition,
+  upDownHint,
+} from '@/utils/Siyuan/utils'
+import {
+  onBeforeUnmount,
+  onMounted,
+} from 'vue'
 
 const plugin = usePlugin()
 
 const slashId_WhiteBoard = 'EnWhiteBoard'
-const cbValue = `plugin\u200b${plugin.name}\u200b${slashId_WhiteBoard}`
+const cbValue = `plugin\u200B${plugin.name}\u200B${slashId_WhiteBoard}`
 
 function markItem(hint: any, item: HTMLElement) {
   hint.element.querySelector('.b3-list-item--focus')?.classList.remove('b3-list-item--focus')
@@ -47,16 +58,21 @@ async function renderWhiteBoardListIntoProtyleHint(protyle: Protyle, searchValue
       id: item.whiteBoardId,
       html: `
         <div
-          class="b3-list-item__text en-whiteboard-selector-item"
+          class="b3-list-item__first en-whiteboard-selector-item"
           data-en-whiteboard-id="${item.whiteBoardId}"
           data-en-whiteboard-name="${item.whiteBoardName}"
         >
-          ${item.whiteBoardName}
+          <span class="b3-list-item__text">
+            ${highlightText(item.whiteBoardName, searchValue)}
+          </span>
+        </div>
+        <div class="b3-list-item__meta b3-list-item__showall">
+          ${highlightText(item.whiteBoardId, searchValue)}
         </div>
       `,
     })
   })
-  hint.genHTML(hintItems, protyle.protyle, true, "hint");
+  hint.genHTML(hintItems, protyle.protyle, true, 'hint')
 
   const newHintInputWrapperDom = document.createElement('div') as HTMLDivElement
   newHintInputWrapperDom.classList.add('en-whiteboard-hint-input-wrapper')
@@ -72,33 +88,38 @@ async function renderWhiteBoardListIntoProtyleHint(protyle: Protyle, searchValue
   newHintInputDom.addEventListener('input', (event: InputEvent) => {
     const currentValue = (event.target as HTMLInputElement).value
     if (event.isComposing) {
-      return;
+      return
     }
-    event.stopPropagation();
+    event.stopPropagation()
     renderWhiteBoardListIntoProtyleHint(protyle, currentValue)
     // this.genSearchHTML(protyle, searchElement, nodeElement, oldValue, source);
   })
-  newHintInputDom.addEventListener("compositionend", (event: InputEvent) => {
-    event.stopPropagation();
+  newHintInputDom.addEventListener('compositionend', (event: InputEvent) => {
+    event.stopPropagation()
     const currentValue = (event.target as HTMLInputElement).value
     // this.genSearchHTML(protyle, searchElement, nodeElement, oldValue, source);
     renderWhiteBoardListIntoProtyleHint(protyle, currentValue)
-  });
+  })
 
   newHintInputDom.addEventListener('keydown', (event) => {
-    if (event.key !== "Meta" && event.key !== "Control") {
+    if (event.key !== 'Meta' && event.key !== 'Control') {
       // 需要冒泡以满足光标在块标位置时 ctrl 弹出悬浮层
-      event.stopPropagation();
+      event.stopPropagation()
     }
     if (event.isComposing) {
-      return;
+      return
     }
-    upDownHint(hint.element.lastElementChild, event);
-    if (event.key === "Enter") {
-      event.preventDefault();
-      clearTimeout(hint.timeId);
-      hint.element.classList.add("fn__none");
+    upDownHint(hint.element.lastElementChild, event)
+    if (event.key === 'Enter') {
+      event.preventDefault()
+      clearTimeout(hint.timeId)
+      hint.element.classList.add('fn__none')
       createOrInsertWhiteBoard(protyle)
+    }
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      clearTimeout(hint.timeId)
+      hint.element.classList.add('fn__none')
     }
   })
 
@@ -122,7 +143,7 @@ async function renderWhiteBoardListIntoProtyleHint(protyle: Protyle, searchValue
   newHintInputDom.focus()
   const siyuanNode = hint.siyuanNode
   const siyuanNodeRect = siyuanNode?.getBoundingClientRect()
-  setPosition(hint.element, siyuanNodeRect?.left, siyuanNodeRect?.bottom);
+  setPosition(hint.element, siyuanNodeRect?.left, siyuanNodeRect?.bottom)
 }
 
 function createOrInsertWhiteBoard(protyle: Protyle) {
@@ -138,19 +159,26 @@ function createOrInsertWhiteBoard(protyle: Protyle) {
     whiteBoardId = generateWhiteBoardId()
   }
 
-  const result = `选择的白板id：${whiteBoardId}<br/>选择的白板名称：${whiteBoardName ? ` ${whiteBoardName}` : '[后续应该自动生成白板的名称]'}<br/>选择的块id：${hint.enBlockId}。`
+  const result = `Enhance 白板嵌入区域<br />选择的白板id：${whiteBoardId}<br/>选择的白板名称：${whiteBoardName ? ` ${whiteBoardName}` : '[后续应该自动生成白板的名称]'}<br/>用于渲染的的块id：${hint.enBlockId}`
   const testHtml =
 `<div>
-  <div style="display: none;">
+  <style>
+    .en-whiteboard-placeholder {
+      display: var(--en-whiteboard-placeholder-display);
+    }
+  </style>
+  <div class="en-whiteboard-placeholder">
     ${result}
   </div>
 </div>
 
 {: custom-en-ref-whiteboard-id="${whiteBoardId}" alias="en-wb-${whiteBoardName}" }
 `
-  createWhiteBoard({
+  embedWhiteBoard({
     whiteBoardId,
     whiteBoardName,
+    embedNodeId: hint.enBlockId,
+    isNew: isCreateNew,
   })
   updateBlock('markdown', testHtml, hint.enBlockId)
   hint.enCreatingOrSelectingWhiteBoard = false
@@ -158,6 +186,19 @@ function createOrInsertWhiteBoard(protyle: Protyle) {
   hint.enBlockId = ''
 }
 
+const switchPlaceholderDisplay = (enable: boolean) => {
+  const key = '--en-whiteboard-placeholder-display'
+  if (enable) {
+    document.documentElement.style.setProperty(
+      key,
+      'none',
+    )
+  } else {
+    document.documentElement.style.removeProperty(
+      key,
+    )
+  }
+}
 onMounted(() => {
   plugin.protyleSlash.push({
     filter: [
@@ -195,12 +236,14 @@ onMounted(() => {
           createOrInsertWhiteBoard(protyle)
         }
       }
-    }
+    },
   })
+  switchPlaceholderDisplay(true)
 })
 
 onBeforeUnmount(() => {
   plugin.protyleSlash = plugin.protyleSlash.filter((item) => item.id !== slashId_WhiteBoard)
+  switchPlaceholderDisplay(false)
 })
 </script>
 

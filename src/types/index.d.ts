@@ -132,6 +132,9 @@ interface Window {
 
   en_SyncDataRefMap: Ref<EnSyncDataRefMap>
   en_plugin: VPlugin
+  en_plugin_global: {
+    [key: string]: any
+  }
 }
 
 interface IBreadcrumb {

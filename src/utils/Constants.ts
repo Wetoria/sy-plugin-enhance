@@ -1,4 +1,4 @@
-
+/* eslint-disable perfectionist/sort-enums */
 export enum EN_CONSTANTS {
   BACKGROUND_IMG = 'EnBackgroundImg',
   BACKGROUND_IMG_DISPLAY = '背景图',
@@ -12,6 +12,12 @@ export enum EN_CONSTANTS {
   EN_OTHER_DISPLAY = '其他设置',
 
   EN_TEST_LOGIC = 'TestLogic',
+
+  WHITEBOARD_BASE_PATH = 'EnWhiteBoard',
+  EN_WHITE_BOARD = `${WHITEBOARD_BASE_PATH}/config`,
+  EN_WHITE_BOARD_DISPLAY = '白板',
+  EN_WHITE_BOARD_INDEX_MAP = `${WHITEBOARD_BASE_PATH}/IndexMap`,
+  EN_WHITE_BOARD_WHITEBOARD_LIST = `${WHITEBOARD_BASE_PATH}/WhiteboardList`,
 
   MODULE_PROVIDER_KEY = 'EnModule',
 
@@ -30,8 +36,6 @@ export enum EN_COMMAND_KEYS {
   EN_OPEN_QUICK_NOTE = EN_CONSTANTS.CMD_KEY_EN_OPEN_QUICK_NOTE,
 }
 
-
-/* eslint-disable perfectionist/sort-enums */
 export enum EN_MODULE_LIST {
   SETTINGS = EN_CONSTANTS.SETTINGS,
 
@@ -40,4 +44,6 @@ export enum EN_MODULE_LIST {
   BACKGROUND_IMG = EN_CONSTANTS.BACKGROUND_IMG,
   DAILY_NOTE = EN_CONSTANTS.DAILY_NOTE,
   EN_OTHER = EN_CONSTANTS.EN_OTHER,
+
+  EN_WHITE_BOARD = EN_CONSTANTS.EN_WHITE_BOARD,
 }

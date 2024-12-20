@@ -1,4 +1,5 @@
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
+import dayjs from 'dayjs'
 import {
   App,
   createApp,
@@ -176,4 +177,10 @@ export function generateShortUUID() {
     const v = c === 'x' ? r : (r & 0x3 | 0x8)
     return v.toString(16)
   }).slice(0, 8) // 取前8个字符
+}
+
+export function generateUUIDWithTimestamp() {
+  const shortUUID = generateShortUUID()
+  const time = dayjs().format('YYYYMMDDHHmmss')
+  return `${time}-${shortUUID}`
 }
