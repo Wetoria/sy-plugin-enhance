@@ -67,6 +67,9 @@ const enProtyleActualAreaRef = ref<HTMLElement | null>(null)
 const enProtyleActualAreaContainerRef = ref<HTMLElement | null>(null)
 
 const protyleContentRef = ref<HTMLElement | null>(null)
+defineExpose({
+  protyleContentRef,
+})
 
 const registerDom = () => {
   const dom = props.getTargetBlockDom()

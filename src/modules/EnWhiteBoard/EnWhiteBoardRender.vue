@@ -51,6 +51,7 @@
       <VueFlow
         :nodes="nodes"
         :edges="edges"
+        :zoom-on-scroll="false"
         fit-view-on-init
         :minZoom="0.2"
       >

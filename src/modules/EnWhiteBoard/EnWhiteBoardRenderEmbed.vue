@@ -1,5 +1,6 @@
 <template>
   <EnProtyleCustomArea
+    ref="customRef"
     :getTargetBlockDom="data.getDom"
     :fullScreen="fullScreen"
   >
@@ -18,6 +19,7 @@
             minHeight: `${moduleOptions.embedBlockMinHeight}px`,
             height: fullScreen ? '100%' : undefined,
           }"
+          @wheel="handleWheel"
         >
           <EnWhiteBoardRender
             :data="data"
@@ -60,12 +62,15 @@ import {
 } from '@/modules/EnWhiteBoard/EnWhiteBoard'
 import EnWhiteBoardRender from '@/modules/EnWhiteBoard/EnWhiteBoardRender.vue'
 import {
+  onBeforeUnmount,
   ref,
 } from 'vue'
 
 const props = defineProps<{
   data: EnWhiteBoardBlockDomTarget
 }>()
+
+const customRef = ref(null)
 
 const {
   moduleOptions,
@@ -80,6 +85,59 @@ const fullScreen = ref<'doc' | 'siyuan' | undefined>(undefined)
 const changeFullScreen = (value?: 'doc' | 'siyuan') => {
   fullScreen.value = value
 }
+
+let scrollAnimation: number | null = null
+let velocity = 0
+const friction = 0.95 // 摩擦系数，可以调整
+const speedMultiplier = 0.2 // 速度倍数，可以调整
+
+
+const animateScroll = () => {
+  const targetElement = customRef.value?.protyleContentRef
+  if (!targetElement || Math.abs(velocity) < 0.1) {
+    scrollAnimation = null
+    velocity = 0
+    return
+  }
+
+  targetElement.scrollTop += velocity
+  velocity *= friction
+
+  scrollAnimation = requestAnimationFrame(animateScroll)
+}
+
+const handleWheel = (e: WheelEvent) => {
+  if (fullScreen.value) {
+    return
+  }
+
+  e.preventDefault()
+
+  // 根据deltaMode调整滚动量
+  let delta = e.deltaY
+  if (e.deltaMode === 1) { // 如果是行模式
+    delta *= 16 // 转换为像素
+  }
+
+  // 添加更自然的加速度
+  velocity += delta * speedMultiplier
+
+  // 限制最大速度
+  const maxVelocity = 100
+  velocity = Math.max(Math.min(velocity, maxVelocity), -maxVelocity)
+
+  if (scrollAnimation === null) {
+    animateScroll()
+  }
+}
+
+// 在组件卸载时清理
+onBeforeUnmount(() => {
+  if (scrollAnimation) {
+    cancelAnimationFrame(scrollAnimation)
+  }
+})
+
 </script>
 
 <style lang="scss" scoped>
