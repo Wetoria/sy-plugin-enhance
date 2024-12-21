@@ -12,8 +12,7 @@
       color="gold"
     >
       <a-space>
-        <SyIcon name="iconVIP" />
-        <span>勇士</span>
+        <EnIconDragon />
       </a-space>
     </a-tag>
     <a-tag
@@ -132,6 +131,7 @@
 
 <script lang="ts">
 import { request } from '@/api'
+import EnIconDragon from '@/components/EnIconDragon.vue'
 import { useSyncModuleData } from '@/utils/SyncData'
 import { Notification } from '@arco-design/web-vue'
 import dayjs from 'dayjs'
