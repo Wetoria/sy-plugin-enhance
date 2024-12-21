@@ -1,39 +1,28 @@
 <template>
-  <div class="EnWhiteBoardRenderContainer">
-    <div
-      class="EnWhiteBoardSider EnWhiteBoardLeftAreaContainer"
+  <div
+    class="EnWhiteBoardRenderContainer"
+  >
+    <EnWhiteBoardSider
+      :needSider="needSider"
+      :embedBlockOptions="embedBlockOptions"
+      pos="Left"
     >
-      <a-resize-box
-        v-show="!hideSider"
-        v-model:width="embedBlockOptions.SiderLeftWidth"
-        :directions="['right']"
-        :style="{
-          maxWidth: '100%',
-        }"
-      >
-        <div>Sider Left</div>
-      </a-resize-box>
-      <div
-        class="EnWhiteBoardSiderFolder"
-        :style="{
-          left: embedBlockOptions.SiderLeftShow ? 'var(--b3-border-radius)' : undefined,
-          right: embedBlockOptions.SiderLeftShow ? undefined : '0px',
-          transform: embedBlockOptions.SiderLeftShow ? undefined : 'translateX(100%)',
-        }"
-      >
-        <a-button
-          v-show="!hideSider"
-          @click="changeSiderShown('left')"
-        >
-          <template v-if="embedBlockOptions.SiderLeftShow">
-            <SyIcon name="iconOutdent" />
-          </template>
-          <template v-else>
-            <SyIcon name="iconIndent" />
-          </template>
-        </a-button>
-      </div>
-    </div>
+      <template #SiderTopButtonGroupBefore>
+        <slot name="SiderLeftTopButtonGroupBefore" />
+      </template>
+      <template #SiderTopButtonGroupAfter>
+        <slot name="SiderLeftTopButtonGroupAfter" />
+      </template>
+
+      <div>Sider Left</div>
+
+      <template #SiderBottomButtonGroupBefore>
+        <slot name="SiderLeftBottomButtonGroupBefore" />
+      </template>
+      <template #SiderBottomButtonGroupAfter>
+        <slot name="SiderLeftBottomButtonGroupAfter" />
+      </template>
+    </EnWhiteBoardSider>
 
     <div class="EnWhiteBoardContentContainer">
       <!-- {{ data.whiteBoardId }} - {{ data.nodeId }} -->
@@ -55,9 +44,9 @@
 
         </div>
       </div>
-      <div class="EnWhiteBoardControlArea EnWhiteBoardControlArea__Right">
-      </div>
       <div class="EnWhiteBoardControlArea EnWhiteBoardControlArea__Left">
+      </div>
+      <div class="EnWhiteBoardControlArea EnWhiteBoardControlArea__Right">
       </div>
       <VueFlow
         :nodes="nodes"
@@ -83,48 +72,38 @@
     </div>
 
 
-    <div class="EnWhiteBoardSider EnWhiteBoardRightAreaContainer">
-      <a-resize-box
-        v-show="!hideSider"
-        v-model:width="embedBlockOptions.SiderRightWidth"
-        :directions="['left']"
-        :style="{
-          maxWidth: '100%',
-        }"
-      >
-        <div>Sider Right</div>
-      </a-resize-box>
-      <div
-        class="EnWhiteBoardSiderFolder"
-        :style="{
-          right: embedBlockOptions.SiderRightShow ? 'var(--b3-border-radius)' : undefined,
-          left: embedBlockOptions.SiderRightShow ? undefined : '0px',
-          transform: embedBlockOptions.SiderRightShow ? undefined : 'translateX(-100%)',
-        }"
-      >
-        <a-button
-          v-show="!hideSider"
-          @click="changeSiderShown('right')"
-        >
-          <template v-if="embedBlockOptions.SiderRightShow">
-            <SyIcon name="iconIndent" />
-          </template>
-          <template v-else>
-            <SyIcon name="iconOutdent" />
-          </template>
-        </a-button>
-      </div>
-    </div>
+    <EnWhiteBoardSider
+      :needSider="needSider"
+      :embedBlockOptions="embedBlockOptions"
+      pos="Right"
+    >
+      <template #SiderTopButtonGroupBefore>
+        <slot name="SiderRightTopButtonGroupBefore" />
+      </template>
+      <template #SiderTopButtonGroupAfter>
+        <slot name="SiderRightTopButtonGroupAfter" />
+      </template>
 
+      <div>Sider Right</div>
+
+      <template #SiderBottomButtonGroupBefore>
+        <slot name="SiderRightBottomButtonGroupBefore" />
+      </template>
+      <template #SiderBottomButtonGroupAfter>
+        <slot name="SiderRightBottomButtonGroupAfter" />
+      </template>
+    </EnWhiteBoardSider>
   </div>
 </template>
 
 <script setup lang="ts">
-import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import {
   EnWhiteBoardBlockDomTarget,
   getWhiteBoardConfigRefById,
 } from '@/modules/EnWhiteBoard/EnWhiteBoard'
+
+
+import EnWhiteBoardSider from '@/modules/EnWhiteBoard/EnWhiteBoardSider.vue'
 import { VueFlow } from '@vue-flow/core'
 import {
   ref,
@@ -136,7 +115,7 @@ import SpecialNode from './SpecialNode.vue'
 
 const props = defineProps<{
   data: EnWhiteBoardBlockDomTarget
-  hideSider?: boolean
+  needSider?: boolean
 }>()
 
 const {
@@ -150,30 +129,7 @@ watch(() => embedBlockOptions.value.SiderLeftWidth, () => {
 watch(() => embedBlockOptions.value.SiderRightWidth, () => {
   embedBlockOptions.value.SiderRightShow = embedBlockOptions.value.SiderRightWidth > 0
 })
-const changeSiderShown = (side: 'left' | 'right') => {
-  if (side === 'left') {
-    const newShown = !embedBlockOptions.value.SiderLeftShow
-    if (newShown) {
-      embedBlockOptions.value.SiderLeftWidth = embedBlockOptions.value.SiderLeftWidthLast
-      embedBlockOptions.value.SiderLeftShow = newShown
-    } else {
-      embedBlockOptions.value.SiderLeftWidthLast = embedBlockOptions.value.SiderLeftWidth
-      embedBlockOptions.value.SiderLeftWidth = 0
-      embedBlockOptions.value.SiderLeftShow = newShown
-    }
-  }
-  else {
-    const newShown = !embedBlockOptions.value.SiderRightShow
-    if (newShown) {
-      embedBlockOptions.value.SiderRightWidth = embedBlockOptions.value.SiderRightWidthLast
-      embedBlockOptions.value.SiderRightShow = newShown
-    } else {
-      embedBlockOptions.value.SiderRightWidthLast = embedBlockOptions.value.SiderRightWidth
-      embedBlockOptions.value.SiderRightWidth = 0
-      embedBlockOptions.value.SiderRightShow = newShown
-    }
-  }
-}
+
 
 const nodes = ref([
   // an input node, specified by using `type: 'input'`
@@ -292,6 +248,7 @@ const edges = ref([
   height: 100%;
   position: relative;
   display: flex;
+  z-index: 0;
 
   .EnWhiteBoardContentContainer {
     flex: 1;
@@ -351,27 +308,6 @@ const edges = ref([
     height: calc(100% - var(--en-white-board-control-vertical-height) * 2);
 
     flex-direction: column;
-  }
-
-  .EnWhiteBoardSider {
-    height: 100%;
-    box-sizing: border-box;
-    max-width: 95%;
-
-    display: flex;
-    flex-direction: column;
-
-    position: relative;
-
-    .arco-resizebox {
-      height: 100%;
-    }
-
-    .EnWhiteBoardSiderFolder {
-      position: absolute;
-      bottom: var(--b3-border-radius);
-      z-index: 3;
-    }
   }
 }
 </style>

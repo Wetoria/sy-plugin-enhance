@@ -97,7 +97,7 @@ onMounted(() => {
   --sky-blue: #00bfff;
   --sky-blue-blur: #00bfff7f;
 
-  --en-gap: 8px;
+  --en-gap: var(--b3-border-radius);
   // --b3-theme-background: #000;
 }
 

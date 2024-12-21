@@ -21,9 +21,9 @@
         >
           <EnWhiteBoardRender
             :data="data"
-            :hideSider="!fullScreen"
+            :needSider="!!fullScreen"
           >
-            <template #topButtonGroup>
+            <template #SiderRightTopButtonGroupAfter>
               <a-tooltip content="思源内铺满">
                 <a-button @click="changeFullScreen('siyuan')">
                   <SyIcon name="iconSiYuan" />
