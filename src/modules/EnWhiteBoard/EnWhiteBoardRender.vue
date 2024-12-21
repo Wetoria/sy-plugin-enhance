@@ -309,5 +309,13 @@ const edges = ref([
 
     flex-direction: column;
   }
+
+  :deep(.arco-btn-secondary[type="button"]) {
+    background-color: var(--b3-theme-background);
+
+    &:hover {
+      background-color: var(--b3-theme-surface);
+    }
+  }
 }
 </style>

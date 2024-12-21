@@ -31,13 +31,5 @@ html {
       background-color: var(--b3-theme-surface);
     }
   }
-
-  .arco-btn-secondary[type="button"] {
-    background-color: var(--b3-theme-background);
-
-    &:hover {
-      background-color: var(--b3-theme-surface);
-    }
-  }
 }
 </style>
