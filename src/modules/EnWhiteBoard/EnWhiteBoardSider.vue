@@ -220,8 +220,6 @@ const folderIconName = computed(() => {
       box-sizing: border-box;
       z-index: 3;
 
-      min-width: fit-content;
-
       // 使用 max 函数确保只有一个值生效
       --top-value: calc(var(--en-is-toolbar-top) * 0px);
       --bottom-value: calc(var(--en-is-toolbar-bottom) * 0px);
@@ -259,7 +257,6 @@ const folderIconName = computed(() => {
         left: 0;
         right: unset;
 
-        width: 100%;
         justify-content: flex-start;
       }
     }
@@ -333,7 +330,6 @@ const folderIconName = computed(() => {
         left: unset;
         right: 0;
 
-        width: 100%;
         justify-content: flex-end;
       }
     }
