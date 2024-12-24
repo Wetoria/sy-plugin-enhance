@@ -136,6 +136,21 @@ const afterProtyleLoad = (protyle: Protyle) => {
       protyleUtilAreaRef.value?.appendChild(target)
     }
   })
+
+  protyle?.protyle?.wysiwyg?.element?.addEventListener('mousedown', (event) => {
+    const target = event.target as HTMLElement
+    const mainElement = target.closest('.EnWhiteBoardCardMain')
+    if (mainElement && !mainElement.classList.contains('nodrag')) {
+      event.stopImmediatePropagation()
+      const newEvent = new MouseEvent('mousedown', {
+        bubbles: true,
+        cancelable: true,
+        view: window,
+        ...event,
+      })
+      mainElement.parentElement?.dispatchEvent(newEvent)
+    }
+  }, true)
 }
 
 const mainRef = ref<HTMLDivElement | null>(null)
