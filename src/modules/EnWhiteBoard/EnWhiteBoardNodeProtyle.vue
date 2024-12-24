@@ -1,18 +1,48 @@
 <template>
   <div
-    class="EnWhiteBoardCardContainer vue-flow__node-default"
+    class="EnWhiteBoardCardContainer"
   >
+    <div
+      ref="mainRef"
+      class="main EnWhiteBoardCardMain"
+      @wheel.capture="captureWheel"
+    >
+      <!-- <div>{{ data.label }}</div>
+
+      <div>
+        {{ x }} {{ y }}
+      </div> -->
+
+      <template v-if="nodeData.blockId">
+        <EnProtyle
+          :block-id="nodeData.blockId"
+          disableEnhance
+          @after="afterProtyleLoad"
+        />
+        <Teleport
+          v-if="enWhiteBoardProtyleUtilAreaRef"
+          :to="enWhiteBoardProtyleUtilAreaRef"
+        >
+          <div ref="protyleUtilAreaRef">
+
+          </div>
+        </Teleport>
+      </template>
+      <!-- <div
+        v-if="!nodeData.editing"
+        class="protyle-cursor-mask"
+      >
+
+      </div> -->
+    </div>
+
     <NodeResizer
       :min-width="100"
       :min-height="30"
       color="transparent"
+      @resize="onResize"
     />
 
-    <div>{{ data.label }}</div>
-
-    <div>
-      {{ x }} {{ y }}
-    </div>
 
     <Handle
       type="source"
@@ -26,22 +56,123 @@
 </script>
 
 <script setup lang="ts">
+import EnProtyle from '@/components/EnProtyle.vue'
+import { EnWhiteBoardNodeData } from '@/modules/EnWhiteBoard/EnWhiteBoard'
+import { debounce } from '@/utils'
+import {
+  unWatchDomChange,
+  watchDomChange,
+} from '@/utils/DOM'
+import { SyDomNodeTypes } from '@/utils/Siyuan'
 import {
   Handle,
   type NodeProps,
   Position,
+  useKeyPress,
 } from '@vue-flow/core'
-import { NodeResizer } from '@vue-flow/node-resizer'
-import { computed } from 'vue'
+import {
+  NodeResizer,
+  OnResize,
+} from '@vue-flow/node-resizer'
+import { Protyle } from 'siyuan'
+import {
+  computed,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+} from 'vue'
 
-interface EnWhiteBoardNodeData {
-  nodeId: string
+
+const props = defineProps<{
+  nodeProps: NodeProps<EnWhiteBoardNodeData>
+  enWhiteBoardProtyleUtilAreaRef: HTMLElement
+}>()
+
+const emit = defineEmits<{
+  clickCard: [element: HTMLElement]
+}>()
+
+// const node = computed(() => props.node)
+const x = computed(() => `${Math.round(props.nodeProps.position.x)}px`)
+const y = computed(() => `${Math.round(props.nodeProps.position.y)}px`)
+
+const nodeData = computed(() => props.nodeProps.data)
+
+const spaceKeyPressing = useKeyPress('Space')
+const captureWheel = (event: WheelEvent) => {
+  if (!event.ctrlKey && !event.altKey && !event.shiftKey && !event.metaKey && !spaceKeyPressing.value) {
+
+    const protyleContent = mainRef.value?.querySelector('.protyle-content')
+
+    if (!protyleContent) {
+      return
+    }
+
+    const {
+      scrollTop,
+      scrollHeight,
+      clientHeight,
+    } = protyleContent
+    const isAtTop = scrollTop <= 0
+    const isAtBottom = scrollTop + clientHeight >= scrollHeight
+
+    if ((event.deltaY < 0 && !isAtTop) || (event.deltaY > 0 && !isAtBottom)) {
+      event.stopImmediatePropagation()
+    }
+  }
 }
 
-const props = defineProps<NodeProps<EnWhiteBoardNodeData>>()
-// const node = computed(() => props.node)
-const x = computed(() => `${Math.round(props.position.x)}px`)
-const y = computed(() => `${Math.round(props.position.y)}px`)
+const targetProtyleUtilClassList = [
+  'protyle-gutters',
+  'protyle-select',
+  'protyle-toolbar',
+  'protyle-hint',
+]
+const protyleUtilAreaRef = ref<HTMLDivElement | null>(null)
+const afterProtyleLoad = (protyle: Protyle) => {
+  targetProtyleUtilClassList.forEach((className) => {
+    const target = protyle.protyle.element.querySelector(`.${className}`)
+    if (target) {
+      protyleUtilAreaRef.value?.appendChild(target)
+    }
+  })
+}
+
+const mainRef = ref<HTMLDivElement | null>(null)
+
+const lastReadOnlyStatus = ref(false)
+const changeReadOnly = () => {
+  const mainElement = mainRef.value
+  if (!mainElement)
+    return
+  const readonly = !mainElement.classList.contains('nodrag')
+  if (lastReadOnlyStatus.value === readonly)
+    return
+
+  const elements = mainElement.querySelectorAll(`[data-type="${SyDomNodeTypes.NodeParagraph}"]`)
+  elements?.forEach((element) => {
+    const contentEditable = element.firstElementChild
+    contentEditable?.setAttribute('contenteditable', `${!readonly}`)
+  })
+  lastReadOnlyStatus.value = readonly
+}
+const watchNodrag = debounce(() => {
+  if (!mainRef.value)
+    return
+
+  changeReadOnly()
+}, 50)
+onMounted(() => {
+  watchDomChange(watchNodrag)
+})
+onBeforeUnmount(() => {
+  unWatchDomChange(watchNodrag)
+})
+
+
+const onResize = (event: OnResize) => {
+  console.log('onResize', event)
+}
 </script>
 
 <style lang="scss" scoped>
@@ -54,9 +185,43 @@ const y = computed(() => `${Math.round(props.position.y)}px`)
   width: 100%;
   height: 100%;
   box-sizing: border-box;
+  overflow: hidden;
 
   position: relative;
+  border: 1px solid var(--b3-border-color);
   border-radius: var(--en-whiteboard-card-radius);
+
+  padding: unset;
+
+
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    position: relative;
+
+    &:not(.nodrag) {
+      opacity: 0.9;
+
+      :deep(.protyle-wysiwyg) {
+        cursor: var(--en-whiteboard-card-cursor);
+      }
+    }
+
+    .protyle-cursor-mask {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 1;
+    }
+  }
 
   :deep(.vue-flow__resize-control) {
     opacity: 0;
@@ -235,6 +400,16 @@ const y = computed(() => `${Math.round(props.position.y)}px`)
       //   // bottom: calc((var(--en-whiteboard-handle-size) - var(--en-whiteboard-resizer-width)) / 2);
       // }
     }
+  }
+}
+</style>
+
+<style lang="scss">
+.vue-flow__node-EnWhiteBoardCard {
+  --en-whiteboard-card-cursor: grab;
+
+  &.dragging {
+    --en-whiteboard-card-cursor: grabbing;
   }
 }
 </style>

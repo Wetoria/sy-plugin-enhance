@@ -160,6 +160,7 @@ export default antfu(
         },
       }],
       'vue/attribute-hyphenation': 'off',
+      'vue/v-on-event-hyphenation': 'off',
 
       'vue/html-self-closing': 'off',
       'vue/multiline-html-element-content-newline': 'off',

@@ -49,19 +49,31 @@
       <div class="EnWhiteBoardControlArea EnWhiteBoardControlArea__Right">
       </div>
       <VueFlow
-        :nodes="nodes"
-        :edges="edges"
+        v-model:nodes="nodes"
+        v-model:edges="edges"
         :zoom-on-scroll="false"
+        snap-to-grid
+        only-render-visible-elements
         fit-view-on-init
+        :zoom-on-double-click="false"
         :minZoom="0.2"
+        @nodeDragStart="onMoveStart"
+        @nodeDrag="onMove"
+        @nodeDragStop="onMoveEnd"
+        @nodeClick="onNodeClick"
+        @paneClick="onPaneClick"
+        @connect="onConnect"
+        @connectStart="onConnectStart"
+        @connectEnd="onConnectEnd"
       >
         <!-- bind your custom node type to a component by using slots, slot names are always `node-<type>` -->
         <template #node-special="specialNodeProps">
           <SpecialNode v-bind="specialNodeProps" />
         </template>
-        <template #node-EnWhiteBoardCard="node">
-          <EnWhiteBoardCard
-            v-bind="node"
+        <template #node-EnWhiteBoardNodeProtyle="node">
+          <EnWhiteBoardNodeProtyle
+            :nodeProps="node"
+            :enWhiteBoardProtyleUtilAreaRef="EnWhiteBoardProtyleUtilAreaRef"
           />
         </template>
 
@@ -70,6 +82,13 @@
           <SpecialEdge v-bind="specialEdgeProps" />
         </template>
       </VueFlow>
+      <div
+        ref="EnWhiteBoardProtyleUtilAreaRef"
+        class="EnWhiteBoardProtyleUtilArea"
+        style="height: 0px;"
+      >
+
+      </div>
     </div>
 
 
@@ -98,19 +117,34 @@
 </template>
 
 <script setup lang="ts">
+import { getNewDailyNoteBlockId } from '@/modules/DailyNote/DailyNote.vue'
+
+
 import {
   EnWhiteBoardBlockDomTarget,
+  generateWhiteBoardNodeId,
   getWhiteBoardConfigRefById,
+  useWhiteBoardModule,
 } from '@/modules/EnWhiteBoard/EnWhiteBoard'
 
-
 import EnWhiteBoardSider from '@/modules/EnWhiteBoard/EnWhiteBoardSider.vue'
-import { VueFlow } from '@vue-flow/core'
+import { EN_CONSTANTS } from '@/utils/Constants'
+import { onCountClick } from '@/utils/DOM'
 import {
+  NodeDimensionChange,
+  NodePositionChange,
+  pointToRendererPoint,
+  useGetPointerPosition,
+  useVueFlow,
+  VueFlow,
+} from '@vue-flow/core'
+import {
+  computed,
   ref,
   watch,
+  watchEffect,
 } from 'vue'
-import EnWhiteBoardCard from './EnWhiteBoardCard.vue'
+import EnWhiteBoardNodeProtyle from './EnWhiteBoardNodeProtyle.vue'
 import SpecialEdge from './SpecialEdge.vue'
 import SpecialNode from './SpecialNode.vue'
 
@@ -118,6 +152,10 @@ const props = defineProps<{
   data: EnWhiteBoardBlockDomTarget
   needSider?: boolean
 }>()
+
+const {
+  moduleOptions: moduleWhiteBoardOptions,
+} = useWhiteBoardModule()
 
 const {
   embedWhiteBoardConfigData,
@@ -132,115 +170,142 @@ watch(() => embedBlockOptions.value.SiderRightWidth, () => {
 })
 
 
-const nodes = ref([
-  // an input node, specified by using `type: 'input'`
-  {
-    id: '1',
-    type: 'input',
-    position: {
-      x: 250,
-      y: 5,
-    },
-    // all nodes can have a data object containing any data you want to pass to the node
-    // a label can property can be used for default nodes
-    data: { label: 'Node 1' },
-  },
+const EnWhiteBoardProtyleUtilAreaRef = ref<HTMLElement | null>(null)
+// TODO 移动时，需要隐藏所有的 gutter/toolbar/hint
 
-  // default node, you can omit `type: 'default'` as it's the fallback type
-  {
-    id: '2',
-    position: {
-      x: 100,
-      y: 100,
-    },
-    data: { label: 'Node 2' },
-  },
+const onMoveStart = (event) => {
+  console.log('onMoveStart', event)
+}
+const onMove = (event) => {
+  console.log('onMove', event)
+}
+const onMoveEnd = (event) => {
+  console.log('onMoveEnd', event)
+}
 
-  // An output node, specified by using `type: 'output'`
-  {
-    id: '3',
-    type: 'output',
-    position: {
-      x: 400,
-      y: 200,
-    },
-    data: { label: 'Node 3' },
-  },
+const lastEditProtyleCardElementRef = ref<HTMLElement | null>(null)
+const onNodeClick = ({ event }) => {
+  console.log('onNodeClick', event)
+  const mainElement = event.target.closest('.EnWhiteBoardCardMain')
+  if (mainElement) {
+    lastEditProtyleCardElementRef.value = mainElement
+    mainElement?.classList.add('nodrag')
+    // mainElement.dispatchEvent(new MouseEvent('mousedown', {
+    //   bubbles: true,
+    //   cancelable: true,
+    //   view: window,
+    //   ...event,
+    // }))
+  }
+}
 
-  // this is a custom node
-  // we set it by using a custom type name we choose, in this example `special`
-  // the name can be freely chosen, there are no restrictions as long as it's a string
-  {
-    id: '4',
-    type: 'special', // <-- this is the custom node type name
-    position: {
-      x: 500,
-      y: 300,
-    },
-    data: {
-      label: 'Node 4',
-      hello: 'world',
-    },
-  },
-  {
-    id: '6',
-    parentNode: '5',
-    expandParent: true,
-    position: {
-      x: 110,
-      y: 110,
-    },
-    data: {
-      label: 'Node 6',
-      hello: 'world',
-    },
-  },
-  {
-    id: '5',
-    type: 'EnWhiteBoardCard', // <-- this is the custom node type name
-    position: {
-      x: 300,
-      y: 300,
-    },
-    data: {
-      label: 'Node 5',
-      hello: 'world',
-    },
-  },
-])
+const getPointerPosition = useGetPointerPosition()
 
-// these are our edges
-const edges = ref([
-  // default bezier edge
-  // consists of an edge id, source node id and target node id
-  {
-    id: 'e1->2',
-    source: '1',
-    target: '2',
-  },
+const onConnect = (event) => {
+  console.log('onConnect', event)
+  edges.value.push({
+    id: `${event.source}->${event.target}`,
+    source: event.source,
+    target: event.target,
+  })
+}
+const onConnectStart = (event) => {
+  console.log('onConnectStart', event)
+}
+const onConnectEnd = (event) => {
+  console.log('onConnectEnd', event)
+}
 
-  // set `animated: true` to create an animated edge path
-  {
-    id: 'e2->3',
-    source: '2',
-    target: '3',
-    animated: true,
-  },
+const {
+  onNodesChange,
+  onEdgesChange,
+  viewport,
+} = useVueFlow({
+  connectOnClick: true,
+})
 
-  // a custom edge, specified by using a custom type name
-  // we choose `type: 'special'` for this example
-  {
-    id: 'e3->4',
-    type: 'special',
-    source: '3',
-    target: '4',
+watchEffect(() => {
+  console.log('viewport', viewport.value)
+})
 
-    // all edges can have a data object containing any data you want to pass to the edge
-    data: {
-      hello: 'world',
-    },
-  },
-])
+const nodes = computed(() => embedWhiteBoardConfigData.value?.boardOptions.nodes)
+const edges = computed(() => embedWhiteBoardConfigData.value?.boardOptions.edges)
+
+const onPaneClick = onCountClick((count, event) => {
+  console.log('onPaneClick', count, event)
+  if (count === 1) {
+    if (lastEditProtyleCardElementRef.value) {
+      lastEditProtyleCardElementRef.value.classList.remove('nodrag')
+      lastEditProtyleCardElementRef.value = null
+    }
+  } else if (count === 2) {
+    const result = getPointerPosition(event)
+    const rendererPoint = pointToRendererPoint({
+      x: event.offsetX,
+      y: event.offsetY,
+    }, viewport.value)
+    console.log('result', result)
+    console.log('rendererPoint', rendererPoint)
+    getNewDailyNoteBlockId().then((blockId) => {
+      nodes.value.push({
+        id: generateWhiteBoardNodeId(),
+        type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_PROTYLE,
+        data: {
+          blockId,
+        },
+        connectable: true,
+        position: {
+          x: rendererPoint.x,
+          y: rendererPoint.y,
+        },
+        width: moduleWhiteBoardOptions.value.cardWidthDefault,
+        height: moduleWhiteBoardOptions.value.cardHeightDefault,
+      })
+    })
+  }
+})
+
+onNodesChange((changes) => {
+  // changes are arrays of type `NodeChange`
+  console.log('onNodesChange', changes)
+
+  changes.forEach((change) => {
+
+    if (
+      [
+        'dimensions',
+        'position',
+      ].includes(change.type)
+    ) {
+      const targetNode = nodes.value.find((node) => node.id === (change as NodeDimensionChange | NodePositionChange).id)
+      if (!targetNode) {
+        return
+      }
+      if (change.type === 'dimensions') {
+        if (change.dimensions) {
+          targetNode.width = change.dimensions.width
+          targetNode.height = change.dimensions.height
+          return
+        }
+      }
+      if (change.type === 'position') {
+        if (change.position) {
+          targetNode.position.x = change.position.x
+          targetNode.position.y = change.position.y
+        }
+      }
+    }
+  })
+})
+
+onEdgesChange((changes) => {
+  // changes are arrays of type `EdgeChange`
+  console.log('onEdgesChange', changes)
+})
+
+watchEffect(() => {
+  console.log('nodes is ', nodes.value)
+})
 </script>
 
 <style lang="scss" scoped>
@@ -274,6 +339,7 @@ const edges = ref([
     display: flex;
 
     padding: var(--b3-border-radius);
+    pointer-events: none;
   }
 
   .EnWhiteBoardControlArea__Top {

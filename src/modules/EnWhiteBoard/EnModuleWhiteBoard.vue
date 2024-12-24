@@ -63,6 +63,32 @@
         />
       </template>
     </EnSettingsItem>
+    <EnSettingsItem mode="vertical">
+      <div>
+        白板卡片默认宽度
+      </div>
+      <template #opt>
+        <a-input-number
+          v-model="moduleOptions.cardWidthDefault"
+          placeholder="Please Enter"
+          mode="button"
+          :readOnly="plugin.isMobile"
+        />
+      </template>
+    </EnSettingsItem>
+    <EnSettingsItem mode="vertical">
+      <div>
+        白板卡片默认高度
+      </div>
+      <template #opt>
+        <a-input-number
+          v-model="moduleOptions.cardHeightDefault"
+          placeholder="Please Enter"
+          mode="button"
+          :readOnly="plugin.isMobile"
+        />
+      </template>
+    </EnSettingsItem>
   </EnSettingsTeleportModule>
 
   <template v-if="moduleOptions.enabled">
@@ -132,6 +158,9 @@ const {
     siderLeftShowDefault: true,
     siderRightWidthDefault: 50,
     siderRightShowDefault: true,
+
+    cardWidthDefault: 300,
+    cardHeightDefault: 100,
   },
 })
 

@@ -18,7 +18,12 @@ import {
   unuseModuleByNamespace,
 } from '@/utils/SyncData'
 import { Notification } from '@arco-design/web-vue'
+import {
+  Edge,
+  Node,
+} from '@vue-flow/core'
 import lodash from 'lodash'
+
 import {
   computed,
   ComputedRef,
@@ -29,11 +34,21 @@ import {
 
 
 
-export function generateWhiteBoardId() {
+export function generateWhiteBoardIdWithPrefix(prefix: string) {
   const shortUUID = generateUUIDWithTimestamp()
-  return `en-whiteboard-id-${shortUUID}`
+  return `${prefix}-${shortUUID}`
 }
 
+
+export function generateWhiteBoardId() {
+  return generateWhiteBoardIdWithPrefix('en-whiteboard-id')
+}
+export function generateWhiteBoardNodeId() {
+  return generateWhiteBoardIdWithPrefix('en-whiteboard-node-id')
+}
+export function generateWhiteBoardEdgeId() {
+  return generateWhiteBoardIdWithPrefix('en-whiteboard-edge-id')
+}
 
 export interface EnWhiteBoardBlockDomTarget {
   whiteBoardId: string
@@ -52,6 +67,9 @@ export interface EnWhiteBoardSetting extends EnModule {
   siderLeftShowDefault: boolean
   siderRightWidthDefault: number
   siderRightShowDefault: boolean
+
+  cardWidthDefault: number
+  cardHeightDefault: number
 }
 export function useWhiteBoardModule(): {
   module: EnSyncModuleDataRef<EnWhiteBoardSetting>
@@ -75,6 +93,18 @@ export interface EnWhiteBoardIndexMap {
 export const EN_WHITEBOARD_CONFIG_BASE_PATH = `${EN_CONSTANTS.WHITEBOARD_BASE_PATH}/`
 export function getWhiteBoardConfigPathById(whiteBoardId: string) {
   return `${EN_WHITEBOARD_CONFIG_BASE_PATH}${whiteBoardId}`
+}
+
+
+export interface EnWhiteBoardNodeData {
+  // 思源块 id
+  blockId: string
+}
+
+export interface EnWhiteBoardEdgeData {
+  // 连接线上的描述文本
+  // 未来可能会是块引的锚文本
+  label: string
 }
 
 export interface EnWhiteBoardConfig {
@@ -106,6 +136,9 @@ export interface EnWhiteBoardConfig {
   // 如果是嵌入的白板，就不让显示侧边栏了，除非展开显示
   boardOptions: {
     keepEmbedOptionsSame: boolean
+
+    nodes: Node<EnWhiteBoardNodeData>[]
+    edges: Edge<EnWhiteBoardEdgeData>[]
   }
 }
 
@@ -164,6 +197,8 @@ const defaultWhiteBoardConfig: EnWhiteBoardConfig = {
 
   boardOptions: {
     keepEmbedOptionsSame: false,
+    nodes: [],
+    edges: [],
   },
 }
 
