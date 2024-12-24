@@ -49,12 +49,13 @@
       <div class="EnWhiteBoardControlArea EnWhiteBoardControlArea__Right">
       </div>
       <VueFlow
+        v-if="embedWhiteBoardConfigData.loaded"
         v-model:nodes="nodes"
         v-model:edges="edges"
+        :defaultViewport="embedWhiteBoardConfigData.boardOptions.viewport"
         :zoom-on-scroll="false"
         snap-to-grid
         only-render-visible-elements
-        fit-view-on-init
         :zoom-on-double-click="false"
         :minZoom="0.2"
         @nodeDragStart="onMoveStart"
@@ -220,12 +221,13 @@ const {
   onNodesChange,
   onEdgesChange,
   viewport,
+  onViewportChange,
 } = useVueFlow({
   connectOnClick: true,
 })
 
-watchEffect(() => {
-  console.log('viewport', viewport.value)
+onViewportChange((viewport) => {
+  embedWhiteBoardConfigData.value.boardOptions.viewport = viewport
 })
 
 const nodes = computed(() => embedWhiteBoardConfigData.value?.boardOptions.nodes)

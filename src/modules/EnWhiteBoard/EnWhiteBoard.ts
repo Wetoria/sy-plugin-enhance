@@ -21,6 +21,7 @@ import { Notification } from '@arco-design/web-vue'
 import {
   Edge,
   Node,
+  ViewportTransform,
 } from '@vue-flow/core'
 import lodash from 'lodash'
 
@@ -111,6 +112,8 @@ export interface EnWhiteBoardConfig {
   id: string
   name: string
 
+  loaded?: boolean
+
   // 白板嵌入时的配置
   // 比如不同文档下渲染同一个白板，可以分别配置一个高度
   // 每一个嵌入的白板有一个单独的配置
@@ -139,6 +142,7 @@ export interface EnWhiteBoardConfig {
 
     nodes: Node<EnWhiteBoardNodeData>[]
     edges: Edge<EnWhiteBoardEdgeData>[]
+    viewport: ViewportTransform
   }
 }
 
@@ -199,6 +203,11 @@ const defaultWhiteBoardConfig: EnWhiteBoardConfig = {
     keepEmbedOptionsSame: false,
     nodes: [],
     edges: [],
+    viewport: {
+      x: 0,
+      y: 0,
+      zoom: 1,
+    },
   },
 }
 
@@ -248,6 +257,7 @@ export async function loadWhiteBoardConfigById(whiteBoardId: string, defaultData
   })
   await loadModuleDataByNamespace(path)
 
+  config.moduleOptions.value.loaded = true
   whiteBoardRef.configList.value[whiteBoardId] = config
   return config
 }

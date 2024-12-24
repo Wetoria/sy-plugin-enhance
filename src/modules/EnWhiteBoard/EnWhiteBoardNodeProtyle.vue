@@ -23,7 +23,10 @@
           v-if="enWhiteBoardProtyleUtilAreaRef"
           :to="enWhiteBoardProtyleUtilAreaRef"
         >
-          <div ref="protyleUtilAreaRef">
+          <div
+            ref="protyleUtilAreaRef"
+            :data-en-whiteboard-node-protyle-util-area="nodeProps.id"
+          >
 
           </div>
         </Teleport>
