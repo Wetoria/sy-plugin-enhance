@@ -13,6 +13,7 @@
               <a-switch
                 v-if="!always"
                 v-model="moduleData.enabled"
+                :disabled="!hasAuth"
                 @change="onModuleSwitch"
               />
             </div>
@@ -35,6 +36,14 @@
       >
         设为默认
       </a-button>
+      <div
+        v-if="!hasAuth"
+        class="mask"
+      >
+        <a-typography-text type="primary">
+          Lv.{{ authLevel }} 可解锁
+        </a-typography-text>
+      </div>
     </div>
   </EnSettingsTeleport>
 </template>
@@ -46,6 +55,7 @@ import {
   resetModuleOptions,
   useSettingModuleData,
 } from '@/modules/Settings/EnSettings.vue'
+import { useAuthLevel } from '@/modules/Settings/EnSettingsAuth.vue'
 import EnSettingsItemAreaHeading from '@/modules/Settings/EnSettingsItemAreaHeading.vue'
 import EnSettingsTeleport from '@/modules/Settings/EnSettingsTeleport.vue'
 import {
@@ -61,7 +71,10 @@ const props = defineProps<{
   display: string
   module: EnSettingModule<EnModule>
   always?: boolean
+  authLevel?: number | string
 }>()
+
+const hasAuth = useAuthLevel(props.authLevel)
 
 const slots = useSlots()
 const hasFooterSlot = computed(() => {
@@ -107,7 +120,6 @@ const resetModule = () => {
   resetFlag = true
   resetModuleOptions(module)
 }
-
 
 onMounted(() => {
   /**
@@ -156,5 +168,23 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.en_settings_module {
+  position: relative;
+
+  .mask {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color:  color-mix(in srgb, var(--color-bg-3) 50%, transparent);
+    z-index: 10;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
 }
 </style>

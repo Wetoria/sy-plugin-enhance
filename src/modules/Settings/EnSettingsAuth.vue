@@ -21,7 +21,7 @@
       style="cursor: pointer;"
       @click="openAuthModal"
     >
-      {{ level }}
+      {{ levelLabel }}
     </a-tag>
   </template>
   <a-modal
@@ -53,7 +53,7 @@
             },
             {
               label: '当前版本',
-              value: level,
+              value: levelLabel,
             },
             {
               label: '有效期至',
@@ -160,6 +160,19 @@ const authModule = useSyncModuleData<EnAuth>({
 export const authModuleData = computed(() => {
   return authModule.value.data
 })
+
+export const lv = (level: number) => {
+  const settings = useSettings()
+  return authModuleData.value.lv >= level || settings.value.v >= 1
+}
+
+export const useAuthLevel = (level: number | string) => {
+  const settings = useSettings()
+  const hasAuth = computed(() => {
+    return !level || authModuleData.value.lv >= Number(level) || settings.value.v >= 1
+  })
+  return hasAuth
+}
 </script>
 
 <script setup lang="ts">
@@ -177,7 +190,7 @@ const openAuthModal = () => {
   authModalVisible.value = true
 }
 
-const level = computed(() => {
+const levelLabel = computed(() => {
   const map = {
     0: '普通版',
     98: 'Inner',
@@ -270,7 +283,7 @@ const updateAuthSubscription = async (showMessage = true) => {
     }
     if (showMessage) {
       Notification.success({
-        content: `Enhance｜更新订阅状态成功. 当前版本：${level.value}. 有效期至：${expiration.value}`,
+        content: `Enhance｜更新订阅状态成功. 当前版本：${levelLabel.value}. 有效期至：${expiration.value}`,
       })
     }
     return true

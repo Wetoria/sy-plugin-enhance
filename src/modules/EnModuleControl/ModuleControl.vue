@@ -17,6 +17,7 @@
     <EnFont />
     <TemplateEntry />
     <EnComment v-if="isNotFree && !isInEnWindow" />
+    <EnModuleWhiteBoard />
 
     <!-- 仅移动端 -->
     <template v-if="plugin.isMobile">
@@ -45,6 +46,7 @@ import ModuleDataProvider from '@/modules/EnModuleControl/ModuleDataProvider.vue
 import EnOthers from '@/modules/EnOthers.vue'
 import EnPWA from '@/modules/EnPWA.vue'
 import EnSiyuanEntry from '@/modules/EnSiyuanEntry.vue'
+import EnModuleWhiteBoard from '@/modules/EnWhiteBoard/EnModuleWhiteBoard.vue'
 import { isInWindow } from '@/modules/EnWindow.vue'
 import LifeLog from '@/modules/LifeLog/EnModuleLifeLog.vue'
 import EnSettings, {

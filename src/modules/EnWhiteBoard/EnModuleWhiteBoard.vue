@@ -3,6 +3,7 @@
     :name="moduleOptions.moduleName"
     :display="moduleOptions.moduleDisplayName"
     :module="module"
+    authLevel="2"
   >
     <EnSettingsItem mode="vertical">
       <div>
@@ -14,6 +15,7 @@
           placeholder="Please Enter"
           mode="button"
           :readOnly="plugin.isMobile"
+          :disabled="cannotEdit"
         />
       </template>
     </EnSettingsItem>
@@ -24,6 +26,7 @@
       <template #opt>
         <a-switch
           v-model="moduleOptions.siderLeftShowDefault"
+          :disabled="cannotEdit"
         />
       </template>
     </EnSettingsItem>
@@ -37,6 +40,7 @@
           placeholder="Please Enter"
           mode="button"
           :readOnly="plugin.isMobile"
+          :disabled="cannotEdit"
         />
       </template>
     </EnSettingsItem>
@@ -47,6 +51,7 @@
       <template #opt>
         <a-switch
           v-model="moduleOptions.siderRightShowDefault"
+          :disabled="cannotEdit"
         />
       </template>
     </EnSettingsItem>
@@ -60,6 +65,7 @@
           placeholder="Please Enter"
           mode="button"
           :readOnly="plugin.isMobile"
+          :disabled="cannotEdit"
         />
       </template>
     </EnSettingsItem>
@@ -73,6 +79,7 @@
           placeholder="Please Enter"
           mode="button"
           :readOnly="plugin.isMobile"
+          :disabled="cannotEdit"
         />
       </template>
     </EnSettingsItem>
@@ -86,12 +93,13 @@
           placeholder="Please Enter"
           mode="button"
           :readOnly="plugin.isMobile"
+          :disabled="cannotEdit"
         />
       </template>
     </EnSettingsItem>
   </EnSettingsTeleportModule>
 
-  <template v-if="moduleOptions.enabled">
+  <template v-if="hasAuth && moduleOptions.enabled">
     <EnWhiteBoardEntrySlash />
     <template
       v-for="item in wbEmbedBlockDomTargetList"
@@ -117,21 +125,23 @@ import {
   unloadWhiteBoard,
 } from '@/modules/EnWhiteBoard/EnWhiteBoard'
 import EnWhiteBoardRenderEmbed from '@/modules/EnWhiteBoard/EnWhiteBoardRenderEmbed.vue'
+import { useAuthLevel } from '@/modules/Settings/EnSettingsAuth.vue'
 import {
   debounce,
 } from '@/utils'
+
+
 import {
   EN_CONSTANTS,
   EN_MODULE_LIST,
 } from '@/utils/Constants'
-
-
 import {
   queryAllByDom,
   unWatchDomChange,
   watchDomChange,
 } from '@/utils/DOM'
 import {
+  computed,
   ref,
   watch,
   watchEffect,
@@ -141,6 +151,12 @@ import EnSettingsTeleportModule from '../Settings/EnSettingsTeleportModule.vue'
 import EnWhiteBoardEntrySlash from './EnWhiteBoardEntrySlash.vue'
 
 const plugin = usePlugin()
+
+const hasAuth = useAuthLevel(2)
+
+const cannotEdit = computed(() => {
+  return !hasAuth.value || plugin.isMobile
+})
 
 // #region 基本的模块配置
 
