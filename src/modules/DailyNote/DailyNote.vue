@@ -212,10 +212,10 @@ export async function appendBlockIntoDailyNote(
   return request(url, payload)
 }
 
-export async function getNewDailyNoteBlockId() {
+export async function getNewDailyNoteBlockId(text: string = '') {
   const res = await appendBlockIntoDailyNote(
     'markdown',
-    '',
+    text,
     moduleOptions.value.dailyNoteNotebookId,
   )
   const blockId = getAppendedDailyNoteBlockId(res)

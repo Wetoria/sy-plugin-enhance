@@ -229,6 +229,10 @@ onViewportChange((viewport) => {
   embedWhiteBoardConfigData.value.boardOptions.viewport = viewport
 })
 
+watchEffect(() => {
+  viewport.value = embedWhiteBoardConfigData.value.boardOptions.viewport
+})
+
 const nodes = computed(() => embedWhiteBoardConfigData.value?.boardOptions.nodes)
 const edges = computed(() => embedWhiteBoardConfigData.value?.boardOptions.edges)
 
@@ -245,9 +249,7 @@ const onPaneClick = onCountClick((count, event) => {
       x: event.offsetX,
       y: event.offsetY,
     }, viewport.value)
-    console.log('result', result)
-    console.log('rendererPoint', rendererPoint)
-    getNewDailyNoteBlockId().then((blockId) => {
+    getNewDailyNoteBlockId('\n{: style=\"\" }\n{: style=\"\" }').then((blockId) => {
       nodes.value.push({
         id: generateWhiteBoardNodeId(),
         type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_PROTYLE,
