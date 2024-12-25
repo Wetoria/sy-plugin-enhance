@@ -258,9 +258,6 @@ body {
   --en-whiteboard-card-radius: 4px;
 
   --en-whiteboard-resizer-color: rgb(var(--primary-6));
-  --en-whiteboard-resizer-width: 4px;
-
-  --en-whiteboard-handle-color: rgb(var(--primary-6));
-  --en-whiteboard-handle-size: 8px;
+  --en-whiteboard-resizer-width: 5px;
 }
 </style>

@@ -5,6 +5,7 @@
     :fullScreen="fullScreen"
   >
     <div
+      ref="embedRenderRef"
       class="EnWhiteBoardEmbedRenderContainer"
       :class="{
         FullScreen: fullScreen,
@@ -142,10 +143,12 @@ onBeforeUnmount(() => {
   }
 })
 
+const embedRenderRef = ref(null)
 const clickedInside = ref(false)
 const recordClickedInsider = (event) => {
   const target = event.target as HTMLElement
-  if (target.closest('.EnWhiteBoardEmbedRenderContainer')) {
+  const targetContainer = target.closest('.EnWhiteBoardEmbedRenderContainer')
+  if (targetContainer && targetContainer === embedRenderRef.value) {
     clickedInside.value = true
   } else {
     clickedInside.value = false
