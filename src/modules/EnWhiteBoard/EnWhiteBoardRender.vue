@@ -66,20 +66,11 @@
         @connectStart="onConnectStart"
         @connectEnd="onConnectEnd"
       >
-        <!-- bind your custom node type to a component by using slots, slot names are always `node-<type>` -->
-        <template #node-special="specialNodeProps">
-          <SpecialNode v-bind="specialNodeProps" />
-        </template>
         <template #node-EnWhiteBoardNodeProtyle="node">
           <EnWhiteBoardNodeProtyle
             :nodeProps="node"
             :enWhiteBoardProtyleUtilAreaRef="EnWhiteBoardProtyleUtilAreaRef"
           />
-        </template>
-
-        <!-- bind your custom edge type to a component by using slots, slot names are always `edge-<type>` -->
-        <template #edge-special="specialEdgeProps">
-          <SpecialEdge v-bind="specialEdgeProps" />
         </template>
       </VueFlow>
       <div
@@ -122,6 +113,7 @@ import { getNewDailyNoteBlockId } from '@/modules/DailyNote/DailyNote.vue'
 
 import {
   EnWhiteBoardBlockDomTarget,
+  generateWhiteBoardEdgeId,
   generateWhiteBoardNodeId,
   getWhiteBoardConfigRefById,
   useWhiteBoardModule,
@@ -131,6 +123,8 @@ import EnWhiteBoardSider from '@/modules/EnWhiteBoard/EnWhiteBoardSider.vue'
 import { EN_CONSTANTS } from '@/utils/Constants'
 import { onCountClick } from '@/utils/DOM'
 import {
+  EdgeAddChange,
+  EdgeChange,
   NodeAddChange,
   NodeChange,
   pointToRendererPoint,
@@ -138,6 +132,7 @@ import {
   useVueFlow,
   VueFlow,
 } from '@vue-flow/core'
+import lodash from 'lodash'
 import {
   computed,
   ref,
@@ -145,8 +140,6 @@ import {
   watchEffect,
 } from 'vue'
 import EnWhiteBoardNodeProtyle from './EnWhiteBoardNodeProtyle.vue'
-import SpecialEdge from './SpecialEdge.vue'
-import SpecialNode from './SpecialNode.vue'
 
 const props = defineProps<{
   data: EnWhiteBoardBlockDomTarget
@@ -201,14 +194,6 @@ const onNodeClick = ({ event }) => {
 
 const getPointerPosition = useGetPointerPosition()
 
-const onConnect = (event) => {
-  console.log('onConnect', event)
-  edges.value.push({
-    id: `${event.source}->${event.target}`,
-    source: event.source,
-    target: event.target,
-  })
-}
 const onConnectStart = (event) => {
   console.log('onConnectStart', event)
 }
@@ -216,14 +201,19 @@ const onConnectEnd = (event) => {
   console.log('onConnectEnd', event)
 }
 
+
+
 const {
   onNodesChange,
   onEdgesChange,
   viewport,
   onViewportChange,
+  onEdgeUpdate,
 } = useVueFlow({
   connectOnClick: true,
 })
+
+
 
 onViewportChange((viewport) => {
   embedWhiteBoardConfigData.value.boardOptions.viewport = viewport
@@ -301,10 +291,56 @@ onNodesChange((changes) => {
 onEdgesChange((changes) => {
   // changes are arrays of type `EdgeChange`
   console.log('onEdgesChange', changes)
+  changes.forEach((change) => {
+    const targetEdge = edges.value.find((e) => e.id === (change as Exclude<EdgeChange, EdgeAddChange>).id)
+    if (!targetEdge) {
+      return
+    }
+
+    if (change.type === 'remove') {
+      embedWhiteBoardConfigData.value.boardOptions.edges = edges.value.filter((e) => e.id !== change.id)
+    }
+  })
+})
+
+
+const onConnect = (event) => {
+  edges.value.push({
+    id: generateWhiteBoardEdgeId(),
+    source: event.source,
+    target: event.target,
+    updatable: true,
+    deletable: true,
+    focusable: true,
+    selectable: true,
+  })
+}
+
+onEdgeUpdate(({
+  edge,
+  connection,
+}) => {
+
+  const targetEdge = edges.value.find((e) => e.id === edge.id)
+  if (!targetEdge) {
+    return
+  }
+  targetEdge.targetHandle = connection.targetHandle
+  targetEdge.sourceHandle = connection.sourceHandle
+  targetEdge.target = connection.target
+  targetEdge.source = connection.source
+
+  // edge.source = connection.source
+  // edge.target = connection.target
+  // edge.targetHandle = connection.targetHandle
+  // edge.sourceHandle = connection.sourceHandle
+
+  embedWhiteBoardConfigData.value.boardOptions.edges = lodash.cloneDeep(edges.value)
 })
 
 watchEffect(() => {
   console.log('nodes is ', nodes.value)
+  console.log('edges is ', edges.value)
 })
 </script>
 

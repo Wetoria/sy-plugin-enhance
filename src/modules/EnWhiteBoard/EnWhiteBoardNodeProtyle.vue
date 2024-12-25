@@ -219,6 +219,8 @@ const onResize = (event: OnResize) => {
 
     position: relative;
 
+    overflow: hidden;
+
     &:not(.nodrag) {
       opacity: 0.7;
 
