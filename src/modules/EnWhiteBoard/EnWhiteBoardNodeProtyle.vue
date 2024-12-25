@@ -1,10 +1,10 @@
 <template>
   <div
-    class="EnWhiteBoardCardContainer"
+    class="EnWhiteBoardNodeProtyleContainer"
   >
     <div
       ref="mainRef"
-      class="main EnWhiteBoardCardMain"
+      class="main EnWhiteBoardNodeProtyleMain"
       @wheel.capture="captureWheel"
     >
       <!-- <div>{{ data.label }}</div>
@@ -142,7 +142,7 @@ const afterProtyleLoad = (protyle: Protyle) => {
 
   protyle?.protyle?.wysiwyg?.element?.addEventListener('mousedown', (event) => {
     const target = event.target as HTMLElement
-    const mainElement = target.closest('.EnWhiteBoardCardMain')
+    const mainElement = target.closest('.EnWhiteBoardNodeProtyleMain')
     if (mainElement && !mainElement.classList.contains('nodrag')) {
       event.stopImmediatePropagation()
       const newEvent = new MouseEvent('mousedown', {
@@ -195,7 +195,7 @@ const onResize = (event: OnResize) => {
 
 <style lang="scss" scoped>
 
-.EnWhiteBoardCardContainer {
+.EnWhiteBoardNodeProtyleContainer {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -211,7 +211,6 @@ const onResize = (event: OnResize) => {
 
   padding: unset;
 
-
   .main {
     flex: 1;
     display: flex;
@@ -223,7 +222,7 @@ const onResize = (event: OnResize) => {
     position: relative;
 
     &:not(.nodrag) {
-      opacity: 0.9;
+      opacity: 0.7;
 
       :deep(.protyle-wysiwyg) {
         cursor: var(--en-whiteboard-card-cursor);
@@ -423,11 +422,17 @@ const onResize = (event: OnResize) => {
 </style>
 
 <style lang="scss">
-.vue-flow__node-EnWhiteBoardCard {
+.vue-flow__node-EnWhiteBoardNodeProtyle {
   --en-whiteboard-card-cursor: grab;
 
   &.dragging {
     --en-whiteboard-card-cursor: grabbing;
+  }
+
+  &.selected {
+    .EnWhiteBoardNodeProtyleContainer {
+      border-color: var(--b3-theme-primary);
+    }
   }
 }
 </style>

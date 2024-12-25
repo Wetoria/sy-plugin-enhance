@@ -6,7 +6,10 @@
   >
     <div
       class="EnWhiteBoardEmbedRenderContainer"
-      :class="[fullScreen ? 'FullScreen' : '']"
+      :class="{
+        FullScreen: fullScreen,
+        ClickedInside: clickedInside,
+      }"
     >
       <template v-if="!embedWhiteBoardConfigData || !embedBlockOptions">
         <div>白板数据获取失败</div>
@@ -63,6 +66,7 @@ import {
 import EnWhiteBoardRender from '@/modules/EnWhiteBoard/EnWhiteBoardRender.vue'
 import {
   onBeforeUnmount,
+  onMounted,
   ref,
 } from 'vue'
 
@@ -138,6 +142,23 @@ onBeforeUnmount(() => {
   }
 })
 
+const clickedInside = ref(false)
+const recordClickedInsider = (event) => {
+  const target = event.target as HTMLElement
+  if (target.closest('.EnWhiteBoardEmbedRenderContainer')) {
+    clickedInside.value = true
+  } else {
+    clickedInside.value = false
+  }
+}
+onMounted(() => {
+  document.addEventListener('click', recordClickedInsider)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', recordClickedInsider)
+})
+
 </script>
 
 <style lang="scss" scoped>
@@ -151,6 +172,8 @@ onBeforeUnmount(() => {
   border: 1px solid var(--b3-border-color);
   border-radius: var(--b3-border-radius);
 
+  overflow: hidden;
+
   .arco-resizebox {
     box-sizing: border-box;
   }
@@ -158,6 +181,10 @@ onBeforeUnmount(() => {
   &.FullScreen .arco-resizebox {
     height: 100% !important;
     padding-bottom: unset !important;
+  }
+
+  &:not(.FullScreen).ClickedInside {
+    border-color: var(--b3-theme-primary);
   }
 }
 </style>

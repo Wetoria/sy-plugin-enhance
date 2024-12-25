@@ -55,7 +55,6 @@
         :defaultViewport="embedWhiteBoardConfigData.boardOptions.viewport"
         :zoom-on-scroll="false"
         snap-to-grid
-        only-render-visible-elements
         :zoom-on-double-click="false"
         :minZoom="0.2"
         @nodeDragStart="onMoveStart"
@@ -132,8 +131,8 @@ import EnWhiteBoardSider from '@/modules/EnWhiteBoard/EnWhiteBoardSider.vue'
 import { EN_CONSTANTS } from '@/utils/Constants'
 import { onCountClick } from '@/utils/DOM'
 import {
-  NodeDimensionChange,
-  NodePositionChange,
+  NodeAddChange,
+  NodeChange,
   pointToRendererPoint,
   useGetPointerPosition,
   useVueFlow,
@@ -187,7 +186,7 @@ const onMoveEnd = (event) => {
 const lastEditProtyleCardElementRef = ref<HTMLElement | null>(null)
 const onNodeClick = ({ event }) => {
   console.log('onNodeClick', event)
-  const mainElement = event.target.closest('.EnWhiteBoardCardMain')
+  const mainElement = event.target.closest('.EnWhiteBoardNodeProtyleMain')
   if (mainElement) {
     lastEditProtyleCardElementRef.value = mainElement
     mainElement?.classList.add('nodrag')
@@ -273,13 +272,8 @@ onNodesChange((changes) => {
 
   changes.forEach((change) => {
 
-    if (
-      [
-        'dimensions',
-        'position',
-      ].includes(change.type)
-    ) {
-      const targetNode = nodes.value.find((node) => node.id === (change as NodeDimensionChange | NodePositionChange).id)
+    if (change.type !== 'add') {
+      const targetNode = nodes.value.find((node) => node.id === (change as Exclude<NodeChange, NodeAddChange>).id)
       if (!targetNode) {
         return
       }
@@ -287,7 +281,6 @@ onNodesChange((changes) => {
         if (change.dimensions) {
           targetNode.width = change.dimensions.width
           targetNode.height = change.dimensions.height
-          return
         }
       }
       if (change.type === 'position') {
@@ -295,6 +288,9 @@ onNodesChange((changes) => {
           targetNode.position.x = change.position.x
           targetNode.position.y = change.position.y
         }
+      }
+      if (change.type === 'remove') {
+        embedWhiteBoardConfigData.value.boardOptions.nodes = nodes.value.filter((node) => node.id !== change.id)
       }
     }
   })
