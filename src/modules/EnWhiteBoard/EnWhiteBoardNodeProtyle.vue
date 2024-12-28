@@ -66,6 +66,7 @@ import {
   unWatchDomChange,
   watchDomChange,
 } from '@/utils/DOM'
+import { useSiyuanEventTransactions } from '@/utils/EventBusHooks'
 import { SyDomNodeTypes } from '@/utils/Siyuan'
 import {
   Handle,
@@ -132,7 +133,10 @@ const targetProtyleUtilClassList = [
   'protyle-hint',
 ]
 const protyleUtilAreaRef = ref<HTMLDivElement | null>(null)
+const cardProtyleRef = ref<Protyle | null>(null)
 const afterProtyleLoad = (protyle: Protyle) => {
+  cardProtyleRef.value = protyle
+
   targetProtyleUtilClassList.forEach((className) => {
     const target = protyle.protyle.element.querySelector(`.${className}`)
     if (target) {
@@ -185,6 +189,31 @@ onMounted(() => {
 })
 onBeforeUnmount(() => {
   unWatchDomChange(watchNodrag)
+})
+
+
+let offTransactionEvent = null
+onMounted(() => {
+  offTransactionEvent = useSiyuanEventTransactions((event) => {
+    if (!cardProtyleRef.value) {
+      return
+    }
+    const firstNode = cardProtyleRef.value.protyle.element?.querySelector(`[data-node-id]`) as HTMLElement
+    if (!firstNode) {
+      return
+    }
+    const nodeId = firstNode.dataset.nodeId
+    if (!nodeId) {
+      return
+    }
+
+    nodeData.value.blockId = nodeId
+  })
+})
+onBeforeUnmount(() => {
+  if (offTransactionEvent) {
+    offTransactionEvent()
+  }
 })
 
 
