@@ -60,6 +60,9 @@ export interface EnWhiteBoardBlockDomTarget {
   getDom: () => HTMLElement
 }
 
+export function getWhiteBoardCardMainByWhiteBoardNodeId(target: HTMLElement, whiteBoardNodeId: string) {
+  return target.querySelector(`.EnWhiteBoardNodeProtyleMain[data-en-flow-node-id="${whiteBoardNodeId}"]`) as HTMLElement
+}
 
 
 export interface EnWhiteBoardSetting extends EnModule {

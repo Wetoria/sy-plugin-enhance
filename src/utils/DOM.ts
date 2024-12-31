@@ -324,3 +324,16 @@ export const highlightText = (text: string, keyword: string) => {
 
   return result
 }
+
+export function handleWith(judge: () => boolean, callback: () => void) {
+  let timer = null
+  return new Promise<void>((resolve) => {
+    timer = setInterval(() => {
+      if (judge()) {
+        clearInterval(timer)
+        callback()
+        resolve()
+      }
+    }, 0)
+  })
+}

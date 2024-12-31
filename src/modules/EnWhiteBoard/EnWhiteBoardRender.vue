@@ -1,5 +1,6 @@
 <template>
   <div
+    ref="EnWhiteBoardRenderContainerRef"
     class="EnWhiteBoardRenderContainer"
   >
     <EnWhiteBoardSider
@@ -118,13 +119,17 @@ import {
   EnWhiteBoardBlockDomTarget,
   generateWhiteBoardEdgeId,
   generateWhiteBoardNodeId,
+  getWhiteBoardCardMainByWhiteBoardNodeId,
   getWhiteBoardConfigRefById,
   useWhiteBoardModule,
 } from '@/modules/EnWhiteBoard/EnWhiteBoard'
 
 import EnWhiteBoardSider from '@/modules/EnWhiteBoard/EnWhiteBoardSider.vue'
 import { EN_CONSTANTS } from '@/utils/Constants'
-import { onCountClick } from '@/utils/DOM'
+import {
+  handleWith,
+  onCountClick,
+} from '@/utils/DOM'
 import {
   hideHelperByTarget,
   SyDomNodeTypes,
@@ -170,8 +175,10 @@ watch(() => embedBlockOptions.value.SiderRightWidth, () => {
 
 
 const {
+  onNodesInitialized,
   onNodesChange,
   findNode,
+  addSelectedNodes,
   removeSelectedNodes,
 
   onEdgesChange,
@@ -188,6 +195,8 @@ const nodes = computed(() => embedWhiteBoardConfigData.value?.boardOptions.nodes
 const edges = computed(() => embedWhiteBoardConfigData.value?.boardOptions.edges)
 
 const EnWhiteBoardProtyleUtilAreaRef = ref<HTMLElement | null>(null)
+
+const EnWhiteBoardRenderContainerRef = ref<HTMLElement | null>(null)
 
 const hideAllHelper = () => {
   hideHelperByTarget(EnWhiteBoardProtyleUtilAreaRef.value)
@@ -239,6 +248,13 @@ const disableLastProtyleEditable = () => {
     lastEditProtyleCardElementRef.value = null
   }
 }
+const editNewProtyleCard = (target: HTMLElement) => {
+  // 取消上一个的编辑状态
+  disableLastProtyleEditable()
+  // 设置当前的编辑状态
+  changeProtyleEditable(target, true)
+  lastEditProtyleCardElementRef.value = target
+}
 
 const onNodeClick = ({ event }) => {
   console.log('onNodeClick', event)
@@ -250,12 +266,7 @@ const onNodeClick = ({ event }) => {
     return
   }
 
-  // 取消上一个的编辑状态
-  disableLastProtyleEditable()
-  // 设置当前的编辑状态
-  changeProtyleEditable(mainElement, true)
-
-  lastEditProtyleCardElementRef.value = mainElement
+  editNewProtyleCard(mainElement)
 }
 
 
@@ -289,8 +300,9 @@ const onPaneClick = onCountClick((count, event) => {
       y: event.offsetY,
     }, viewport.value)
     getNewDailyNoteBlockId().then((blockId) => {
+      const newEnFlowNodeId = generateWhiteBoardNodeId()
       nodes.value.push({
-        id: generateWhiteBoardNodeId(),
+        id: newEnFlowNodeId,
         type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_PROTYLE,
         data: {
           blockId,
@@ -303,7 +315,23 @@ const onPaneClick = onCountClick((count, event) => {
         width: moduleWhiteBoardOptions.value.cardWidthDefault,
         height: moduleWhiteBoardOptions.value.cardHeightDefault,
       })
-    })
+      handleWith(
+        () => {
+          const targetNode = getWhiteBoardCardMainByWhiteBoardNodeId(EnWhiteBoardRenderContainerRef.value, newEnFlowNodeId)
+          return !!targetNode
+        },
+        () => {
+          const targetMainElement = getWhiteBoardCardMainByWhiteBoardNodeId(EnWhiteBoardRenderContainerRef.value, newEnFlowNodeId)
+
+          const targetNode = findNode(newEnFlowNodeId)
+          addSelectedNodes([targetNode])
+          if (targetMainElement) {
+            editNewProtyleCard(targetMainElement)
+          }
+        },
+      )
+    },
+    )
   }
 })
 
