@@ -32,10 +32,8 @@ html {
     }
   }
 
-  [class*='arco-'] {
-    svg {
-      fill: none;
-    }
+  svg.arco-icon {
+    fill: none;
   }
 }
 </style>
