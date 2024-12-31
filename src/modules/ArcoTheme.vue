@@ -31,5 +31,11 @@ html {
       background-color: var(--b3-theme-surface);
     }
   }
+
+  [class*='arco-'] {
+    svg {
+      fill: none;
+    }
+  }
 }
 </style>
