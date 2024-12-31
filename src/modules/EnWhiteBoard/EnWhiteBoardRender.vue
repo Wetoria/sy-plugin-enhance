@@ -122,13 +122,13 @@ import {
 import EnWhiteBoardSider from '@/modules/EnWhiteBoard/EnWhiteBoardSider.vue'
 import { EN_CONSTANTS } from '@/utils/Constants'
 import { onCountClick } from '@/utils/DOM'
+import { SyDomNodeTypes } from '@/utils/Siyuan'
 import {
   EdgeAddChange,
   EdgeChange,
   NodeAddChange,
   NodeChange,
   pointToRendererPoint,
-  useGetPointerPosition,
   useVueFlow,
   VueFlow,
 } from '@vue-flow/core'
@@ -163,6 +163,24 @@ watch(() => embedBlockOptions.value.SiderRightWidth, () => {
 })
 
 
+const {
+  onNodesChange,
+  findNode,
+  removeSelectedNodes,
+
+  onEdgesChange,
+  onEdgeUpdate,
+
+  viewport,
+  onViewportChange,
+} = useVueFlow({
+  connectOnClick: true,
+})
+
+
+const nodes = computed(() => embedWhiteBoardConfigData.value?.boardOptions.nodes)
+const edges = computed(() => embedWhiteBoardConfigData.value?.boardOptions.edges)
+
 const EnWhiteBoardProtyleUtilAreaRef = ref<HTMLElement | null>(null)
 // TODO 移动时，需要隐藏所有的 gutter/toolbar/hint
 
@@ -177,22 +195,57 @@ const onMoveEnd = (event) => {
 }
 
 const lastEditProtyleCardElementRef = ref<HTMLElement | null>(null)
-const onNodeClick = ({ event }) => {
-  console.log('onNodeClick', event)
-  const mainElement = event.target.closest('.EnWhiteBoardNodeProtyleMain')
-  if (mainElement) {
-    lastEditProtyleCardElementRef.value = mainElement
-    mainElement?.classList.add('nodrag')
-    // mainElement.dispatchEvent(new MouseEvent('mousedown', {
-    //   bubbles: true,
-    //   cancelable: true,
-    //   view: window,
-    //   ...event,
-    // }))
+
+const changeProtyleEditable = (mainElement: HTMLElement, editable: boolean) => {
+  if (!mainElement) {
+    return
+  }
+
+  if (editable) {
+    mainElement.classList.add('nodrag')
+  } else {
+    mainElement.classList.remove('nodrag')
+  }
+
+  const elements = mainElement.querySelectorAll(`[data-type="${SyDomNodeTypes.NodeParagraph}"]`)
+  elements?.forEach((element) => {
+    const contentEditable = element.firstElementChild
+    contentEditable?.setAttribute('contenteditable', `${editable}`)
+  })
+}
+const disableLastProtyleEditable = () => {
+  if (lastEditProtyleCardElementRef.value) {
+    const enFlowNodeId = lastEditProtyleCardElementRef.value.dataset.enFlowNodeId
+
+    const targetNode = findNode(enFlowNodeId)
+    if (targetNode) {
+      // 取消选中状态
+      removeSelectedNodes([targetNode])
+    }
+
+    changeProtyleEditable(lastEditProtyleCardElementRef.value, false)
+    lastEditProtyleCardElementRef.value = null
   }
 }
 
-const getPointerPosition = useGetPointerPosition()
+const onNodeClick = ({ event }) => {
+  console.log('onNodeClick', event)
+  const mainElement = event.target.closest('.EnWhiteBoardNodeProtyleMain')
+  if (!mainElement) {
+    return
+  }
+  if (mainElement === lastEditProtyleCardElementRef.value) {
+    return
+  }
+
+  // 取消上一个的编辑状态
+  disableLastProtyleEditable()
+  // 设置当前的编辑状态
+  changeProtyleEditable(mainElement, true)
+
+  lastEditProtyleCardElementRef.value = mainElement
+}
+
 
 const onConnectStart = (event) => {
   console.log('onConnectStart', event)
@@ -203,38 +256,20 @@ const onConnectEnd = (event) => {
 
 
 
-const {
-  onNodesChange,
-  onEdgesChange,
-  viewport,
-  onViewportChange,
-  onEdgeUpdate,
-} = useVueFlow({
-  connectOnClick: true,
-})
-
-
-
 onViewportChange((viewport) => {
   embedWhiteBoardConfigData.value.boardOptions.viewport = viewport
+  disableLastProtyleEditable()
 })
 
 watchEffect(() => {
   viewport.value = embedWhiteBoardConfigData.value.boardOptions.viewport
 })
 
-const nodes = computed(() => embedWhiteBoardConfigData.value?.boardOptions.nodes)
-const edges = computed(() => embedWhiteBoardConfigData.value?.boardOptions.edges)
-
 const onPaneClick = onCountClick((count, event) => {
   console.log('onPaneClick', count, event)
   if (count === 1) {
-    if (lastEditProtyleCardElementRef.value) {
-      lastEditProtyleCardElementRef.value.classList.remove('nodrag')
-      lastEditProtyleCardElementRef.value = null
-    }
+    disableLastProtyleEditable()
   } else if (count === 2) {
-    const result = getPointerPosition(event)
     const rendererPoint = pointToRendererPoint({
       x: event.offsetX,
       y: event.offsetY,
@@ -305,6 +340,7 @@ onEdgesChange((changes) => {
 
 
 const onConnect = (event) => {
+  // TODO 需要去重一下
   edges.value.push({
     id: generateWhiteBoardEdgeId(),
     source: event.source,

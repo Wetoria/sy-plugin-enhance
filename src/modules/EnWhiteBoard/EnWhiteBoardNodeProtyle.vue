@@ -1,11 +1,14 @@
 <template>
   <div
     class="EnWhiteBoardNodeProtyleContainer"
+    :data-en-flow-node-id="nodeProps.id"
   >
     <div
       ref="mainRef"
       class="main EnWhiteBoardNodeProtyleMain"
+      :data-en-flow-node-id="nodeProps.id"
       @wheel.capture="captureWheel"
+      @mousedown.capture="captureMouseDown"
     >
       <!-- <div>{{ data.label }}</div>
 
@@ -61,13 +64,9 @@
 <script setup lang="ts">
 import EnProtyle from '@/components/EnProtyle.vue'
 import { EnWhiteBoardNodeData } from '@/modules/EnWhiteBoard/EnWhiteBoard'
-import { debounce } from '@/utils'
-import {
-  unWatchDomChange,
-  watchDomChange,
-} from '@/utils/DOM'
+
+
 import { useSiyuanEventTransactions } from '@/utils/EventBusHooks'
-import { SyDomNodeTypes } from '@/utils/Siyuan'
 import {
   Handle,
   type NodeProps,
@@ -144,52 +143,39 @@ const afterProtyleLoad = (protyle: Protyle) => {
     }
   })
 
-  protyle?.protyle?.wysiwyg?.element?.addEventListener('mousedown', (event) => {
-    const target = event.target as HTMLElement
-    const mainElement = target.closest('.EnWhiteBoardNodeProtyleMain')
-    if (mainElement && !mainElement.classList.contains('nodrag')) {
-      event.stopImmediatePropagation()
-      const newEvent = new MouseEvent('mousedown', {
-        bubbles: true,
-        cancelable: true,
-        view: window,
-        ...event,
-      })
-      mainElement.parentElement?.dispatchEvent(newEvent)
-    }
-  }, true)
+  // protyle?.protyle?.wysiwyg?.element?.addEventListener('mousedown', (event) => {
+  //   const target = event.target as HTMLElement
+  //   const mainElement = target.closest('.EnWhiteBoardNodeProtyleMain')
+  //   if (mainElement && !mainElement.classList.contains('nodrag')) {
+  //     event.stopImmediatePropagation()
+  //     const newEvent = new MouseEvent('mousedown', {
+  //       bubbles: true,
+  //       cancelable: true,
+  //       view: window,
+  //       ...event,
+  //     })
+  //     mainElement.parentElement?.dispatchEvent(newEvent)
+  //   }
+  // }, true)
+}
+
+const captureMouseDown = (event: MouseEvent) => {
+  const target = event.target as HTMLElement
+  console.log('captureMouseDown', event)
+  const mainElement = target.closest('.EnWhiteBoardNodeProtyleMain')
+  if (mainElement && !mainElement.classList.contains('nodrag')) {
+    event.stopImmediatePropagation()
+    const newEvent = new MouseEvent('mousedown', {
+      bubbles: true,
+      cancelable: true,
+      view: window,
+      ...event,
+    })
+    mainElement.parentElement?.dispatchEvent(newEvent)
+  }
 }
 
 const mainRef = ref<HTMLDivElement | null>(null)
-
-const lastReadOnlyStatus = ref(false)
-const changeReadOnly = () => {
-  const mainElement = mainRef.value
-  if (!mainElement)
-    return
-  const readonly = !mainElement.classList.contains('nodrag')
-  if (lastReadOnlyStatus.value === readonly)
-    return
-
-  const elements = mainElement.querySelectorAll(`[data-type="${SyDomNodeTypes.NodeParagraph}"]`)
-  elements?.forEach((element) => {
-    const contentEditable = element.firstElementChild
-    contentEditable?.setAttribute('contenteditable', `${!readonly}`)
-  })
-  lastReadOnlyStatus.value = readonly
-}
-const watchNodrag = debounce(() => {
-  if (!mainRef.value)
-    return
-
-  changeReadOnly()
-}, 50)
-onMounted(() => {
-  watchDomChange(watchNodrag)
-})
-onBeforeUnmount(() => {
-  unWatchDomChange(watchNodrag)
-})
 
 
 let offTransactionEvent = null
