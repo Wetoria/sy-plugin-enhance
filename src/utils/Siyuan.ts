@@ -41,6 +41,30 @@ export enum SyDomNodeTypes {
   BreadCrumb = 'protyle-breadcrumb__bar',
 }
 
+export enum SyHelperClasses {
+  GUTTERS = 'protyle-gutters',
+  SELECT = 'protyle-select',
+  TOOLBAR = 'protyle-toolbar',
+  HINT = 'protyle-hint',
+}
+
+export const hideHelperByTarget = (target: HTMLElement) => {
+  if (!target) {
+    return
+  }
+  const helperClasses = [
+    SyHelperClasses.GUTTERS,
+    SyHelperClasses.SELECT,
+    SyHelperClasses.TOOLBAR,
+    SyHelperClasses.HINT,
+  ]
+  helperClasses.forEach((className) => {
+    target.querySelectorAll(`.${className}`).forEach((item) => {
+      item.classList.add('fn__none')
+    })
+  })
+}
+
 export const defaultToolbar = [
   "block-ref",
   "a",
@@ -336,6 +360,7 @@ export function getCreatedByDataset(id: string) {
 }
 
 const currentProtyle = ref<IProtyle>()
+window.en_plugin_global.currentProtyle = currentProtyle
 let recorded = false
 
 export function useCurrentProtyle() {

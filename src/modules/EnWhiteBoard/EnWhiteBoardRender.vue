@@ -76,6 +76,9 @@
       <div
         ref="EnWhiteBoardProtyleUtilAreaRef"
         class="EnWhiteBoardProtyleUtilArea"
+        :class="{
+          dragging,
+        }"
         style="height: 0px;"
       >
 
@@ -122,7 +125,10 @@ import {
 import EnWhiteBoardSider from '@/modules/EnWhiteBoard/EnWhiteBoardSider.vue'
 import { EN_CONSTANTS } from '@/utils/Constants'
 import { onCountClick } from '@/utils/DOM'
-import { SyDomNodeTypes } from '@/utils/Siyuan'
+import {
+  hideHelperByTarget,
+  SyDomNodeTypes,
+} from '@/utils/Siyuan'
 import {
   EdgeAddChange,
   EdgeChange,
@@ -182,16 +188,22 @@ const nodes = computed(() => embedWhiteBoardConfigData.value?.boardOptions.nodes
 const edges = computed(() => embedWhiteBoardConfigData.value?.boardOptions.edges)
 
 const EnWhiteBoardProtyleUtilAreaRef = ref<HTMLElement | null>(null)
-// TODO 移动时，需要隐藏所有的 gutter/toolbar/hint
 
+const hideAllHelper = () => {
+  hideHelperByTarget(EnWhiteBoardProtyleUtilAreaRef.value)
+}
+
+const dragging = ref(false)
 const onMoveStart = (event) => {
   console.log('onMoveStart', event)
+  dragging.value = true
 }
 const onMove = (event) => {
   console.log('onMove', event)
 }
 const onMoveEnd = (event) => {
   console.log('onMoveEnd', event)
+  dragging.value = false
 }
 
 const lastEditProtyleCardElementRef = ref<HTMLElement | null>(null)
@@ -259,6 +271,7 @@ const onConnectEnd = (event) => {
 onViewportChange((viewport) => {
   embedWhiteBoardConfigData.value.boardOptions.viewport = viewport
   disableLastProtyleEditable()
+  hideAllHelper()
 })
 
 watchEffect(() => {
@@ -267,6 +280,7 @@ watchEffect(() => {
 
 const onPaneClick = onCountClick((count, event) => {
   console.log('onPaneClick', count, event)
+  hideAllHelper()
   if (count === 1) {
     disableLastProtyleEditable()
   } else if (count === 2) {
@@ -296,6 +310,7 @@ const onPaneClick = onCountClick((count, event) => {
 onNodesChange((changes) => {
   // changes are arrays of type `NodeChange`
   console.log('onNodesChange', changes)
+  hideAllHelper()
 
   changes.forEach((change) => {
 
@@ -447,6 +462,12 @@ watchEffect(() => {
     height: calc(100% - var(--en-white-board-control-vertical-height) * 2);
 
     flex-direction: column;
+  }
+
+  .EnWhiteBoardProtyleUtilArea {
+    &.dragging {
+      opacity: 0;
+    }
   }
 
   :deep(.arco-btn-secondary[type="button"]) {
