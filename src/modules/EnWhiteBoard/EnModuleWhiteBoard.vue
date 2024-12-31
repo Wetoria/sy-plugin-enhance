@@ -97,6 +97,41 @@
         />
       </template>
     </EnSettingsItem>
+    <EnSettingsItem mode="vertical">
+      <div>
+        白板卡片自动合并为超级块
+      </div>
+      <template #desc>
+        <div>
+          是否自动将卡片顶层多个块合并为超级块
+        </div>
+      </template>
+      <template #opt>
+        <a-switch
+          v-model="moduleOptions.autoMergeToSuperBlock"
+          :disabled="cannotEdit"
+        />
+      </template>
+    </EnSettingsItem>
+    <EnSettingsItem mode="vertical">
+      <div>
+        白板卡片自动合并为超级块延迟时间
+      </div>
+      <template #desc>
+        <div>
+          白板卡片自动合并为超级块的延迟时间，单位为秒
+        </div>
+      </template>
+      <template #opt>
+        <a-input-number
+          v-model="moduleOptions.autoMergeToSuperBlockDelay"
+          placeholder="Please Enter"
+          mode="button"
+          :readOnly="plugin.isMobile"
+          :disabled="cannotEdit"
+        />
+      </template>
+    </EnSettingsItem>
   </EnSettingsTeleportModule>
 
   <template v-if="hasAuth && moduleOptions.enabled">
@@ -175,8 +210,11 @@ const {
     siderRightWidthDefault: 50,
     siderRightShowDefault: true,
 
-    cardWidthDefault: 300,
-    cardHeightDefault: 100,
+    autoMergeToSuperBlock: true,
+    autoMergeToSuperBlockDelay: 3,
+
+    cardWidthDefault: 345,
+    cardHeightDefault: 185,
   },
 })
 

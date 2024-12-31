@@ -69,6 +69,9 @@ export interface EnWhiteBoardSetting extends EnModule {
   siderRightWidthDefault: number
   siderRightShowDefault: boolean
 
+  autoMergeToSuperBlock: boolean
+  autoMergeToSuperBlockDelay: number
+
   cardWidthDefault: number
   cardHeightDefault: number
 }

@@ -3,6 +3,20 @@
     class="EnWhiteBoardNodeProtyleContainer"
     :data-en-flow-node-id="nodeProps.id"
   >
+
+    <div class="ProtyleToolbarArea">
+      <div class="infos">
+
+      </div>
+
+      <div class="operations">
+        <a-spin v-if="isMergingToSuperBlock">
+          <template #icon>
+            <icon-sync />
+          </template>
+        </a-spin>
+      </div>
+    </div>
     <div
       ref="mainRef"
       class="main EnWhiteBoardNodeProtyleMain"
@@ -34,12 +48,6 @@
           </div>
         </Teleport>
       </template>
-      <!-- <div
-        v-if="!nodeData.editing"
-        class="protyle-cursor-mask"
-      >
-
-      </div> -->
     </div>
 
     <NodeResizer
@@ -63,10 +71,17 @@
 
 <script setup lang="ts">
 import EnProtyle from '@/components/EnProtyle.vue'
-import { EnWhiteBoardNodeData } from '@/modules/EnWhiteBoard/EnWhiteBoard'
+import {
+  EnWhiteBoardNodeData,
+  useWhiteBoardModule,
+} from '@/modules/EnWhiteBoard/EnWhiteBoard'
+import { debounce } from '@/utils'
 
 
-import { useSiyuanEventTransactions } from '@/utils/EventBusHooks'
+import {
+  useSiyuanDatabaseIndexCommit,
+  useSiyuanEventTransactions,
+} from '@/utils/EventBusHooks'
 import {
   Handle,
   type NodeProps,
@@ -94,6 +109,10 @@ const props = defineProps<{
 const emit = defineEmits<{
   clickCard: [element: HTMLElement]
 }>()
+
+const {
+  moduleOptions: whiteBoardModuleOptions,
+} = useWhiteBoardModule()
 
 // const node = computed(() => props.node)
 const x = computed(() => `${Math.round(props.nodeProps.position.x)}px`)
@@ -235,10 +254,32 @@ const removeNodeCreatedByOther = (event) => {
   })
 }
 
+const isMergingToSuperBlock = ref(false)
+const mergeTopLevelBlocksIntoSuperBlock = debounce(() => {
+  if (!whiteBoardModuleOptions.value.autoMergeToSuperBlock) {
+    return
+  }
+
+  const children = Array.from(cardProtyleRef.value?.protyle.wysiwyg.element?.children || [])
+  // 如果只有一个子元素，则不进行合并
+  if (children.length <= 1) {
+    return
+  }
+
+  const protyleIns = cardProtyleRef.value?.protyle.getInstance()
+  isMergingToSuperBlock.value = true
+  protyleIns.turnIntoOneTransaction(children, 'BlocksMergeSuperBlock', 'row')
+  const off = useSiyuanDatabaseIndexCommit(debounce(async () => {
+    off()
+    isMergingToSuperBlock.value = false
+  }, 20))
+}, whiteBoardModuleOptions.value.autoMergeToSuperBlockDelay * 1000)
+
 onMounted(() => {
   offTransactionEvent = useSiyuanEventTransactions((event) => {
     bindNodeIdToEnNode()
     removeNodeCreatedByOther(event)
+    mergeTopLevelBlocksIntoSuperBlock()
   })
 })
 onBeforeUnmount(() => {
@@ -289,15 +330,25 @@ const onResize = (event: OnResize) => {
       }
     }
 
-    .protyle-cursor-mask {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.5);
-      z-index: 1;
+    :deep(.protyle-wysiwyg) {
+      padding-bottom: 16px !important;
     }
+
+  }
+
+  .ProtyleToolbarArea {
+    width: 100%;
+    height: 30px;
+    flex-shrink: 0;
+    z-index: 1;
+    background-color: var(--b3-theme-surface);
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    box-sizing: border-box;
+    padding: var(--en-gap);
   }
 
   :deep(.vue-flow__resize-control) {
