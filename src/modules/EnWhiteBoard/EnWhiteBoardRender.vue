@@ -288,7 +288,7 @@ const onPaneClick = onCountClick((count, event) => {
       x: event.offsetX,
       y: event.offsetY,
     }, viewport.value)
-    getNewDailyNoteBlockId('\n{: style=\"\" }\n{: style=\"\" }').then((blockId) => {
+    getNewDailyNoteBlockId().then((blockId) => {
       nodes.value.push({
         id: generateWhiteBoardNodeId(),
         type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_PROTYLE,

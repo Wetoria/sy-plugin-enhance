@@ -179,21 +179,66 @@ const mainRef = ref<HTMLDivElement | null>(null)
 
 
 let offTransactionEvent = null
+const bindNodeIdToEnNode = () => {
+  if (!cardProtyleRef.value) {
+    return
+  }
+  const firstNode = cardProtyleRef.value.protyle.element?.querySelector(`[data-node-id]`) as HTMLElement
+  if (!firstNode) {
+    return
+  }
+  const nodeId = firstNode.dataset.nodeId
+  if (!nodeId) {
+    return
+  }
+
+  nodeData.value.blockId = nodeId
+}
+
+const removeNodeCreatedByOther = (event) => {
+  const {
+    detail,
+  } = event
+  const {
+    sid,
+    data,
+  } = detail
+  const currentProtyleId = cardProtyleRef.value?.protyle.id
+  data.forEach((item) => {
+    const {
+      doOperations = [],
+    } = item
+    doOperations.forEach((operation) => {
+      const {
+        action,
+        id: opId,
+      } = operation
+      const isCreate = action === 'insert'
+      const isCreateByOther = sid !== currentProtyleId
+
+      if (isCreate && isCreateByOther) {
+        let timer = null
+        timer = setInterval(() => {
+          const wysiwygElement = cardProtyleRef.value?.protyle.wysiwyg.element
+          const firstLevelChildren = wysiwygElement?.children
+          const targetElement = Array.from(firstLevelChildren).find((child: HTMLElement) => {
+            const childNodeId = child.dataset.nodeId
+            return childNodeId && childNodeId === opId
+          })
+          if (targetElement) {
+            targetElement.remove()
+            clearInterval(timer)
+          }
+        }, 0)
+      }
+    })
+  })
+}
+
 onMounted(() => {
   offTransactionEvent = useSiyuanEventTransactions((event) => {
-    if (!cardProtyleRef.value) {
-      return
-    }
-    const firstNode = cardProtyleRef.value.protyle.element?.querySelector(`[data-node-id]`) as HTMLElement
-    if (!firstNode) {
-      return
-    }
-    const nodeId = firstNode.dataset.nodeId
-    if (!nodeId) {
-      return
-    }
-
-    nodeData.value.blockId = nodeId
+    bindNodeIdToEnNode()
+    removeNodeCreatedByOther(event)
   })
 })
 onBeforeUnmount(() => {
