@@ -340,7 +340,6 @@ const onResize = (event: OnResize) => {
     width: 100%;
     height: 30px;
     flex-shrink: 0;
-    z-index: 1;
     background-color: var(--b3-theme-surface);
 
     display: flex;
