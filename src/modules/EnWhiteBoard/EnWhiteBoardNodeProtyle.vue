@@ -1,7 +1,11 @@
 <template>
   <div
     class="EnWhiteBoardNodeProtyleContainer"
-    :data-en-flow-node-id="nodeProps.id"
+    :data-en-flow-node-id="flowNode.id"
+    :style="{
+      '--en-card-width': `${flowNode.dimensions.width}px`,
+      '--en-card-height': `${flowNode.dimensions.height}px`,
+    }"
   >
 
     <div class="ProtyleToolbarArea">
@@ -20,15 +24,10 @@
     <div
       ref="mainRef"
       class="main EnWhiteBoardNodeProtyleMain"
-      :data-en-flow-node-id="nodeProps.id"
+      :data-en-flow-node-id="flowNode.id"
       @wheel.capture="captureWheel"
       @mousedown.capture="captureMouseDown"
     >
-      <!-- <div>{{ data.label }}</div>
-
-      <div>
-        {{ x }} {{ y }}
-      </div> -->
 
       <template v-if="nodeData.blockId">
         <EnProtyle
@@ -42,7 +41,7 @@
         >
           <div
             ref="protyleUtilAreaRef"
-            :data-en-whiteboard-node-protyle-util-area="nodeProps.id"
+            :data-en-whiteboard-node-protyle-util-area="flowNode.id"
           >
 
           </div>
@@ -52,7 +51,7 @@
 
     <NodeResizer
       :min-width="100"
-      :min-height="30"
+      :min-height="36"
       color="transparent"
       @resize="onResize"
     />
@@ -72,7 +71,6 @@
 <script setup lang="ts">
 import EnProtyle from '@/components/EnProtyle.vue'
 import {
-  EnWhiteBoardNodeData,
   useWhiteBoardModule,
 } from '@/modules/EnWhiteBoard/EnWhiteBoard'
 import { debounce } from '@/utils'
@@ -84,9 +82,9 @@ import {
 } from '@/utils/EventBusHooks'
 import {
   Handle,
-  type NodeProps,
   Position,
   useKeyPress,
+  useNode,
 } from '@vue-flow/core'
 import {
   NodeResizer,
@@ -102,7 +100,6 @@ import {
 
 
 const props = defineProps<{
-  nodeProps: NodeProps<EnWhiteBoardNodeData>
   enWhiteBoardProtyleUtilAreaRef: HTMLElement
 }>()
 
@@ -114,11 +111,12 @@ const {
   moduleOptions: whiteBoardModuleOptions,
 } = useWhiteBoardModule()
 
-// const node = computed(() => props.node)
-const x = computed(() => `${Math.round(props.nodeProps.position.x)}px`)
-const y = computed(() => `${Math.round(props.nodeProps.position.y)}px`)
+const {
+  node: flowNode,
+} = useNode()
 
-const nodeData = computed(() => props.nodeProps.data)
+const nodeData = computed(() => flowNode.data)
+
 
 const spaceKeyPressing = useKeyPress('Space')
 const captureWheel = (event: WheelEvent) => {
@@ -358,6 +356,23 @@ const onResize = (event: OnResize) => {
 
     &.line {
       box-sizing: border-box;
+      border: unset;
+      top: unset;
+      bottom: unset;
+      left: unset;
+      right: unset;
+
+      &.top,
+      &.bottom {
+        left: 0px;
+        height: var(--en-whiteboard-resizer-width);
+      }
+
+      &.left,
+      &.right {
+        top: 0px;
+        width: var(--en-whiteboard-resizer-width);
+      }
 
       &.top {
         top: calc(0px - (var(--en-whiteboard-node-protyle-border-width) / 2));
@@ -365,16 +380,17 @@ const onResize = (event: OnResize) => {
       &.bottom {
         bottom: 0px;
         transform: translateY(
-          calc(0px + (var(--en-whiteboard-node-protyle-border-width) / 2))
+          calc(0px + (var(--en-whiteboard-resizer-width) / 2) + (var(--en-whiteboard-node-protyle-border-width) / 2))
         );
       }
       &.left {
         left: calc(0px - (var(--en-whiteboard-node-protyle-border-width) / 2));
       }
       &.right {
+        top: 0px;
         right: 0px;
         transform: translateX(
-          calc(0px + (var(--en-whiteboard-node-protyle-border-width) / 2))
+          calc(0px + (var(--en-whiteboard-resizer-width) / 2) + (var(--en-whiteboard-node-protyle-border-width) / 2))
         );
       }
 
@@ -383,54 +399,55 @@ const onResize = (event: OnResize) => {
         background-color: var(--en-whiteboard-resizer-color);
         border-radius: var(--en-whiteboard-resizer-width);
         position: absolute;
-        --en-line-vertical-size: min(max(8px, 20%), 30px);
-        --en-line-horizontal-size: min(max(8px, 20%), 30px);
+        --en-line-vertical-width: min(max(8px, calc(var(--en-card-width) * 0.2)), 30px);
+        --en-line-horizontal-height: min(max(8px, calc(var(--en-card-height) * 0.2)), 30px);
       }
 
-      &.top::before {
-        width: var(--en-line-vertical-size);
-        height: var(--en-whiteboard-resizer-width);
-        top: 0px;
-        transform: translateY(
-          calc(0px - (var(--en-whiteboard-resizer-width) / 2) - 0.5px)
-        );
-        left: calc(50% - var(--en-line-vertical-size) / 2);
-      }
+
+      // 调整大小
+      &.top::before,
       &.bottom::before {
-        width: var(--en-line-vertical-size);
+        width: var(--en-line-vertical-width);
         height: var(--en-whiteboard-resizer-width);
-        bottom: 0px;
-        transform: translateY(
-          calc(0px + (var(--en-whiteboard-resizer-width) / 2) + 0.5px)
-        );
-        left: calc(50% - var(--en-line-vertical-size) / 2);
       }
-      &.left::before {
-        width: var(--en-whiteboard-resizer-width);
-        height: var(--en-line-horizontal-size);
-        top: calc(50% - var(--en-line-horizontal-size) / 2);
-        left: 0px;
-        transform: translateX(
-          calc(0px - (var(--en-whiteboard-resizer-width) / 2) - 0.5px)
-        );
-      }
+
+      &.left::before,
       &.right::before {
         width: var(--en-whiteboard-resizer-width);
-        height: var(--en-line-horizontal-size);
-        top: calc(50% - var(--en-line-horizontal-size) / 2);
+        height: var(--en-line-horizontal-height);
+      }
+
+      // 调整位置
+      &.top::before {
+        top: 0px;
+        left: calc(50% - var(--en-line-vertical-width) / 2);
+      }
+      &.bottom::before {
+        bottom: 0px;
+        left: calc(50% - var(--en-line-vertical-width) / 2);
+      }
+      &.left::before {
+        top: calc(50% - var(--en-line-horizontal-height) / 2);
+        left: 0px;
+      }
+      &.right::before {
+        top: calc(50% - var(--en-line-horizontal-height) / 2);
         right: 0px;
-        transform: translateX(
-          calc(0px + (var(--en-whiteboard-resizer-width) / 2) + 0.5px)
-        );
       }
     }
 
     &.handle {
       border: unset;
 
-      width: min(max(8px, 10%), 30px);
-      height: min(max(6px, 20%), 30px);
+      --en-handle-base-width: min(var(--en-card-width), var(--en-card-height));
+      --en-handle-width: min(max(12px, calc(var(--en-handle-base-width) * 0.3)), 36px);
+      width: var(--en-handle-width);
+      height: var(--en-handle-width);
       transform: unset;
+      top: unset;
+      bottom: unset;
+      left: unset;
+      right: unset;
 
       &::after,
       &::before {
@@ -439,6 +456,16 @@ const onResize = (event: OnResize) => {
         border-radius: var(--en-whiteboard-card-radius);
         position: absolute;
       }
+
+      &::before {
+        width: 100%;
+        height: var(--en-whiteboard-resizer-width);
+      }
+      &::after {
+        width: var(--en-whiteboard-resizer-width);
+        height: 100%;
+      }
+
 
       &.top.left {
         top: 0;
@@ -450,37 +477,25 @@ const onResize = (event: OnResize) => {
           calc(0px - (var(--en-whiteboard-resizer-width) / 2) - (var(--en-whiteboard-node-protyle-border-width) / 2))
         );
 
+        &::before,
         &::after {
-          width: 100%;
-          height: var(--en-whiteboard-resizer-width);
-          top: 0;
-          left: 0;
-        }
-        &::before {
-          width: var(--en-whiteboard-resizer-width);
-          height: 100%;
           top: 0;
           left: 0;
         }
       }
+
       &.top.right {
-        top: 0;
+        top: 0px;
         bottom: unset;
         left: unset;
-        right: 0;
+        right: 0px;
         transform: translate(
           calc(0px + (var(--en-whiteboard-resizer-width) / 2) + (var(--en-whiteboard-node-protyle-border-width) / 2)),
           calc(0px - (var(--en-whiteboard-resizer-width) / 2) - (var(--en-whiteboard-node-protyle-border-width) / 2))
         );
+
+        &::before,
         &::after {
-          width: 100%;
-          height: var(--en-whiteboard-resizer-width);
-          top: 0;
-          right: 0;
-        }
-        &::before {
-          width: var(--en-whiteboard-resizer-width);
-          height: 100%;
           top: 0;
           right: 0;
         }
@@ -494,15 +509,9 @@ const onResize = (event: OnResize) => {
           calc(0px - (var(--en-whiteboard-resizer-width) / 2) - (var(--en-whiteboard-node-protyle-border-width) / 2)),
           calc(0px + (var(--en-whiteboard-resizer-width) / 2) + (var(--en-whiteboard-node-protyle-border-width) / 2))
         );
+
+        &::before,
         &::after {
-          width: 100%;
-          height: var(--en-whiteboard-resizer-width);
-          bottom: 0;
-          left: 0;
-        }
-        &::before {
-          width: var(--en-whiteboard-resizer-width);
-          height: 100%;
           bottom: 0;
           left: 0;
         }
@@ -516,15 +525,9 @@ const onResize = (event: OnResize) => {
           calc(0px + (var(--en-whiteboard-resizer-width) / 2) + (var(--en-whiteboard-node-protyle-border-width) / 2)),
           calc(0px + (var(--en-whiteboard-resizer-width) / 2) + (var(--en-whiteboard-node-protyle-border-width) / 2))
         );
-        &::after {
-          width: 100%;
-          height: var(--en-whiteboard-resizer-width);
-          bottom: 0;
-          right: 0;
-        }
+
+        &::after,
         &::before {
-          width: var(--en-whiteboard-resizer-width);
-          height: 100%;
           bottom: 0;
           right: 0;
         }
