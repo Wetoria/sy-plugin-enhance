@@ -1,5 +1,6 @@
 <template>
   <div
+    ref="containerRef"
     class="EnWhiteBoardNodeProtyleContainer"
     :data-en-flow-node-id="flowNode.id"
     :style="{
@@ -58,9 +59,45 @@
 
 
     <Handle
+      id="top"
+      class="Handle Top"
+      type="source"
+      :position="Position.Top"
+    >
+      <div class="HandleIcon">
+        <icon-arrow-up />
+      </div>
+    </Handle>
+    <Handle
+      id="bottom"
+      class="Handle Bottom"
       type="source"
       :position="Position.Bottom"
-    />
+    >
+      <div class="HandleIcon">
+        <icon-arrow-down />
+      </div>
+    </Handle>
+    <Handle
+      id="left"
+      class="Handle Left"
+      type="source"
+      :position="Position.Left"
+    >
+      <div class="HandleIcon">
+        <icon-arrow-left />
+      </div>
+    </Handle>
+    <Handle
+      id="right"
+      class="Handle Right"
+      type="source"
+      :position="Position.Right"
+    >
+      <div class="HandleIcon">
+        <icon-arrow-right />
+      </div>
+    </Handle>
   </div>
 </template>
 
@@ -116,6 +153,9 @@ const {
 } = useNode()
 
 const nodeData = computed(() => flowNode.data)
+
+const containerRef = ref<HTMLDivElement | null>(null)
+
 
 
 const spaceKeyPressing = useKeyPress('Space')
@@ -534,6 +574,45 @@ const onResize = (event: OnResize) => {
       }
     }
   }
+
+  .Handle {
+    // border-radius: var(--en-whiteboard-card-radius);
+    width: 21px;
+    height: 21px;
+    z-index: -1;
+    opacity: 0;
+    border-color: var(--b3-theme-primary-light);
+    background-color: var(--b3-theme-background);
+    color: var(--b3-theme-primary-light);
+
+    &:hover {
+      background-color: var(--b3-border-color);
+      opacity: 1;
+    }
+
+    .HandleIcon {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      pointer-events: none;
+    }
+  }
+
+  .Handle.Top {
+    top: -16px;
+  }
+  .Handle.Bottom {
+    bottom: -16px;
+  }
+  .Handle.Left {
+    left: -16px;
+  }
+  .Handle.Right {
+    right: -16px;
+  }
 }
 </style>
 
@@ -548,6 +627,10 @@ const onResize = (event: OnResize) => {
   &.selected {
     .EnWhiteBoardNodeProtyleContainer {
       border-color: var(--b3-theme-primary-light);
+
+      .Handle {
+        opacity: 1;
+      }
     }
   }
 }

@@ -21,6 +21,10 @@ export enum EN_CONSTANTS {
 
   EN_WHITE_BOARD_NODE_TYPE_PROTYLE = 'EnWhiteBoardNodeProtyle',
 
+  EN_WHITE_BOARD_EDGE_TYPE_BASE = 'EnWhiteBoardEdgeBase',
+
+  EN_WHITE_BOARD_HANDLE_PLACEHOLDER = 'EnWhiteBoardHandlePlaceholder',
+
   MODULE_PROVIDER_KEY = 'EnModule',
 
   NOTEBOOK_LIST_OPENED = 'NOTEBOOK_LIST_OPENED',

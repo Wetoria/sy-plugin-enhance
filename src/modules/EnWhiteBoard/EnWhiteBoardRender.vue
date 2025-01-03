@@ -58,6 +58,9 @@
         snap-to-grid
         :zoom-on-double-click="false"
         :minZoom="0.2"
+
+        :edge-updater-radius="24"
+        :connectionRadius="100"
         @nodeDragStart="onMoveStart"
         @nodeDrag="onMove"
         @nodeDragStop="onMoveEnd"
@@ -71,6 +74,16 @@
           <EnWhiteBoardNodeProtyle
             :nodeProps="node"
             :enWhiteBoardProtyleUtilAreaRef="EnWhiteBoardProtyleUtilAreaRef"
+          />
+        </template>
+        <template #edge-EnWhiteBoardEdgeBase="edge">
+          <EnWhiteBoardEdgeBase
+            v-bind="edge"
+          />
+        </template>
+        <template #connection-line="connectionLineProps">
+          <EnWhiteBoardEdgeBase
+            v-bind="connectionLineProps"
           />
         </template>
       </VueFlow>
@@ -124,6 +137,7 @@ import {
   useWhiteBoardModule,
 } from '@/modules/EnWhiteBoard/EnWhiteBoard'
 
+import EnWhiteBoardEdgeBase from '@/modules/EnWhiteBoard/EnWhiteBoardEdgeBase.vue'
 import EnWhiteBoardSider from '@/modules/EnWhiteBoard/EnWhiteBoardSider.vue'
 import { EN_CONSTANTS } from '@/utils/Constants'
 import {
@@ -135,8 +149,10 @@ import {
   SyDomNodeTypes,
 } from '@/utils/Siyuan'
 import {
+  Edge,
   EdgeAddChange,
   EdgeChange,
+  MarkerType,
   NodeAddChange,
   NodeChange,
   pointToRendererPoint,
@@ -175,7 +191,6 @@ watch(() => embedBlockOptions.value.SiderRightWidth, () => {
 
 
 const {
-  onNodesInitialized,
   onNodesChange,
   findNode,
   addSelectedNodes,
@@ -384,15 +399,23 @@ onEdgesChange((changes) => {
 
 const onConnect = (event) => {
   // TODO 需要去重一下
-  edges.value.push({
+  const newEdge: Edge = {
     id: generateWhiteBoardEdgeId(),
+    type: EN_CONSTANTS.EN_WHITE_BOARD_EDGE_TYPE_BASE,
     source: event.source,
     target: event.target,
     updatable: true,
     deletable: true,
     focusable: true,
     selectable: true,
-  })
+    markerEnd: {
+      type: MarkerType.ArrowClosed,
+      width: 20,
+      height: 20,
+    },
+  }
+  console.log('newEdge', newEdge)
+  edges.value.push(newEdge)
 }
 
 onEdgeUpdate(({
