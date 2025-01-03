@@ -404,6 +404,8 @@ const onConnect = (event) => {
     type: EN_CONSTANTS.EN_WHITE_BOARD_EDGE_TYPE_BASE,
     source: event.source,
     target: event.target,
+    sourceHandle: event.sourceHandle,
+    targetHandle: event.targetHandle,
     updatable: true,
     deletable: true,
     focusable: true,
