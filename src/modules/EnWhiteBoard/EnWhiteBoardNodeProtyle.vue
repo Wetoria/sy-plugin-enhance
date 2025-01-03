@@ -28,6 +28,7 @@
       :data-en-flow-node-id="flowNode.id"
       @wheel.capture="captureWheel"
       @mousedown.capture="captureMouseDown"
+      @click.capture="captureClick"
     >
 
       <template v-if="nodeData.blockId">
@@ -229,6 +230,27 @@ const captureMouseDown = (event: MouseEvent) => {
       ...event,
     })
     mainElement.parentElement?.dispatchEvent(newEvent)
+  }
+}
+
+const captureClick = (event: MouseEvent) => {
+  const target = event.target as HTMLElement
+  const protyleContent = target.closest('.protyle-content')
+  const isInProtyleContent = !!protyleContent
+  if (isInProtyleContent) {
+
+    const lastRect = cardProtyleRef.value?.protyle.wysiwyg.element.lastElementChild.getBoundingClientRect()
+    if (event.y > lastRect.bottom) {
+      event.stopImmediatePropagation()
+      const newEvent = new MouseEvent('click', {
+        bubbles: true,
+        cancelable: true,
+        view: window,
+        ...event,
+      })
+      const mainElement = target.closest('.EnWhiteBoardNodeProtyleMain')
+      mainElement?.parentElement?.dispatchEvent(newEvent)
+    }
   }
 }
 
