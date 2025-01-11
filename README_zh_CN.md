@@ -1,10 +1,10 @@
 
-# 笔记增强插件
+# 叶归插件
 
 由 [𝓦𝓮𝓽𝓸𝓻𝓲𝓪](https://simplest-frontend.feishu.cn/docx/R1UxdUYPtoWVi2xapQXclJd2nUh#H5N9dK061o6R4sxUWTiccgvYnAc) 开发和维护，一个用来增强[思源笔记](https://b3log.org/siyuan/?utm_source=ld246.com)，在思源笔记中实现无压记录 LifeLog 的插件。
 
 
-**由于 Markdown 截图太麻烦，并且作者很懒**，详细说明请移步 [思源笔记插件 - sy-plugin-enhance](https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse)
+**由于 Markdown 截图太麻烦，并且作者很懒**，详细说明请移步 [思源笔记插件 - 叶归](https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse)
 
 ---
 

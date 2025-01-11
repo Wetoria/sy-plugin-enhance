@@ -1,4 +1,4 @@
-# SY-Plugin-Enhance
+# Fallen Leaves
 
 A plugin to enhance [siyuan](https://b3log.org/siyuan/?utm_source=ld246.com), let you write LifeLog in Siyuan without any pressure.
 
