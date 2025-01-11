@@ -14,13 +14,13 @@
   ],
   "displayName": {
     "default": "zh_CN",
-    "en_US": "sy-plugin-enhance",
-    "zh_CN": "增强思源笔记"
+    "en_US": "Fallen Leaves",
+    "zh_CN": "叶归"
   },
   "description": {
     "default": "zh_CN",
-    "en_US": "A plugin to enhance Siyuan, let us write LifeLog in Siyuan without any pressure.",
-    "zh_CN": "增强思源笔记，在思源笔记中实现无压记录 LifeLog。"
+    "en_US": "Quick Note, LifeLog, Bottom Backlink, Whiteboard, Audio and Video Timestamp, Comment for Reading, Style Shortcut Key, Format Brush, Mobile Nav, etc.",
+    "zh_CN": "一键记事、LifeLog、底部反链、白板、音视频时间戳、阅读批注、样式快捷键、格式刷、移动端底部导航栏等。"
   },
   "readme": {
     "default": "zh_CN",
