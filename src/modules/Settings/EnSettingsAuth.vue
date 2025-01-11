@@ -231,7 +231,7 @@ const updateAuthSubscription = async (showMessage = true) => {
     enLog('Auth subscription update canceled, userId is empty')
     if (showMessage) {
       Notification.error({
-        content: `Enhance｜请先登录思源`,
+        content: `叶归｜请先登录思源`,
       })
     }
     return
@@ -253,7 +253,7 @@ const updateAuthSubscription = async (showMessage = true) => {
     if (res?.code !== 0) {
       if (showMessage) {
         Notification.error({
-          content: `Enhance｜${res.msg}`,
+          content: `叶归｜${res.msg}`,
         })
       }
       return false
@@ -268,7 +268,7 @@ const updateAuthSubscription = async (showMessage = true) => {
     }
     if (showMessage) {
       Notification.success({
-        content: `Enhance｜更新订阅状态成功. 当前版本：${levelLabel.value}. 有效期至：${expiration.value}`,
+        content: `叶归｜更新订阅状态成功. 当前版本：${levelLabel.value}. 有效期至：${expiration.value}`,
       })
     }
     return true

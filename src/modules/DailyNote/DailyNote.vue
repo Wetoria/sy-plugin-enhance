@@ -194,14 +194,14 @@ export async function appendBlockIntoDailyNote(
   notebook: string,
 ): Promise<IResdoOperations[]> {
   if (!notebook) {
-    showMessage('[Enhance 插件] 请先选择创建日记的笔记本')
-    return Promise.reject(new Error('[Enhance 插件] 请先选择创建日记的笔记本'))
+    showMessage('[叶归插件] 请先选择创建日记的笔记本')
+    return Promise.reject(new Error('[叶归插件] 请先选择创建日记的笔记本'))
   }
   const notebookOpened = await notebookIsOpened(moduleOptions.value.dailyNoteNotebookId)
   const notebookClosed = !notebookOpened
   if (notebookClosed) {
-    showMessage('[Enhance 插件] 请先打开日记所在的笔记本')
-    return Promise.reject(new Error('[Enhance 插件] 请先打开日记所在的笔记本'))
+    showMessage('[叶归插件] 请先打开日记所在的笔记本')
+    return Promise.reject(new Error('[叶归插件] 请先打开日记所在的笔记本'))
   }
   const payload = {
     dataType,

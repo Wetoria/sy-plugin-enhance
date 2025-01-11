@@ -159,7 +159,7 @@ function createOrInsertWhiteBoard(protyle: Protyle) {
     whiteBoardId = generateWhiteBoardId()
   }
 
-  const result = `Enhance 白板嵌入区域<br />选择的白板id：${whiteBoardId}<br/>选择的白板名称：${whiteBoardName ? ` ${whiteBoardName}` : '[后续应该自动生成白板的名称]'}<br/>用于渲染的的块id：${hint.enBlockId}`
+  const result = `叶归｜白板嵌入区域<br />选择的白板id：${whiteBoardId}<br/>选择的白板名称：${whiteBoardName ? ` ${whiteBoardName}` : '[后续应该自动生成白板的名称]'}<br/>用于渲染的的块id：${hint.enBlockId}`
   const testHtml =
 `<div>
   <style>
