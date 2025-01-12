@@ -1,5 +1,6 @@
 <template>
   <Teleport
+    v-if="isProtyleInEditor"
     :to="element?.parentNode"
   >
     <div
@@ -87,6 +88,7 @@ import { ILifeLog } from '@/modules/LifeLog/EnModuleLifeLog.vue'
 import { diffFormat } from '@/utils/Date'
 import { queryAllByDom } from '@/utils/DOM'
 import dayjs from 'dayjs'
+import { getAllModels } from 'siyuan'
 import {
   computed,
   onBeforeUnmount,
@@ -116,6 +118,10 @@ const isDailyNote = computed(() => {
 
 const secondsOfADay = 60 * 60 * 24
 
+const { editor } = getAllModels()
+const isProtyleInEditor = !!editor?.find((item: any) => item.element === props.element?.parentElement)
+const isProtyleNotInEditor = !isProtyleInEditor
+
 
 const EnLifeLogDailyNoteGraphRef = ref()
 function checkHeight() {
@@ -140,6 +146,9 @@ function checkHeight() {
 }
 
 onMounted(() => {
+  if (isProtyleNotInEditor) {
+    return
+  }
   load()
   window.addEventListener('resize', checkHeight)
 })
@@ -147,13 +156,21 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', checkHeight)
 })
 onUpdated(() => {
+  if (isProtyleNotInEditor) {
+    return
+  }
   checkHeight()
 })
 
 const current = ref(dayjs())
-setInterval(() => {
-  current.value = dayjs()
-}, 1000)
+onMounted(() => {
+  if (isProtyleNotInEditor) {
+    return
+  }
+  setInterval(() => {
+    current.value = dayjs()
+  }, 1000)
+})
 const currentSecondDiff = computed(() => {
   const startOfToday = current.value.startOf('day')
   const secondsUntilMidnight = current.value.diff(startOfToday, 'second')
@@ -347,6 +364,9 @@ const load = async () => {
 
 watchEffect(() => {
   if (dailyNoteId.value) {
+    if (isProtyleNotInEditor) {
+      return
+    }
     load()
   }
 })
