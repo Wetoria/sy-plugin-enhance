@@ -30,11 +30,13 @@
         <slot name="footer"></slot>
       </div>
       <a-button
+        v-if="!withoutReset"
         type="outline"
+        status="danger"
         size="mini"
         @click="resetModule"
       >
-        设为默认
+        重置为默认
       </a-button>
       <div
         v-if="!hasAuth"
@@ -71,6 +73,7 @@ const props = defineProps<{
   display: string
   module: EnSettingModule<EnModule>
   always?: boolean
+  withoutReset?: boolean
   authLevel?: number | string
 }>()
 
