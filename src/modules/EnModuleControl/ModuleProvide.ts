@@ -1,4 +1,5 @@
 import { EnModule } from '@/modules/Settings/EnSettings.vue'
+import { ModuleName_TestLogic } from '@/modules/Test/TestLogic.vue'
 import { EN_MODULE_LIST } from '@/utils/Constants'
 import {
   EnSyncModuleDataRef,
@@ -48,3 +49,12 @@ export function useModule<T extends EnModule>(
   })
   return globalData
 }
+
+export const moduleOrder = [
+  ModuleName_TestLogic,
+  EN_MODULE_LIST.DAILY_NOTE,
+  'EnComment',
+  EN_MODULE_LIST.EN_WHITE_BOARD,
+  'EnBottomBacklink',
+  'EnLifeLog',
+]

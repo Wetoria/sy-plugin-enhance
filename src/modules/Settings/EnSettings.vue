@@ -84,7 +84,7 @@
 import EnDivider from '@/components/EnDivider.vue'
 import EnDrawer from '@/components/EnDrawer.vue'
 import { usePlugin } from '@/main'
-import { flushModuleConfigs } from '@/modules/Settings/ModuleConfigs'
+import { moduleOrder } from '@/modules/EnModuleControl/ModuleProvide'
 import {
   debounce,
   moduleEnableStatusSwitcher,
@@ -251,9 +251,18 @@ const settingRefKeysSorted = computed(() => {
   enLog(getColorStringError('moduleKeys is'), moduleKeys)
 
   moduleKeys.sort((a, b) => {
-    const aModule = getModuleRefByNamespace<EnModule>(a)
-    const bModule = getModuleRefByNamespace<EnModule>(b)
-    return (aModule.value.data.sort || 999) - (bModule.value.data.sort || 999)
+    const aIndex = moduleOrder.findIndex((moduleName) => moduleName === a)
+    const bIndex = moduleOrder.findIndex((moduleName) => moduleName === b)
+    if (aIndex !== -1 && bIndex !== -1) {
+      return aIndex - bIndex
+    }
+    if (aIndex !== -1 && bIndex === -1) {
+      return -1
+    }
+    if (aIndex === -1 && bIndex !== -1) {
+      return 1
+    }
+    return 0
   })
 
   return moduleKeys
@@ -431,8 +440,6 @@ const resetAllModule = () => {
 }
 
 onMounted(() => {
-  flushModuleConfigs()
-
   addCommand({
     langKey: "En_OpenSettings",
     langText: "打开设置",
