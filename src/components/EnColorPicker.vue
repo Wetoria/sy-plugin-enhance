@@ -13,7 +13,7 @@
 import {
   siyuanBgColorList,
   siyuanColorList,
-} from '@/modules/Editor/EnFont.vue'
+} from '@/modules/Editor/EnFontStyle/EnFont.vue'
 import {
   computed,
   onMounted,

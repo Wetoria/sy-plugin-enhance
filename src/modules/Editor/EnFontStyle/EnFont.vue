@@ -1,4 +1,132 @@
 <template>
+  <EnSettingsTeleportModule
+    :module="module"
+    :name="moduleOptions.moduleName"
+    :display="moduleOptions.moduleDisplayName"
+    always
+    :withoutReset="true"
+  >
+    <div>
+      <div v-if="modalVisible">
+        请在弹窗中添加字体样式快捷键
+      </div>
+      <Teleport
+        :disabled="!modalVisible"
+        :to="EnFontModalContentAreaRef"
+      >
+        <div class="EnFontCommandSetterMain">
+          <div class="line">
+            选择字体颜色
+          </div>
+          <div class="line">
+            <button
+              v-for="item of siyuanColorList"
+              :key="item"
+              class="color__square"
+              data-type="color"
+              :style="`color:${item}`"
+              @click="setColor(item)"
+            >
+              A
+            </button>
+          </div>
+          <div class="line">
+            选择背景色
+          </div>
+          <div class="line">
+            <button
+              v-for="item of siyuanBgColorList"
+              :key="item"
+              class="color__square"
+              data-type="backgroundColor"
+              :style="`background-color:${item}`"
+              @click="setBgColor(item)"
+            >
+            </button>
+          </div>
+          <div class="line">
+            选择字体大小
+          </div>
+          <div class="line">
+            <a-select
+              v-model="currentFontSize"
+              :style="{
+                width: '100%',
+              }"
+            >
+              <a-option
+                v-for="fontSize of fontSizeList"
+                :key="fontSize"
+                :value="fontSize"
+                :label="fontSize"
+              />
+            </a-select>
+          </div>
+          <div class="line">
+            当前选择的效果
+          </div>
+          <div class="line">
+            <span
+              class="color__square"
+              :style="{
+                backgroundColor: currentBgColor,
+                color: currentColor,
+                fontSize: currentFontSize,
+                width: currentFontSize || undefined,
+                height: currentFontSize || undefined,
+              }"
+            >
+              A
+            </span>
+            <a-button
+              type="primary"
+              size="mini"
+              @click="createCommand"
+            >
+              添加该选项
+            </a-button>
+            <a-button
+              size="mini"
+              @click="clearCurrentFontStyle"
+            >
+              清除样式
+            </a-button>
+          </div>
+          <template v-if="configgedFontStyleList.length">
+            <div class="line">
+              当前已设置的颜色列表（点击删除）
+            </div>
+            <div
+              class="line"
+              style="
+              align-items: flex-end;
+            "
+            >
+              <button
+                v-for="item of configgedFontStyleList"
+                :key="item.key"
+                class="color__square"
+                :style="{
+                  backgroundColor: item.bgColor,
+                  color: item.color,
+                  fontSize: item.fontSize,
+                  width: item.fontSize || undefined,
+                  height: item.fontSize || undefined,
+                }"
+                @click="removeConfiggedFont(item)"
+              >
+                A
+              </button>
+            </div>
+
+            <div class="line">
+              请{{ modalVisible ? '重新' : '' }}打开 思源的设置 - 快捷键 页面，进行快捷键的设置
+            </div>
+          </template>
+        </div>
+      </Teleport>
+    </div>
+  </EnSettingsTeleportModule>
   <div>
     <a-modal
       v-model:visible="modalVisible"
@@ -14,116 +142,7 @@
         添加字体样式快捷键
       </template>
 
-      <div class="EnFontCommandSetterMain">
-        <div class="line">
-          选择字体颜色
-        </div>
-        <div class="line">
-          <button
-            v-for="item of siyuanColorList"
-            :key="item"
-            class="color__square"
-            data-type="color"
-            :style="`color:${item}`"
-            @click="setColor(item)"
-          >
-            A
-          </button>
-        </div>
-        <div class="line">
-          选择背景色
-        </div>
-        <div class="line">
-          <button
-            v-for="item of siyuanBgColorList"
-            :key="item"
-            class="color__square"
-            data-type="backgroundColor"
-            :style="`background-color:${item}`"
-            @click="setBgColor(item)"
-          >
-          </button>
-        </div>
-        <div class="line">
-          选择字体大小
-        </div>
-        <div class="line">
-          <a-select
-            v-model="currentFontSize"
-            :style="{
-              width: '100%',
-            }"
-          >
-            <a-option
-              v-for="fontSize of fontSizeList"
-              :key="fontSize"
-              :value="fontSize"
-              :label="fontSize"
-            />
-          </a-select>
-        </div>
-        <div class="line">
-          当前选择的效果
-        </div>
-        <div class="line">
-          <span
-            class="color__square"
-            :style="{
-              backgroundColor: currentBgColor,
-              color: currentColor,
-              fontSize: currentFontSize,
-              width: currentFontSize || undefined,
-              height: currentFontSize || undefined,
-            }"
-          >
-            A
-          </span>
-          <a-button
-            type="primary"
-            size="mini"
-            @click="createCommand"
-          >
-            添加样式快捷键
-          </a-button>
-          <a-button
-            size="mini"
-            @click="clearCurrentFontStyle"
-          >
-            清除样式
-          </a-button>
-        </div>
-        <template v-if="configgedFontStyleList.length">
-          <div class="line">
-            当前已设置的颜色列表（点击删除）
-          </div>
-          <div
-            class="line"
-            style="
-              align-items: flex-end;
-            "
-          >
-            <button
-              v-for="item of configgedFontStyleList"
-              :key="item.key"
-              class="color__square"
-              :style="{
-                backgroundColor: item.bgColor,
-                color: item.color,
-                fontSize: item.fontSize,
-                width: item.fontSize || undefined,
-                height: item.fontSize || undefined,
-              }"
-              @click="removeConfiggedFont(item)"
-            >
-              A
-            </button>
-          </div>
-
-          <div class="line">
-            请重新打开 设置 - 快捷键 页面，进行快捷键的设置
-          </div>
-        </template>
-      </div>
+      <div ref="EnFontModalContentAreaRef"></div>
 
       <template #footer>
       </template>
@@ -134,6 +153,11 @@
 <script lang="ts">
 import { usePlugin } from "@/main"
 import { useModule } from '@/modules/EnModuleControl/ModuleProvide'
+import {
+  EnModule,
+  isFree,
+} from '@/modules/Settings/EnSettings.vue'
+import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue'
 import {
   addCommand,
   removeCommand,
@@ -147,12 +171,8 @@ import {
   onBeforeUnmount,
   onMounted,
   ref,
-  watchEffect,
+  watch,
 } from "vue"
-import {
-  EnModule,
-  isFree,
-} from '../Settings/EnSettings.vue'
 
 export interface ICommandItem {
   key: string
@@ -214,6 +234,8 @@ export const fontSizeList = [
 const plugin = usePlugin()
 
 
+const EnFontModalContentAreaRef = ref()
+
 const parentDatasetKey = 'en_cmd_font_style'
 
 const colorCommandHTML = `
@@ -265,10 +287,11 @@ interface ISettingModuleOptions extends EnModule {
   configgedFontStyleList: ICommandItem[]
 }
 const {
+  module,
   moduleOptions,
 } = useModule<ISettingModuleOptions>('EnFont', {
   defaultData: {
-    enabled: false,
+    enabled: true,
     moduleName: 'EnFont',
     moduleDisplayName: '字体样式快捷键',
 
@@ -352,7 +375,7 @@ const removeConfiggedFont = (item: ICommandItem) => {
   moduleOptions.value.configgedFontStyleList = configgedFontStyleList.value.filter((i) => i.key !== item.key)
 }
 
-watchEffect(() => {
+watch(() => configgedFontStyleList.value, () => {
   addCommandsByList()
 })
 
@@ -379,16 +402,18 @@ const createCommand = () => {
     bgColor,
     fontSize,
   })
+  moduleOptions.value.configgedFontStyleList = [...configgedFontStyleList.value]
 }
 
 const switchModalVisibleStatus = () => {
   modalVisible.value = !modalVisible.value
 }
 
-const handleClickStyle = (event) => {
+const handleClickStyle = (event: MouseEvent) => {
   const target = event.target as HTMLElement
   if (target?.parentElement) {
     if (parentDatasetKey in target.parentElement.dataset) {
+      event.stopImmediatePropagation()
       switchModalVisibleStatus()
     }
   }

@@ -34,13 +34,13 @@ function sortCommandKeys() {
       return aIndex - bIndex
     }
 
-    // 如果 a 没有记录顺序，则 a 排在 b 后面
-    if (aIndex === -1) {
+    // // 如果 a 没有记录顺序，则 a 排在 b 后面
+    if (aIndex === -1 && bIndex !== -1) {
       return 1
     }
     // 如果 b 没有记录顺序，则 b 排在 a 后面
-    if (bIndex === -1) {
-      return 1
+    if (bIndex === -1 && aIndex !== -1) {
+      return -1
     }
 
     // 如果都没有记录顺序，则按照字符串顺序排序
@@ -66,34 +66,32 @@ export function addCommand(command: ICommand) {
   if (!existInKeyList) {
     // 记录当前 command 的 key
     commandsKeyList.push(command.langKey)
-
-    sortCommandKeys()
-
-    plugin.addCommand(command)
-
-    const temp = plugin.commands
-    temp.push(command)
-
-    const result = []
-    plugin.commands = []
-
-    sortCommandKeys()
-
-    // 根据已经存储的 command 列表，从已经注册的 command 中，找到对应的 cmd 存储下来
-    commandsKeyList.forEach((key) => {
-      const targetCmd = temp.find((cmd) => cmd.langKey === key)
-      if (targetCmd) {
-        // 防止显示 undefined
-        targetCmd.hotkey = targetCmd.hotkey || ''
-        // 防止显示 undefined
-        targetCmd.customHotkey = targetCmd.customHotkey || ''
-        result.push(targetCmd)
-      }
-    })
-
-    // 更新插件的 commands
-    plugin.commands = result
   }
+
+  plugin.addCommand(command)
+
+  const temp = plugin.commands
+  temp.push(command)
+
+  const result = []
+  plugin.commands = []
+
+
+  sortCommandKeys()
+  // 根据已经存储的 command 列表，从已经注册的 command 中，找到对应的 cmd 存储下来
+  commandsKeyList.forEach((key) => {
+    const targetCmd = temp.find((cmd) => cmd.langKey === key)
+    if (targetCmd) {
+      // 防止显示 undefined
+      targetCmd.hotkey = targetCmd.hotkey || ''
+      // 防止显示 undefined
+      targetCmd.customHotkey = targetCmd.customHotkey || ''
+      result.push(targetCmd)
+    }
+  })
+
+  // 更新插件的 commands
+  plugin.commands = result
 }
 
 export function removeCommand(command: ICommand) {
