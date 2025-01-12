@@ -219,15 +219,35 @@ export const initWebsocket = () => {
 
     socket.onopen = () => {
       enSuccess('Sync Data Websocket Channel Ready.')
+      connecting = false
+
       resolve(socketRef.value)
     }
 
     socket.onmessage = getSyncDataByWebSocket
 
     socket.onerror = function () {
+      connecting = false
+
       initWebsocket()
     }
   })
+}
+
+export const closeWebsocket = () => {
+  if (socketIsOpen()) {
+    if (socketRef.value) {
+      socketRef.value.onopen = null
+      socketRef.value.onmessage = null
+      socketRef.value.onerror = null
+      socketRef.value.onclose = null
+
+      socketRef.value.close()
+      socketRef.value = null
+
+      connecting = false
+    }
+  }
 }
 
 // #endregion socket logics

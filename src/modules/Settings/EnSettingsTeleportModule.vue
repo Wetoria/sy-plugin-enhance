@@ -74,6 +74,8 @@ const props = defineProps<{
   authLevel?: number | string
 }>()
 
+const emit = defineEmits(['moduleEnabled', 'moduleDisabled'])
+
 const hasAuth = useAuthLevel(props.authLevel)
 
 const slots = useSlots()
@@ -120,6 +122,16 @@ const resetModule = () => {
   resetFlag = true
   resetModuleOptions(module)
 }
+
+watch(() => moduleData.value.enabled, (enabled) => {
+  if (enabled) {
+    emit('moduleEnabled')
+  } else {
+    emit('moduleDisabled')
+  }
+  // 不需要 immediate
+  // 首次数据是临时全局变量，等数据加载完毕后，会重新触发，刚好就是首次需要的状态
+})
 
 onMounted(() => {
   /**

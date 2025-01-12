@@ -9,6 +9,7 @@ import {
   loadSettings,
 } from '@/modules/Settings/EnSettings.vue'
 import {
+  closeWebsocket,
   initWebsocket,
   loadModuleDataByNamespace,
 
@@ -16,6 +17,7 @@ import {
 } from '@/utils/SyncData'
 import {
   computed,
+  onBeforeUnmount,
   onMounted,
 
   ref,
@@ -39,6 +41,12 @@ watchEffect(() => {
   }
 })
 
+const unmarkAll = () => {
+  wsInited.value = false
+  settingsLoaded.value = false
+  moduleDataLoaded.value = false
+}
+
 const autoLoadModuledata = async () => {
   const namespaces = Object.keys(syncDataRefMap)
   const needLoadNamespaces = namespaces.filter((namespace) => {
@@ -46,6 +54,10 @@ const autoLoadModuledata = async () => {
     return module.autoLoad && !module.loaded && module.needSave
   })
   enLog('needLoadNamespaces', needLoadNamespaces)
+  if (!needLoadNamespaces.length) {
+    moduleDataLoaded.value = true
+    return
+  }
   await Promise.all(needLoadNamespaces.map((namespace) => loadModuleDataByNamespace(namespace)))
   moduleDataLoaded.value = true
 }
@@ -58,6 +70,10 @@ onMounted(() => {
     settingsLoaded.value = true
   })
   autoLoadModuledata()
+})
+onBeforeUnmount(() => {
+  closeWebsocket()
+  unmarkAll()
 })
 
 

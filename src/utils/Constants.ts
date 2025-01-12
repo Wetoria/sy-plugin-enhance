@@ -1,5 +1,8 @@
 /* eslint-disable perfectionist/sort-enums */
 export enum EN_CONSTANTS {
+  EN_PLUGIN_SWITCH = 'En_Plugin_Switch',
+  EN_PLUGIN_SWITCH_DISPLAY = '开/关插件',
+
   BACKGROUND_IMG = 'EnBackgroundImg',
   BACKGROUND_IMG_DISPLAY = '背景图',
 
@@ -39,6 +42,8 @@ export enum EN_CONSTANTS {
 }
 
 export enum EN_COMMAND_KEYS {
+  EN_PLUGIN_SWITCH = EN_CONSTANTS.EN_PLUGIN_SWITCH,
+
   EN_OPEN_QUICK_NOTE = EN_CONSTANTS.CMD_KEY_EN_OPEN_QUICK_NOTE,
 }
 

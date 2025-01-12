@@ -1,7 +1,7 @@
 <template>
   <!-- 只用来控制模块的导入 -->
   <!-- 数据加载在 ModuleDataProvider 中 -->
-  <ModuleDataProvider>
+  <ModuleDataProvider v-if="moduleEnabled">
     <!-- 全平台 -->
     <!-- 这里的顺序，决定了设置中的模块显示顺序 -->
     <EnSettings />
@@ -55,14 +55,32 @@ import EnSettings, {
 } from '@/modules/Settings/EnSettings.vue'
 import TemplateEntry from '@/modules/Templates/TemplateEntry.vue'
 import EnVideoAndAudio from '@/modules/VideoAndAudio/EnVideoAndAudio.vue'
+import { addCommand } from '@/utils/Commands'
+import {
+  EN_COMMAND_KEYS,
+  EN_CONSTANTS,
+} from '@/utils/Constants'
 
 import {
+  onMounted,
   ref,
 } from 'vue'
 
 const plugin = usePlugin()
 
 const isInEnWindow = ref(isInWindow('QuickNote') || isInWindow('EnVideoAndAudio'))
+
+const moduleEnabled = ref(true)
+onMounted(() => {
+  addCommand({
+    langKey: EN_COMMAND_KEYS.EN_PLUGIN_SWITCH,
+    langText: EN_CONSTANTS.EN_PLUGIN_SWITCH_DISPLAY,
+    hotkey: "",
+    callback: () => {
+      moduleEnabled.value = !moduleEnabled.value
+    },
+  })
+})
 </script>
 
 <style lang="scss" scoped>

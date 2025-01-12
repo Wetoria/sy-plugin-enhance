@@ -1,9 +1,11 @@
 import { usePlugin } from '@/main'
+import { EN_COMMAND_KEYS } from '@/utils/Constants'
 import { ICommand } from 'siyuan'
 
 const commandsKeyList: string[] = []
 
 const commandOrder = [
+  EN_COMMAND_KEYS.EN_PLUGIN_SWITCH,
   'En_OpenSettings',
 
   'En_OpenQuickNote',
