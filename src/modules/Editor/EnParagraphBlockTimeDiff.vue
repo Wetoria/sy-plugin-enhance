@@ -3,6 +3,7 @@
     position="top"
     auto-fit-position
     :unmount-on-close="false"
+    popupContainer="#SyEnhancerAppDisplayArea"
   >
     <div class="TimeDiffTriggerContainer">
       <span class="TimeDiff">

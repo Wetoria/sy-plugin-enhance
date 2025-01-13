@@ -7,13 +7,18 @@
       class="SyEnhancerApp"
     >
       <ArcoTheme />
-      <div class="displayArea">
+      <div
+        id="SyEnhancerAppDisplayArea"
+        class="displayArea"
+      >
         <TestLogic />
       </div>
-      <div class="hiddenArea">
+      <div
+        id="SyEnhancerAppHiddenArea"
+        class="hiddenArea"
+      >
 
       </div>
-
       <ModuleControl />
 
       <!-- <FixedDocArea v-if="!plugin.isMobile" /> -->
