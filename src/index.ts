@@ -11,7 +11,6 @@ import {
   Plugin,
 } from "siyuan"
 
-import { openSettings } from './modules/Settings/EnSettings.vue'
 import { SyFrontendTypes } from './utils/Siyuan'
 
 
@@ -48,7 +47,7 @@ export default class EnhancePlugin extends Plugin {
       location.href.includes('127.0.0.1')
       || location.href.includes('localhost')
     this.isInWindow = location.href.includes('window.html')
-    enLog('require is ', require)
+
     try {
       require("@electron/remote")
         .require("@electron/remote/main")
@@ -65,6 +64,6 @@ export default class EnhancePlugin extends Plugin {
   }
 
   openSetting() {
-    openSettings()
+    window.SEP_GLOBAL?.globalFunc?.openSettings?.()
   }
 }
