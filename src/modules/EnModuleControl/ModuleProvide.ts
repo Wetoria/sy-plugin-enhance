@@ -15,8 +15,6 @@ import {
   onMounted,
 } from 'vue'
 
-window.en_plugin_global = {}
-
 export interface GlobalData<T> {
   module: EnSyncModuleDataRef<T>
   moduleOptions: ComputedRef<T>

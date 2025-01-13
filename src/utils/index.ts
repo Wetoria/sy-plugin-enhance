@@ -1,66 +1,9 @@
-import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import dayjs from 'dayjs'
 import {
-  App,
-  createApp,
   onMounted,
   ref,
 } from 'vue'
 
-let mountedVueDoms = []
-
-export const mountedVueMap = new WeakMap<HTMLDivElement, App>()
-function saveDom(div, app) {
-  mountedVueMap.set(div, app)
-  mountedVueDoms.push(div)
-}
-
-export function clearAllVueComponents() {
-  const list = [...mountedVueDoms]
-  list.forEach((div) => {
-    unmout(div)
-    mountedVueMap.delete(div)
-  })
-  mountedVueDoms = []
-}
-
-export function loadComponentAppendToBody(component) {
-  const div = document.createElement('div')
-  div.id = 'enApp'
-  const app = createApp(component)
-  app.mount(div)
-  app.component('SyIcon', SyIcon)
-  document.body.appendChild(div)
-  saveDom(div, app)
-  return div
-}
-
-
-export function unmout(div: HTMLDivElement) {
-  if (mountedVueMap.has(div)) {
-    const temp = mountedVueMap.get(div)
-    temp.unmount()
-    mountedVueMap.delete(div)
-    mountedVueDoms = mountedVueDoms.filter((i) => i != div)
-  }
-}
-
-export function getDomByVueComponent(component, options = {
-  props: {},
-}) {
-  const div = document.createElement('div')
-  const {
-    // useArco
-    props = {},
-  } = options
-  const app = createApp(component, props)
-  // if (useArco) {
-  //   app.use(ArcoVue);
-  // }
-  app.mount(div)
-  saveDom(div, app)
-  return div
-}
 
 let flag
 let registered = false
@@ -126,20 +69,6 @@ export function recursionTreeCanBreakChildren(
     }
     recursionTree(node.children, node, callback)
   })
-}
-
-export function reomveDuplicated(
-  list,
-  compare = (cur, itemInResult) => (cur.id === itemInResult.id),
-) {
-  const result = []
-  list.forEach((item) => {
-    const exist = result.find((i) => compare(i, item))
-    if (!exist) {
-      result.push(item)
-    }
-  })
-  return result
 }
 
 export function debounce(fn, time = 500) {

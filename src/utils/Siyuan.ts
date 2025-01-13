@@ -360,7 +360,7 @@ export function getCreatedByDataset(id: string) {
 }
 
 const currentProtyle = ref<IProtyle>()
-window.en_plugin_global.currentProtyle = currentProtyle
+window.SEP_GLOBAL.currentProtyle = currentProtyle
 let recorded = false
 
 export function useCurrentProtyle() {

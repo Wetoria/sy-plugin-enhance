@@ -1,25 +1,29 @@
-import PluginInfoString from '@/../plugin.json?raw'
+
+import '@/utils/GlobalModule'
+import PluginInfoString from '@/../plugin.json'
+import '@/utils/Log'
+import {
+  destroy,
+  init,
+} from './main'
 import {
   getFrontend,
   Plugin,
 } from "siyuan"
 
-import {
-  destroy,
-  init,
-} from './main'
 import { openSettings } from './modules/Settings/EnSettings.vue'
 import { SyFrontendTypes } from './utils/Siyuan'
-import '@/utils/Log'
+
 
 let PluginInfo = {
   version: '',
 }
 try {
-  PluginInfo = JSON.parse(PluginInfoString)
+  PluginInfo = PluginInfoString
 } catch (err) {
   console.log('err is ', err)
 }
+window.SEP_GLOBAL.PluginInfo = PluginInfo
 const {
   version,
 } = PluginInfo
@@ -35,7 +39,6 @@ export default class EnhancePlugin extends Plugin {
   declare readonly i18n: I18nType
 
   async onload() {
-    enSuccess(`Plugin script loaded, ready to init plugin logics`)
     const frontEnd = getFrontend()
     this.platform = frontEnd as SyFrontendTypes
     this.isMobile = frontEnd === "mobile" || frontEnd === "browser-mobile"

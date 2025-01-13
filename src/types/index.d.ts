@@ -130,9 +130,7 @@ interface Window {
   enError: typeof console.error
   enSuccess: typeof console.log
 
-  en_SyncDataRefMap: Ref<EnSyncDataRefMap>
-  en_plugin: VPlugin
-  en_plugin_global: {
+  SEP_GLOBAL: {
     [key: string]: any
   }
 }

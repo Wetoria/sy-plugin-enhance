@@ -166,7 +166,7 @@ export const whiteBoardRef: {
 }
 export const whiteBoardConfigList = computed<ConfigList>(() => whiteBoardRef.configList.value)
 
-window.en_plugin_global.whiteBoardRef = whiteBoardRef
+window.SEP_GLOBAL.whiteBoardRef = whiteBoardRef
 
 
 export function getWhiteBoardListBySearchValue(searchValue: string) {

@@ -97,8 +97,6 @@ interface EnSyncDataRefMap {
   [key: string]: EnSyncModule<any>
 }
 export const syncDataRefMap: EnSyncDataRefMap = {}
-window.en_SyncDataRefMap = syncDataRefMap
-
 
 
 export const markAsDoNotSave = (namespace: string, value = true) => {

@@ -1,42 +1,32 @@
-import { reactive } from 'vue'
+
+import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
+import {
+  createApp,
+  reactive,
+} from 'vue'
 
 import VPlugin from '.'
 import AppVue from './App.vue'
 
-import {
-  loadModuleData_EnVideoAndAudioBlockPlay,
-} from './modules/VideoAndAudio/EnVideoAndAudioBlockPlay.vue'
-import {
-  clearAllVueComponents,
-  loadComponentAppendToBody,
-} from './utils'
-import { registerProtyleBottomArea } from './utils/DOM'
-
-let pluginRef: VPlugin = null
-export function registerPlugin(plugin) {
-  pluginRef = reactive(plugin)
-
-  window.en_plugin = pluginRef
-}
 export function usePlugin() {
-  return pluginRef
+  return window.SEP_GLOBAL.pluginRef
 }
 
+let app = null
 function loadVueApp() {
-  loadComponentAppendToBody(AppVue)
-}
-
-async function loadModuleDataBeforeApp() {
-  await loadModuleData_EnVideoAndAudioBlockPlay()
+  const div = document.createElement('div')
+  div.id = 'enApp'
+  app = createApp(AppVue)
+  app.mount(div)
+  app.component('SyIcon', SyIcon)
+  document.body.appendChild(div)
 }
 
 export async function init(plugin: VPlugin) {
-  registerPlugin(plugin)
-  await loadModuleDataBeforeApp()
+  window.SEP_GLOBAL.pluginRef = reactive(plugin)
   loadVueApp()
-  registerProtyleBottomArea()
 }
 
 export function destroy() {
-  clearAllVueComponents()
+  app?.unmount()
 }

@@ -22,6 +22,7 @@ export default antfu(
       'src/components/FixedDocArea.vue',
       'src/modules/Test/*',
       'src/utils/Siyuan/*',
+      'src/index.ts',
 
       'src/**/*.test.*',
     ],
