@@ -33,6 +33,7 @@ export default class EnhancePlugin extends Plugin {
   public isBrowser: boolean
   public isLocal: boolean
   public isElectron: boolean
+  public isInWindow: boolean
   public platform: SyFrontendTypes
   public readonly version = version
   // @ts-expect-error fix siyuan i18n type doesn't match
@@ -46,6 +47,7 @@ export default class EnhancePlugin extends Plugin {
     this.isLocal =
       location.href.includes('127.0.0.1')
       || location.href.includes('localhost')
+    this.isInWindow = location.href.includes('window.html')
     enLog('require is ', require)
     try {
       require("@electron/remote")
