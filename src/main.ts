@@ -17,8 +17,8 @@ function loadVueApp() {
   const div = document.createElement('div')
   div.id = 'enApp'
   app = createApp(AppVue)
-  app.mount(div)
   app.component('SyIcon', SyIcon)
+  app.mount(div)
   document.body.appendChild(div)
 }
 
