@@ -46,6 +46,7 @@ import { useGlobalData } from '@/modules/EnModuleControl/ModuleProvide'
 import EnWindow, { isInWindow } from '@/modules/EnWindow.vue'
 import { addCommand } from '@/utils/Commands'
 import { EN_CONSTANTS } from '@/utils/Constants'
+import dayjs from 'dayjs'
 import { Protyle } from 'siyuan'
 import {
   computed,
@@ -103,16 +104,18 @@ const onAfterRender = (protyle) => {
   protyleRef.value = protyle
 }
 
-const destoryProtyle = () => {
+const destoryProtyle = async () => {
   if (!protyleRef.value) {
     return
   }
   const protyle = protyleRef.value.protyle
+  // 如果没有编辑过，则删除一键记事中的块
+  // IMP 看后续有没有需求，比如输入过再清空的情况下，这种时候会保留下来。
   if (!protyle.updated && currentBlockId.value) {
-    deleteBlock(currentBlockId.value)
+    await deleteBlock(currentBlockId.value)
+    protyleRef.value?.destroy()
+    currentBlockId.value = ''
   }
-  protyleRef.value?.destroy()
-  currentBlockId.value = ''
 }
 
 // #endregion 在打开的窗口中
@@ -145,16 +148,25 @@ onMounted(() => {
   } else {
     const winRef = enWinRef.value.getWin()
     let unwatchFunc = null
+    let lastHideTime = null
     winRef.on('show', () => {
-      initProtyle()
+      if (!lastHideTime) {
+        initProtyle()
+      } else if (dayjs().diff(lastHideTime, 'seconds') > moduleOptions.value.newBlockDelay) {
+        initProtyle()
+      } else if (!currentBlockId.value) {
+        initProtyle()
+      }
       enLog('quick note show')
       unwatchFunc = watch(selectedNotebookId, () => {
-        destoryProtyle()
-        initProtyle()
+        destoryProtyle().then(() => {
+          initProtyle()
+        })
       })
     })
 
     winRef.on('hide', () => {
+      lastHideTime = dayjs()
       destoryProtyle()
       enLog('quick note hide')
       if (unwatchFunc) {

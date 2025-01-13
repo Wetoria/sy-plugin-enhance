@@ -24,6 +24,29 @@
         />
       </template>
     </EnSettingsItem>
+    <EnSettingsItem mode="vertical">
+      <div>
+        一键记事创建新块的延时
+      </div>
+      <template #desc>
+        <div>
+          一键记事关闭窗口后，重新创建块的延迟时间。单位：秒。
+        </div>
+        <div>
+          应用场景：比如关闭了一键记事以后，突然又想追加内容，在延时时间内，不会创建新块，可继续编写之前的内容。
+        </div>
+      </template>
+      <template #opt>
+        <a-input-number
+          v-model="moduleOptions.newBlockDelay"
+          placeholder="Please Enter"
+          mode="button"
+          :readOnly="plugin.isMobile"
+          :step="1"
+          :min="1"
+        />
+      </template>
+    </EnSettingsItem>
   </EnSettingsTeleportModule>
 
   <!-- 一键记事 -->
@@ -152,6 +175,7 @@ export async function updateOpenedNotebookList() {
 
 interface ISettingModuleOptions extends EnModule {
   dailyNoteNotebookId: string
+  newBlockDelay: number
 }
 
 const {
@@ -164,6 +188,7 @@ const {
     moduleDisplayName: EN_CONSTANTS.DAILY_NOTE_DISPLAY,
 
     dailyNoteNotebookId: '',
+    newBlockDelay: 5,
   },
 })
 
