@@ -12,6 +12,7 @@ import {
 } from "siyuan"
 
 import { SyFrontendTypes } from './utils/Siyuan'
+import { openSettings } from '@/modules/Settings/Settings'
 
 
 let PluginInfo = {
@@ -22,7 +23,6 @@ try {
 } catch (err) {
   console.log('err is ', err)
 }
-window.SEP_GLOBAL.PluginInfo = PluginInfo
 const {
   version,
 } = PluginInfo
@@ -64,6 +64,6 @@ export default class EnhancePlugin extends Plugin {
   }
 
   openSetting() {
-    window.SEP_GLOBAL?.globalFunc?.openSettings?.()
+    openSettings()
   }
 }

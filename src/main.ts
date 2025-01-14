@@ -8,7 +8,7 @@ import {
 import VPlugin from '.'
 import AppVue from './App.vue'
 
-export function usePlugin() {
+export function usePlugin(): VPlugin {
   return window.SEP_GLOBAL.pluginRef
 }
 

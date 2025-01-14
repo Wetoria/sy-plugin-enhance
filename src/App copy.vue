@@ -6,18 +6,14 @@
       id="SyEnhancerApp"
       class="SyEnhancerApp"
     >
-      <div
-        id="SyEnhancerAppDisplayArea"
-        class="displayArea"
-      >
+      <ArcoTheme />
+      <div class="displayArea">
+        <TestLogic />
+      </div>
+      <div class="hiddenArea">
 
       </div>
-      <div
-        id="SyEnhancerAppHiddenArea"
-        class="hiddenArea"
-      >
 
-      </div>
       <ModuleControl />
 
       <!-- <FixedDocArea v-if="!plugin.isMobile" /> -->
@@ -26,11 +22,74 @@
 </template>
 
 <script setup lang="ts">
-import ModuleControl from '@/modules/EnModuleControl/ModuleControl.vue'
+import { request } from '@/api'
+import { usePlugin } from '@/main'
 
+import ArcoTheme from '@/modules/ArcoTheme.vue'
+import { getCurrentDocTitleDomByDom } from '@/modules/DailyNote/DailyNote.vue'
+import ModuleControl from '@/modules/EnModuleControl/ModuleControl.vue'
+import TestLogic from '@/modules/Test/TestLogic.vue'
+
+import { moduleEnableStatusSwitcher } from '@/utils'
 import { registerGlobalObserver } from '@/utils/DOM'
 
+import {
+  Protyle,
+  showMessage,
+} from 'siyuan'
+import {
+  onMounted,
+  watchEffect,
+} from 'vue'
+
+const plugin = usePlugin()
+
+watchEffect(() => {
+  moduleEnableStatusSwitcher('EnhancerIsMobile', plugin.isMobile)
+})
 registerGlobalObserver()
+
+onMounted(() => {
+  const searchParams = {
+    id: '',
+    k: '',
+    sort: '3',
+    mk: '',
+    mSort: '3',
+  }
+  plugin.protyleSlash.push({
+    filter: [
+      '插入当前反链 MOC',
+      'insert current moc',
+    ],
+    html: `<div class="b3-list-item__first"><span class="b3-list-item__text">${'插入当前反链 MOC'}</span></div>`,
+    id: 'enInsertMocCurrent',
+    callback(protyle: Protyle) {
+      const titleDom = getCurrentDocTitleDomByDom(protyle.protyle.contentElement)
+      if (!titleDom) {
+        return
+      }
+
+      searchParams.id = titleDom.dataset.nodeId
+      request('/api/ref/getBacklink2', searchParams).then((res) => {
+        const {
+          backlinks,
+        } = res
+        if (!backlinks.length) {
+          showMessage('当前文档暂无反链')
+          return
+        }
+
+        const insertMD = []
+        backlinks.forEach((backlink) => {
+          insertMD.push(`- [${backlink.name}](siyuan://blocks/${backlink.id})`)
+        })
+        const result = insertMD.join('\n')
+        protyle.insert(result)
+      })
+    },
+  })
+})
 </script>
 
 <style lang="scss">

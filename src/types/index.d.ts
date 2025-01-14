@@ -131,7 +131,12 @@ interface Window {
   enSuccess: typeof console.log
 
   SEP_GLOBAL: {
-    [key: string]: any
+    functions: {
+      [key: string]: (...args: any[]) => any
+    }
+    pluginRef: any
+    topBarEntryRef: HTMLElement
+    currentProtyle: Ref<IProtyle>
   }
 }
 

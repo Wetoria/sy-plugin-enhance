@@ -117,53 +117,26 @@
 <script lang="ts">
 import { request } from '@/api'
 import EnIconDragon from '@/components/EnIconDragon.vue'
-import { useSyncModuleData } from '@/utils/SyncData'
+import { useSettings } from '@/modules/Settings/EnSettings.vue'
+import { EN_CONSTANTS } from '@/utils/Constants'
 import { Notification } from '@arco-design/web-vue'
 import dayjs from 'dayjs'
 import {
   computed,
+  ComputedRef,
+  inject,
   onMounted,
   ref,
   watch,
 } from 'vue'
-import { useSettings } from './EnSettings.vue'
-
-interface EnAuth {
-  lv: number
-  expiration: string | number | null
-}
-
-const authModule = useSyncModuleData<EnAuth>({
-  namespace: 'EnSettingsAuth',
-  defaultData: {
-    lv: 0,
-    expiration: null,
-  },
-  needSave: false,
-})
-
-export const authModuleData = computed(() => {
-  return authModule.value.data
-})
-
-export const lv = (level: number) => {
-  const settings = useSettings()
-  return authModuleData.value.lv >= level || settings.value.v >= 1
-}
-
-export const useAuthLevel = (level: number | string) => {
-  const settings = useSettings()
-  const hasAuth = computed(() => {
-    return !level || authModuleData.value.lv >= Number(level) || settings.value.v >= 1
-  })
-  return hasAuth
-}
 </script>
 
 <script setup lang="ts">
 
 
 const settings = useSettings()
+
+const authModuleData = inject(EN_CONSTANTS.AUTH) as ComputedRef<EnAuth>
 
 const isPermanent = computed(() => {
   return settings.value.v && settings.value.v >= 1
@@ -262,10 +235,10 @@ const updateAuthSubscription = async (showMessage = true) => {
       v: number
       e: string
     }
-    authModule.value.data = {
+    Object.assign(authModuleData.value, {
       lv: respData.v,
       expiration: respData.e,
-    }
+    })
     if (showMessage) {
       Notification.success({
         content: `叶归｜更新订阅状态成功. 当前版本：${levelLabel.value}. 有效期至：${expiration.value}`,

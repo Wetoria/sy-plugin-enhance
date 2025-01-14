@@ -55,13 +55,14 @@ import {
   EnModule,
   EnSettingModule,
   resetModuleOptions,
-  useSettingModuleData,
 } from '@/modules/Settings/EnSettings.vue'
-import { useAuthLevel } from '@/modules/Settings/EnSettingsAuth.vue'
 import EnSettingsItemAreaHeading from '@/modules/Settings/EnSettingsItemAreaHeading.vue'
 import EnSettingsTeleport from '@/modules/Settings/EnSettingsTeleport.vue'
+import { EN_MODULE_LIST } from '@/utils/Constants'
 import {
   computed,
+  ComputedRef,
+  inject,
   onMounted,
   onUnmounted,
   useSlots,
@@ -79,6 +80,9 @@ const props = defineProps<{
 
 const emit = defineEmits(['moduleEnabled', 'moduleDisabled'])
 
+const authData = inject(EN_MODULE_LIST.AUTH)
+console.log('authData is ', authData)
+const useAuthLevel = inject('useAuthLevel') as (level: any) => ComputedRef<boolean>
 const hasAuth = useAuthLevel(props.authLevel)
 
 const slots = useSlots()
@@ -87,7 +91,7 @@ const hasFooterSlot = computed(() => {
 })
 
 const module = computed(() => props.module)
-const moduleData = useSettingModuleData(props.name)
+const moduleData = computed(() => module.value.data)
 const moduleBooleanOptionKeys = computed(() => {
   return Object.keys(moduleData.value || {})
     .filter((key) => typeof moduleData.value[key] === 'boolean')

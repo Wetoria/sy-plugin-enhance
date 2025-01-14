@@ -1,10 +1,11 @@
 <template>
 
   <EnDrawer
-    v-model:visible="editingSettings"
+    v-model:visible="settingsVisible"
     class="enSettingDrawer"
+    footer
     :scrollTarget="enSettingsMainContentRef"
-    @cancel="closeSettings"
+    @cancel="closeSettingsPanel"
   >
     <template #title>
       <div class="enSettingsTitle row flexCenter">
@@ -14,7 +15,7 @@
         >
           {{ plugin.i18n.pluginName }}
         </div>
-        <EnSettingsAuth />
+        <!-- <EnSettingsAuth /> -->
       </div>
     </template>
 
@@ -78,377 +79,59 @@
   </EnDrawer>
 </template>
 
-
-<script lang="ts">
-
+<script setup lang="ts">
 import EnDivider from '@/components/EnDivider.vue'
 import EnDrawer from '@/components/EnDrawer.vue'
 import { usePlugin } from '@/main'
-import { moduleOrder } from '@/modules/EnModuleControl/ModuleProvide'
+
+
 import {
-  debounce,
-  moduleEnableStatusSwitcher,
-} from '@/utils'
-import { addCommand } from '@/utils/Commands'
-import { EN_MODULE_LIST } from '@/utils/Constants'
-import { onCountClick } from '@/utils/DOM'
-import { getColorStringError } from '@/utils/Log'
+  closeSettingsPanel,
+  enSettingsMainContentRef,
+  settingsVisible,
+  switchSettingsDisplay,
+  useDebugSwitcher,
+} from '@/modules/Settings/Settings'
+
 import {
-  EnSyncModuleData,
-  EnSyncModuleDataRef,
-  getModuleRefByNamespace,
-  loadModuleDataByNamespace,
-  useSyncModuleData,
-} from '@/utils/SyncData'
+  currentModuleIndex,
+  onSelectModule,
+  onSettingListScroll,
+  resetAllModule,
+  settingModulesList,
+  settingRefKeysSorted,
+  settingsRefMap,
+} from '@/modules/Settings/SettingsModuleControl'
+
+
 import {
-  computed,
-  ComputedRef,
+  addCommand,
+  removeCommand,
+} from '@/utils/Commands'
+import {
+  onBeforeUnmount,
   onMounted,
-  ref,
-  watch,
-  watchEffect,
 } from 'vue'
-import EnSettingsAuth, { authModuleData } from './EnSettingsAuth.vue'
-
-interface EnSettings {
-  isDebugging: boolean
-  v: 0 | 1 | 2
-  l: 0 | 1 | 2
-
-  boxId: string
-
-  modules: {
-    [module: string]: boolean
-  }
-}
-
-const defaultSettings: EnSettings = {
-  isDebugging: false,
-  v: 0,
-  l: 0,
-
-  boxId: '',
-
-  modules: {},
-}
-
-const namespace = 'EnSettings'
-
-const syncSettings = useSyncModuleData({
-  namespace,
-  defaultData: defaultSettings,
-})
-const settings = computed(() => syncSettings.value.data)
-
-
-export function useSettings() {
-  return settings
-}
-
-export const switchID = (time) => {
-  let v = settings.value.v
-  if (time >= 11 && time < 20) {
-    v = v > 0 ? 0 : 1
-  } else if (time >= 20) {
-    v = 2
-  }
-  settings.value.l = settings.value.v
-  settings.value.v = v
-}
-export const isFree = computed(() => {
-  return authModuleData.value.lv === 0 && settings.value.v === 0
-})
-export const isNotFree = computed(() => !isFree.value)
-
-export const isPro = computed(() => settings.value.v === 1 || authModuleData.value.lv === 1)
-export const isVip = computed(() => {
-  return settings.value.v === 2 || authModuleData.value.lv === 99
-})
-
-watchEffect(() => {
-  console.log('flag is ', isFree.value, isPro.value, isVip.value, isNotFree.value)
-})
-
-/**
- * 模块接口
- *
- * @field enabled - 模块是否启用
- * @field moduleName - 模块名称，用于标识模块，不可修改
- * @field moduleDisplayName - 模块在设置界面显示的名称，不可修改
- */
-export interface EnModule {
-  enabled: boolean
-  readonly moduleName: EN_MODULE_LIST | string
-  readonly moduleDisplayName: string
-  sort?: number
-}
-
-export interface EnModuleOptions<T extends EnModule> {
-  defaultData: T
-}
-
-export interface EnSettingModule<T extends EnModule>
-  extends EnSyncModuleData<T>
-{
-
-}
-export interface EnSettingModuleRef<T extends EnModule>
-  extends EnSyncModuleDataRef<T>
-{
-
-}
-
-
-export function useSettingModule<T extends EnModule>(
-  moduleName: string,
-  moduleOptions: EnModuleOptions<T> = {} as EnModuleOptions<T>,
-): EnSettingModuleRef<T> {
-  const {
-    defaultData,
-  } = moduleOptions
-
-  const module: EnSettingModuleRef<T> = useSyncModuleData<T>({
-    namespace: moduleName,
-    defaultData,
-  })
-
-  // const recorded = settings.value.modules[moduleName]
-  // if (!recorded) {
-  // }
-
-  return module
-}
-
-export function resetModuleOptions<T>(aModule: EnSyncModuleDataRef<T>) {
-  aModule.value.data = JSON.parse(JSON.stringify(aModule.value.defaultValue))
-}
-
-export interface EnSettingModuleDataRef<T extends EnModule> extends ComputedRef<T> {
-}
-
-export function useSettingModuleData<T extends EnModule>(moduleName: string): EnSettingModuleDataRef<T> {
-  const module = getModuleRefByNamespace<T>(moduleName)
-  const moduleData = computed(() => module.value.data)
-  return moduleData
-}
-
-export async function loadSettings() {
-  useSyncModuleData({
-    namespace,
-    defaultData: defaultSettings,
-  })
-  await loadModuleDataByNamespace(namespace)
-
-}
-
-const editingSettings = ref(false)
-
-const settingRefKeys = ref<string[]>([])
-const settingsRefMap = ref({})
-
-const settingRefKeysSorted = computed(() => {
-  const moduleKeys = settingRefKeys.value
-  enLog(getColorStringError('moduleKeys is'), moduleKeys)
-
-  moduleKeys.sort((a, b) => {
-    const aIndex = moduleOrder.findIndex((moduleName) => moduleName === a)
-    const bIndex = moduleOrder.findIndex((moduleName) => moduleName === b)
-    if (aIndex !== -1 && bIndex !== -1) {
-      return aIndex - bIndex
-    }
-    if (aIndex !== -1 && bIndex === -1) {
-      return -1
-    }
-    if (aIndex === -1 && bIndex !== -1) {
-      return 1
-    }
-    return 0
-  })
-
-  return moduleKeys
-})
-
-const settingModulesList = computed(() => {
-  return settingRefKeysSorted.value.map((moduleKey) => {
-    const moduleRef = getModuleRefByNamespace<EnModule>(moduleKey)
-    return moduleRef.value.data
-  })
-})
-
-const currentModuleIndex = ref(0)
-const changedByClick = ref(false)
-const onSelectModule = (index: number) => {
-  currentModuleIndex.value = index
-  const moduleInfo = settingModulesList.value[index]
-  const el = document.querySelector(`[data-en-setting-ref-module-name="${moduleInfo.moduleName}"]`) as HTMLDivElement
-  if (el) {
-    changedByClick.value = true
-    el.scrollIntoView({
-      behavior: 'smooth',
-    })
-  }
-}
-
-const triggerScrollEnd = debounce(() => {
-  enLog('scroll end')
-  changedByClick.value = false
-}, 300)
-
-const onSettingListScroll = (e: Event) => {
-  if (changedByClick.value) {
-    triggerScrollEnd()
-    return
-  }
-
-  const target = e.target as HTMLElement
-  const targetRect = target.getBoundingClientRect()
-
-  // 获取所有模块元素
-  const moduleElements = Array.from(document.querySelectorAll('[data-en-setting-ref-module-name]'))
-
-  // 找到当前在视口中最靠近顶部的模块
-  let closestModule = null
-  let minDistance = Infinity
-
-  moduleElements.forEach((el) => {
-    const rect = el.getBoundingClientRect()
-    const distance = Math.abs(rect.top - targetRect.top)
-
-    if (distance < minDistance) {
-      minDistance = distance
-      closestModule = el
-    }
-  })
-
-  if (closestModule) {
-    const moduleName = closestModule.getAttribute('data-en-setting-ref-module-name')
-    const moduleIndex = settingModulesList.value.findIndex((m) => m.moduleName === moduleName)
-    if (moduleIndex !== -1) {
-      currentModuleIndex.value = moduleIndex
-      const el = document.querySelector(`[data-en-setting-module-index="${moduleIndex}"]`) as HTMLDivElement
-      if (el) {
-        el.scrollIntoView({
-          behavior: 'auto',
-          block: 'nearest',
-        })
-      }
-    }
-  }
-}
-
-export function registerSettingRef(refName: string) {
-  const registered = settingRefKeys.value.includes(refName)
-  let settingRef = settingsRefMap.value[refName]
-  if (!registered) {
-    settingRef = ref()
-    settingRefKeys.value.push(refName)
-    settingsRefMap.value[refName] = settingRef
-  }
-
-  enSuccess('Setting Ref Registered', refName)
-  return settingRef
-}
-
-export function unregisterSettingRef(refName: string) {
-  settingRefKeys.value = settingRefKeys.value.filter((key) => {
-    if (key === refName) {
-      return false
-    }
-    return true
-  })
-  enSuccess('Setting Ref Unregistered', refName)
-}
-
-const switchSettingsDisplay = () => {
-  if (editingSettings.value) {
-    closeSettings()
-  } else {
-    openSettings()
-  }
-}
-
-export const openSettings = () => {
-  editingSettings.value = true
-}
-
-export const entryOpenSettings = onCountClick((time) => {
-  if (time >= 11) {
-    switchID(time)
-  } else {
-    openSettings()
-  }
-})
-
-export const closeSettings = () => {
-  editingSettings.value = false
-}
-
-
-export const useProWatcher = (props: {
-  onChange?: (enabled: boolean) => void
-  onEnabled?: () => void
-  onDisabled?: () => void
-}) => {
-  const {
-    onChange = () => {},
-    onEnabled = () => {},
-    onDisabled = () => {},
-  } = props
-
-  watch(() => settings.value.v, () => {
-    const lastEnabled = settings.value.l >= 1
-    const enabled = settings.value.v >= 1
-    if (lastEnabled === enabled) {
-      return
-    }
-    onChange(enabled)
-    if (enabled) {
-      onEnabled()
-    } else {
-      onDisabled()
-    }
-  }, {
-    immediate: true,
-  })
-}
-
-</script>
-
-<script setup lang="ts">
 
 const plugin = usePlugin()
 
-enSuccess('Settings Module Loaded')
 
-const enSettingsMainContentRef = ref(null)
-
-const onTitleClicked = onCountClick((count) => {
-  if (count >= 10) {
-    settings.value.isDebugging = !settings.value.isDebugging
-  }
-})
-
-watchEffect(() => {
-  moduleEnableStatusSwitcher('EnDebugging', settings.value.isDebugging)
-})
-
-const resetAllModule = () => {
-  settingRefKeys.value.forEach((moduleName) => {
-    const moduleRef = getModuleRefByNamespace(moduleName)
-    resetModuleOptions(moduleRef)
-  })
+const command = {
+  langKey: "En_OpenSettings",
+  langText: "打开设置",
+  hotkey: "",
+  callback: () => {
+    switchSettingsDisplay()
+  },
 }
-
 onMounted(() => {
-  addCommand({
-    langKey: "En_OpenSettings",
-    langText: "打开设置",
-    hotkey: "",
-    callback: () => {
-      switchSettingsDisplay()
-    },
-  })
+  addCommand(command)
 })
+onBeforeUnmount(() => {
+  removeCommand(command)
+})
+
+const { onTitleClicked } = useDebugSwitcher()
 </script>
 
 <style lang="scss" scoped>

@@ -4,17 +4,26 @@
 
 <script setup lang="ts">
 import { debounce } from '@/utils'
-import { onMounted } from 'vue'
+import {
+  onBeforeUnmount,
+  onMounted,
+} from 'vue'
 
+const handler = debounce(() => {
+  document.body.setAttribute('arco-theme', document.documentElement.dataset.themeMode)
+}, 100)
+
+let observer = null
 onMounted(() => {
-  const handler = () => {
-    document.body.setAttribute('arco-theme', document.documentElement.dataset.themeMode)
-  }
   handler()
-  const observer = new MutationObserver(debounce(handler, 100))
+  observer = new MutationObserver(handler)
   observer.observe(document.documentElement, {
     attributes: true,
   })
+})
+onBeforeUnmount(() => {
+  observer?.disconnect()
+  observer = null
 })
 </script>
 
