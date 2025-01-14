@@ -111,7 +111,6 @@ import EnColorPicker from '@/components/EnColorPicker.vue'
 import { useModule } from '@/modules/EnModuleControl/ModuleProvide'
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
 import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue'
-import { EnModule } from '../Settings/EnSettings.vue'
 import TemplateCornell from './TemplateCornell.vue'
 
 

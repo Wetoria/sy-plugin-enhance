@@ -18,14 +18,14 @@
       <!-- <EnVideoAndAudio v-if="isNotFree" /> -->
       <EnFormatBrush v-if="isNotFree" />
       <EnFont />
-      <!-- <TemplateEntry /> -->
-      <!-- <EnComment v-if="isNotFree && !isInEnWindow" /> -->
+      <TemplateEntry />
+      <EnModuleComment v-if="isNotFree && !isInEnWindow" />
       <!-- <EnModuleWhiteBoard /> -->
 
       <!-- 仅移动端 -->
       <template v-if="plugin.isMobile">
-        <!-- <EnPWA /> -->
-        <!-- <EnMobileNav /> -->
+        <EnPWA />
+        <EnMobileNav />
 
       </template>
 
@@ -40,13 +40,18 @@
 import { usePlugin } from '@/main'
 import ArcoTheme from '@/modules/ArcoTheme.vue'
 import EnBackgroundImg from '@/modules/Background/EnBackgroundImg.vue'
+import EnModuleComment from '@/modules/Editor/Comment/EnModuleComment.vue'
 import EnFont from '@/modules/Editor/EnFontStyle/EnFont.vue'
 import EnFormatBrush from '@/modules/EnFormatBrush/EnFormatBrush.vue'
+import EnMobileNav from '@/modules/EnMobileNav.vue'
 import ModuleDataProvider from '@/modules/EnModuleControl/ModuleDataProvider.vue'
 import EnOthers from '@/modules/EnOthers.vue'
+import EnPWA from '@/modules/EnPWA.vue'
 import EnSiyuanEntry from '@/modules/EnSiyuanEntry.vue'
+import { isInWindow } from '@/modules/EnWindow.vue'
 import EnModuleLifeLog from '@/modules/LifeLog/EnModuleLifeLog.vue'
 import EnSettings from '@/modules/Settings/EnSettings.vue'
+import TemplateEntry from '@/modules/Templates/TemplateEntry.vue'
 import { moduleEnableStatusSwitcher } from '@/utils'
 import {
   addCommand,
@@ -63,7 +68,7 @@ import {
   watchEffect,
 } from 'vue'
 
-// const isInEnWindow = ref(isInWindow('QuickNote') || isInWindow('EnVideoAndAudio'))
+const isInEnWindow = ref(isInWindow('QuickNote') || isInWindow('EnVideoAndAudio'))
 
 const moduleEnabled = ref(true)
 const enableCommand = {

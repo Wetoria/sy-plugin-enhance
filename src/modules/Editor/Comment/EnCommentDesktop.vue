@@ -109,7 +109,6 @@ import {
   useGlobalData,
   useModule,
 } from '@/modules/EnModuleControl/ModuleProvide'
-import { EnModule } from '@/modules/Settings/EnSettings.vue'
 import {
   debounce,
   generateShortUUID,

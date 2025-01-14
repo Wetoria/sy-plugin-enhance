@@ -159,7 +159,6 @@ import {
   useGlobalData,
   useModule,
 } from '@/modules/EnModuleControl/ModuleProvide'
-import { EnModule } from '@/modules/Settings/EnSettings.vue'
 import {
   debounce,
   generateShortUUID,
@@ -197,7 +196,6 @@ import {
 } from 'vue'
 
 const currentProtyle = useCurrentProtyle()
-window.en_currentProtyle = currentProtyle
 
 const lastClickedElement = ref(null)
 const currentClickedElement = ref(null)

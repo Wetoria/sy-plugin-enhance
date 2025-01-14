@@ -53,16 +53,14 @@
       </template>
     </EnSettingsItem>
   </EnSettingsTeleportModule>
-  <div
-    v-if="settings.isDebugging"
-    id="testv"
-  ></div>
 </template>
 
 <script setup lang="ts">
 import { usePlugin } from '@/main'
 import { useModule } from '@/modules/EnModuleControl/ModuleProvide'
 import { useEnhancer } from '@/modules/GlobalStatus'
+import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
+import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue'
 import {
   onBeforeUnmount,
   onMounted,
@@ -70,16 +68,9 @@ import {
   watch,
   watchEffect,
 } from 'vue'
-import {
-  EnModule,
-  useSettings,
-} from './Settings/EnSettings.vue'
-import EnSettingsItem from '../modules/Settings/EnSettingsItem.vue'
-import EnSettingsTeleportModule from '../modules/Settings/EnSettingsTeleportModule.vue'
 
 const plugin = usePlugin()
 const EnhancerState = useEnhancer()
-const settings = useSettings()
 
 // #region 基本的模块配置
 
@@ -152,17 +143,6 @@ onViewportChange((newViewport) => {
     window.keyboardToolbar.style.top = 'unset'
   }
 })
-
-
-onViewportChange((newViewport) => {
-  // @ts-expect-error testv
-  if (window.testv) {
-    // @ts-expect-error testv
-    window.testv.style.height = `${newViewport.height - 5}px`
-    // @ts-expect-error testv
-    window.testv.style.top = `${newViewport.offsetTop}px`
-  }
-})
 </script>
 
 <script lang="ts">
@@ -227,18 +207,6 @@ export function onViewportChange(cb: (newViewport: any, oldViewport: any) => voi
 :root {
   --en-status-height: 56px;
   --en-toolbar-height: 30px;
-}
-
-
-#testv {
-  position: fixed;
-  width: calc(100vw - 2px);
-  box-sizing: border-box;
-  min-height: 100px;
-  left: 0px;
-  border: 1px solid red;
-  pointer-events: none;
-  z-index: 99999;
 }
 
 

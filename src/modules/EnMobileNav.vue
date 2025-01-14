@@ -142,12 +142,13 @@ import {
 } from '@/modules/DailyNote/DailyNote.vue'
 import { createTodayDailyNote } from '@/modules/DailyNote/QuickNote/EnQuickNoteMobile.vue'
 import {
-  entryOpenSettings,
-  isNotFree,
-  useSettings,
-} from '@/modules/Settings/EnSettings.vue'
+  injectAuthStatus,
+  injectSettings,
+} from '@/modules/EnModuleControl/ModuleProvide'
 import { debounce } from '@/utils'
+import { EN_EVENT_BUS_KEYS } from '@/utils/Constants'
 import { watchDomChange } from '@/utils/DOM'
+import { enEventBus } from '@/utils/EnEventBus'
 import { useDocHistory } from '@/utils/History'
 import {
   computed,
@@ -161,6 +162,16 @@ export const EnNavMoreRef = ref(null)
 <script setup lang="ts">
 
 const plugin = usePlugin()
+
+const {
+  isNotFree,
+} = injectAuthStatus()
+
+const entryOpenSettings = () => {
+  enEventBus.emit(EN_EVENT_BUS_KEYS.SETTINGS_OPEN_ON_ENTRY)
+}
+
+const settings = injectSettings()
 
 const lastScrollTop = ref(0)
 const showToolBar = ref(true)
@@ -222,8 +233,6 @@ const {
   isNewset,
   isOldest,
 } = useDocHistory()
-
-const settings = useSettings()
 
 const navListRef = ref(null)
 const navList = ref<Array<{

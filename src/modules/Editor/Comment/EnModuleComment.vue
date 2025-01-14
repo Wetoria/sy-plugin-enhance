@@ -84,7 +84,6 @@ import EnCommentMobile from '@/modules/Editor/Comment/EnCommentMobile.vue'
 import {
   useModule,
 } from '@/modules/EnModuleControl/ModuleProvide'
-import { EnModule } from '@/modules/Settings/EnSettings.vue'
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
 import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue'
 

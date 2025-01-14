@@ -321,7 +321,6 @@ const commands = [
 const registerToolbarBrush = debounce(() => {
   const domList = document.querySelectorAll('.protyle-toolbar')
 
-  console.log('domList is re', domList)
   if (!domList.length) {
     return
   }
