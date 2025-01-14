@@ -1,5 +1,8 @@
-import { usePlugin } from '@/main'
 import { debounce } from '@/utils'
+import {
+  loadData,
+  saveData,
+} from '@/utils/DataManager'
 import chalk from 'chalk'
 import _ from 'lodash'
 import {
@@ -227,7 +230,9 @@ export const initWebsocket = () => {
     socket.onerror = function () {
       connecting = false
 
-      initWebsocket()
+      initWebsocket().then(() => {
+        resolve(socketRef.value)
+      })
     }
   })
 }
@@ -281,12 +286,11 @@ export const saveModuleDataByNamespace = async (namespace: Namespace) => {
     mapData.doNotSave = false
     return
   }
-  const plugin = usePlugin()
   const dataRef = mapData.dataRef
   const storageKey = getModuleStorageKey(namespace)
   // IMP 记录保存状态，在设置页面进行展示
   enLog(`${getColorStringWarn('Ready to save module')} ${getNamespaceLogString(namespace)} data into file [${storageKey}]: `, JSON.parse(JSON.stringify(dataRef.value)))
-  await plugin.saveData(storageKey, dataRef.value)
+  await saveData(storageKey, dataRef.value)
   enLog(`${getColorStringWarn('Saved Module Data: ')} ${getNamespaceLogString(namespace)}`)
 }
 
@@ -371,7 +375,6 @@ export function useSyncModuleData<T>({
 // 根据 namespace 加载 module 数据
 export async function loadModuleDataByNamespace<T>(namespace: Namespace) {
   enLog(`${getColorStringWarn('Triggered to load module data')} of ${getNamespaceLogString(namespace)}`)
-  const plugin = usePlugin()
   const storageKey = getModuleStorageKey(namespace)
 
   if (!syncDataRefMap[namespace]) {
@@ -394,7 +397,7 @@ export async function loadModuleDataByNamespace<T>(namespace: Namespace) {
 
   enLog(`${getColorStringWarn('Ready to load module data')} of ${getNamespaceLogString(namespace)} from file [${storageKey}]`)
   syncDataRefMap[namespace].loading = true
-  const res: EnSyncModuleData<T> = await plugin.loadData(storageKey)
+  const res = await loadData(storageKey) as EnSyncModuleData<T>
   syncDataRefMap[namespace].loading = false
 
 
