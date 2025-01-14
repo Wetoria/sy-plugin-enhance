@@ -42,14 +42,11 @@
 <script setup lang="ts">
 import { usePlugin } from '@/main'
 import { useModule } from '@/modules/EnModuleControl/ModuleProvide'
-import {
-  EnModule,
-} from '@/modules/Settings/EnSettings.vue'
+import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
+import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue'
 import { moduleEnableStatusSwitcher } from '@/utils'
 import { EN_MODULE_LIST } from '@/utils/Constants'
 import { watchEffect } from 'vue'
-import EnSettingsItem from '../Settings/EnSettingsItem.vue'
-import EnSettingsTeleportModule from '../Settings/EnSettingsTeleportModule.vue'
 
 const plugin = usePlugin()
 

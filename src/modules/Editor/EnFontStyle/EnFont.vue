@@ -152,11 +152,10 @@
 
 <script lang="ts">
 import { usePlugin } from "@/main"
-import { useModule } from '@/modules/EnModuleControl/ModuleProvide'
 import {
-  EnModule,
-  isFree,
-} from '@/modules/Settings/EnSettings.vue'
+  injectAuthStatus,
+  useModule,
+} from '@/modules/EnModuleControl/ModuleProvide'
 import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue'
 import {
   addCommand,
@@ -379,7 +378,7 @@ watch(() => configgedFontStyleList.value, () => {
   addCommandsByList()
 })
 
-
+const { isFree } = injectAuthStatus()
 const createCommand = () => {
   const color = currentColor.value
   const bgColor = currentBgColor.value

@@ -37,8 +37,8 @@
 </template>
 
 <script setup lang="ts">
-import EnSettingsTeleportModule from '../Settings/EnSettingsTeleportModule.vue';
-import EnSettingsItem from '../Settings/EnSettingsItem.vue';
+import EnSettingsTeleportModule from '../../modules/Settings/EnSettingsTeleportModule.vue';
+import EnSettingsItem from '../../modules/Settings/EnSettingsItem.vue';
 import { EnModule, useSettings } from '../Settings/EnSettings.vue';
 import { watchEffect } from 'vue';
 import { useModule } from '@/modules/EnModuleControl/ModuleProvide'

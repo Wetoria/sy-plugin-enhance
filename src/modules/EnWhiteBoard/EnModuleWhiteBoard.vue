@@ -181,8 +181,8 @@ import {
   watch,
   watchEffect,
 } from 'vue'
-import EnSettingsItem from '../Settings/EnSettingsItem.vue'
-import EnSettingsTeleportModule from '../Settings/EnSettingsTeleportModule.vue'
+import EnSettingsItem from '../../modules/Settings/EnSettingsItem.vue'
+import EnSettingsTeleportModule from '../../modules/Settings/EnSettingsTeleportModule.vue'
 import EnWhiteBoardEntrySlash from './EnWhiteBoardEntrySlash.vue'
 
 const plugin = usePlugin()

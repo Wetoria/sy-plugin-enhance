@@ -55,17 +55,17 @@ import { getColorStringWarn } from '@/utils/Log'
 import dayjs from 'dayjs'
 import { Protyle } from 'siyuan'
 import {
+  onBeforeUnmount,
   onMounted,
   watchEffect,
 } from 'vue'
+import EnSettingsItem from '../../modules/Settings/EnSettingsItem.vue'
+import EnSettingsTeleportModule from '../../modules/Settings/EnSettingsTeleportModule.vue'
 import {
   EnhanceIOperation,
   onEditorUpdate,
   SyDomNodeTypes,
 } from '../../utils/Siyuan'
-import { EnModule } from '../Settings/EnSettings.vue'
-import EnSettingsItem from '../Settings/EnSettingsItem.vue'
-import EnSettingsTeleportModule from '../Settings/EnSettingsTeleportModule.vue'
 import { reloadLifeLogData } from './EnLifeLogDailyNoteGraph.vue'
 
 const lifelogPrefix = 'custom-lifelog-'
@@ -160,22 +160,29 @@ const listenerSticky = () => {
 onMounted(() => {
   markLifeLogBlock()
   listenerSticky()
-  plugin.protyleSlash.push({
-    filter: [
-      "add current time",
-      'insert current time',
-      "插入当前时间",
-      'adt',
-      'df now',
-      'now',
-    ],
-    html: `<div class="b3-list-item__first"><span class="b3-list-item__text">${'EN｜插入当前时间'}</span></div>`,
-    id: "enInsertCurrentTime",
-    callback(protyle: Protyle) {
-      const timestamp = dayjs().format('HH:mm')
-      protyle.insert(timestamp)
-    },
-  })
+})
+
+const insertCurrentTimeSlas = {
+  filter: [
+    "add current time",
+    'insert current time',
+    "插入当前时间",
+    'adt',
+    'df now',
+    'now',
+  ],
+  html: `<div class="b3-list-item__first"><span class="b3-list-item__text">${'叶归｜插入当前时间'}</span></div>`,
+  id: "enInsertCurrentTime",
+  callback(protyle: Protyle) {
+    const timestamp = dayjs().format('HH:mm')
+    protyle.insert(timestamp)
+  },
+}
+onMounted(() => {
+  plugin.protyleSlash.push(insertCurrentTimeSlas)
+})
+onBeforeUnmount(() => {
+  plugin.protyleSlash = plugin.protyleSlash.filter((i) => i.id !== insertCurrentTimeSlas.id)
 })
 
 

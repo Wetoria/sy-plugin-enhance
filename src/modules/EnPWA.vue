@@ -74,8 +74,8 @@ import {
   EnModule,
   useSettings,
 } from './Settings/EnSettings.vue'
-import EnSettingsItem from './Settings/EnSettingsItem.vue'
-import EnSettingsTeleportModule from './Settings/EnSettingsTeleportModule.vue'
+import EnSettingsItem from '../modules/Settings/EnSettingsItem.vue'
+import EnSettingsTeleportModule from '../modules/Settings/EnSettingsTeleportModule.vue'
 
 const plugin = usePlugin()
 const EnhancerState = useEnhancer()

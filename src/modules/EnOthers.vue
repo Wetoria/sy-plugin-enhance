@@ -25,7 +25,6 @@
 
 <script setup lang="ts">
 import { useModule } from '@/modules/EnModuleControl/ModuleProvide'
-import { EnModule } from '@/modules/Settings/EnSettings.vue'
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
 import { moduleEnableStatusSwitcher } from '@/utils'
 import {
@@ -33,7 +32,7 @@ import {
   EN_MODULE_LIST,
 } from '@/utils/Constants'
 import { watchEffect } from 'vue'
-import EnSettingsTeleportModule from './Settings/EnSettingsTeleportModule.vue'
+import EnSettingsTeleportModule from '../modules/Settings/EnSettingsTeleportModule.vue'
 
 
 // #region 基本的模块配置

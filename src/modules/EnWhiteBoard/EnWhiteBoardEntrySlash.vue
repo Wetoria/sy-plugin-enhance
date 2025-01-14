@@ -213,7 +213,7 @@ onMounted(() => {
       '画板',
       '白板',
     ],
-    html: `<div class="b3-list-item__first"><span class="b3-list-item__text">EN｜白板</span></div>`,
+    html: `<div class="b3-list-item__first"><span class="b3-list-item__text">叶归｜白板</span></div>`,
     id: slashId_WhiteBoard,
     callback(protyle: Protyle) {
       const hint: any = protyle.protyle.hint

@@ -150,8 +150,11 @@ const enableBrush = () => {
 const brushing = computed(() => !!currentFontStyle.value)
 
 
+const changeBrushStatusIndom = (enable: boolean) => {
+  moduleEnableStatusSwitcher('EnFormatBrush', enable)
+}
 const switchEnableStatus = () => {
-  moduleEnableStatusSwitcher('EnFormatBrush', brushing.value)
+  changeBrushStatusIndom(brushing.value)
   if (brushing.value) {
     enableBrush()
   }
@@ -315,10 +318,10 @@ const commands = [
   },
 ]
 
-// 不想写清除的逻辑了 - -
 const registerToolbarBrush = debounce(() => {
   const domList = document.querySelectorAll('.protyle-toolbar')
 
+  console.log('domList is re', domList)
   if (!domList.length) {
     return
   }
@@ -337,11 +340,6 @@ const registerToolbarBrush = debounce(() => {
     }
 
     const fragment = document.createDocumentFragment()
-
-    const divider = document.createElement('div')
-    divider.className = 'protyle-toolbar__divider'
-    fragment.appendChild(divider)
-
 
 
     const btn = document.createElement('button')
@@ -369,6 +367,25 @@ const registerToolbarBrush = debounce(() => {
   })
 }, 300)
 
+const unregisterToolbarBrush = () => {
+  const domList = document.querySelectorAll('.protyle-toolbar')
+
+  if (!domList.length) {
+    return
+  }
+  domList.forEach((dom) => {
+    let exist = false
+    const findResult = Array.prototype.find.call(dom.children, (node: HTMLElement) => {
+      if (node.dataset.type === 'EnFormatBrush') {
+        exist = true
+        return node
+      }
+    })
+    if (exist) {
+      findResult.remove()
+    }
+  })
+}
 
 const getAriaLabel = () => {
   const cmd = plugin.commands.find((i) => i.langKey === 'En_FormatBrush_Enable')
@@ -425,8 +442,14 @@ onMounted(() => {
   watchDomChange(registerToolbarBrush)
 })
 onBeforeUnmount(() => {
+  cancelBrush()
+  changeBrushStatusIndom(false)
   plugin.commands = plugin.commands.filter((i) => !commands.find((cmd) => cmd.langKey === i.langKey))
+
   unWatchDomChange(registerToolbarBrush)
+  setTimeout(() => {
+    unregisterToolbarBrush()
+  }, 500)
 })
 </script>
 
