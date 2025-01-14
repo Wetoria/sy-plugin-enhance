@@ -5,15 +5,18 @@
 <script setup lang="ts">
 import { usePlugin } from '@/main'
 import {
-  debounce,
   moduleEnableStatusSwitcher,
 } from '@/utils'
-import { addCommand } from '@/utils/Commands'
+import {
+  addCommand,
+  removeCommand,
+} from '@/utils/Commands'
 import {
   unWatchDomChange,
   watchDomChange,
 } from '@/utils/DOM'
 import { useCurrentProtyle } from '@/utils/Siyuan'
+import lodash from 'lodash'
 import { IProtyle } from 'siyuan'
 import {
   computed,
@@ -150,11 +153,11 @@ const enableBrush = () => {
 const brushing = computed(() => !!currentFontStyle.value)
 
 
-const changeBrushStatusIndom = (enable: boolean) => {
+const changeBrushStatusIndomTo = (enable: boolean) => {
   moduleEnableStatusSwitcher('EnFormatBrush', enable)
 }
 const switchEnableStatus = () => {
-  changeBrushStatusIndom(brushing.value)
+  changeBrushStatusIndomTo(brushing.value)
   if (brushing.value) {
     enableBrush()
   }
@@ -318,7 +321,7 @@ const commands = [
   },
 ]
 
-const registerToolbarBrush = debounce(() => {
+const registerToolbarBrush = lodash.debounce(() => {
   const domList = document.querySelectorAll('.protyle-toolbar')
 
   if (!domList.length) {
@@ -442,13 +445,14 @@ onMounted(() => {
 })
 onBeforeUnmount(() => {
   cancelBrush()
-  changeBrushStatusIndom(false)
-  plugin.commands = plugin.commands.filter((i) => !commands.find((cmd) => cmd.langKey === i.langKey))
+  changeBrushStatusIndomTo(false)
+  registerToolbarBrush.cancel()
+  commands.forEach((command) => {
+    removeCommand(command)
+  })
 
   unWatchDomChange(registerToolbarBrush)
-  setTimeout(() => {
-    unregisterToolbarBrush()
-  }, 500)
+  unregisterToolbarBrush()
 })
 </script>
 
