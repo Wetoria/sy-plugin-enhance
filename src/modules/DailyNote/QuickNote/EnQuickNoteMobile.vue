@@ -42,16 +42,20 @@
   </Teleport>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { deleteBlock } from '@/api'
 import EnProtyle from '@/components/EnProtyle.vue'
 import { getNewDailyNoteBlockId } from '@/modules/DailyNote/DailyNote.vue'
-import { useEnhancer } from '@/modules/GlobalStatus'
+import { injectGlobalData } from '@/modules/EnModuleControl/ModuleProvide'
+import { EN_EVENT_BUS_KEYS } from '@/utils/Constants'
+import { enEventBus } from '@/utils/EnEventBus'
 import {
   Protyle,
   showMessage,
 } from 'siyuan'
 import {
+  onBeforeUnmount,
+  onMounted,
   ref,
   watch,
 } from 'vue'
@@ -59,29 +63,6 @@ import {
 const isCreatingDailyNote = ref(false)
 const quickNoteModalVisible = ref(false)
 const currentBlockId = ref()
-
-
-export async function createTodayDailyNote() {
-  const enhancer = useEnhancer()
-  if (enhancer.value.isSync) {
-    showMessage('正在同步中，请等待同步完成再创建笔记', 1000)
-    return
-  }
-
-  if (quickNoteModalVisible.value) {
-    return
-  }
-  isCreatingDailyNote.value = true
-
-  const blockId = await getNewDailyNoteBlockId()
-
-  quickNoteModalVisible.value = true
-
-  currentBlockId.value = blockId
-}
-</script>
-
-<script setup lang="ts">
 
 const protyleRef = ref<Protyle>()
 const onAfterRender = (protyle: Protyle) => {
@@ -119,6 +100,32 @@ watch(quickNoteModalVisible, (visible) => {
   if (!visible) {
     destoryProtyle()
   }
+})
+
+async function createTodayDailyNote() {
+  const globalData = injectGlobalData()
+  if (globalData.value.isSyncing) {
+    showMessage('正在同步中，请等待同步完成再创建笔记', 1000)
+    return
+  }
+
+  if (quickNoteModalVisible.value) {
+    return
+  }
+  isCreatingDailyNote.value = true
+
+  const blockId = await getNewDailyNoteBlockId()
+
+  quickNoteModalVisible.value = true
+
+  currentBlockId.value = blockId
+}
+
+onMounted(() => {
+  enEventBus.on(EN_EVENT_BUS_KEYS.CREATE_TODAY_DAILY_NOTE_MOBILE, createTodayDailyNote)
+})
+onBeforeUnmount(() => {
+  enEventBus.off(EN_EVENT_BUS_KEYS.CREATE_TODAY_DAILY_NOTE_MOBILE, createTodayDailyNote)
 })
 </script>
 

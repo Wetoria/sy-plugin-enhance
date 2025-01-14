@@ -8,6 +8,7 @@ const emitter = mitt()
 export interface EventBusType {
   [EN_EVENT_BUS_KEYS.SETTINGS_OPEN_ON_ENTRY]: void
   [EN_EVENT_BUS_KEYS.AUTH_OPEN_MODAL]: void
+  [EN_EVENT_BUS_KEYS.CREATE_TODAY_DAILY_NOTE_MOBILE]: void
 }
 
 // 导出类型化的 eventBus

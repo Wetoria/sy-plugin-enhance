@@ -140,7 +140,6 @@ import {
   jumpToNextDailyNote,
   jumpToPrevDailyNote,
 } from '@/modules/DailyNote/DailyNote.vue'
-import { createTodayDailyNote } from '@/modules/DailyNote/QuickNote/EnQuickNoteMobile.vue'
 import {
   injectAuthStatus,
   injectSettings,
@@ -247,6 +246,11 @@ const openSiyuanSettings = () => {
   if (toolbarMore) {
     toolbarMore.dispatchEvent(new MouseEvent('click'))
   }
+}
+
+
+const createTodayDailyNote = () => {
+  enEventBus.emit(EN_EVENT_BUS_KEYS.CREATE_TODAY_DAILY_NOTE_MOBILE)
 }
 </script>
 

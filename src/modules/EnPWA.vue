@@ -57,8 +57,10 @@
 
 <script setup lang="ts">
 import { usePlugin } from '@/main'
-import { useModule } from '@/modules/EnModuleControl/ModuleProvide'
-import { useEnhancer } from '@/modules/GlobalStatus'
+import {
+  injectGlobalData,
+  useModule,
+} from '@/modules/EnModuleControl/ModuleProvide'
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
 import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue'
 import {
@@ -70,7 +72,8 @@ import {
 } from 'vue'
 
 const plugin = usePlugin()
-const EnhancerState = useEnhancer()
+
+const globalData = injectGlobalData()
 
 // #region 基本的模块配置
 
@@ -124,7 +127,7 @@ onMounted(() => {
 
   // @ts-expect-error standalone
   const isStandalone = window.navigator.standalone
-  EnhancerState.value.isStandalone = isStandalone
+  globalData.value.isStandalone = isStandalone
   if (isStandalone) {
     document.documentElement.dataset.enIsStandalone = isStandalone
   }
