@@ -86,6 +86,10 @@ import {
 } from '@/modules/EnModuleControl/ModuleProvide'
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
 import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue'
+import {
+  EN_CONSTANTS,
+  EN_MODULE_LIST,
+} from '@/utils/Constants'
 
 
 
@@ -97,11 +101,11 @@ const {
 } = useModule<{
   customStyleBlock: string
   customStyleInline: string
-} & EnModule>('EnComment', {
+} & EnModule>(EN_MODULE_LIST.COMMENT, {
   defaultData: {
     enabled: true,
-    moduleName: 'EnComment',
-    moduleDisplayName: '批注',
+    moduleName: EN_MODULE_LIST.COMMENT,
+    moduleDisplayName: EN_CONSTANTS.COMMENT_DISPLAY,
 
     customStyleBlock: `& {
   &[data-type="NodeParagraph"],

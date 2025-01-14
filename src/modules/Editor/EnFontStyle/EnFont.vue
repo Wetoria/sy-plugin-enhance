@@ -162,6 +162,10 @@ import {
   removeCommand,
 } from '@/utils/Commands'
 import {
+  EN_CONSTANTS,
+  EN_MODULE_LIST,
+} from '@/utils/Constants'
+import {
   ICommand,
   showMessage,
 } from 'siyuan'
@@ -288,11 +292,11 @@ interface ISettingModuleOptions extends EnModule {
 const {
   module,
   moduleOptions,
-} = useModule<ISettingModuleOptions>('EnFont', {
+} = useModule<ISettingModuleOptions>(EN_MODULE_LIST.FONT_STYLE, {
   defaultData: {
     enabled: true,
-    moduleName: 'EnFont',
-    moduleDisplayName: '字体样式快捷键',
+    moduleName: EN_MODULE_LIST.FONT_STYLE,
+    moduleDisplayName: EN_CONSTANTS.FONT_STYLE_DISPLAY,
 
     configgedFontStyleList: [],
   },

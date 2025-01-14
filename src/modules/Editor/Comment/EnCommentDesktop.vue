@@ -114,7 +114,10 @@ import {
   generateShortUUID,
 } from '@/utils'
 import { addCommand } from '@/utils/Commands'
-import { EN_CONSTANTS } from '@/utils/Constants'
+import {
+  EN_CONSTANTS,
+  EN_MODULE_LIST,
+} from '@/utils/Constants'
 import {
   getSelectionCopy,
   positionModalWithTranslate,
@@ -163,7 +166,7 @@ const {
 } = useModule<{
   customStyleBlock: string
   customStyleInline: string
-} & EnModule>('EnComment')
+} & EnModule>(EN_MODULE_LIST.COMMENT)
 
 
 const messageFlag = ref(null)

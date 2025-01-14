@@ -50,6 +50,10 @@ import {
 import { usePlugin } from '@/main'
 import { useModule } from '@/modules/EnModuleControl/ModuleProvide'
 import { moduleEnableStatusSwitcher } from '@/utils'
+import {
+  EN_CONSTANTS,
+  EN_MODULE_LIST,
+} from '@/utils/Constants'
 import { queryAllByDom } from '@/utils/DOM'
 import { getColorStringWarn } from '@/utils/Log'
 import dayjs from 'dayjs'
@@ -100,11 +104,11 @@ interface ISettingModuleOptions extends EnModule {
 const {
   module,
   moduleOptions,
-} = useModule<ISettingModuleOptions>('EnLifeLog', {
+} = useModule<ISettingModuleOptions>(EN_MODULE_LIST.LIFELOG, {
   defaultData: {
     enabled: false,
-    moduleName: 'EnLifeLog',
-    moduleDisplayName: 'LifeLog',
+    moduleName: EN_MODULE_LIST.LIFELOG,
+    moduleDisplayName: EN_CONSTANTS.LIFELOG_DISPLAY,
 
     enableLifeLog: false,
     showLifeLogFlag: false,

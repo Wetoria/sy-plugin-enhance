@@ -127,6 +127,7 @@ import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import { usePlugin } from '@/main'
 import { useModule } from '@/modules/EnModuleControl/ModuleProvide'
 import { debounce } from '@/utils'
+import { EN_MODULE_LIST } from '@/utils/Constants'
 import { queryAllByDom } from '@/utils/DOM'
 import { SyDomNodeTypes } from '@/utils/Siyuan'
 import { Protyle } from 'siyuan'
@@ -145,7 +146,7 @@ const plugin = usePlugin()
 const {
   module,
   moduleOptions,
-} = useModule('EnTemplates')
+} = useModule(EN_MODULE_LIST.EN_TEMPLATES)
 const cornellOptions = computed(() => (moduleOptions.value as ModuleTemplatesOptions).cornell)
 
 const resetColors = () => {

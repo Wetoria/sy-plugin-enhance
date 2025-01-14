@@ -2,27 +2,56 @@
 export enum EN_CONSTANTS {
   AUTH = 'EnSettingsAuth',
 
+
+
   GLOBAL_DATA = 'GlobalData',
   GLOBAL_MODULE = 'GlobalModule',
+
+
 
   EN_PLUGIN_SWITCH = 'En_Plugin_Switch',
   EN_PLUGIN_SWITCH_DISPLAY = '开/关插件',
 
+
+
   BACKGROUND_IMG = 'EnBackgroundImg',
   BACKGROUND_IMG_DISPLAY = '背景图',
 
+
+  COMMENT = 'EnComment',
+  COMMENT_DISPLAY = '批注',
+
+
   CMD_KEY_EN_OPEN_QUICK_NOTE = 'En_OpenQuickNote',
+
+
 
   DAILY_NOTE = 'DailyNote',
   DAILY_NOTE_DISPLAY = '日记',
 
+
+
   EN_OTHER = 'EnOther',
   EN_OTHER_DISPLAY = '其他设置',
+
+
 
   EN_SERVER = 'EnServer',
   EN_SERVER_DISPLAY = 'API 服务',
 
+
+
   EN_TEST_LOGIC = 'TestLogic',
+
+
+  FONT_STYLE = 'EnFont',
+  FONT_STYLE_DISPLAY = '字体样式快捷键',
+
+
+  LIFELOG = 'EnLifeLog',
+  LIFELOG_DISPLAY = 'LifeLog',
+
+
 
   WHITEBOARD_BASE_PATH = 'EnWhiteBoard',
   EN_WHITE_BOARD = `${WHITEBOARD_BASE_PATH}/config`,
@@ -36,19 +65,36 @@ export enum EN_CONSTANTS {
 
   EN_WHITE_BOARD_HANDLE_PLACEHOLDER = 'EnWhiteBoardHandlePlaceholder',
 
+
+
   MODULE_PROVIDER_KEY = 'EnModule',
+
+
 
   NOTEBOOK_LIST_OPENED = 'NOTEBOOK_LIST_OPENED',
   NOTEBOOK_LIST_OPENED_UPDATOR = 'NOTEBOOK_LIST_OPENED_UPDATOR',
 
+
+
   PARAGRAPH_BLOCK_TIME_DIFF = 'EnParagraphBlockTimeDiff',
+
+
+  PWA = 'EnPWA',
+  PWA_DISPLAY = '移动端 PWA 适配',
 
   QUICK_NOTE = 'QuickNote',
   QUICK_NOTE_DISPLAY = '一键记事',
 
+
+
   SETTINGS = 'EnSettings',
   SETTINGS_ITEM_MODE_HORIZONTAL = 'horizontal',
   SETTINGS_ITEM_MODE_VERTICAL = 'vertical',
+
+
+
+  EN_TEMPLATES = 'EnTemplates',
+  EN_TEMPLATES_DISPLAY = '模板',
 }
 
 export enum EN_COMMAND_KEYS {
@@ -64,12 +110,24 @@ export enum EN_MODULE_LIST {
   EN_TEST_LOGIC = EN_CONSTANTS.EN_TEST_LOGIC,
 
   BACKGROUND_IMG = EN_CONSTANTS.BACKGROUND_IMG,
+
+  COMMENT = EN_CONSTANTS.COMMENT,
+
   DAILY_NOTE = EN_CONSTANTS.DAILY_NOTE,
+
   EN_OTHER = EN_CONSTANTS.EN_OTHER,
+
+  FONT_STYLE = EN_CONSTANTS.FONT_STYLE,
+
+  LIFELOG = EN_CONSTANTS.LIFELOG,
+
+  PWA = EN_CONSTANTS.PWA,
 
   QUICK_NOTE = EN_CONSTANTS.QUICK_NOTE,
 
   EN_SERVER = EN_CONSTANTS.EN_SERVER,
+
+  EN_TEMPLATES = EN_CONSTANTS.EN_TEMPLATES,
 
   EN_WHITE_BOARD = EN_CONSTANTS.EN_WHITE_BOARD,
 }

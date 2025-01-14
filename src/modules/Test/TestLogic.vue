@@ -39,9 +39,9 @@
 <script setup lang="ts">
 import EnSettingsTeleportModule from '../../modules/Settings/EnSettingsTeleportModule.vue';
 import EnSettingsItem from '../../modules/Settings/EnSettingsItem.vue';
-import { EnModule, useSettings } from '../Settings/EnSettings.vue';
 import { watchEffect } from 'vue';
-import { useModule } from '@/modules/EnModuleControl/ModuleProvide'
+import { injectSettings, useModule } from '@/modules/EnModuleControl/ModuleProvide'
+import { EN_MODULE_LIST } from '@/utils/Constants'
 
 const test = () => {
   enLog('TestLogic test')
@@ -54,7 +54,7 @@ watchEffect(() => {
 })
 
 
-const settings = useSettings()
+const settings = injectSettings()
 
 const getTargetBlockDom = () => {
   // const dom = document.body.querySelector('[data-type="NodeParagraph"][data-node-id="20241125202123-7uoztlc"]')
@@ -75,11 +75,11 @@ interface ISettingModuleOptions extends EnModule {
 const {
   module,
   moduleOptions,
-} = useModule<ISettingModuleOptions>('TestLogic', {
+} = useModule<ISettingModuleOptions>(EN_MODULE_LIST.EN_TEST_LOGIC, {
   defaultData: {
     enabled: false,
-    moduleName: 'TestLogic',
-    moduleDisplayName: 'Test Logic',
+    moduleName: EN_MODULE_LIST.EN_TEST_LOGIC,
+    moduleDisplayName: EN_MODULE_LIST.EN_TEST_LOGIC,
 
     test1: false,
     test2: false,

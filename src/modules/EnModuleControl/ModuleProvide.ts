@@ -35,7 +35,7 @@ export function useGlobalData<T>(
 }
 
 export function useModule<T extends EnModule>(
-  moduleName: EN_MODULE_LIST | string,
+  moduleName: EN_MODULE_LIST,
   options?: Required<Pick<EnSyncModuleProps<T>, 'defaultData'>> &
     Partial<Omit<EnSyncModuleProps<T>, 'defaultData' | 'namespace'>>,
 ): IGlobalData<T> {

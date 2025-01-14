@@ -64,6 +64,10 @@ import {
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
 import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue'
 import {
+  EN_CONSTANTS,
+  EN_MODULE_LIST,
+} from '@/utils/Constants'
+import {
   onBeforeUnmount,
   onMounted,
   ref,
@@ -85,11 +89,11 @@ interface ISettingModuleOptions extends EnModule {
 const {
   module,
   moduleOptions,
-} = useModule<ISettingModuleOptions>('EnPWA', {
+} = useModule<ISettingModuleOptions>(EN_MODULE_LIST.PWA, {
   defaultData: {
     enabled: false,
-    moduleName: 'EnPWA',
-    moduleDisplayName: '移动端 PWA 适配',
+    moduleName: EN_MODULE_LIST.PWA,
+    moduleDisplayName: EN_CONSTANTS.PWA_DISPLAY,
 
     statusBarHeight: 56,
     toolBarHeight: 30,

@@ -111,6 +111,10 @@ import EnColorPicker from '@/components/EnColorPicker.vue'
 import { useModule } from '@/modules/EnModuleControl/ModuleProvide'
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
 import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue'
+import {
+  EN_CONSTANTS,
+  EN_MODULE_LIST,
+} from '@/utils/Constants'
 import TemplateCornell from './TemplateCornell.vue'
 
 
@@ -139,11 +143,11 @@ interface ISettingModuleOptions extends EnModule {
 const {
   module,
   moduleOptions,
-} = useModule<ISettingModuleOptions>('EnTemplates', {
+} = useModule<ISettingModuleOptions>(EN_MODULE_LIST.EN_TEMPLATES, {
   defaultData: {
     enabled: false,
-    moduleName: 'EnTemplates',
-    moduleDisplayName: '模板',
+    moduleName: EN_MODULE_LIST.EN_TEMPLATES,
+    moduleDisplayName: EN_CONSTANTS.EN_TEMPLATES_DISPLAY,
 
     cornell: {
       noteTitleColor: '',

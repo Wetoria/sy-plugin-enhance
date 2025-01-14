@@ -163,7 +163,10 @@ import {
   debounce,
   generateShortUUID,
 } from '@/utils'
-import { EN_CONSTANTS } from '@/utils/Constants'
+import {
+  EN_CONSTANTS,
+  EN_MODULE_LIST,
+} from '@/utils/Constants'
 import {
   getSelectionCopy,
   useRegisterStyle,
@@ -354,7 +357,7 @@ const {
 } = useModule<{
   customStyleBlock: string
   customStyleInline: string
-} & EnModule>('EnComment')
+} & EnModule>(EN_MODULE_LIST.COMMENT)
 
 
 const messageFlag = ref(null)
