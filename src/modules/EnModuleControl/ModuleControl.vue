@@ -63,6 +63,8 @@ import {
   watchEffect,
 } from 'vue'
 
+// const isInEnWindow = ref(isInWindow('QuickNote') || isInWindow('EnVideoAndAudio'))
+
 const moduleEnabled = ref(true)
 const enableCommand = {
   langKey: EN_COMMAND_KEYS.EN_PLUGIN_SWITCH,
