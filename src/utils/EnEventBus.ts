@@ -7,6 +7,7 @@ const emitter = mitt()
 // 导出类型定义
 export interface EventBusType {
   [EN_EVENT_BUS_KEYS.SETTINGS_OPEN_ON_ENTRY]: void
+  [EN_EVENT_BUS_KEYS.AUTH_OPEN_MODAL]: void
 }
 
 // 导出类型化的 eventBus

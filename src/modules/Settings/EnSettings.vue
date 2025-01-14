@@ -15,7 +15,31 @@
         >
           {{ plugin.i18n.pluginName }}
         </div>
-        <!-- <EnSettingsAuth /> -->
+        <a-button
+          v-if="!settings.v && !authModuleData.lv"
+          type="primary"
+          @click="openAuthModal"
+        >
+          订阅
+        </a-button>
+        <template v-else>
+          <a-tag
+            v-if="isPermanent"
+            color="gold"
+          >
+            <a-space>
+              <EnIconDragon />
+            </a-space>
+          </a-tag>
+          <a-tag
+            v-else
+            color="arcoblue"
+            style="cursor: pointer;"
+            @click="openAuthModal"
+          >
+            {{ levelLabel }}
+          </a-tag>
+        </template>
       </div>
     </template>
 
@@ -82,8 +106,13 @@
 <script setup lang="ts">
 import EnDivider from '@/components/EnDivider.vue'
 import EnDrawer from '@/components/EnDrawer.vue'
+import EnIconDragon from '@/components/EnIconDragon.vue'
 import { usePlugin } from '@/main'
-import { injectSettings } from '@/modules/EnModuleControl/ModuleProvide'
+import {
+  injectAuth,
+  injectAuthStatus,
+  injectSettings,
+} from '@/modules/EnModuleControl/ModuleProvide'
 
 
 import {
@@ -157,15 +186,26 @@ const entryOpenSettings = onCountClick((time) => {
   }
 })
 onMounted(() => {
-  enEventBus.on(EN_EVENT_BUS_KEYS.SETTINGS_OPEN_ON_ENTRY, () => {
-    entryOpenSettings()
-  })
+  enEventBus.on(EN_EVENT_BUS_KEYS.SETTINGS_OPEN_ON_ENTRY, entryOpenSettings)
+})
+onBeforeUnmount(() => {
+  enEventBus.off(EN_EVENT_BUS_KEYS.SETTINGS_OPEN_ON_ENTRY, entryOpenSettings)
 })
 
 
 // #endregion 离线模式下的权限控制
 
 const { onTitleClicked } = useDebugSwitcher()
+
+
+const authModuleData = injectAuth()
+const {
+  isPermanent,
+  levelLabel,
+} = injectAuthStatus()
+const openAuthModal = () => {
+  enEventBus.emit(EN_EVENT_BUS_KEYS.AUTH_OPEN_MODAL)
+}
 </script>
 
 <style lang="scss" scoped>

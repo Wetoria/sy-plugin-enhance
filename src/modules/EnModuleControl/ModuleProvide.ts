@@ -87,6 +87,7 @@ export function injectAuthStatus(): {
   isPro: ComputedRef<boolean>
   isVip: ComputedRef<boolean>
   isPermanent: ComputedRef<boolean>
+  levelLabel: ComputedRef<string>
   computedLevel: (level: number | string) => ComputedRef<boolean>
 } {
   const authStatus = inject('Auth_Status') as {
@@ -96,6 +97,7 @@ export function injectAuthStatus(): {
     isVip: ComputedRef<boolean>
     isPermanent: ComputedRef<boolean>
     computedLevel: (level: number | string) => ComputedRef<boolean>
+    levelLabel: ComputedRef<string>
   }
   return authStatus
 }

@@ -9,11 +9,13 @@
         isPermanent,
       }"
     ></slot>
+    <EnAuth />
   </template>
 </template>
 
 <script setup lang="ts">
 import { usePlugin } from '@/main'
+import EnAuth from '@/modules/EnModuleControl/EnAuth.vue'
 import {
   useGlobalData,
 } from '@/modules/EnModuleControl/ModuleProvide'
@@ -119,7 +121,16 @@ const isVip = computed(() => {
   return settings.value.v === 2 || authModuleData.value.lv === 99
 })
 const isPermanent = computed(() => {
-  return settings.value.v && settings.value.v >= 1
+  return !!settings.value.v && settings.value.v >= 1
+})
+
+const levelLabel = computed(() => {
+  const map = {
+    0: '普通版',
+    98: 'Inner',
+    99: 'Super',
+  }
+  return map[authModuleData.value.lv] || (authModuleData.value.lv ? `Lv. ${authModuleData.value.lv}` : '--')
 })
 
 const computedLevel = (level: number | string) => {
@@ -134,6 +145,7 @@ provide('Auth_Status', {
   isPro,
   isVip,
   isPermanent,
+  levelLabel,
   computedLevel,
 })
 
