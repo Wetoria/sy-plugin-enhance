@@ -42,9 +42,14 @@
         v-if="!hasAuth"
         class="mask"
       >
-        <a-typography-text type="primary">
-          Lv.{{ authLevel }} 可解锁
-        </a-typography-text>
+        <a-button
+          type="text"
+          @click="goToUnlock"
+        >
+          <a-typography-text type="primary">
+            Lv.{{ authLevel }} 可解锁
+          </a-typography-text>
+        </a-button>
       </div>
     </div>
   </EnSettingsTeleport>
@@ -55,6 +60,8 @@ import { injectAuthStatus } from '@/modules/EnModuleControl/ModuleProvide'
 import EnSettingsItemAreaHeading from '@/modules/Settings/EnSettingsItemAreaHeading.vue'
 import EnSettingsTeleport from '@/modules/Settings/EnSettingsTeleport.vue'
 import { resetModuleOptions } from '@/modules/Settings/SettingsModuleControl'
+import { EN_EVENT_BUS_KEYS } from '@/utils/Constants'
+import { enEventBus } from '@/utils/EnEventBus'
 import {
   computed,
   onMounted,
@@ -78,6 +85,10 @@ const {
   computedLevel,
 } = injectAuthStatus()
 const hasAuth = computedLevel(props.authLevel)
+
+const goToUnlock = () => {
+  enEventBus.emit(EN_EVENT_BUS_KEYS.AUTH_OPEN_MODAL)
+}
 
 const slots = useSlots()
 const hasFooterSlot = computed(() => {
