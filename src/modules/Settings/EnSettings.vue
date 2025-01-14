@@ -83,11 +83,13 @@
 import EnDivider from '@/components/EnDivider.vue'
 import EnDrawer from '@/components/EnDrawer.vue'
 import { usePlugin } from '@/main'
+import { injectSettings } from '@/modules/EnModuleControl/ModuleProvide'
 
 
 import {
   closeSettingsPanel,
   enSettingsMainContentRef,
+  openSettings,
   settingsVisible,
   switchSettingsDisplay,
   useDebugSwitcher,
@@ -108,6 +110,9 @@ import {
   addCommand,
   removeCommand,
 } from '@/utils/Commands'
+import { EN_EVENT_BUS_KEYS } from '@/utils/Constants'
+import { onCountClick } from '@/utils/DOM'
+import { enEventBus } from '@/utils/EnEventBus'
 import {
   onBeforeUnmount,
   onMounted,
@@ -130,6 +135,35 @@ onMounted(() => {
 onBeforeUnmount(() => {
   removeCommand(command)
 })
+
+// #region 离线模式下的权限控制
+
+const settings = injectSettings()
+const switchID = (time) => {
+  let v = settings.value.v
+  if (time >= 11 && time < 20) {
+    v = v > 0 ? 0 : 1
+  } else if (time >= 20) {
+    v = 2
+  }
+  settings.value.l = settings.value.v
+  settings.value.v = v
+}
+const entryOpenSettings = onCountClick((time) => {
+  if (time >= 11) {
+    switchID(time)
+  } else {
+    openSettings()
+  }
+})
+onMounted(() => {
+  enEventBus.on(EN_EVENT_BUS_KEYS.SETTINGS_OPEN_ON_ENTRY, () => {
+    entryOpenSettings()
+  })
+})
+
+
+// #endregion 离线模式下的权限控制
 
 const { onTitleClicked } = useDebugSwitcher()
 </script>
@@ -155,6 +189,7 @@ const { onTitleClicked } = useDebugSwitcher()
   display: flex;
   flex-direction: column;
   max-height: 85vh;
+  padding: 2px;
 }
 
 .enSettingsModuleSelectorList {

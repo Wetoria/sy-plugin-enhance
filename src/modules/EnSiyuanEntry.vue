@@ -16,6 +16,8 @@ import EnIconDragon from '@/components/EnIconDragon.vue'
 import EnIconLeaf2 from '@/components/EnIconLeaf2.vue'
 import { usePlugin } from '@/main'
 import { injectSettings } from '@/modules/EnModuleControl/ModuleProvide'
+import { EN_EVENT_BUS_KEYS } from '@/utils/Constants'
+import { enEventBus } from '@/utils/EnEventBus'
 import {
   onMounted,
   ref,
@@ -35,7 +37,7 @@ const registerTopBar = () => {
     title: plugin.i18n.pluginName,
     position: "right",
     callback: () => {
-      window.SEP_GLOBAL.functions.entryOpenSettings?.()
+      enEventBus.emit(EN_EVENT_BUS_KEYS.SETTINGS_OPEN_ON_ENTRY)
     },
   }) as HTMLDivElement
   window.SEP_GLOBAL.topBarEntryRef = entryRef.value = el

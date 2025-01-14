@@ -73,3 +73,7 @@ export enum EN_MODULE_LIST {
 
   EN_WHITE_BOARD = EN_CONSTANTS.EN_WHITE_BOARD,
 }
+
+export enum EN_EVENT_BUS_KEYS {
+  SETTINGS_OPEN_ON_ENTRY = 'settings:openOnEntry',
+}

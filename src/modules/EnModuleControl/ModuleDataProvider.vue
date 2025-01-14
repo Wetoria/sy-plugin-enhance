@@ -1,10 +1,19 @@
 <template>
   <template v-if="allIsReady">
-    <slot></slot>
+    <slot
+      v-bind="{
+        isFree,
+        isNotFree,
+        isPro,
+        isVip,
+        isPermanent,
+      }"
+    ></slot>
   </template>
 </template>
 
 <script setup lang="ts">
+import { usePlugin } from '@/main'
 import {
   useGlobalData,
 } from '@/modules/EnModuleControl/ModuleProvide'
@@ -24,8 +33,11 @@ import {
   onMounted,
   provide,
   ref,
+  watchEffect,
 } from 'vue'
 
+
+// #region 需要保存的全局数据，也是 Settings
 
 const settingsGlobalData = useGlobalData<EnSettings>(EN_CONSTANTS.SETTINGS, {
   defaultData: {
@@ -41,8 +53,14 @@ provide(EN_CONSTANTS.SETTINGS, settings)
 // 提供需要保存的全局数据
 provide(EN_CONSTANTS.GLOBAL_MODULE, settingsGlobalData)
 
+// #endregion 需要保存的全局数据，也是 Settings
 
-const globalData = useGlobalData<GlobalData>(EN_CONSTANTS.GLOBAL_DATA, {
+
+
+
+// #region 不需要保存的全局数据
+
+const globalData: IGlobalData<GlobalData> = useGlobalData<GlobalData>(EN_CONSTANTS.GLOBAL_DATA, {
   defaultData: {
     isSyncing: false,
     isStandalone: false,
@@ -52,6 +70,31 @@ const globalData = useGlobalData<GlobalData>(EN_CONSTANTS.GLOBAL_DATA, {
 // 提供不需要保存的全局数据
 provide(`${EN_CONSTANTS.GLOBAL_DATA}_module`, globalData)
 
+// TODO 需要测试
+watchEffect(() => {
+  console.log('globalData isSyncing', globalData.moduleOptions.value.isSyncing)
+})
+
+const { moduleOptions: globalDataOptions } = globalData
+
+const plugin = usePlugin()
+plugin.eventBus.on('sync-start', () => {
+  globalDataOptions.value.isSyncing = true
+})
+plugin.eventBus.on('sync-end', () => {
+  globalDataOptions.value.isSyncing = false
+})
+plugin.eventBus.on('sync-fail', () => {
+  globalDataOptions.value.isSyncing = false
+})
+
+// #endregion 不需要保存的全局数据
+
+
+
+
+
+// #region 权限模块
 
 const authModule = useGlobalData<EnAuth>(EN_MODULE_LIST.AUTH, {
   defaultData: {
@@ -60,7 +103,53 @@ const authModule = useGlobalData<EnAuth>(EN_MODULE_LIST.AUTH, {
   },
   needSave: false,
 })
+
+const { moduleOptions: authModuleData } = authModule
 provide(`${EN_MODULE_LIST.AUTH}_module`, authModule)
+
+const isFree = computed(() => {
+  return authModuleData.value.lv === 0 && settings.value.v === 0
+})
+const isNotFree = computed(() => !isFree.value)
+
+const isPro = computed(() => {
+  return settings.value.v === 1 || authModuleData.value.lv === 1
+})
+const isVip = computed(() => {
+  return settings.value.v === 2 || authModuleData.value.lv === 99
+})
+const isPermanent = computed(() => {
+  return settings.value.v && settings.value.v >= 1
+})
+
+const computedLevel = (level: number | string) => {
+  const hasAuth = computed(() => {
+    return !level || authModuleData.value.lv >= Number(level) || settings.value.v >= 1
+  })
+  return hasAuth
+}
+provide('Auth_Status', {
+  isFree,
+  isNotFree,
+  isPro,
+  isVip,
+  isPermanent,
+  computedLevel,
+})
+
+watchEffect(() => {
+  if (settings.value.isDebugging) {
+    console.log(`Auth flag is isFree: ${isFree.value}, isPro: ${isPro.value}, isVip: ${isVip.value}, isNotFree: ${isNotFree.value}, isPermanent: ${isPermanent.value}`)
+  }
+})
+
+// #endregion 权限模块
+
+
+
+
+
+// #region 模块数据控制逻辑
 
 const wsInited = ref(false)
 const moduleDataLoaded = ref(false)
@@ -101,6 +190,8 @@ onBeforeUnmount(() => {
   closeWebsocket()
   unmarkAll()
 })
+
+// #endregion 模块数据控制逻辑
 </script>
 
 <style lang="scss" scoped>

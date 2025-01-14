@@ -80,3 +80,23 @@ export function injectAuth(): ComputedRef<EnAuth> {
   const authModule = injectAuthModule()
   return authModule.moduleOptions
 }
+
+export function injectAuthStatus(): {
+  isFree: ComputedRef<boolean>
+  isNotFree: ComputedRef<boolean>
+  isPro: ComputedRef<boolean>
+  isVip: ComputedRef<boolean>
+  isPermanent: ComputedRef<boolean>
+  computedLevel: (level: number | string) => ComputedRef<boolean>
+} {
+  const authStatus = inject('Auth_Status') as {
+    isFree: ComputedRef<boolean>
+    isNotFree: ComputedRef<boolean>
+    isPro: ComputedRef<boolean>
+    isVip: ComputedRef<boolean>
+    isPermanent: ComputedRef<boolean>
+    computedLevel: (level: number | string) => ComputedRef<boolean>
+  }
+  return authStatus
+}
+

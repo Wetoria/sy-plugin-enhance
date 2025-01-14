@@ -1,5 +1,6 @@
 <template>
   <ModuleDataProvider v-if="moduleEnabled">
+    <template #default="{ isVip }">
     <ArcoTheme />
     <EnSettings />
     <EnSiyuanEntry />
@@ -13,27 +14,35 @@ import ModuleDataProvider from '@/modules/EnModuleControl/ModuleDataProvider.vue
 import EnSiyuanEntry from '@/modules/EnSiyuanEntry.vue'
 import EnSettings from '@/modules/Settings/EnSettings.vue'
 import { moduleEnableStatusSwitcher } from '@/utils'
-import { addCommand } from '@/utils/Commands'
+import {
+  addCommand,
+  removeCommand,
+} from '@/utils/Commands'
 import {
   EN_COMMAND_KEYS,
   EN_CONSTANTS,
 } from '@/utils/Constants'
 import {
+  onBeforeUnmount,
   onMounted,
   ref,
   watchEffect,
 } from 'vue'
 
 const moduleEnabled = ref(true)
-onMounted(() => {
-  addCommand({
+const enableCommand = {
     langKey: EN_COMMAND_KEYS.EN_PLUGIN_SWITCH,
     langText: EN_CONSTANTS.EN_PLUGIN_SWITCH_DISPLAY,
     hotkey: "",
     callback: () => {
       moduleEnabled.value = !moduleEnabled.value
     },
+}
+onMounted(() => {
+  addCommand(enableCommand)
   })
+onBeforeUnmount(() => {
+  removeCommand(enableCommand)
 })
 
 const plugin = usePlugin()

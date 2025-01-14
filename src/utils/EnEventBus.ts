@@ -1,3 +1,4 @@
+import { EN_EVENT_BUS_KEYS } from '@/utils/Constants'
 import mitt from 'mitt' // 需要先安装 mitt 包: npm install mitt
 
 // 创建一个 mitt 实例
@@ -5,7 +6,7 @@ const emitter = mitt()
 
 // 导出类型定义
 export interface EventBusType {
-  'settings:openOnEntry': void
+  [EN_EVENT_BUS_KEYS.SETTINGS_OPEN_ON_ENTRY]: void
 }
 
 // 导出类型化的 eventBus

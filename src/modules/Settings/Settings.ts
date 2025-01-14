@@ -8,14 +8,11 @@ import { onCountClick } from '@/utils/DOM'
 
 
 import {
-  EnSyncModuleData,
-  EnSyncModuleDataRef,
   getModuleRefByNamespace,
   useSyncModuleData,
 } from '@/utils/SyncData'
 import {
   computed,
-  ComputedRef,
   ref,
   watch,
   watchEffect,
@@ -43,31 +40,6 @@ export const switchSettingsDisplay = () => {
 // #endregion 控制设置页面的显示
 
 
-
-
-// #region 离线模式下的权限控制
-
-const switchID = (time) => {
-  const settings = injectSettings()
-  let v = settings.value.v
-  if (time >= 11 && time < 20) {
-    v = v > 0 ? 0 : 1
-  } else if (time >= 20) {
-    v = 2
-  }
-  settings.value.l = settings.value.v
-  settings.value.v = v
-}
-export const entryOpenSettings = onCountClick((time) => {
-  if (time >= 11) {
-    switchID(time)
-  } else {
-    openSettings()
-  }
-})
-
-
-// #endregion 离线模式下的权限控制
 
 
 // 设置页面 手势控制的 Ref
@@ -119,21 +91,6 @@ export const useDebugSwitcher = () => {
 
 
 
-export interface EnModuleOptions<T extends EnModule> {
-  defaultData: T
-}
-
-export interface EnSettingModule<T extends EnModule>
-  extends EnSyncModuleData<T>
-{
-
-}
-export interface EnSettingModuleRef<T extends EnModule>
-  extends EnSyncModuleDataRef<T>
-{
-
-}
-
 
 export function useSettingModule<T extends EnModule>(
   moduleName: string,
@@ -155,9 +112,6 @@ export function useSettingModule<T extends EnModule>(
   return module
 }
 
-
-export interface EnSettingModuleDataRef<T extends EnModule> extends ComputedRef<T> {
-}
 
 export function useSettingModuleData<T extends EnModule>(moduleName: string): EnSettingModuleDataRef<T> {
   const module = getModuleRefByNamespace<T>(moduleName)
