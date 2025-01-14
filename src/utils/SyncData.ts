@@ -6,7 +6,6 @@ import {
 import chalk from 'chalk'
 import _ from 'lodash'
 import {
-  Ref,
   ref,
   watch,
 } from 'vue'
@@ -44,20 +43,8 @@ export interface EnSyncModuleProps<T> {
 
 export type Namespace = string
 
-/**
- * 同步模块的数据结构
- * @field data 当前数据
- * @field defaultValue 默认数据
- */
-export interface EnSyncModuleData<T> {
-  data: T
-  defaultValue: T
-}
 
-/**
- * 同步模块的数据引用 Ref<EnSyncModuleData<T>>
- */
-export type EnSyncModuleDataRef<T> = Ref<EnSyncModuleData<T>>
+
 
 
 /**

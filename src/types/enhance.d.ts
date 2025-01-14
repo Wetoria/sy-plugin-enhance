@@ -22,6 +22,22 @@ interface IGlobalData<T> {
 }
 
 /**
+ * 同步模块的数据结构
+ * @field data 当前数据
+ * @field defaultValue 默认数据
+ */
+interface EnSyncModuleData<T> {
+  data: T
+  defaultValue: T
+}
+
+/**
+ * 同步模块的数据引用 Ref<EnSyncModuleData<T>>
+ */
+type EnSyncModuleDataRef<T> = Ref<EnSyncModuleData<T>>
+
+
+/**
  * 模块接口
  *
  * @field enabled - 模块是否启用
@@ -33,4 +49,22 @@ interface EnModule {
   readonly moduleName: EN_MODULE_LIST | string
   readonly moduleDisplayName: string
   sort?: number
+}
+
+interface EnModuleOptions<T extends EnModule> {
+  defaultData: T
+}
+
+interface EnSettingModule<T extends EnModule>
+  extends EnSyncModuleData<T>
+{
+
+}
+interface EnSettingModuleRef<T extends EnModule>
+  extends EnSyncModuleDataRef<T>
+{
+
+}
+
+interface EnSettingModuleDataRef<T extends EnModule> extends ComputedRef<T> {
 }
