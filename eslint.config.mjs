@@ -110,7 +110,7 @@ export default antfu(
       'style/arrow-parens': ['warn', 'always'],
       'style/brace-style': 'off',
       'style/no-multiple-empty-lines': ['warn', {
-        max: 3,
+        max: 7,
       }],
       'style/operator-linebreak': ['warn', 'before', {
         overrides: {
