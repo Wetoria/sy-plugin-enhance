@@ -14,6 +14,7 @@
 </template>
 
 <script setup lang="ts">
+import { lsNotebooks } from '@/api'
 import { usePlugin } from '@/main'
 import EnAuth from '@/modules/EnModuleControl/EnAuth.vue'
 import {
@@ -23,6 +24,10 @@ import {
   EN_CONSTANTS,
   EN_MODULE_LIST,
 } from '@/utils/Constants'
+import {
+  useSiyuanNotebookMount,
+  useSiyuanNotebookUnmount,
+} from '@/utils/EventBusHooks'
 import {
   closeWebsocket,
   initWebsocket,
@@ -35,8 +40,12 @@ import {
   onMounted,
   provide,
   ref,
+  watch,
   watchEffect,
 } from 'vue'
+
+
+const isInWindowHtml = location.href.includes('window.html')
 
 
 // #region 需要保存的全局数据，也是 Settings
@@ -62,32 +71,74 @@ provide(EN_CONSTANTS.GLOBAL_MODULE, settingsGlobalData)
 
 // #region 不需要保存的全局数据
 
-const globalData: IGlobalData<GlobalData> = useGlobalData<GlobalData>(EN_CONSTANTS.GLOBAL_DATA, {
+const globalDataModule: IGlobalData<GlobalData> = useGlobalData<GlobalData>(EN_CONSTANTS.GLOBAL_DATA, {
   defaultData: {
     isSyncing: false,
     isStandalone: false,
+
+    isInSiyuanMain: !isInWindowHtml,
+    isInSiyuanWindowHtml: isInWindowHtml,
+
+    notebookList: [],
+    openedNotebookList: [],
   },
   needSave: false,
 })
-// 提供不需要保存的全局数据
-provide(`${EN_CONSTANTS.GLOBAL_DATA}_module`, globalData)
+const { moduleOptions: globalData } = globalDataModule
 
-// TODO 需要测试
-watchEffect(() => {
-  console.log('globalData isSyncing', globalData.moduleOptions.value.isSyncing)
+// 提供不需要保存的全局数据
+provide(`${EN_CONSTANTS.GLOBAL_DATA}_module`, globalDataModule)
+
+
+// 测试模式绑定数据到 window 对象上
+watch(() => settings.value.isDebugging, (value) => {
+  if (value) {
+    window.SEP_GLOBAL.globalData = globalData
+  }
 })
 
-const { moduleOptions: globalDataOptions } = globalData
+
+// #region 笔记本相关数据控制逻辑
+
+async function updateOpenedNotebookList() {
+  const res = await lsNotebooks()
+  globalData.value.notebookList = res?.notebooks || []
+  globalData.value.openedNotebookList = globalData.value.notebookList.filter((i) => !i.closed)
+}
+
+
+onMounted(() => {
+  updateOpenedNotebookList()
+
+  // 在思源本体中，监听思源的笔记本变化
+  // 其实这样写，每一个终端都会监听，有一点点蠢
+  if (globalData.value.isInSiyuanMain) {
+    useSiyuanNotebookMount(() => {
+      updateOpenedNotebookList()
+    })
+    useSiyuanNotebookUnmount(() => {
+      updateOpenedNotebookList()
+    })
+  }
+})
+
+// #endregion 笔记本相关数据控制逻辑
+
+// TODO 需要测试
+// watchEffect(() => {
+//   console.log('globalData isSyncing', globalDataModule.moduleOptions.value.isSyncing)
+// })
+
 
 const plugin = usePlugin()
 plugin.eventBus.on('sync-start', () => {
-  globalDataOptions.value.isSyncing = true
+  globalData.value.isSyncing = true
 })
 plugin.eventBus.on('sync-end', () => {
-  globalDataOptions.value.isSyncing = false
+  globalData.value.isSyncing = false
 })
 plugin.eventBus.on('sync-fail', () => {
-  globalDataOptions.value.isSyncing = false
+  globalData.value.isSyncing = false
 })
 
 // #endregion 不需要保存的全局数据

@@ -14,6 +14,12 @@ interface GlobalModule extends EnSettings {}
 interface GlobalData {
   isSyncing: boolean
   isStandalone: boolean
+
+  isInSiyuanMain: boolean
+  isInSiyuanWindowHtml: boolean
+
+  notebookList: Notebook[]
+  openedNotebookList: Notebook[]
 }
 
 interface IGlobalData<T> {
