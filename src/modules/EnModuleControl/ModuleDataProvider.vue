@@ -183,7 +183,6 @@ const autoLoadModuleData = async () => {
     // 需要保存，并且是自动保存的，但是没有加载的模块
     return module.needSave && module.autoLoad && !module.loaded
   })
-  console.log(' needLoadNamespaces is ', needLoadNamespaces)
   if (!needLoadNamespaces.length) {
     moduleDataLoaded.value = true
     return

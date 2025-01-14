@@ -79,6 +79,8 @@ import {
   useGlobalData,
   useModule,
 } from '@/modules/EnModuleControl/ModuleProvide'
+import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
+import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue'
 import { addCommand } from '@/utils/Commands'
 import {
   EN_CONSTANTS,
@@ -97,9 +99,6 @@ import {
 import {
   onMounted,
 } from 'vue'
-import { EnModule } from '../Settings/EnSettings.vue'
-import EnSettingsItem from '../../modules/Settings/EnSettingsItem.vue'
-import EnSettingsTeleportModule from '../../modules/Settings/EnSettingsTeleportModule.vue'
 import EnQuickNoteMobile from './QuickNote/EnQuickNoteMobile.vue'
 
 const plugin = usePlugin()

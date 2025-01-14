@@ -10,7 +10,7 @@
       <EnSettings />
       <EnSiyuanEntry />
       <EnBackgroundImg v-if="isVip" />
-      <!-- <DailyNote /> -->
+      <DailyNote />
       <!-- <EnEditor /> -->
       <EnOthers />
 
@@ -40,6 +40,7 @@
 import { usePlugin } from '@/main'
 import ArcoTheme from '@/modules/ArcoTheme.vue'
 import EnBackgroundImg from '@/modules/Background/EnBackgroundImg.vue'
+import DailyNote from '@/modules/DailyNote/DailyNote.vue'
 import EnModuleComment from '@/modules/Editor/Comment/EnModuleComment.vue'
 import EnFont from '@/modules/Editor/EnFontStyle/EnFont.vue'
 import EnFormatBrush from '@/modules/EnFormatBrush/EnFormatBrush.vue'
