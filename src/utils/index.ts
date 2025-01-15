@@ -1,5 +1,9 @@
 import dayjs from 'dayjs'
 import {
+  DebounceSettings,
+  debounce as lodashDebounce,
+} from 'lodash-es'
+import {
   onMounted,
   ref,
 } from 'vue'
@@ -71,16 +75,8 @@ export function recursionTreeCanBreakChildren(
   })
 }
 
-export function debounce(fn, time = 500) {
-  let flag
-  return (...args) => {
-    if (flag) {
-      clearTimeout(flag)
-    }
-    flag = setTimeout(() => {
-      fn(...args)
-    }, time)
-  }
+export function debounce(fn, time = 500, options?: DebounceSettings) {
+  return lodashDebounce(fn, time, options)
 }
 
 export function moduleEnableStatusSwitcher(
