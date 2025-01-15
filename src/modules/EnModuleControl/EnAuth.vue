@@ -115,6 +115,10 @@ import {
 
 
 const authModuleData = injectAuth()
+const { levelLabel } = injectAuthStatus()
+const expiration = computed(() => {
+  return authModuleData.value.expiration ? dayjs(authModuleData.value.expiration).format('YYYY-MM-DD HH:mm') : '--'
+})
 
 
 const authModalVisible = ref(false)
@@ -123,24 +127,14 @@ const openAuthModal = () => {
   authModalVisible.value = true
 }
 
+// #region 👇 监听订阅窗口的开启
 onMounted(() => {
   enEventBus.on(EN_EVENT_BUS_KEYS.AUTH_OPEN_MODAL, openAuthModal)
 })
 onBeforeUnmount(() => {
   enEventBus.off(EN_EVENT_BUS_KEYS.AUTH_OPEN_MODAL, openAuthModal)
 })
-
-const levelLabel = computed(() => {
-  const map = {
-    0: '普通版',
-    98: 'Inner',
-    99: 'Super',
-  }
-  return map[authModuleData.value.lv] || (authModuleData.value.lv ? `Lv. ${authModuleData.value.lv}` : '--')
-})
-const expiration = computed(() => {
-  return authModuleData.value.expiration ? dayjs(authModuleData.value.expiration).format('YYYY-MM-DD HH:mm') : '--'
-})
+// #endregion 👆 监听订阅窗口的开启
 
 const siyuanAccount = ref({
   userId: '',
