@@ -21,7 +21,7 @@
         </EnSettingsItemAreaHeading>
       </div>
       <div class="en_settings_module_body flexColumn">
-        <slot></slot>
+        <slot v-bind="{ hasAuth }"></slot>
       </div>
       <div
         v-if="hasFooterSlot"
