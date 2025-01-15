@@ -1,9 +1,25 @@
 <template>
-  <div></div>
+  <EnSettingsTeleportModule
+    :name="moduleOptions.moduleName"
+    :display="moduleOptions.moduleDisplayName"
+    :module="module"
+    :authLevel="1"
+    @moduleEnabled="onModuleEnabled"
+    @moduleDisabled="onModuleDisabled"
+  >
+    <div>
+      格式刷功能{{ hasAuth ? '已开启' : '未开启' }}
+    </div>
+  </EnSettingsTeleportModule>
 </template>
 
 <script setup lang="ts">
 import { usePlugin } from '@/main'
+import {
+  injectAuthStatus,
+  useModule,
+} from '@/modules/EnModuleControl/ModuleProvide'
+import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue'
 import {
   moduleEnableStatusSwitcher,
 } from '@/utils'
@@ -11,6 +27,10 @@ import {
   addCommand,
   removeCommand,
 } from '@/utils/Commands'
+import {
+  EN_CONSTANTS,
+  EN_MODULE_LIST,
+} from '@/utils/Constants'
 import {
   unWatchDomChange,
   watchDomChange,
@@ -21,13 +41,32 @@ import { debounce } from 'lodash-es'
 import { IProtyle } from 'siyuan'
 import {
   computed,
-  onBeforeUnmount,
-  onMounted,
   ref,
   watch,
 } from 'vue'
 
 const plugin = usePlugin()
+
+const {
+  module,
+  moduleOptions,
+} = useModule(EN_MODULE_LIST.EN_FORMAT_BRUSH, {
+  defaultData: {
+    enabled: false,
+    moduleName: EN_MODULE_LIST.EN_FORMAT_BRUSH,
+    moduleDisplayName: EN_CONSTANTS.EN_FORMAT_BRUSH_DISPLAY,
+  },
+  needSave: false,
+})
+
+const { computedLevel } = injectAuthStatus()
+const hasAuth = computedLevel(1)
+// 有权限时，自动开启格式刷功能
+watch(hasAuth, () => {
+  if (hasAuth.value) {
+    moduleOptions.value.enable = true
+  }
+})
 
 plugin.addIcons(`
   <symbol id="EnIconFormatBrushActived" viewBox="0 0 32 32">
@@ -44,6 +83,8 @@ plugin.addIcons(`
   </symbol>
 `)
 
+// @ts-expect-error ignore
+// eslint-disable-next-line unused-imports/no-unused-vars
 const INLINE_TYPE = [
   "block-ref",
   "text",
@@ -122,17 +163,19 @@ const escapeEvent = (event) => {
     event.preventDefault()
     event.stopImmediatePropagation()
     event.stopPropagation()
+    // eslint-disable-next-line ts/no-use-before-define
     cancelBrush()
   }
 }
 
-const pasteStyleOnMouseUp = (event) => {
+const pasteStyleOnMouseUp = () => {
   const selection = window.getSelection()
 
   if (selection.isCollapsed) {
     return
   }
   setTimeout(() => {
+    // eslint-disable-next-line ts/no-use-before-define
     pasteCurrentStyle()
   }, 30)
 }
@@ -150,6 +193,8 @@ const enableBrush = () => {
   document.addEventListener('mouseup', pasteStyleOnMouseUp)
 }
 
+
+const currentProtyle = useCurrentProtyle()
 
 const brushing = computed(() => !!currentFontStyle.value)
 
@@ -211,6 +256,8 @@ const convertStyleByRange = () => {
   return tempStyle
 }
 
+// @ts-expect-error ignore
+// eslint-disable-next-line unused-imports/no-unused-vars
 const isSameStyle = (style1: IStyle, style2: IStyle) => {
   if (!style1 || !style2) {
     return false
@@ -322,6 +369,36 @@ const commands = [
   },
 ]
 
+
+const getAriaLabel = () => {
+  const cmd = plugin.commands.find((i) => i.langKey === 'En_FormatBrush_Enable')
+  const enableLabels = [`开启格式刷`]
+  if (cmd && (cmd.customHotkey || cmd.hotkey)) {
+    enableLabels.push(`(${cmd.customHotkey || cmd.hotkey})`)
+  }
+  return `${!brushing.value ? enableLabels.join('') : `关闭格式刷(Esc 取消)`}`
+}
+
+const updateToolbarBrushInfo = (eachBtn: HTMLElement) => {
+  const svg = eachBtn.querySelector('svg')
+  const oldAriaLabel = eachBtn.getAttribute('aria-label')
+  const domEnabledStatus = eachBtn.dataset.en_brush_enabled
+  const newAriaLabel = getAriaLabel()
+  if (oldAriaLabel === newAriaLabel && domEnabledStatus === `${brushing.value}`) {
+    return
+  }
+
+  eachBtn.setAttribute('aria-label', newAriaLabel)
+  eachBtn.dataset.en_brush_enabled = brushing.value ? 'true' : 'false'
+
+  const useDom = svg.querySelector('use')
+  if (brushing.value) {
+    useDom?.setAttribute('xlink:href', '#EnIconFormatBrushActived')
+  } else {
+    useDom?.setAttribute('xlink:href', '#EnIconFormatBrush')
+  }
+}
+
 const registerToolbarBrush = debounce(() => {
   const domList = document.querySelectorAll('.protyle-toolbar')
 
@@ -390,34 +467,6 @@ const unregisterToolbarBrush = () => {
   })
 }
 
-const getAriaLabel = () => {
-  const cmd = plugin.commands.find((i) => i.langKey === 'En_FormatBrush_Enable')
-  const enableLabels = [`开启格式刷`]
-  if (cmd && (cmd.customHotkey || cmd.hotkey)) {
-    enableLabels.push(`(${cmd.customHotkey || cmd.hotkey})`)
-  }
-  return `${!brushing.value ? enableLabels.join('') : `关闭格式刷(Esc 取消)`}`
-}
-
-const updateToolbarBrushInfo = (eachBtn: HTMLElement) => {
-  const svg = eachBtn.querySelector('svg')
-  const oldAriaLabel = eachBtn.getAttribute('aria-label')
-  const domEnabledStatus = eachBtn.dataset.en_brush_enabled
-  const newAriaLabel = getAriaLabel()
-  if (oldAriaLabel === newAriaLabel && domEnabledStatus === `${brushing.value}`) {
-    return
-  }
-
-  eachBtn.setAttribute('aria-label', newAriaLabel)
-  eachBtn.dataset.en_brush_enabled = brushing.value ? 'true' : 'false'
-
-  const useDom = svg.querySelector('use')
-  if (brushing.value) {
-    useDom?.setAttribute('xlink:href', '#EnIconFormatBrushActived')
-  } else {
-    useDom?.setAttribute('xlink:href', '#EnIconFormatBrush')
-  }
-}
 
 const updateAllToolbarBrushInfo = () => {
   const btns = document.querySelectorAll('[data-type="EnFormatBrush"]')
@@ -428,23 +477,27 @@ const updateAllToolbarBrushInfo = () => {
 }
 
 
-const currentProtyle = useCurrentProtyle()
 
+let unwatchBrushing = null
+const onModuleEnabled = () => {
 
-watch(brushing, () => {
-  updateAllToolbarBrushInfo()
-  switchEnableStatus()
-}, {
-  immediate: true,
-})
-
-onMounted(() => {
   commands.forEach((command) => {
     addCommand(command)
   })
+
+  unwatchBrushing = watch(brushing, () => {
+    updateAllToolbarBrushInfo()
+    switchEnableStatus()
+  }, {
+    immediate: true,
+  })
+
+
   watchDomChange(registerToolbarBrush)
-})
-onBeforeUnmount(() => {
+}
+
+const onModuleDisabled = () => {
+  unwatchBrushing?.()
   cancelBrush()
   changeBrushStatusIndomTo(false)
   registerToolbarBrush.cancel()
@@ -454,7 +507,7 @@ onBeforeUnmount(() => {
 
   unWatchDomChange(registerToolbarBrush)
   unregisterToolbarBrush()
-})
+}
 </script>
 
 <style lang="scss">
