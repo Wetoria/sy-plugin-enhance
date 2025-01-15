@@ -67,6 +67,7 @@ import { EN_EVENT_BUS_KEYS } from '@/utils/Constants'
 import { enEventBus } from '@/utils/EnEventBus'
 import {
   computed,
+  onBeforeUnmount,
   onMounted,
   onUnmounted,
   useSlots,
@@ -175,6 +176,9 @@ watch(() => moduleData.value.enabled, (enabled) => {
   }
   // 不需要 immediate
   // 首次数据是临时全局变量，等数据加载完毕后，会重新触发，刚好就是首次需要的状态
+})
+onBeforeUnmount(() => {
+  emit('moduleDisabled')
 })
 
 onMounted(() => {
