@@ -11,6 +11,26 @@
       格式刷功能{{ hasAuth ? '已开启' : '未开启' }}
     </div>
   </EnSettingsTeleportModule>
+  <template
+    v-for="protyleToolbarBrushContainerTarget in toolbarDomList"
+    :key="protyleToolbarBrushContainerTarget.dataset.en_loop_key"
+  >
+    <Teleport
+      :to="protyleToolbarBrushContainerTarget"
+    >
+      <button
+        class="protyle-toolbar__item b3-tooltips b3-tooltips__n"
+        data-type="EnFormatBrush"
+        :aria-label="getAriaLabel()"
+        :data-en_brush_enabled="brushing"
+        @click="onToolbarBrushClick"
+      >
+        <svg>
+          <use :xlink:href="brushing ? '#EnIconFormatBrushActived' : '#EnIconFormatBrush'"></use>
+        </svg>
+      </button>
+    </Teleport>
+  </template>
 </template>
 
 <script setup lang="ts">
@@ -21,26 +41,33 @@ import {
 } from '@/modules/EnModuleControl/ModuleProvide'
 import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue'
 import {
+  generateShortUUID,
   moduleEnableStatusSwitcher,
 } from '@/utils'
 import {
   addCommand,
   removeCommand,
 } from '@/utils/Commands'
+
+
 import {
   EN_CONSTANTS,
   EN_MODULE_LIST,
 } from '@/utils/Constants'
 import {
-  unWatchDomChange,
-  watchDomChange,
+  appendTargetDomAsClassOrder,
+  queryAllByDom,
 } from '@/utils/DOM'
+import {
+  useSiyuanEventLoadedProtyleStatic,
+  useSiyuanEventProtyleDestroy,
+} from '@/utils/EventBusHooks'
 import { useCurrentProtyle } from '@/utils/Siyuan'
-import { debounce } from 'lodash-es'
 
 import { IProtyle } from 'siyuan'
 import {
   computed,
+  nextTick,
   ref,
   watch,
 } from 'vue'
@@ -154,9 +181,18 @@ interface IStyle {
   }
 }
 
+const currentProtyle = useCurrentProtyle()
+
+
 const currentFontStyle = ref<IStyle>()
+const brushing = computed(() => !!currentFontStyle.value)
 
 
+
+
+const changeBrushStatusIndomTo = (enable: boolean) => {
+  moduleEnableStatusSwitcher('EnFormatBrush', enable)
+}
 
 const escapeEvent = (event) => {
   if (event.code === 'Escape') {
@@ -182,32 +218,19 @@ const pasteStyleOnMouseUp = () => {
 
 const cancelBrush = () => {
   currentFontStyle.value = null
+  changeBrushStatusIndomTo(false)
 
   document.removeEventListener('keydown', escapeEvent, true)
   document.removeEventListener('mouseup', pasteStyleOnMouseUp)
 }
 
 const enableBrush = () => {
+  changeBrushStatusIndomTo(true)
   document.addEventListener('keydown', escapeEvent, true)
-
   document.addEventListener('mouseup', pasteStyleOnMouseUp)
 }
 
 
-const currentProtyle = useCurrentProtyle()
-
-const brushing = computed(() => !!currentFontStyle.value)
-
-
-const changeBrushStatusIndomTo = (enable: boolean) => {
-  moduleEnableStatusSwitcher('EnFormatBrush', enable)
-}
-const switchEnableStatus = () => {
-  changeBrushStatusIndomTo(brushing.value)
-  if (brushing.value) {
-    enableBrush()
-  }
-}
 
 const convertStyleByRange = () => {
   const selection = window.getSelection()
@@ -224,15 +247,6 @@ const convertStyleByRange = () => {
   // 获取包含选区开始的元素
   const element = (startContainer.nodeType === Node.ELEMENT_NODE ? startContainer : startContainer.parentElement) as HTMLElement
 
-  // console.log('element is ', element)
-  // const tagNames = [
-  //   'strong',
-  //   'span',
-  // ]
-  // if (!tagNames.includes(element.localName)) {
-  //   console.log('[Enhance] - 首个元素没有设置样式')
-  //   return
-  // }
 
   const tempStyle = {} as any as IStyle
   tempStyle.style = {}
@@ -289,6 +303,7 @@ const isSameStyle = (style1: IStyle, style2: IStyle) => {
 const copyCurrentStyle = () => {
   const tempStyle = convertStyleByRange()
   currentFontStyle.value = tempStyle
+  enableBrush()
 }
 
 const pasteCurrentStyle = (protyle: IProtyle = currentProtyle.value) => {
@@ -316,6 +331,7 @@ const pasteCurrentStyle = (protyle: IProtyle = currentProtyle.value) => {
 
   // const oldElement = siyuanNode.outerHTML
 
+  // IMP 这里可能会影响到批注的数据
   protyle?.toolbar?.setInlineMark(protyle, 'clear', "range")
   protyle?.toolbar?.setInlineMark(protyle, 'clear', "range")
 
@@ -359,14 +375,14 @@ const commands = [
       copyCurrentStyle()
     },
   },
-  {
-    langKey: "En_FormatBrush_Paste",
-    langText: "格式刷（粘贴当前格式）",
-    hotkey: "",
-    editorCallback: (protyle) => {
-      pasteCurrentStyle(protyle)
-    },
-  },
+  // {
+  //   langKey: "En_FormatBrush_Paste",
+  //   langText: "格式刷（粘贴当前格式）",
+  //   hotkey: "",
+  //   editorCallback: (protyle) => {
+  //     pasteCurrentStyle(protyle)
+  //   },
+  // },
 ]
 
 
@@ -379,134 +395,95 @@ const getAriaLabel = () => {
   return `${!brushing.value ? enableLabels.join('') : `关闭格式刷(Esc 取消)`}`
 }
 
-const updateToolbarBrushInfo = (eachBtn: HTMLElement) => {
-  const svg = eachBtn.querySelector('svg')
-  const oldAriaLabel = eachBtn.getAttribute('aria-label')
-  const domEnabledStatus = eachBtn.dataset.en_brush_enabled
-  const newAriaLabel = getAriaLabel()
-  if (oldAriaLabel === newAriaLabel && domEnabledStatus === `${brushing.value}`) {
-    return
-  }
 
-  eachBtn.setAttribute('aria-label', newAriaLabel)
-  eachBtn.dataset.en_brush_enabled = brushing.value ? 'true' : 'false'
-
-  const useDom = svg.querySelector('use')
+const onToolbarBrushClick = () => {
   if (brushing.value) {
-    useDom?.setAttribute('xlink:href', '#EnIconFormatBrushActived')
+    cancelBrush()
   } else {
-    useDom?.setAttribute('xlink:href', '#EnIconFormatBrush')
+    copyCurrentStyle()
   }
 }
 
-const registerToolbarBrush = debounce(() => {
-  const domList = document.querySelectorAll('.protyle-toolbar')
+
+
+// #region 👇 工具栏中格式刷按钮的相关逻辑
+
+const toolbarDomList = ref<HTMLElement[]>([])
+
+const registerToolbarBrushContainer = () => {
+  const domList = queryAllByDom(document.body, '.protyle-toolbar')
 
   if (!domList.length) {
     return
   }
 
-  domList.forEach((dom) => {
-    let exist = false
-    const findResult = Array.prototype.find.call(dom.children, (node: HTMLElement) => {
-      if (node.dataset.type === 'EnFormatBrush') {
-        exist = true
-        return node
-      }
-    })
+  domList.forEach((dom: HTMLElement) => {
+    const toolbarItems = [...dom.children]
+    const exist = toolbarItems.find((i: HTMLElement) => i.dataset.type === 'EnFormatBrush')
     if (exist) {
-      updateToolbarBrushInfo(findResult)
       return
     }
-
-    const fragment = document.createDocumentFragment()
-
-
-    const btn = document.createElement('button')
-    btn.className = 'protyle-toolbar__item b3-tooltips b3-tooltips__n'
-    btn.setAttribute('data-type', 'EnFormatBrush')
-    btn.setAttribute('aria-label', getAriaLabel())
-    btn.dataset.en_brush_enabled = brushing.value ? 'true' : 'false'
-    btn.innerHTML = `
-    <svg>
-      <use xlink:href="${brushing.value ? '#EnIconFormatBrushActived' : '#EnIconFormatBrush'}"></use>
-    </svg>
-    `
-    btn.addEventListener('click', () => {
-      if (brushing.value) {
-        cancelBrush()
-      } else {
-        copyCurrentStyle()
-      }
-    })
-    fragment.appendChild(btn)
-
-
-
-    dom.appendChild(fragment)
+    const targetDom = appendTargetDomAsClassOrder('enProtyleToolbarBrushContainer', dom)
+    targetDom.setAttribute('data-type', 'EnFormatBrush')
+    targetDom.dataset.en_loop_key = generateShortUUID()
+    toolbarDomList.value.push(targetDom)
   })
-}, 300)
-
-const unregisterToolbarBrush = () => {
-  const domList = document.querySelectorAll('.protyle-toolbar')
-
-  if (!domList.length) {
-    return
-  }
-  domList.forEach((dom) => {
-    let exist = false
-    const findResult = Array.prototype.find.call(dom.children, (node: HTMLElement) => {
-      if (node.dataset.type === 'EnFormatBrush') {
-        exist = true
-        return node
-      }
-    })
-    if (exist) {
-      findResult.remove()
-    }
+}
+const unregisterToolbarBrushContainer = () => {
+  toolbarDomList.value.forEach((dom) => {
+    dom.remove()
   })
 }
 
-
-const updateAllToolbarBrushInfo = () => {
-  const btns = document.querySelectorAll('[data-type="EnFormatBrush"]')
-
-  btns.forEach((eachBtn) => {
-    updateToolbarBrushInfo(eachBtn as HTMLElement)
+const removeToolbarBrushContainerNotInDocument = () => {
+  toolbarDomList.value = toolbarDomList.value.filter((dom) => {
+    return document.body.contains(dom)
   })
 }
 
+let offRegisterToolbarBrush = null
+let offOnProtyleDestroy = null
+const bindRegisterToolbarBrushListener = () => {
+  // 启动时先处理一次，防止已经存在的文档，没有触发 load
+  registerToolbarBrushContainer()
 
 
-let unwatchBrushing = null
+  // 监听 protyle 加载，追加格式刷按钮
+  offRegisterToolbarBrush = useSiyuanEventLoadedProtyleStatic(() => {
+    registerToolbarBrushContainer()
+  })
+
+  // 监听 protyle 销毁，移除格式刷按钮
+  offOnProtyleDestroy = useSiyuanEventProtyleDestroy(() => {
+    nextTick(() => {
+      removeToolbarBrushContainerNotInDocument()
+    })
+  })
+}
+const unbindRegisterToolbarBrushListener = () => {
+  offOnProtyleDestroy?.()
+  offRegisterToolbarBrush?.()
+  unregisterToolbarBrushContainer()
+}
+
+// #endregion 👆 工具栏中格式刷按钮的相关逻辑
+
+
 const onModuleEnabled = () => {
-
+  bindRegisterToolbarBrushListener()
+  // 注册格式刷快捷键和命令
   commands.forEach((command) => {
     addCommand(command)
   })
-
-  unwatchBrushing = watch(brushing, () => {
-    updateAllToolbarBrushInfo()
-    switchEnableStatus()
-  }, {
-    immediate: true,
-  })
-
-
-  watchDomChange(registerToolbarBrush)
 }
 
 const onModuleDisabled = () => {
-  unwatchBrushing?.()
   cancelBrush()
-  changeBrushStatusIndomTo(false)
-  registerToolbarBrush.cancel()
+  unbindRegisterToolbarBrushListener()
+
   commands.forEach((command) => {
     removeCommand(command)
   })
-
-  unWatchDomChange(registerToolbarBrush)
-  unregisterToolbarBrush()
 }
 </script>
 

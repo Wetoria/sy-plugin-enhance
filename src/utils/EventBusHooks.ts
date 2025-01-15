@@ -23,6 +23,10 @@ export function useSiyuanEventLoadedProtyleStatic(cb: (event: any) => void): off
   return useSiyuanEvent('loaded-protyle-static', cb)
 }
 
+export function useSiyuanEventProtyleDestroy(cb: (event: any) => void): offSiyuanEvent {
+  return useSiyuanEvent('destroy-protyle', cb)
+}
+
 export function useSiyuanEventWsMain(cb: (event: any) => void): offSiyuanEvent {
   return useSiyuanEvent('ws-main', cb)
 }
