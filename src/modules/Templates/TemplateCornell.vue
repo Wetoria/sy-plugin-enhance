@@ -133,6 +133,7 @@ import { SyDomNodeTypes } from '@/utils/Siyuan'
 import { Protyle } from 'siyuan'
 import {
   computed,
+  onBeforeUnmount,
   onMounted,
   ref,
   watchEffect,
@@ -208,38 +209,43 @@ watchEffect(() => {
   })
 })
 
-function insertBlockTime() {
-  const handler = () => {
-    const paragraphList = queryAllByDom(document.body, `.protyle [data-type="${SyDomNodeTypes.NodeSuperBlock}"][custom-iscornell="true"]`) as HTMLDivElement[]
-    paragraphListRef.value = paragraphList
-  }
-
-  handler()
-  const observer = new MutationObserver(debounce(handler, 300))
-  observer.observe(document.documentElement, {
-    childList: true, // 观察目标子节点的变化，是否有添加或者删除
-    subtree: true, // 观察后代节点，默认为 false
-    attributes: true,
-  })
-}
-onMounted(() => {
-  insertBlockTime()
-})
-
-plugin.protyleSlash.push({
+const slash = {
   filter: [
     "add template cornell",
     'atc',
     "插入模板 - 康奈尔",
   ],
-  html: `<div class="b3-list-item__first"><span class="b3-list-item__text">${'插入模板 - 康奈尔'}</span></div>`,
+  html: `<div class="b3-list-item__first"><span class="b3-list-item__text">${'叶归｜插入模板 - 康奈尔'}</span></div>`,
   id: "enTemplateInsertCornell",
   callback(protyle: Protyle) {
-    const iProtyle = protyle.protyle
-    enLog('id is ', iProtyle.selectElement)
     protyle.insert(`{{{row\n{{{col\n{{{row\n线索\n{: style="" }\n{: style="" }\n}}}\n{{{row\n笔记\n{: style="" }\n{: style="" }\n}}}\n}}}\n{{{row\n总结\n{: style="" }\n{: style="" }\n}}}\n}}}\n{: custom-iscornell="true" }`)
   },
+}
+
+const handler = () => {
+  const paragraphList = queryAllByDom(document.body, `.protyle [data-type="${SyDomNodeTypes.NodeSuperBlock}"][custom-iscornell="true"]`) as HTMLDivElement[]
+  paragraphListRef.value = paragraphList
+}
+let observer: MutationObserver = null
+onMounted(() => {
+  handler()
+  observer = new MutationObserver(debounce(handler, 300))
+  observer.observe(document.documentElement, {
+    childList: true, // 观察目标子节点的变化，是否有添加或者删除
+    subtree: true, // 观察后代节点，默认为 false
+    attributes: true,
+  })
+
+  plugin.protyleSlash.push(slash)
 })
+onBeforeUnmount(() => {
+  observer?.disconnect()
+  observer = null
+
+  plugin.protyleSlash = plugin.protyleSlash.filter((i) => i.id !== 'enTemplateInsertCornell')
+})
+
+
 </script>
 
 <style lang="scss">
