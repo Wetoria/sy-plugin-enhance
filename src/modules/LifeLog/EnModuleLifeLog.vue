@@ -6,11 +6,33 @@
   >
     <EnSettingsItem>
       <div>
-        启用 LifeLog 相关功能
+        启用 LifeLog 标记功能
       </div>
       <template #desc>
         <div>
-          是否启动 LifeLog 功能。
+          是否标记 LifeLog 段落。但输入 [时间 类型] 或 [时间 类型：备注] 后，会自动将段落标记为 LifeLog 段落。
+        </div>
+        <div>
+          例如：
+        </div>
+        <div>
+          12:00 工作
+        </div>
+        <div>
+          12:00 工作：写日报
+        </div>
+        <div>
+          12:00:00 工作：写日报
+        </div>
+        <div>
+          <a-typography-text type="warning">
+            注：该功能只标记日记中的段落。
+          </a-typography-text>
+        </div>
+        <div>
+          <a-typography-text type="warning">
+            注：如果开头的时间带有任何样式，则不会被标记。可先进行标记，在设置格式。
+          </a-typography-text>
         </div>
       </template>
       <template #opt>
@@ -33,6 +55,104 @@
         <a-switch v-model="moduleOptions.showLifeLogFlag" />
       </template>
     </EnSettingsItem>
+    <EnSettingsItem>
+      <div>
+        LifeLog 类型
+      </div>
+      <template #desc>
+        <div>
+          LifeLog 记录的类型，用于进行醒目提醒。主要分为四大类：
+        </div>
+        <EnDivider />
+        <div>
+          <a-space>
+            <div
+              :style="{
+                color: moduleOptions.lifelogTypes.fixed.baseColor,
+              }"
+            >
+              固定
+            </div>
+            <EnColorPicker
+              v-model="moduleOptions.lifelogTypes.fixed.baseColor"
+              type="bgColor"
+            />
+          </a-space>
+        </div>
+        <div>
+          必须要做的事情。比如吃饭、睡觉。
+        </div>
+        <EnLifeLogSettingTypeItem
+          :typeItem="moduleOptions.lifelogTypes.fixed"
+        />
+        <EnDivider />
+        <div>
+          <a-space>
+            <div
+              :style="{
+                color: moduleOptions.lifelogTypes.growth.baseColor,
+              }"
+            >
+              成长
+            </div>
+            <EnColorPicker
+              v-model="moduleOptions.lifelogTypes.growth.baseColor"
+              type="bgColor"
+            />
+          </a-space>
+        </div>
+        <div>
+          为个人成长而做的事情。比如学习、阅读、事业。
+        </div>
+        <EnLifeLogSettingTypeItem
+          :typeItem="moduleOptions.lifelogTypes.growth"
+        />
+        <EnDivider />
+        <div>
+          <a-space>
+            <div
+              :style="{
+                color: moduleOptions.lifelogTypes.work.baseColor,
+              }"
+            >
+              成长
+            </div>
+            <EnColorPicker
+              v-model="moduleOptions.lifelogTypes.work.baseColor"
+              type="bgColor"
+            />
+          </a-space>
+        </div>
+        <div>
+          为了生活不得不做的。比如工作。（注：个人事业不应归类于此）
+        </div>
+        <EnLifeLogSettingTypeItem
+          :typeItem="moduleOptions.lifelogTypes.work"
+        />
+        <EnDivider />
+        <div>
+          <a-space>
+            <div
+              :style="{
+                color: moduleOptions.lifelogTypes.waste.baseColor,
+              }"
+            >
+              荒废
+            </div>
+            <EnColorPicker
+              v-model="moduleOptions.lifelogTypes.waste.baseColor"
+              type="bgColor"
+            />
+          </a-space>
+        </div>
+        <div>
+          与成长无关的事情。不能单纯的将娱乐活动归于此类，比如有的人打游戏就是工作。
+        </div>
+        <EnLifeLogSettingTypeItem
+          :typeItem="moduleOptions.lifelogTypes.waste"
+        />
+      </template>
+    </EnSettingsItem>
 
   </EnSettingsTeleportModule>
   <template v-if="moduleOptions.enabled">
@@ -40,18 +160,25 @@
 </template>
 
 <script setup lang="ts">
+import EnColorPicker from '@/components/EnColorPicker.vue'
+import EnDivider from '@/components/EnDivider.vue'
 import { usePlugin } from '@/main'
 import { useModule } from '@/modules/EnModuleControl/ModuleProvide'
+import EnLifeLogSettingTypeItem from '@/modules/LifeLog/EnLifeLogSettingTypeItem.vue'
 import { markLifeLogBlock } from '@/modules/LifeLog/LifeLog'
 import { moduleEnableStatusSwitcher } from '@/utils'
 import {
   EN_CONSTANTS,
   EN_MODULE_LIST,
 } from '@/utils/Constants'
-import { queryAllByDom } from '@/utils/DOM'
+import {
+  queryAllByDom,
+  useRegisterStyle,
+} from '@/utils/DOM'
 import dayjs from 'dayjs'
 import { Protyle } from 'siyuan'
 import {
+  computed,
   onBeforeUnmount,
   onMounted,
   ref,
@@ -75,9 +202,133 @@ const {
 
     enableMarker: false,
     showLifeLogFlag: false,
+
+    lifelogTypes: null,
   },
 })
+
+watchEffect(() => {
+  if (!moduleOptions.value.lifelogTypes) {
+    moduleOptions.value.lifelogTypes = {
+      fixed: {
+        baseColor: '#D3D3D3',
+        items: [
+          {
+            type: '固',
+            color: '#D3D3D3',
+          },
+          {
+            type: '固定',
+            color: '#D3D3D3',
+          },
+        ],
+      },
+      growth: {
+        baseColor: '#90EE90',
+        items: [
+          {
+            type: '增',
+            color: '#90EE90',
+          },
+          {
+            type: '学习',
+            color: '#90EE90',
+          },
+          {
+            type: '阅读',
+            color: '#90EE90',
+          },
+          {
+            type: '事业',
+            color: '#90EE90',
+          },
+        ],
+      },
+      work: {
+        baseColor: '#FFD700',
+        items: [
+          {
+            type: '工作',
+            color: '#FFD700',
+          },
+        ],
+      },
+      waste: {
+        baseColor: '#FF0000',
+        items: [
+          {
+            type: '荒废',
+            color: '#FF0000',
+          },
+          {
+            type: '废',
+            color: '#FF0000',
+          },
+          {
+            type: '娱乐',
+            color: '#FF0000',
+          },
+          {
+            type: '玩',
+            color: '#FF0000',
+          },
+        ],
+      },
+      other: {
+        baseColor: 'rgb(71, 255, 248)',
+        items: [
+          {
+            type: '家庭',
+            color: 'rgb(71, 255, 248)',
+          },
+          {
+            type: '家',
+            color: 'rgb(71, 255, 248)',
+          },
+          {
+            type: '朋友',
+            color: 'rgb(156, 123, 85)',
+          },
+          {
+            type: '友',
+            color: 'rgb(156, 123, 85)',
+          },
+        ],
+      },
+    }
+  }
+})
 // #endregion 基本的模块配置
+
+const flatLifelogTypes = computed(() => {
+  return [
+    ...moduleOptions.value.lifelogTypes.fixed.items,
+    ...moduleOptions.value.lifelogTypes.growth.items,
+    ...moduleOptions.value.lifelogTypes.work.items,
+    ...moduleOptions.value.lifelogTypes.waste.items,
+    ...moduleOptions.value.lifelogTypes.other.items,
+  ]
+})
+
+watchEffect((onCleanup) => {
+  const styleDomRef = useRegisterStyle('en-lifelog-style')
+  styleDomRef.value.textContent = `
+  html[data-en_enabled_module~="EnableLifelogTag"] {
+    ${flatLifelogTypes.value.map((i) => `
+      [data-type="NodeParagraph"] {
+        &[custom-lifelog-type="${i.type}"] {
+          --en-lifelog-border-color: ${i.color};
+        }
+      }
+    `).join('')}
+  }
+  `
+  onCleanup(() => {
+    styleDomRef.value.textContent = ''
+    styleDomRef.value.remove()
+  })
+})
+
 
 const handler = (event: Event) => {
   const scrollArea = event.target as HTMLElement
@@ -178,30 +429,12 @@ onBeforeUnmount(() => {
 
 <style>
 html[data-en_enabled_module~="EnableLifelogTag"] {
-  --en-lifelog-固: #D3D3D3;
-  --en-lifelog-固定: #D3D3D3;
-
-  --en-lifelog-增: #90EE90;
-  --en-lifelog-学习: #90EE90;
-  --en-lifelog-事业: #90EE90;
-
-  --en-lifelog-工作: #FFD700;
-
-  --en-lifelog-废: #FF0000;
-  --en-lifelog-娱乐: #FF0000;
-  --en-lifelog-荒废: #FF0000;
-  --en-lifelog-玩: #FF0000;
-
-  --en-lifelog-家: rgb(71, 255, 248);
-  --en-lifelog-家庭: rgb(71, 255, 248);
-
-  --en-lifelog-友: rgb(156, 123, 85);
-  --en-lifelog-朋友: rgb(156, 123, 85);
 
   & [data-type="NodeParagraph"] {
 
     &[custom-lifelog-type] {
-      --en-lifelog-border-style: 1px solid #D3D3D3;
+      --en-lifelog-border-color: #D3D3D3;
+      --en-lifelog-border-style: 1px solid var(--en-lifelog-border-color);
       border-bottom: var(--en-lifelog-border-style);
 
       &.en-stickied {
@@ -210,54 +443,6 @@ html[data-en_enabled_module~="EnableLifelogTag"] {
         border-left: var(--en-lifelog-border-style);
         border-right: var(--en-lifelog-border-style);
       }
-    }
-
-    &[custom-lifelog-type="固"] {
-      --en-lifelog-border-style: 1px solid #D3D3D3;
-    }
-    &[custom-lifelog-type="固定"] {
-      --en-lifelog-border-style: 1px solid #D3D3D3;
-    }
-
-    &[custom-lifelog-type="增"] {
-      --en-lifelog-border-style: 1px solid #90EE90;
-    }
-    &[custom-lifelog-type="学习"] {
-      --en-lifelog-border-style: 1px solid #90EE90;
-    }
-
-    &[custom-lifelog-type="事业"] {
-      --en-lifelog-border-style: 1px solid #90EE90;
-    }
-
-    &[custom-lifelog-type="工作"] {
-      --en-lifelog-border-style: 1px solid #FFD700;
-    }
-
-    &[custom-lifelog-type="废"] {
-      --en-lifelog-border-style: 1px solid #FF0000;
-    }
-    &[custom-lifelog-type="娱乐"] {
-      --en-lifelog-border-style: 1px solid #FF0000;
-    }
-    &[custom-lifelog-type="荒废"] {
-      --en-lifelog-border-style: 1px solid #FF0000;
-    }
-    &[custom-lifelog-type="玩"] {
-      --en-lifelog-border-style: 1px solid #FF0000;
-    }
-
-    &[custom-lifelog-type="家庭"] {
-      --en-lifelog-border-style: 1px solid rgb(71, 255, 248);
-    }
-    &[custom-lifelog-type="家"] {
-      --en-lifelog-border-style: 1px solid rgb(71, 255, 248);
-    }
-    &[custom-lifelog-type="朋友"] {
-      --en-lifelog-border-style: 1px solid rgb(156, 123, 85);
-    }
-    &[custom-lifelog-type="友"] {
-      --en-lifelog-border-style: 1px solid rgb(156, 123, 85);
     }
 
   }

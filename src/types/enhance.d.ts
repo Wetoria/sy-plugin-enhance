@@ -103,6 +103,7 @@ interface EnModuleQuickNote extends EnModule {
 
 
 
+
 interface ILifeLog {
   [lifelogAttrTime]: string
   [lifelogAttrDate]: string
@@ -112,7 +113,24 @@ interface ILifeLog {
   [lifelogAttrUpdated]: string
 }
 
+interface ILifeLogTypeItem {
+  baseColor: string
+  items: Array<{
+    type: string
+    color: string
+  }>
+}
+
 interface LifeLogModule extends EnModule {
   enableMarker: boolean
   showLifeLogFlag: boolean
+
+  lifelogTypes: {
+    fixed: ILifeLogTypeItem
+    waste: ILifeLogTypeItem
+    growth: ILifeLogTypeItem
+    work: ILifeLogTypeItem
+    other: ILifeLogTypeItem
+  }
 }
+
