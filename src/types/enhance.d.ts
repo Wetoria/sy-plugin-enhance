@@ -98,3 +98,21 @@ interface EnModuleQuickNote extends EnModule {
   notebookId: string
   newBlockDelay: number
 }
+
+
+
+
+
+interface ILifeLog {
+  [lifelogAttrTime]: string
+  [lifelogAttrDate]: string
+  [lifelogAttrType]: string
+  [lifelogAttrContent]: string
+  [lifelogAttrCreated]: string
+  [lifelogAttrUpdated]: string
+}
+
+interface LifeLogModule extends EnModule {
+  enableMarker: boolean
+  showLifeLogFlag: boolean
+}

@@ -1,5 +1,6 @@
 import { usePlugin } from '@/main'
 import { debounce } from '@/utils'
+import { useSiyuanEventTransactions } from '@/utils/EventBusHooks'
 import {
   IOperation,
   IProtyle,
@@ -322,7 +323,6 @@ export function onEditorUpdate(
   callback: (operations: EnhanceIOperation[]) => void,
   time = 5000,
 ) {
-  const plugin = usePlugin()
   let doOperationList: EnhanceIOperation[] = []
   const debounceTime = time
   const run = debounce(() => {
@@ -330,26 +330,21 @@ export function onEditorUpdate(
     doOperationList = []
   }, debounceTime)
 
-  const eventFunc = ({ detail }) => {
-    if (detail.cmd === 'transactions') {
-      detail.data.forEach((item) => {
-        const {
-          doOperations,
-          timestamp,
-        } = item
-        doOperations.forEach((doOperation) => {
-          doOperationList.push(
-            convertIOperationIntoDoOperation(doOperation, timestamp),
-          )
-        })
+  const off = useSiyuanEventTransactions(({ detail }) => {
+    detail.data.forEach((item) => {
+      const {
+        doOperations,
+        timestamp,
+      } = item
+      doOperations.forEach((doOperation) => {
+        doOperationList.push(
+          convertIOperationIntoDoOperation(doOperation, timestamp),
+        )
       })
-      run()
-    }
-  }
-  plugin.eventBus.on('ws-main', eventFunc)
-  return () => {
-    plugin.eventBus.off('ws-main', eventFunc)
-  }
+    })
+    run()
+  })
+  return off
 }
 
 export function getCreatedByDataset(id: string) {
