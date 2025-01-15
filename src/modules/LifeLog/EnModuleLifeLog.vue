@@ -190,8 +190,11 @@ onBeforeUnmount(() => {
 })
 
 
-watchEffect(() => {
+watchEffect((onCleanup) => {
   moduleEnableStatusSwitcher('EnableLifelogTag', moduleOptions.value.showLifeLogFlag)
+  onCleanup(() => {
+    moduleEnableStatusSwitcher('EnableLifelogTag')
+  })
 })
 
 function markLifeLogBlock() {
