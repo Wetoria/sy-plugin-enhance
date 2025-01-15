@@ -67,12 +67,16 @@ const {
   },
 })
 
-watchEffect(() => {
+watchEffect((onCleanup) => {
   moduleEnableStatusSwitcher(
     EN_MODULE_LIST.BACKGROUND_IMG,
     moduleOptions.value.enableBackgroundImg,
   )
   document.documentElement.style.setProperty('--en-opacity', `${moduleOptions.value.opacity}`)
+  onCleanup(() => {
+    document.documentElement.style.removeProperty('--en-opacity')
+    moduleEnableStatusSwitcher(EN_MODULE_LIST.BACKGROUND_IMG)
+  })
 })
 </script>
 

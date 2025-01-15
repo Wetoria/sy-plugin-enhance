@@ -82,18 +82,25 @@
 
 <script setup lang="ts">
 import { usePlugin } from '@/main'
-import { useModule } from '@/modules/EnModuleControl/ModuleProvide'
+import {
+  useModule,
+} from '@/modules/EnModuleControl/ModuleProvide'
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
 import {
+  debounce,
   moduleEnableStatusSwitcher,
 } from '@/utils'
 import {
   EN_CONSTANTS,
   EN_MODULE_LIST,
 } from '@/utils/Constants'
+import {
+  queryAllByDom,
+} from '@/utils/DOM'
 import { useSiyuanEventLoadedProtyleStatic } from '@/utils/EventBusHooks'
 import {
   onBeforeUnmount,
+  onMounted,
   watchEffect,
 } from 'vue'
 import EnSettingsTeleportModule from '../modules/Settings/EnSettingsTeleportModule.vue'
@@ -131,59 +138,90 @@ const {
 
 // #endregion 基本的模块配置
 
-watchEffect(() => {
+watchEffect((onCleanup) => {
   moduleEnableStatusSwitcher(
     EN_MODULE_LIST.EN_OTHER,
     moduleOptions.value.enabled,
   )
+  onCleanup(() => {
+    moduleEnableStatusSwitcher(
+      EN_MODULE_LIST.EN_OTHER,
+    )
+  })
 })
-watchEffect(() => {
+watchEffect((onCleanup) => {
   moduleEnableStatusSwitcher(
     EN_CONSTANTS.EN_OTHER_LINK_COLOR,
     moduleOptions.value.enableLinkColor,
   )
+  onCleanup(() => {
+    moduleEnableStatusSwitcher(
+      EN_CONSTANTS.EN_OTHER_LINK_COLOR,
+    )
+  })
 })
-watchEffect(() => {
+watchEffect((onCleanup) => {
   moduleEnableStatusSwitcher(
     EN_CONSTANTS.EN_OTHER_BLOCK_REF_BRACKET,
     moduleOptions.value.enbaleBlockRefBracket,
   )
+  onCleanup(() => {
+    moduleEnableStatusSwitcher(
+      EN_CONSTANTS.EN_OTHER_BLOCK_REF_BRACKET,
+    )
+  })
 })
-watchEffect(() => {
+watchEffect((onCleanup) => {
   moduleEnableStatusSwitcher(
     EN_CONSTANTS.EN_OTHER_DAILY_NOTE_FIRST_BLOCK_BG,
     moduleOptions.value.enableDailyNoteFirstBlockBg,
   )
+  onCleanup(() => {
+    moduleEnableStatusSwitcher(
+      EN_CONSTANTS.EN_OTHER_DAILY_NOTE_FIRST_BLOCK_BG,
+    )
+  })
 })
-watchEffect(() => {
+watchEffect((onCleanup) => {
   moduleEnableStatusSwitcher(
     EN_CONSTANTS.EN_OTHER_IMAGE_DEFAULT_WIDTH,
     moduleOptions.value.enableImageDefaultWidth,
   )
+  onCleanup(() => {
+    moduleEnableStatusSwitcher(
+      EN_CONSTANTS.EN_OTHER_IMAGE_DEFAULT_WIDTH,
+    )
+  })
 })
-watchEffect(() => {
+watchEffect((onCleanup) => {
   document.documentElement.style.setProperty('--en-img-default-width', `${moduleOptions.value.defaultImageWidth}%`)
+  onCleanup(() => {
+    document.documentElement.style.removeProperty('--en-img-default-width')
+  })
 })
 
-const offMarkProtyleIsDailyNote = useSiyuanEventLoadedProtyleStatic((event) => {
-  const {
-    detail,
-  } = event
-  const element = detail.protyle.contentElement
-  if (!element) {
-    return
-  }
+const markProtyleIsDailyNote = debounce(() => {
+  const protyleContentDoms = queryAllByDom(document.body, '.protyle-content:not([data-en_is_dailynote])')
 
-  // 标记是不是日记文档
-  const wysiwygEl: HTMLDivElement = element.querySelector('.protyle-wysiwyg')
-  if (wysiwygEl) {
+  protyleContentDoms.forEach((protyleContentDom: HTMLElement) => {
+    const wysiwygEl: HTMLDivElement = protyleContentDom.querySelector('.protyle-wysiwyg')
+    if (!wysiwygEl) {
+      return
+    }
     const attrs = wysiwygEl.getAttributeNames()
     const containsDailyNoteAttr = attrs.find((i) => i.startsWith('custom-dailynote'))
     if (containsDailyNoteAttr) {
       wysiwygEl.dataset.en_is_dailynote = 'true'
-      element.dataset.en_is_dailynote = 'true'
+      protyleContentDom.dataset.en_is_dailynote = 'true'
     }
-  }
+  })
+})
+const offMarkProtyleIsDailyNote = useSiyuanEventLoadedProtyleStatic(() => {
+  markProtyleIsDailyNote()
+})
+onMounted(() => {
+  // 在启动时，处理未被标记的 protyle
+  markProtyleIsDailyNote()
 })
 onBeforeUnmount(() => {
   offMarkProtyleIsDailyNote()

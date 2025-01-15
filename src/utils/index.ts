@@ -81,7 +81,7 @@ export function debounce(fn, time = 500, options?: DebounceSettings) {
 
 export function moduleEnableStatusSwitcher(
   moduleName: string,
-  enabled: boolean,
+  enabled?: boolean,
 ) {
   const moduleStr = document.documentElement.dataset.en_enabled_module || ''
   let enabledModules = moduleStr.split(/\s+/)

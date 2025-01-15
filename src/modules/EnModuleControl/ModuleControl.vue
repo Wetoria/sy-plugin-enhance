@@ -70,6 +70,8 @@ import {
 
 const isInEnWindow = ref(isInWindow('QuickNote') || isInWindow('EnVideoAndAudio'))
 
+// 控制模块开关
+// 关闭时，应当几乎跟没开启插件一个效果
 const moduleEnabled = ref(true)
 const enableCommand = {
   langKey: EN_COMMAND_KEYS.EN_PLUGIN_SWITCH,
@@ -87,11 +89,14 @@ onBeforeUnmount(() => {
 })
 
 const plugin = usePlugin()
+
+// #region 👇 全局 icon
 plugin.addIcons(`
   <symbol id="iconEnLeaf" viewBox="0 0 24 24">
     <path d="M9.356 11.563c4.53 -3.254 9.047 -5.217 13.547 -5.723L24 2.978c-6.662 0 -7.57 1.457 -9.873 3.752M0 21.021c14.719 0 18.189 -3.46 20.213 -8.17l1.7 -4.434c-4.958 0.143 -12.441 3.066 -17.673 8.324" stroke-width="1"></path>
   </symbol>
 `)
+// #endregion 👆 全局 icon
 
 // #region 全局状态控制
 
