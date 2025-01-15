@@ -139,7 +139,7 @@ import { usePlugin } from '@/main'
 import {
   jumpToNextDailyNote,
   jumpToPrevDailyNote,
-} from '@/modules/DailyNote/DailyNote.vue'
+} from '@/modules/DailyNote/DailyNote'
 import {
   injectAuthStatus,
   injectSettings,

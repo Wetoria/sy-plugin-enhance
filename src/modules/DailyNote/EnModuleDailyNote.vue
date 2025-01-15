@@ -1,0 +1,211 @@
+<template>
+  <EnSettingsTeleportModule
+    :name="moduleName"
+    :display="moduleDisplayName"
+    :module="module"
+    always
+  >
+    <EnSettingsItem mode="vertical">
+      <div>
+        日记笔记本
+      </div>
+      <template #desc>
+        <div>
+          选择日记所在的笔记本。
+        </div>
+        <div>
+          该选项将会影响到一键记事、评论等模块。
+        </div>
+      </template>
+      <template #opt>
+        <EnNotebookSelector
+          v-model="moduleOptions.dailyNoteNotebookId"
+          :notebookList="openedNotebookList"
+        />
+      </template>
+    </EnSettingsItem>
+    <EnSettingsItem mode="vertical">
+      <div>
+        一键记事创建新块的延时
+      </div>
+      <template #desc>
+        <div>
+          一键记事关闭窗口后，重新创建块的延迟时间。单位：秒。
+        </div>
+        <div>
+          应用场景：比如关闭了一键记事以后，突然又想追加内容，在延时时间内，不会创建新块，可继续编写之前的内容。
+        </div>
+      </template>
+      <template #opt>
+        <a-input-number
+          v-model="moduleOptions.newBlockDelay"
+          placeholder="Please Enter"
+          mode="button"
+          :readOnly="plugin.isMobile"
+          :step="1"
+          :min="1"
+        />
+      </template>
+    </EnSettingsItem>
+  </EnSettingsTeleportModule>
+</template>
+
+
+
+<script setup lang="tsx">
+
+
+import EnNotebookSelector from '@/components/EnNotebookSelector.vue'
+import { usePlugin } from '@/main'
+import {
+  jumpToNextDailyNote,
+  jumpToPrevDailyNote,
+} from '@/modules/DailyNote/DailyNote'
+import {
+  injectGlobalData,
+  useModule,
+} from '@/modules/EnModuleControl/ModuleProvide'
+import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
+import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue'
+import { addCommand } from '@/utils/Commands'
+
+import {
+  EN_CONSTANTS,
+  EN_MODULE_LIST,
+} from '@/utils/Constants'
+import {
+  computed,
+  onMounted,
+} from 'vue'
+
+const plugin = usePlugin()
+
+const globalData = injectGlobalData()
+const openedNotebookList = computed(() => globalData.value.openedNotebookList)
+console.log('openedNotebookList is ', openedNotebookList.value)
+
+
+// #region 基本的模块配置
+
+const {
+  module,
+  moduleOptions,
+} = useModule<EnModuleDailyNote>(EN_MODULE_LIST.DAILY_NOTE, {
+  defaultData: {
+    enabled: false,
+    moduleName: EN_MODULE_LIST.DAILY_NOTE,
+    moduleDisplayName: EN_CONSTANTS.DAILY_NOTE_DISPLAY,
+
+    dailyNoteNotebookId: '',
+    newBlockDelay: 5,
+  },
+})
+
+const moduleName = moduleOptions.value.moduleName
+const moduleDisplayName = moduleOptions.value.moduleDisplayName
+
+// #endregion 基本的模块配置
+
+
+onMounted(() => {
+  addCommand({
+    langKey: "En_DailyNote_GoPrev",
+    langText: "前一篇日记",
+    hotkey: "⌥⌘↑",
+    callback: () => {
+      jumpToPrevDailyNote()
+    },
+  })
+  addCommand({
+    langKey: "En_DailyNote_GoNext",
+    langText: "后一篇日记",
+    hotkey: "⌥⌘↓",
+    callback: () => {
+      jumpToNextDailyNote()
+    },
+  })
+})
+</script>
+
+
+
+
+<style lang="scss">
+.enQuickNoteModal {
+  pointer-events: none;
+
+  & .arco-modal-wrapper {
+    pointer-events: none;
+    overflow: hidden;
+  }
+}
+.enQuickNoteContainer {
+  pointer-events: auto;
+  top: 0;
+  vertical-align: top;
+  width: calc(100vw - 20px);
+  background: var(--b3-theme-background);
+  border: 1px solid var(--b3-border-color);
+  transform: translateY(20px);
+  max-height: calc(100vh - 40px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  .arco-modal-body {
+    padding: 0;
+  }
+
+  .arco-modal-footer {
+    padding: 6px 8px;
+  }
+
+  .enCommentContainerContent {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: auto;
+
+    .protyle-content {
+      padding-bottom: unset !important;
+    }
+
+    .protyle-wysiwyg {
+      padding: 6px 16px !important;
+
+      [data-type="NodeParagraph"] > div:first-child:empty:before {
+        color: var(--b3-empty-color);
+        content: attr(placeholder);
+      }
+    }
+  }
+}
+
+html[data-en-is-standalone="true"][data-en-pwa="true"] {
+  &[data-en-orientation="portrait-primary"] {
+    .enQuickNoteContainer {
+      transform: translateY(var(--en-status-height));
+      max-height: calc(35vh);
+    }
+  }
+
+  &[data-en-orientation="landscape-secondary"],
+  &[data-en-orientation="landscape-primary"] {
+    .enQuickNoteContainer {
+      margin: unset;
+      width: calc(100% - var(--en-status-height) - var(--en-toolbar-height));
+      max-height: calc(50vh);
+    }
+  }
+  &[data-en-orientation="landscape-secondary"] {
+    .enQuickNoteContainer {
+      transform: translateX(var(--en-toolbar-height));
+    }
+  }
+  &[data-en-orientation="landscape-primary"] {
+    .enQuickNoteContainer {
+      transform: translateX(var(--en-status-height));
+    }
+  }
+}
+</style>

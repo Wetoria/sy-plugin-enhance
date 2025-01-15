@@ -153,7 +153,7 @@ import EnProtyle from '@/components/EnProtyle.vue'
 import {
   appendBlockIntoDailyNote,
   useDailyNote,
-} from '@/modules/DailyNote/DailyNote.vue'
+} from '@/modules/DailyNote/DailyNote'
 import { EnNavMoreRef } from '@/modules/EnMobileNav.vue'
 import {
   useGlobalData,

@@ -104,7 +104,7 @@ import EnProtyle from '@/components/EnProtyle.vue'
 import {
   appendBlockIntoDailyNote,
   useDailyNote,
-} from '@/modules/DailyNote/DailyNote.vue'
+} from '@/modules/DailyNote/DailyNote'
 import {
   useGlobalData,
   useModule,

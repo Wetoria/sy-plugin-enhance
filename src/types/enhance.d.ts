@@ -74,3 +74,16 @@ interface EnSettingModuleRef<T extends EnModule>
 
 interface EnSettingModuleDataRef<T extends EnModule> extends ComputedRef<T> {
 }
+
+
+
+
+interface EnModuleDailyNote extends EnModule {
+  dailyNoteNotebookId: string
+}
+
+
+interface EnModuleQuickNote extends EnModule {
+  notebookId: string
+  newBlockDelay: number
+}

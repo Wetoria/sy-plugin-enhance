@@ -125,7 +125,7 @@
 </template>
 
 <script setup lang="ts">
-import { getNewDailyNoteBlockId } from '@/modules/DailyNote/DailyNote.vue'
+import { getNewDailyNoteBlockId } from '@/modules/DailyNote/DailyNote'
 
 
 import {
