@@ -12,10 +12,16 @@
             <slot></slot>
           </div>
           <div class="settingDesc">
-            <slot name="desc"></slot>
+            <slot
+              v-if="hasDescSlot"
+              name="desc"
+            ></slot>
           </div>
         </div>
-        <div class="settingItemOptionArea">
+        <div
+          v-if="hasOptSlot"
+          class="settingItemOptionArea"
+        >
           <slot name="opt"></slot>
         </div>
       </template>
@@ -29,11 +35,16 @@
           <div class="settingTitle">
             <slot></slot>
           </div>
-          <div>
+          <div
+            v-if="hasOptSlot"
+          >
             <slot name="opt"></slot>
           </div>
           <div class="settingDesc">
-            <slot name="desc"></slot>
+            <slot
+              v-if="hasDescSlot"
+              name="desc"
+            ></slot>
           </div>
         </div>
       </template>
@@ -51,10 +62,16 @@
             <slot></slot>
           </div>
           <div class="settingDesc">
-            <slot name="desc"></slot>
+            <slot
+              v-if="hasDescSlot"
+              name="desc"
+            ></slot>
           </div>
         </div>
-        <div class="settingItemOptionArea">
+        <div
+          v-if="hasOptSlot"
+          class="settingItemOptionArea"
+        >
           <slot name="opt"></slot>
         </div>
       </template>
@@ -64,7 +81,10 @@
 
 <script lang="ts" setup>
 import { usePlugin } from '@/main'
-import { computed } from 'vue'
+import {
+  computed,
+  useSlots,
+} from 'vue'
 
 defineProps<{
   mode?: 'horizontal' | 'vertical' | 'manual'
@@ -72,6 +92,14 @@ defineProps<{
 const plugin = usePlugin()
 const isMobile = computed(() => plugin.isMobile)
 
+const slots = useSlots()
+const hasDescSlot = computed(() => {
+  return !!slots.desc
+})
+
+const hasOptSlot = computed(() => {
+  return !!slots.opt
+})
 </script>
 
 <style lang="scss" scoped>
