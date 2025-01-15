@@ -4,18 +4,75 @@
     :display="moduleOptions.moduleDisplayName"
     :module="module"
   >
+    <div>部分样式效果：<a data-type="a">示例</a>、<span data-type="block-ref">示例</span></div>
     <EnSettingsItem>
       <div>
-        启用样式效果
+        启用块引及超链接颜色
       </div>
       <template #desc>
         <div>
-          是否启用 双链颜色、双链增加中括号、图片宽度 50% 等样式。
+          是否启用块引及超链接颜色
         </div>
-        <div>开关该选项查看效果：<a data-type="a">示例</a>、<span data-type="block-ref">示例</span></div>
       </template>
       <template #opt>
-        <a-switch v-model="moduleOptions.useVipStyle" />
+        <a-switch v-model="moduleOptions.enableLinkColor" />
+      </template>
+    </EnSettingsItem>
+
+    <EnSettingsItem>
+      <div>
+        启用块引双括号
+      </div>
+      <template #desc>
+        <div>
+          是否显示块引双括号
+        </div>
+      </template>
+      <template #opt>
+        <a-switch v-model="moduleOptions.enbaleBlockRefBracket" />
+      </template>
+    </EnSettingsItem>
+    <EnSettingsItem>
+      <div>
+        启用日记首个容器块背景色
+      </div>
+      <template #desc>
+        <div>
+          是否启用日记首个容器块背景色，将首个容易块当作“卡片”。
+        </div>
+      </template>
+      <template #opt>
+        <a-switch v-model="moduleOptions.enableDailyNoteFirstBlockBg" />
+      </template>
+    </EnSettingsItem>
+
+    <EnSettingsItem>
+      <div>
+        启用图片默认宽度
+      </div>
+      <template #desc>
+        <div>
+          是否启用图片默认宽度。不影响单个图片宽度的调整。
+        </div>
+      </template>
+      <template #opt>
+        <a-switch v-model="moduleOptions.enableImageDefaultWidth" />
+      </template>
+    </EnSettingsItem>
+    <EnSettingsItem mode="vertical">
+      <div>
+        图片默认宽度百分比
+      </div>
+      <template #opt>
+        <a-input-number
+          v-model="moduleOptions.defaultImageWidth"
+          placeholder="Please Enter"
+          mode="button"
+          :readOnly="plugin.isMobile"
+          :step="1"
+          :max="100"
+          :min="1"
+        />
       </template>
     </EnSettingsItem>
   </EnSettingsTeleportModule>
@@ -24,21 +81,34 @@
 
 
 <script setup lang="ts">
+import { usePlugin } from '@/main'
 import { useModule } from '@/modules/EnModuleControl/ModuleProvide'
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
-import { moduleEnableStatusSwitcher } from '@/utils'
+import {
+  moduleEnableStatusSwitcher,
+} from '@/utils'
 import {
   EN_CONSTANTS,
   EN_MODULE_LIST,
 } from '@/utils/Constants'
-import { watchEffect } from 'vue'
+import { useSiyuanEventLoadedProtyleStatic } from '@/utils/EventBusHooks'
+import {
+  onBeforeUnmount,
+  watchEffect,
+} from 'vue'
 import EnSettingsTeleportModule from '../modules/Settings/EnSettingsTeleportModule.vue'
 
+const plugin = usePlugin()
 
 // #region 基本的模块配置
 
 interface ISettingModuleOptions extends EnModule {
   useVipStyle: boolean
+  enableLinkColor: boolean
+  enbaleBlockRefBracket: boolean
+  enableImageDefaultWidth: boolean
+  defaultImageWidth: number
+  enableDailyNoteFirstBlockBg: boolean
 }
 
 const {
@@ -51,6 +121,11 @@ const {
     moduleDisplayName: EN_CONSTANTS.EN_OTHER_DISPLAY,
 
     useVipStyle: false,
+    enableLinkColor: false,
+    enbaleBlockRefBracket: false,
+    enableImageDefaultWidth: false,
+    defaultImageWidth: 50,
+    enableDailyNoteFirstBlockBg: false,
   },
 })
 
@@ -59,8 +134,59 @@ const {
 watchEffect(() => {
   moduleEnableStatusSwitcher(
     EN_MODULE_LIST.EN_OTHER,
-    moduleOptions.value.useVipStyle,
+    moduleOptions.value.enabled,
   )
+})
+watchEffect(() => {
+  moduleEnableStatusSwitcher(
+    EN_CONSTANTS.EN_OTHER_LINK_COLOR,
+    moduleOptions.value.enableLinkColor,
+  )
+})
+watchEffect(() => {
+  moduleEnableStatusSwitcher(
+    EN_CONSTANTS.EN_OTHER_BLOCK_REF_BRACKET,
+    moduleOptions.value.enbaleBlockRefBracket,
+  )
+})
+watchEffect(() => {
+  moduleEnableStatusSwitcher(
+    EN_CONSTANTS.EN_OTHER_DAILY_NOTE_FIRST_BLOCK_BG,
+    moduleOptions.value.enableDailyNoteFirstBlockBg,
+  )
+})
+watchEffect(() => {
+  moduleEnableStatusSwitcher(
+    EN_CONSTANTS.EN_OTHER_IMAGE_DEFAULT_WIDTH,
+    moduleOptions.value.enableImageDefaultWidth,
+  )
+})
+watchEffect(() => {
+  document.documentElement.style.setProperty('--en-img-default-width', `${moduleOptions.value.defaultImageWidth}%`)
+})
+
+const offMarkProtyleIsDailyNote = useSiyuanEventLoadedProtyleStatic((event) => {
+  const {
+    detail,
+  } = event
+  const element = detail.protyle.contentElement
+  if (!element) {
+    return
+  }
+
+  // 标记是不是日记文档
+  const wysiwygEl: HTMLDivElement = element.querySelector('.protyle-wysiwyg')
+  if (wysiwygEl) {
+    const attrs = wysiwygEl.getAttributeNames()
+    const containsDailyNoteAttr = attrs.find((i) => i.startsWith('custom-dailynote'))
+    if (containsDailyNoteAttr) {
+      wysiwygEl.dataset.en_is_dailynote = 'true'
+      element.dataset.en_is_dailynote = 'true'
+    }
+  }
+})
+onBeforeUnmount(() => {
+  offMarkProtyleIsDailyNote()
 })
 </script>
 
@@ -79,79 +205,61 @@ html[data-en_enabled_module~="EnOther"] {
       border-bottom: unset;
     }
   }
-  [data-type="block-ref"],
-  [data-type="a"] {
-    color: var(--sky-blue) !important;
+
+  &[data-en_enabled_module~="EnOtherLinkColor"] {
+    [data-type="block-ref"],
+    [data-type="a"] {
+      color: var(--sky-blue) !important;
+    }
   }
-
-  // 反链列表项的提示效果
-  // .protyle-wysiwyg [data-node-id].li[fold="1"] > .protyle-action:after {
-  //   background-color: var(--b3-list-hover, #363636);
-  // }
-
-
-  // #region 反链面板文档名称sticky
-  // .backlinkMList .b3-list-item,
-  // .backlinkList .b3-list-item {
-  //     --b3-theme-primary-lightest: rgba(53, 115, 240, 1);
-  //     position: sticky;
-  //     top: 0;
-  //     z-index: 2;
-  //     background-color: var(--b3-list-hover, #363636);
-  // }
-  // #endregion 反链面板文档名称sticky
-
 
   // #region 文档反链增加 [[]]
-  span[data-type="block-ref"] {
-    font-weight: inherit;
-    background-color: transparent !important;
-    border-bottom: none !important;
-  }
+  &[data-en_enabled_module~="EnOtherBlockRefBracket"] {
+    span[data-type="block-ref"] {
+      font-weight: inherit;
+      background-color: transparent !important;
+      border-bottom: none !important;
+    }
 
-  /* 为引用块后面增加引用图标 */
-  span[data-type="block-ref"]::before {
-    color: var(--b3-theme-on-surface) !important;
-    content: "[[";
-  }
+    /* 为引用块后面增加引用图标 */
+    span[data-type="block-ref"]::before {
+      color: var(--b3-theme-on-surface) !important;
+      content: "[[";
+    }
 
-  span[data-type="block-ref"]::after {
-    color: var(--b3-theme-on-surface) !important;
-    content: "]]";
-  }
+    span[data-type="block-ref"]::after {
+      color: var(--b3-theme-on-surface) !important;
+      content: "]]";
+    }
 
-  span[data-type="block-ref"]:hover {
-    background-color: var(--b3-theme-primary-lightest) !important;
+    span[data-type="block-ref"]:hover {
+      background-color: var(--b3-theme-primary-lightest) !important;
+    }
   }
   // #endregion 文档反链增加 [[]]
 
 
-  .protyle-wysiwyg {
-
-    & > [data-type="NodeList"] {
-      // background-color: rgba(0, 47, 255, 0.1);
-      // background-color: rgba(65, 65, 65, 0.1);
-      // background-color: rgba(255, 255, 255, 0.1);
-      // 👇 这个还可以
-      // background-color: rgba(77, 77, 77, 0.1);
-      // background-color: rgba(93, 93, 93, 0.1);
-      // 就👇这个配色了，哪种模式下都舒服
-      background-color: rgba(109, 109, 109, 0.1);
-
-
-      & > [data-type="NodeListItem"] {
-
-        & > ::before {
-          border-left-color: var(--sky-blue);
-        }
+  &[data-en_enabled_module~="EnOtherDailyNoteFirstBlockBg"] {
+    .protyle-wysiwyg[data-en_is_dailynote] {
+      & > [data-type="NodeSuperBlock"],
+      & > [data-type="NodeList"] {
+        // background-color: rgba(0, 47, 255, 0.1);
+        // background-color: rgba(65, 65, 65, 0.1);
+        // background-color: rgba(255, 255, 255, 0.1);
+        // 👇 这个还可以
+        // background-color: rgba(77, 77, 77, 0.1);
+        // background-color: rgba(93, 93, 93, 0.1);
+        // 就👇这个配色了，哪种模式下都舒服
+        background-color: rgba(109, 109, 109, 0.1);
       }
     }
   }
 
-  [data-type="img"] span:nth-child(2) {
-    text-align: left;
-    & img {
-      width: 50%;
+  &[data-en_enabled_module~="EnOtherImageDefaultWidth"] {
+    [data-type="img"] {
+      span:nth-child(2):not([style^="width"]) {
+        width: var(--en-img-default-width);
+      }
     }
   }
 }

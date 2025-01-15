@@ -33,8 +33,10 @@ export enum EN_CONSTANTS {
 
   EN_OTHER = 'EnOther',
   EN_OTHER_DISPLAY = '其他设置',
-
-
+  EN_OTHER_LINK_COLOR = 'EnOtherLinkColor',
+  EN_OTHER_BLOCK_REF_BRACKET = 'EnOtherBlockRefBracket',
+  EN_OTHER_IMAGE_DEFAULT_WIDTH = 'EnOtherImageDefaultWidth',
+  EN_OTHER_DAILY_NOTE_FIRST_BLOCK_BG = 'EnOtherDailyNoteFirstBlockBg',
 
   EN_SERVER = 'EnServer',
   EN_SERVER_DISPLAY = 'API 服务',
