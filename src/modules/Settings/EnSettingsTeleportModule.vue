@@ -56,7 +56,10 @@
 </template>
 
 <script setup lang="ts">
-import { injectAuthStatus } from '@/modules/EnModuleControl/ModuleProvide'
+import {
+  injectAuthStatus,
+  injectParentAuth,
+} from '@/modules/EnModuleControl/ModuleProvide'
 import EnSettingsItemAreaHeading from '@/modules/Settings/EnSettingsItemAreaHeading.vue'
 import EnSettingsTeleport from '@/modules/Settings/EnSettingsTeleport.vue'
 import { resetModuleOptions } from '@/modules/Settings/SettingsModuleControl'
@@ -84,7 +87,22 @@ const emit = defineEmits(['moduleEnabled', 'moduleDisabled'])
 const {
   computedLevel,
 } = injectAuthStatus()
-const hasAuth = computedLevel(props.authLevel)
+const hasLevelAuth = computedLevel(props.authLevel)
+
+// 获取父级权限
+// 如果父级使用过 computedLevel, 则会自动注入父级权限
+const parentAuth = injectParentAuth()
+
+const hasAuth = computed(() => {
+
+  // 如果父级提供了权限，则按照父级的权限进行判断
+  if (parentAuth) {
+    return parentAuth.value
+  }
+
+  // 如果父级没有提供权限，则按照 authLevel 的权限进行判断
+  return hasLevelAuth.value
+})
 
 const goToUnlock = () => {
   enEventBus.emit(EN_EVENT_BUS_KEYS.AUTH_OPEN_MODAL)

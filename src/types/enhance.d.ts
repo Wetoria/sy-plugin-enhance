@@ -3,6 +3,16 @@ interface EnAuth {
   expiration: string | number | null
 }
 
+interface EnAuthStatus {
+  isFree: ComputedRef<boolean>
+  isNotFree: ComputedRef<boolean>
+  isPro: ComputedRef<boolean>
+  isVip: ComputedRef<boolean>
+  isPermanent: ComputedRef<boolean>
+  levelLabel: ComputedRef<string>
+  computedLevel: (level: number | string) => ComputedRef<boolean>
+}
+
 interface EnSettings {
   isDebugging: boolean
   v: 0 | 1 | 2
