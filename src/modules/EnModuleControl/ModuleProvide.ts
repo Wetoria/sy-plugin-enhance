@@ -15,6 +15,7 @@ import {
   inject,
   onMounted,
   provide,
+  WritableComputedRef,
 } from 'vue'
 
 
@@ -28,7 +29,12 @@ export function useGlobalData<T>(
   const optionsCopy = cloneDeep(innerOptions)
   optionsCopy.namespace = namespace
   const module = useSyncModuleData<T>(optionsCopy)
-  const moduleOptions = computed(() => module.value.data)
+  const moduleOptions = computed({
+    get: () => module.value.data,
+    set: (value) => {
+      module.value.data = value
+    },
+  })
   return {
     module,
     moduleOptions,
@@ -144,7 +150,7 @@ export function injectAuthModule(): IGlobalData<EnAuth> {
 /**
  * 注入权限模块数据
  */
-export function injectAuth(): ComputedRef<EnAuth> {
+export function injectAuth(): WritableComputedRef<EnAuth> {
   const authModule = injectAuthModule()
   return authModule.moduleOptions
 }

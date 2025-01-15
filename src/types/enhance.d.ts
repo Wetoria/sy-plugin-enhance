@@ -34,7 +34,7 @@ interface GlobalData {
 
 interface IGlobalData<T> {
   module: EnSyncModuleDataRef<T>
-  moduleOptions: ComputedRef<T>
+  moduleOptions: WritableComputedRef<T>
 }
 
 /**

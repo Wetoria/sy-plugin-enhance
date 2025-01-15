@@ -214,10 +214,10 @@ const updateAuthSubscription = async (showMessage = true) => {
       v: number
       e: string
     }
-    Object.assign(authModuleData.value, {
+    authModuleData.value = {
       lv: respData.v,
       expiration: respData.e,
-    })
+    }
     if (showMessage) {
       Notification.success({
         content: `叶归｜更新订阅状态成功. 当前版本：${levelLabel.value}. 有效期至：${expiration.value}`,
