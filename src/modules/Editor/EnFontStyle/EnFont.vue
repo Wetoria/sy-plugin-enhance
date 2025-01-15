@@ -4,7 +4,7 @@
     :name="moduleOptions.moduleName"
     :display="moduleOptions.moduleDisplayName"
     always
-    :withoutReset="true"
+    withoutReset
   >
     <div>
       <div v-if="modalVisible">
@@ -373,6 +373,9 @@ const addCommandsByList = () => {
     })
   })
 }
+const removeAllFontStyleCommands = () => {
+  plugin.commands = plugin.commands.filter((item) => !item.langKey.startsWith('En_FontStyle_'))
+}
 
 const removeConfiggedFont = (item: ICommandItem) => {
   moduleOptions.value.configgedFontStyleList = configgedFontStyleList.value.filter((i) => i.key !== item.key)
@@ -380,6 +383,8 @@ const removeConfiggedFont = (item: ICommandItem) => {
 
 watch(() => configgedFontStyleList.value, () => {
   addCommandsByList()
+}, {
+  immediate: true,
 })
 
 const { isFree } = injectAuthStatus()
@@ -428,6 +433,7 @@ onMounted(() => {
 })
 onBeforeUnmount(() => {
   removeCommand(command)
+  removeAllFontStyleCommands()
   document.documentElement.removeEventListener("click", handleClickStyle, true)
 })
 </script>
