@@ -146,11 +146,15 @@ import {
 } from '@/modules/EnModuleControl/ModuleProvide'
 import { debounce } from '@/utils'
 import { EN_EVENT_BUS_KEYS } from '@/utils/Constants'
-import { watchDomChange } from '@/utils/DOM'
+import {
+  unWatchDomChange,
+  watchDomChange,
+} from '@/utils/DOM'
 import { enEventBus } from '@/utils/EnEventBus'
 import { useDocHistory } from '@/utils/History'
 import {
   computed,
+  onBeforeMount,
   onMounted,
   ref,
 } from 'vue'
@@ -193,22 +197,28 @@ const onScroll = (event) => {
 }
 
 const bindedProtyleContent = ref(null)
+
+const watchToBindNavScrollHandler = debounce(() => {
+  const editorDom = document.body.querySelector('#editor') as HTMLElement
+  if (editorDom) {
+    const contentDom = editorDom.querySelector('.protyle-content')
+    if (contentDom && bindedProtyleContent.value !== contentDom) {
+      bindedProtyleContent.value?.removeEventListener('scroll', onScroll)
+      contentDom.addEventListener('scroll', onScroll)
+      bindedProtyleContent.value = contentDom
+    }
+  }
+}, 300)
 onMounted(() => {
   if (!plugin.isMobile) {
     return
   }
 
-  watchDomChange(debounce(() => {
-    const editorDom = document.body.querySelector('#editor') as HTMLElement
-    if (editorDom) {
-      const contentDom = editorDom.querySelector('.protyle-content')
-      if (contentDom && bindedProtyleContent.value !== contentDom) {
-        bindedProtyleContent.value?.removeEventListener('scroll', onScroll)
-        contentDom.addEventListener('scroll', onScroll)
-        bindedProtyleContent.value = contentDom
-      }
-    }
-  }, 300))
+  watchDomChange(watchToBindNavScrollHandler)
+})
+onBeforeMount(() => {
+  watchToBindNavScrollHandler.cancel()
+  unWatchDomChange(watchToBindNavScrollHandler)
 })
 
 const keyboardShown = ref(false)
