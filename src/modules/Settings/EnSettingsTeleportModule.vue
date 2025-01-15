@@ -174,8 +174,8 @@ watch(() => moduleData.value.enabled, (enabled) => {
   } else {
     emit('moduleDisabled')
   }
-  // 不需要 immediate
-  // 首次数据是临时全局变量，等数据加载完毕后，会重新触发，刚好就是首次需要的状态
+}, {
+  immediate: true,
 })
 onBeforeUnmount(() => {
   emit('moduleDisabled')
