@@ -148,9 +148,11 @@ html[data-en_enabled_module~="EnOther"] {
     }
   }
 
-  [data-type="img"]:not(:has(img[style~="width:"])) {
-    display: inline-block !important;
-    width: 50%;
+  [data-type="img"] span:nth-child(2) {
+    text-align: left;
+    & img {
+      width: 50%;
+    }
   }
 }
 </style>
