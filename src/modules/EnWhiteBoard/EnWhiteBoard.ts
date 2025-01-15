@@ -23,7 +23,7 @@ import {
   Node,
   ViewportTransform,
 } from '@vue-flow/core'
-import lodash from 'lodash'
+import { cloneDeep } from 'lodash-es'
 
 import {
   computed,
@@ -237,7 +237,7 @@ async function createWhiteBoardConfig({
   whiteBoardName: string
   embedNodeId?: string
 }) {
-  const newDefaultConfig = lodash.cloneDeep(defaultWhiteBoardConfig)
+  const newDefaultConfig = cloneDeep(defaultWhiteBoardConfig)
   newDefaultConfig.id = whiteBoardId
   newDefaultConfig.name = whiteBoardName
 

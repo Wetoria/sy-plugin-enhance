@@ -16,7 +16,8 @@ import {
   watchDomChange,
 } from '@/utils/DOM'
 import { useCurrentProtyle } from '@/utils/Siyuan'
-import lodash from 'lodash'
+import { debounce } from 'lodash-es'
+
 import { IProtyle } from 'siyuan'
 import {
   computed,
@@ -321,7 +322,7 @@ const commands = [
   },
 ]
 
-const registerToolbarBrush = lodash.debounce(() => {
+const registerToolbarBrush = debounce(() => {
   const domList = document.querySelectorAll('.protyle-toolbar')
 
   if (!domList.length) {

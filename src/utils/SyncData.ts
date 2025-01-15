@@ -4,7 +4,10 @@ import {
   saveData,
 } from '@/utils/DataManager'
 import chalk from 'chalk'
-import _ from 'lodash'
+import {
+  cloneDeep,
+  merge,
+} from 'lodash-es'
 import {
   ref,
   watch,
@@ -409,10 +412,10 @@ export async function loadModuleDataByNamespace<T>(namespace: Namespace) {
     return syncDataRefMap[namespace]?.dataRef
   }
 
-  const defaultDataCopy = _.cloneDeep(dataRef.value.defaultValue)
+  const defaultDataCopy = cloneDeep(dataRef.value.defaultValue)
 
   // 合并默认值到返回值中，方便新增字段
-  const mergedData = _.merge({}, defaultDataCopy, res?.data)
+  const mergedData = merge({}, defaultDataCopy, res?.data)
   const mergedRes = {
     data: mergedData,
     defaultValue: defaultDataCopy,

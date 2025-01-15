@@ -8,7 +8,7 @@ import {
   Namespace,
   useSyncModuleData,
 } from '@/utils/SyncData'
-import lodash from 'lodash'
+import { cloneDeep } from 'lodash-es'
 import {
   computed,
   ComputedRef,
@@ -24,7 +24,7 @@ export function useGlobalData<T>(
 ): IGlobalData<T> {
   const innerOptions = (options || {}) as EnSyncModuleProps<T>
 
-  const optionsCopy = lodash.cloneDeep(innerOptions)
+  const optionsCopy = cloneDeep(innerOptions)
   optionsCopy.namespace = namespace
   const module = useSyncModuleData<T>(optionsCopy)
   const moduleOptions = computed(() => module.value.data)

@@ -159,7 +159,7 @@ import {
   useVueFlow,
   VueFlow,
 } from '@vue-flow/core'
-import lodash from 'lodash'
+import { cloneDeep } from 'lodash-es'
 import {
   computed,
   ref,
@@ -439,7 +439,7 @@ onEdgeUpdate(({
   // edge.targetHandle = connection.targetHandle
   // edge.sourceHandle = connection.sourceHandle
 
-  embedWhiteBoardConfigData.value.boardOptions.edges = lodash.cloneDeep(edges.value)
+  embedWhiteBoardConfigData.value.boardOptions.edges = cloneDeep(edges.value)
 })
 
 watchEffect(() => {
