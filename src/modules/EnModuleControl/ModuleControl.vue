@@ -93,9 +93,19 @@ plugin.addIcons(`
   </symbol>
 `)
 
+// #region 全局状态控制
+
+// 是否是移动端
+watchEffect(() => {
+  moduleEnableStatusSwitcher('EnhancerIsMobile', plugin.isMobile)
+})
+
+// 插件是否开启
 watchEffect(() => {
   moduleEnableStatusSwitcher('En_Plugin_Enabled', moduleEnabled.value)
 })
+
+// #endregion 全局状态控制
 </script>
 
 <style lang="scss">
