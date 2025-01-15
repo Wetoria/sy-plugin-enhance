@@ -18,6 +18,11 @@ import { lsNotebooks } from '@/api'
 import { usePlugin } from '@/main'
 import EnAuth from '@/modules/EnModuleControl/EnAuth.vue'
 import {
+  provideAuthModule,
+  provideAuthStatus,
+  provideGlobalDataModule,
+  provideGlobalModule,
+  provideParentAuth,
   useGlobalData,
 } from '@/modules/EnModuleControl/ModuleProvide'
 import {
@@ -38,7 +43,6 @@ import {
   computed,
   onBeforeUnmount,
   onMounted,
-  provide,
   ref,
   watch,
   watchEffect,
@@ -60,9 +64,8 @@ const settingsGlobalData = useGlobalData<EnSettings>(EN_CONSTANTS.SETTINGS, {
 const {
   moduleOptions: settings,
 } = settingsGlobalData
-provide(EN_CONSTANTS.SETTINGS, settings)
 // 提供需要保存的全局数据
-provide(EN_CONSTANTS.GLOBAL_MODULE, settingsGlobalData)
+provideGlobalModule(settingsGlobalData)
 
 // #endregion 需要保存的全局数据，也是 Settings
 
@@ -87,7 +90,7 @@ const globalDataModule: IGlobalData<GlobalData> = useGlobalData<GlobalData>(EN_C
 const { moduleOptions: globalData } = globalDataModule
 
 // 提供不需要保存的全局数据
-provide(`${EN_CONSTANTS.GLOBAL_DATA}_module`, globalDataModule)
+provideGlobalDataModule(globalDataModule)
 
 
 // 测试模式绑定数据到 window 对象上
@@ -158,7 +161,7 @@ const authModule = useGlobalData<EnAuth>(EN_MODULE_LIST.AUTH, {
 })
 
 const { moduleOptions: authModuleData } = authModule
-provide(`${EN_MODULE_LIST.AUTH}_module`, authModule)
+provideAuthModule(authModule)
 
 const isFree = computed(() => {
   return authModuleData.value.lv === 0 && settings.value.v === 0
@@ -188,9 +191,11 @@ const computedLevel = (level: number | string) => {
   const hasAuth = computed(() => {
     return !level || authModuleData.value.lv >= Number(level) || settings.value.v >= 1
   })
+  provideParentAuth(hasAuth)
   return hasAuth
 }
-provide('Auth_Status', {
+
+provideAuthStatus({
   isFree,
   isNotFree,
   isPro,

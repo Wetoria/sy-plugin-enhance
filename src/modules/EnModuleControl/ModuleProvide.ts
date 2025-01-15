@@ -14,6 +14,7 @@ import {
   ComputedRef,
   inject,
   onMounted,
+  provide,
 } from 'vue'
 
 
@@ -57,6 +58,9 @@ export function useModule<T extends EnModule>(
 /**
  * 注入全局模块，需要保存，也是 settings
  */
+export function provideGlobalModule(globalModule: IGlobalData<EnSettings>) {
+  provide(EN_CONSTANTS.GLOBAL_MODULE, globalModule)
+}
 export function injectGlobalModule(): IGlobalData<EnSettings> {
   const globalModule = inject(EN_CONSTANTS.GLOBAL_MODULE) as IGlobalData<EnSettings>
   return globalModule
@@ -92,6 +96,9 @@ export function useSettingsExternal(): ComputedRef<EnSettings> {
 /**
  * 注入全局数据模块 GlobalDataModule，不需要保存
  */
+export function provideGlobalDataModule(globalData: IGlobalData<GlobalData>) {
+  provide(`${EN_CONSTANTS.GLOBAL_DATA}_module`, globalData)
+}
 export function injectGlobalDataModule(): IGlobalData<GlobalData> {
   const globalData = inject(`${EN_CONSTANTS.GLOBAL_DATA}_module`) as IGlobalData<GlobalData>
   return globalData
@@ -126,6 +133,9 @@ export function useGlobalDataExternal(): ComputedRef<GlobalData> {
 /**
  * 注入权限模块
  */
+export function provideAuthModule(authModule: IGlobalData<EnAuth>) {
+  provide(`${EN_MODULE_LIST.AUTH}_module`, authModule)
+}
 export function injectAuthModule(): IGlobalData<EnAuth> {
   const authModule = inject(`${EN_MODULE_LIST.AUTH}_module`) as IGlobalData<EnAuth>
   return authModule
@@ -140,31 +150,31 @@ export function injectAuth(): ComputedRef<EnAuth> {
 }
 
 
+
 /**
  * 注入权限状态相关的变量
  */
-export function injectAuthStatus(): {
-  isFree: ComputedRef<boolean>
-  isNotFree: ComputedRef<boolean>
-  isPro: ComputedRef<boolean>
-  isVip: ComputedRef<boolean>
-  isPermanent: ComputedRef<boolean>
-  levelLabel: ComputedRef<string>
-  computedLevel: (level: number | string) => ComputedRef<boolean>
-} {
-  const authStatus = inject('Auth_Status') as {
-    isFree: ComputedRef<boolean>
-    isNotFree: ComputedRef<boolean>
-    isPro: ComputedRef<boolean>
-    isVip: ComputedRef<boolean>
-    isPermanent: ComputedRef<boolean>
-    computedLevel: (level: number | string) => ComputedRef<boolean>
-    levelLabel: ComputedRef<string>
-  }
+export function provideAuthStatus(authStatus: EnAuthStatus) {
+  provide('Auth_Status', authStatus)
+}
+export function injectAuthStatus(): EnAuthStatus {
+  const authStatus = inject('Auth_Status') as EnAuthStatus
   return authStatus
+}
+
+/**
+ * 提供父级权限
+ * 如果父级使用过 computedLevel, 则会自动注入父级权限
+ * 在 TeleportModule 中，则可以自动获取父级的权限
+ */
+export function provideParentAuth(parentAuth: ComputedRef<boolean>) {
+  provide('parentAuth', parentAuth)
+}
+export function injectParentAuth(): ComputedRef<boolean> {
+  const parentAuth = inject('parentAuth') as ComputedRef<boolean>
+  return parentAuth
 }
 // #endregion 权限模块
 
 // #endregion 👆 全局 inject 方法（方便后续不需要编写 TS 类型）
-
 
