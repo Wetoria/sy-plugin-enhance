@@ -20,19 +20,19 @@
       </template>
       <template #opt>
         <a-space>
-          背景色：
+          背景
           <EnColorPicker
             v-model="moduleOptions.cornell.noteBgColor"
             type="bgColor"
             defaultIndex="2"
           />
-          标题色
+          标题
           <EnColorPicker
             v-model="moduleOptions.cornell.noteTitleColor"
             type="color"
             defaultIndex="2"
           />
-          字体色：
+          字体
           <EnColorPicker
             v-model="moduleOptions.cornell.noteFontColor"
             type="color"
@@ -51,19 +51,19 @@
       </template>
       <template #opt>
         <a-space>
-          背景色：
+          背景
           <EnColorPicker
             v-model="moduleOptions.cornell.clueBgColor"
             type="bgColor"
             defaultIndex="10"
           />
-          标题色
+          标题
           <EnColorPicker
             v-model="moduleOptions.cornell.clueTitleColor"
             type="color"
             defaultIndex="10"
           />
-          字体色：
+          字体
           <EnColorPicker
             v-model="moduleOptions.cornell.clueFontColor"
             type="color"
@@ -82,19 +82,19 @@
       </template>
       <template #opt>
         <a-space>
-          背景色：
+          背景
           <EnColorPicker
             v-model="moduleOptions.cornell.summaryBgColor"
             type="bgColor"
             defaultIndex="12"
           />
-          标题色
+          标题
           <EnColorPicker
             v-model="moduleOptions.cornell.summaryTitleColor"
             type="color"
             defaultIndex="12"
           />
-          字体色：
+          字体
           <EnColorPicker
             v-model="moduleOptions.cornell.summaryFontColor"
             type="color"

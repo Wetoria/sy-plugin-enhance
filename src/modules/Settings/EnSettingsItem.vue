@@ -7,27 +7,27 @@
       v-if="isMobile"
     >
       <template v-if="!mode || mode === 'horizontal'">
-        <div class="settingItemDescArea">
+        <div class="settingItemMainArea">
           <div class="settingTitle">
             <slot></slot>
           </div>
-          <div class="settingDesc">
-            <slot
-              v-if="hasDescSlot"
-              name="desc"
-            ></slot>
+          <div
+            v-if="hasOptSlot"
+            class="settingItemOptionArea"
+          >
+            <slot name="opt"></slot>
           </div>
         </div>
-        <div
-          v-if="hasOptSlot"
-          class="settingItemOptionArea"
-        >
-          <slot name="opt"></slot>
+        <div class="settingDesc">
+          <slot
+            v-if="hasDescSlot"
+            name="desc"
+          ></slot>
         </div>
       </template>
       <template v-else-if="mode === 'vertical'">
         <div
-          class="settingItemDescArea flexColumn"
+          class="settingItemMainArea flexColumn"
           style="
             width: 100%;
           "
@@ -57,22 +57,22 @@
         <slot></slot>
       </template>
       <template v-else>
-        <div class="settingItemDescArea">
+        <div class="settingItemMainArea">
           <div class="settingTitle">
             <slot></slot>
           </div>
-          <div class="settingDesc">
-            <slot
-              v-if="hasDescSlot"
-              name="desc"
-            ></slot>
+          <div
+            v-if="hasOptSlot"
+            class="settingItemOptionArea"
+          >
+            <slot name="opt"></slot>
           </div>
         </div>
-        <div
-          v-if="hasOptSlot"
-          class="settingItemOptionArea"
-        >
-          <slot name="opt"></slot>
+        <div class="settingDesc">
+          <slot
+            v-if="hasDescSlot"
+            name="desc"
+          ></slot>
         </div>
       </template>
     </template>
@@ -107,23 +107,28 @@ const hasOptSlot = computed(() => {
   display: flex;
   width: 100%;
   min-height: 32px;
-  align-items: flex-start;
+  flex-direction: column;
   gap: var(--en-gap);
 
-  .settingItemDescArea {
+  .settingItemMainArea {
     flex: 1;
+    display: flex;
+    gap: var(--en-gap);
+    align-items: center;
+  }
 
-    .settingTitle {
-      font-weight: bold;
-      display: flex;
-      align-items: center;
-      height: 28px;
-    }
+  .settingTitle {
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    height: 28px;
+    flex: 1;
+    flex-shrink: 0;
+  }
 
-    .settingDesc {
-      color: var(--b3-theme-on-surface);
-      font-size: 14px;
-    }
+  .settingDesc {
+    color: var(--b3-theme-on-surface);
+    font-size: 14px;
   }
 
   .settingItemOptionArea {
@@ -133,6 +138,7 @@ const hasOptSlot = computed(() => {
     height: 28px;
 
     min-width: 20%;
+    max-width: 50%;
   }
 
   &[data-isMobile="true"] {
