@@ -314,6 +314,15 @@ const openAuthModal = () => {
 
 <style lang="scss">
 .enSettingDrawer {
+
+  .arco-drawer-mask {
+    background-color: rgba(0, 0, 0, 0.2);
+  }
+  .arco-drawer {
+    max-width: 520px;
+    left: unset;
+    right: 0;
+  }
   .arco-drawer-body {
     overscroll-behavior: none;
     padding: 0px 0px;
