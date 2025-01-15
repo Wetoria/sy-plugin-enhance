@@ -54,6 +54,7 @@ import { Protyle } from 'siyuan'
 import {
   onBeforeUnmount,
   onMounted,
+  ref,
   watchEffect,
 } from 'vue'
 import EnSettingsItem from '../../modules/Settings/EnSettingsItem.vue'
@@ -78,43 +79,39 @@ const {
 })
 // #endregion 基本的模块配置
 
+const handler = (event: Event) => {
+  const scrollArea = event.target as HTMLElement
+  const paragraphList = queryAllByDom(scrollArea, '[data-type="NodeParagraph"][custom-lifelog-time]')
 
+  let flag = true
+  paragraphList.reverse()
+  paragraphList.forEach((p: HTMLElement) => {
+
+    const pRect = p.getBoundingClientRect()
+    const sRect = scrollArea.getBoundingClientRect()
+
+    if (pRect.top <= sRect.top && flag) {
+      p.classList.toggle('en-stickied', true)
+      flag = false
+    } else {
+      p.classList.toggle('en-stickied', false)
+    }
+  })
+}
+
+let observer = null
+const bindedProtyleList = ref([])
 const listenerSticky = () => {
-  const map = new WeakMap()
-
-  const handler = (scrollArea) => {
-    const paragraphList = queryAllByDom(scrollArea, '[data-type="NodeParagraph"][custom-lifelog-time]')
-
-    let flag = true
-    paragraphList.reverse()
-    paragraphList.forEach((p: HTMLElement) => {
-
-      const pRect = p.getBoundingClientRect()
-      const sRect = scrollArea.getBoundingClientRect()
-
-      if (pRect.top <= sRect.top && flag) {
-        p.classList.toggle('en-stickied', true)
-        p.style.borderLeft = getComputedStyle(p).borderBottom
-        p.style.borderRight = getComputedStyle(p).borderBottom
-        flag = false
-      } else {
-        p.classList.toggle('en-stickied', false)
-        p.style.borderLeft = ''
-        p.style.borderRight = ''
-      }
-    })
-  }
-  const observer = new MutationObserver(() => {
+  observer = new MutationObserver(() => {
     const protyleContentList = queryAllByDom(document.body, '.protyle-content')
     protyleContentList.forEach((item: HTMLElement) => {
-      if (map.has(item)) {
+      const exist = bindedProtyleList.value.find((i) => i === item)
+      if (exist) {
         return
       }
 
-      item.addEventListener('scroll', () => {
-        handler(item)
-      })
-      map.set(item, true)
+      item.addEventListener('scroll', handler)
+      bindedProtyleList.value.push(item)
     })
   })
   observer.observe(document.body, {
@@ -122,14 +119,22 @@ const listenerSticky = () => {
     subtree: true, // 观察后代节点，默认为 false
   })
 }
+const offListenerSticky = () => {
+  observer?.disconnect()
+  observer = null
+  bindedProtyleList.value.forEach((item) => {
+    item.removeEventListener('scroll', handler)
+  })
+  bindedProtyleList.value = []
+}
 
-onMounted(() => {
-  listenerSticky()
-})
+
 watchEffect((onCleanup) => {
   moduleEnableStatusSwitcher('EnableLifelogTag', moduleOptions.value.showLifeLogFlag)
+  listenerSticky()
   onCleanup(() => {
     moduleEnableStatusSwitcher('EnableLifelogTag')
+    offListenerSticky()
   })
 })
 
@@ -193,71 +198,66 @@ html[data-en_enabled_module~="EnableLifelogTag"] {
   --en-lifelog-友: rgb(156, 123, 85);
   --en-lifelog-朋友: rgb(156, 123, 85);
 
-
-  .enLifeLogStickyContainer {
-    position: absolute;
-    top: 30px;
-    width: 100%;
-    height: max-content;
-    box-sizing: border-box;
-    z-index: 2;
-  }
-
   & [data-type="NodeParagraph"] {
 
     &[custom-lifelog-type] {
-      z-index: 2;
+      --en-lifelog-border-style: 1px solid #D3D3D3;
+      border-bottom: var(--en-lifelog-border-style);
+
       &.en-stickied {
+        z-index: 2;
         position: sticky;
+        border-left: var(--en-lifelog-border-style);
+        border-right: var(--en-lifelog-border-style);
       }
     }
 
     &[custom-lifelog-type="固"] {
-      border-bottom: 1px solid #D3D3D3;
+      --en-lifelog-border-style: 1px solid #D3D3D3;
     }
     &[custom-lifelog-type="固定"] {
-      border-bottom: 1px solid #D3D3D3;
+      --en-lifelog-border-style: 1px solid #D3D3D3;
     }
 
     &[custom-lifelog-type="增"] {
-      border-bottom: 1px solid #90EE90;
+      --en-lifelog-border-style: 1px solid #90EE90;
     }
     &[custom-lifelog-type="学习"] {
-      border-bottom: 1px solid #90EE90;
+      --en-lifelog-border-style: 1px solid #90EE90;
     }
 
     &[custom-lifelog-type="事业"] {
-      border-bottom: 1px solid #90EE90;
+      --en-lifelog-border-style: 1px solid #90EE90;
     }
 
     &[custom-lifelog-type="工作"] {
-      border-bottom: 1px solid #FFD700;
+      --en-lifelog-border-style: 1px solid #FFD700;
     }
 
     &[custom-lifelog-type="废"] {
-      border-bottom: 1px solid #FF0000;
+      --en-lifelog-border-style: 1px solid #FF0000;
     }
     &[custom-lifelog-type="娱乐"] {
-      border-bottom: 1px solid #FF0000;
+      --en-lifelog-border-style: 1px solid #FF0000;
     }
     &[custom-lifelog-type="荒废"] {
-      border-bottom: 1px solid #FF0000;
+      --en-lifelog-border-style: 1px solid #FF0000;
     }
     &[custom-lifelog-type="玩"] {
-      border-bottom: 1px solid #FF0000;
+      --en-lifelog-border-style: 1px solid #FF0000;
     }
 
     &[custom-lifelog-type="家庭"] {
-      border-bottom: 1px solid rgb(71, 255, 248);
+      --en-lifelog-border-style: 1px solid rgb(71, 255, 248);
     }
     &[custom-lifelog-type="家"] {
-      border-bottom: 1px solid rgb(71, 255, 248);
+      --en-lifelog-border-style: 1px solid rgb(71, 255, 248);
     }
     &[custom-lifelog-type="朋友"] {
-      border-bottom: 1px solid rgb(156, 123, 85);
+      --en-lifelog-border-style: 1px solid rgb(156, 123, 85);
     }
     &[custom-lifelog-type="友"] {
-      border-bottom: 1px solid rgb(156, 123, 85);
+      --en-lifelog-border-style: 1px solid rgb(156, 123, 85);
     }
 
   }
