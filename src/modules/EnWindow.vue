@@ -76,6 +76,11 @@ interface IEnWindow {
   y: number
 }
 
+export const isInEnWindow = () => {
+  const urlSearchParams = new URLSearchParams(location.search)
+  return urlSearchParams.has('enhance') && urlSearchParams.get('enhance') === 'true'
+}
+
 export const isInWindow = (title) => {
   const urlSearchParams = new URLSearchParams(location.search)
   return urlSearchParams.has('enhance') && urlSearchParams.get('enhance') === 'true'

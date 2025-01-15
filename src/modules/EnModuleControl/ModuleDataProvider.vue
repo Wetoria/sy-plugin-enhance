@@ -25,6 +25,7 @@ import {
   provideParentAuth,
   useGlobalData,
 } from '@/modules/EnModuleControl/ModuleProvide'
+import { isInEnWindow } from '@/modules/EnWindow.vue'
 import {
   EN_CONSTANTS,
   EN_MODULE_LIST,
@@ -49,8 +50,6 @@ import {
 } from 'vue'
 
 
-const isInWindowHtml = location.href.includes('window.html')
-
 
 // #region 需要保存的全局数据，也是 Settings
 
@@ -74,6 +73,8 @@ provideGlobalModule(settingsGlobalData)
 
 // #region 不需要保存的全局数据
 
+const isInWindowHtml = location.href.includes('window.html')
+
 const globalDataModule: IGlobalData<GlobalData> = useGlobalData<GlobalData>(EN_CONSTANTS.GLOBAL_DATA, {
   defaultData: {
     isSyncing: false,
@@ -81,6 +82,7 @@ const globalDataModule: IGlobalData<GlobalData> = useGlobalData<GlobalData>(EN_C
 
     isInSiyuanMain: !isInWindowHtml,
     isInSiyuanWindowHtml: isInWindowHtml,
+    isInEnWindow: isInEnWindow(),
 
     notebookList: [],
     openedNotebookList: [],

@@ -27,6 +27,7 @@ interface GlobalData {
 
   isInSiyuanMain: boolean
   isInSiyuanWindowHtml: boolean
+  isInEnWindow: boolean
 
   notebookList: Notebook[]
   openedNotebookList: Notebook[]
