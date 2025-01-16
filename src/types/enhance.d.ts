@@ -63,8 +63,8 @@ type EnSyncModuleDataRef<T> = Ref<EnSyncModuleData<T>>
  */
 interface EnModule {
   enabled: boolean
-  readonly moduleName: EN_MODULE_LIST | string
-  readonly moduleDisplayName: string
+  readonly moduleName: EN_MODULE_LIST
+  readonly moduleDisplayName: EN_CONSTANTS
   sort?: number
 }
 
@@ -134,3 +134,16 @@ interface LifeLogModule extends EnModule {
   }
 }
 
+
+
+
+
+interface EnModuleParagraphBlock extends EnModule {
+  enableBlockTime: boolean
+  blockTimeFontSize: number
+  defaultBlockType: 'created' | 'updated'
+
+  enableBlockLock: boolean
+  autoLockTimeDiff: number
+  autoCheckTime: number
+}

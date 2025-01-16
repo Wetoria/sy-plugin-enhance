@@ -187,6 +187,8 @@ import {
 import EnSettingsItem from '../../modules/Settings/EnSettingsItem.vue'
 import EnSettingsTeleportModule from '../../modules/Settings/EnSettingsTeleportModule.vue'
 
+
+// TODO 增加slash菜单选择LifeLog类型
 const plugin = usePlugin()
 
 // #region 基本的模块配置

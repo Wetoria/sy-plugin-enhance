@@ -56,10 +56,10 @@ const styledFormatted = computed(() => {
 .enBlockTimeContainer {
   font-family: monospace;
   position: relative;
-  font-size: var(--timeFontSize);
+  font-size: var(--enTimeFontSize);
 
   :deep(.EnBlockTimeDivider) {
-    font-size: var(--timeFontSize);
+    font-size: var(--enTimeFontSize);
     &.showUpdated {
       color: var(--sky-blue);
     }

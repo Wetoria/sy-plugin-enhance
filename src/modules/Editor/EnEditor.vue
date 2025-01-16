@@ -1,5 +1,4 @@
 <template>
-  <EnParagraphBlock />
   <Teleport
     v-for="protyleBottom of protyleBottomMap.values()"
     :key="protyleBottom.element"
@@ -11,7 +10,6 @@
 
 <script setup lang="ts">
 import { protyleBottomMap } from "@/utils/DOM"
-import EnParagraphBlock from "./EnParagraphBlock.vue"
 import EnProtyleBottomContainer from "./ProtyleBottom/EnProtyleBottomContainer.vue"
 </script>
 

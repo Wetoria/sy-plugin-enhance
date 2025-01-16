@@ -2,7 +2,6 @@ import { debounce } from '@/utils'
 import { EN_MODULE_LIST } from '@/utils/Constants'
 import { getColorStringError } from '@/utils/Log'
 import {
-  EnSyncModuleDataRef,
   getModuleRefByNamespace,
 } from '@/utils/SyncData'
 import {

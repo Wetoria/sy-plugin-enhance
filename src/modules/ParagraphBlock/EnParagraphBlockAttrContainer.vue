@@ -1,23 +1,31 @@
 <template>
   <Teleport
-    v-if="pProtyleAttrRef"
-    :to="pProtyleAttrRef"
+    v-if="toEl"
+    :to="toEl"
   >
-    <slot
-      :created="created"
-      :createdFormatted="createdFormatted"
-      :updated="updated"
-      :updatedFormatted="updatedFormatted"
-      :nodeId="nodeId"
-    ></slot>
+    <div
+      ref="attrContainerRef"
+      class="enProtyleAttrContainerComponent"
+    >
+      <slot
+        :created="created"
+        :createdFormatted="createdFormatted"
+        :updated="updated"
+        :updatedFormatted="updatedFormatted"
+        :nodeId="nodeId"
+      ></slot>
+    </div>
   </Teleport>
 </template>
 
 <script lang="ts">
 import { debounce } from '@/utils'
+import { EN_STYLE_KEYS } from '@/utils/Constants'
 import dayjs from 'dayjs'
 import {
   computed,
+  onBeforeUnmount,
+  onMounted,
   ref,
   watch,
 } from 'vue'
@@ -43,6 +51,7 @@ export const getUpdated = (pDom) => {
 
 const props = defineProps<{
   el: HTMLSpanElement
+  toEl: HTMLElement
 }>()
 const nodeId = ref(getNodeId(props.el))
 const updated = ref(getUpdated(props.el))
@@ -56,14 +65,6 @@ const created = computed(() => {
 })
 const createdFormatted = computed(() => `created: ${created.value.format(FORMAT_TIME)}`)
 
-const getRef = () => {
-  if (!props.el) return
-  const protyleAttr = props.el.querySelector('.protyle-attr')
-  if (!protyleAttr) return
-  return protyleAttr.querySelector('.enProtyleAttrContainer')
-}
-
-const pProtyleAttrRef = ref(getRef())
 
 const watchParagraphAttrChange = () => {
   if (props.el) {
@@ -94,10 +95,31 @@ watch(() => props.el, () => {
   watchParagraphAttrChange()
 }, { immediate: true })
 
+const attrContainerRef = ref<HTMLDivElement | null>(null)
+const resizeObserver = new ResizeObserver(() => {
+  if (!attrContainerRef.value) return
+  const width = attrContainerRef.value.offsetWidth + 2
+
+  props.el.style.setProperty(EN_STYLE_KEYS.enAttrContainerWidth, `${width}px`)
+})
+
+onMounted(() => {
+  resizeObserver.observe(attrContainerRef.value)
+})
+onBeforeUnmount(() => {
+  console.log('onBeforeUnmount attr container')
+  resizeObserver.disconnect()
+  attrContainerRef.value = null
+})
 </script>
 
-<style lang="scss">
-.protyle-attr {
-  opacity: 1;
+<style lang="scss" scoped>
+.enProtyleAttrContainerComponent {
+  display: flex;
+  justify-content: end;
+  align-items: center;
+  gap: var(--en-gap);
+
+  width: 100%;
 }
 </style>

@@ -34,6 +34,7 @@
 </template>
 
 <script lang="ts">
+import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import { useGlobalData } from '@/modules/EnModuleControl/ModuleProvide'
 import { EN_CONSTANTS } from '@/utils/Constants'
 import { getDiffFormat } from '@/utils/Date'
@@ -95,7 +96,7 @@ const bindedCreated = computed<Dayjs | undefined>(() => {
 
   .TimeDiff {
     font-family: monospace;
-    font-size: var(--timeFontSize);
+    font-size: var(--enTimeFontSize);
   }
 
   & .binded {

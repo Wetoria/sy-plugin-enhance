@@ -41,6 +41,9 @@ export enum EN_CONSTANTS {
   EN_OTHER_IMAGE_DEFAULT_WIDTH = 'EnOtherImageDefaultWidth',
   EN_OTHER_DAILY_NOTE_FIRST_BLOCK_BG = 'EnOtherDailyNoteFirstBlockBg',
 
+  EN_PARAGRAPH_BLOCK = 'EnParagraphBlock',
+  EN_PARAGRAPH_BLOCK_DISPLAY = '段落块相关',
+
   EN_SERVER = 'EnServer',
   EN_SERVER_DISPLAY = 'API 服务',
 
@@ -124,6 +127,8 @@ export enum EN_MODULE_LIST {
 
   EN_OTHER = EN_CONSTANTS.EN_OTHER,
 
+  EN_PARAGRAPH_BLOCK = EN_CONSTANTS.EN_PARAGRAPH_BLOCK,
+
   FONT_STYLE = EN_CONSTANTS.FONT_STYLE,
 
   LIFELOG = EN_CONSTANTS.LIFELOG,
@@ -143,4 +148,10 @@ export enum EN_EVENT_BUS_KEYS {
   SETTINGS_OPEN_ON_ENTRY = 'settings:openOnEntry',
   AUTH_OPEN_MODAL = 'auth:openModal',
   CREATE_TODAY_DAILY_NOTE_MOBILE = 'createTodayDailyNote_mobile',
+}
+
+
+export enum EN_STYLE_KEYS {
+  enTimeFontSize = '--enTimeFontSize',
+  enAttrContainerWidth = '--enAttrContainerWidth',
 }
