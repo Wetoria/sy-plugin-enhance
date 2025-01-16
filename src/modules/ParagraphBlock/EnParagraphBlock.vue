@@ -333,6 +333,18 @@ onBeforeUnmount(() => {
         // padding-right: 4px;
       }
     }
+
+    div[data-type="NodeBlockquote"] {
+
+      div[data-type="NodeParagraph"] {
+        .protyle-attr {
+          right: calc(var(--enAttrContainerWidth) - 4px);
+        }
+        .enProtyleAttrContainer {
+          right: -4px;
+        }
+      }
+    }
   }
   html[data-en-paragraph-block-lock="true"] {
     .block-focus {
