@@ -14,36 +14,13 @@
           选择日记所在的笔记本。
         </div>
         <div>
-          该选项将会影响到一键记事、评论等模块。
+          该选项将会影响到一键记事、评论、白板等模块。
         </div>
       </template>
       <template #opt>
         <EnNotebookSelector
           v-model="moduleOptions.dailyNoteNotebookId"
           :notebookList="openedNotebookList"
-        />
-      </template>
-    </EnSettingsItem>
-    <EnSettingsItem mode="vertical">
-      <div>
-        一键记事创建新块的延时
-      </div>
-      <template #desc>
-        <div>
-          一键记事关闭窗口后，重新创建块的延迟时间。单位：秒。
-        </div>
-        <div>
-          应用场景：比如关闭了一键记事以后，突然又想追加内容，在延时时间内，不会创建新块，可继续编写之前的内容。
-        </div>
-      </template>
-      <template #opt>
-        <a-input-number
-          v-model="moduleOptions.newBlockDelay"
-          placeholder="Please Enter"
-          mode="button"
-          :readOnly="plugin.isMobile"
-          :step="1"
-          :min="1"
         />
       </template>
     </EnSettingsItem>

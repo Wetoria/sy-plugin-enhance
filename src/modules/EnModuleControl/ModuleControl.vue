@@ -8,13 +8,27 @@
     >
       <ArcoTheme />
       <EnSettings />
+      <!-- 简单模块 -->
       <EnSiyuanEntry />
       <EnBackgroundImg v-if="isVip" />
+      <EnOthers />
+      <EnFormatBrush />
+      <EnFont />
+
+
+      <TemplateEntry />
+      <EnModuleLifeLog />
+
+      <EnParagraphBlock />
+
+      <!-- 复杂模块 -->
       <EnModuleDailyNote />
+      <EnModuleQuickNote />
+      <!-- TODO -->
       <!-- <EnEditor /> -->
       <EnOthers />
 
-      <EnModuleLifeLog />
+      <!-- TODO -->
       <!-- <EnVideoAndAudio v-if="isNotFree" /> -->
       <EnFormatBrush v-if="isNotFree" />
       <EnFont />

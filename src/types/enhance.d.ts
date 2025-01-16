@@ -31,6 +31,8 @@ interface GlobalData {
 
   notebookList: Notebook[]
   openedNotebookList: Notebook[]
+
+  quickNoteMode: Array<'targetDoc' | 'targetBlock' | 'currentDoc' | 'currentBlock'>
 }
 
 interface IGlobalData<T> {
@@ -96,6 +98,7 @@ interface EnModuleDailyNote extends EnModule {
 
 interface EnModuleQuickNote extends EnModule {
   notebookId: string
+  targetId: string
   newBlockDelay: number
 }
 

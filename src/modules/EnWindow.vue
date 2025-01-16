@@ -58,6 +58,7 @@ import {
 } from '@/utils/SyncData'
 import {
   computed,
+  onBeforeUnmount,
   onMounted,
   ref,
 } from 'vue'
@@ -252,10 +253,19 @@ onMounted(async () => {
   }
 })
 
+onBeforeUnmount(() => {
+  if (winRef) {
+    winRef.hide()
+    winRef.destroy()
+    winRef = null
+  }
+})
+
 window.addEventListener('beforeunload', () => {
   if (winRef) {
     winRef.hide()
     winRef.destroy()
+    winRef = null
   }
 })
 </script>
