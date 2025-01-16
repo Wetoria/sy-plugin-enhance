@@ -49,7 +49,10 @@ import {
   EN_CONSTANTS,
   EN_MODULE_LIST,
 } from '@/utils/Constants'
-import { watchEffect } from 'vue'
+import {
+  onBeforeUnmount,
+  watch,
+} from 'vue'
 
 const plugin = usePlugin()
 
@@ -70,16 +73,28 @@ const {
   },
 })
 
-watchEffect((onCleanup) => {
+const unwatchEnableBkImg = watch(() => moduleOptions.value.enableBackgroundImg, () => {
   moduleEnableStatusSwitcher(
     EN_MODULE_LIST.BACKGROUND_IMG,
     moduleOptions.value.enableBackgroundImg,
   )
+}, {
+  immediate: true,
+})
+const unwatchBkOpacity = watch(() => moduleOptions.value.opacity, () => {
   document.documentElement.style.setProperty('--en-opacity', `${moduleOptions.value.opacity}`)
-  onCleanup(() => {
-    document.documentElement.style.removeProperty('--en-opacity')
-    moduleEnableStatusSwitcher(EN_MODULE_LIST.BACKGROUND_IMG)
-  })
+}, {
+  immediate: true,
+})
+
+const disableAll = () => {
+  unwatchEnableBkImg()
+  unwatchBkOpacity()
+  moduleEnableStatusSwitcher(EN_MODULE_LIST.BACKGROUND_IMG)
+  document.documentElement.style.removeProperty('--en-opacity')
+}
+onBeforeUnmount(() => {
+  disableAll()
 })
 </script>
 
