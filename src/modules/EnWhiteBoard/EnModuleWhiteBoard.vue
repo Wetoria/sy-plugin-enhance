@@ -19,7 +19,7 @@
         />
       </template>
     </EnSettingsItem>
-    <EnSettingsItem mode="vertical">
+    <EnSettingsItem>
       <div>
         白板左侧边默认展开
       </div>
@@ -44,7 +44,7 @@
         />
       </template>
     </EnSettingsItem>
-    <EnSettingsItem mode="vertical">
+    <EnSettingsItem>
       <div>
         白板右侧边默认展开
       </div>
@@ -97,7 +97,7 @@
         />
       </template>
     </EnSettingsItem>
-    <EnSettingsItem mode="vertical">
+    <EnSettingsItem>
       <div>
         白板卡片自动合并为超级块
       </div>

@@ -18,7 +18,7 @@
           <div class="line">
             选择字体颜色
           </div>
-          <div class="line">
+          <div class="line colorLine">
             <button
               v-for="item of siyuanColorList"
               :key="item"
@@ -33,7 +33,7 @@
           <div class="line">
             选择背景色
           </div>
-          <div class="line">
+          <div class="line colorLine">
             <button
               v-for="item of siyuanBgColorList"
               :key="item"
@@ -448,6 +448,13 @@ onBeforeUnmount(() => {
     display: flex;
     gap: var(--en-gap);
     align-items: center;
+
+    &.colorLine {
+      flex-wrap: wrap;
+      .color__square {
+        flex-shrink: 0;
+      }
+    }
   }
 }
 </style>

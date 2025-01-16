@@ -1,8 +1,9 @@
 <template>
   <div
-    class="settingItem"
+    class="enSettingItem"
     :data-isMobile="isMobile"
   >
+    <!-- 移动端 -->
     <template
       v-if="isMobile"
     >
@@ -32,16 +33,32 @@
             width: 100%;
           "
         >
-          <div class="settingTitle">
+          <div
+            class="settingTitle"
+            style="
+              width: 100%;
+              max-width: 100%;
+            "
+          >
             <slot></slot>
           </div>
           <div
             v-if="hasOptSlot"
             class="settingItemOptionArea"
+            style="
+              width: 100%;
+              max-width: 100%;
+            "
           >
             <slot name="opt"></slot>
           </div>
-          <div class="settingDesc">
+          <div
+            class="settingDesc"
+            style="
+              width: 100%;
+              max-width: 100%;
+            "
+          >
             <slot
               v-if="hasDescSlot"
               name="desc"
@@ -53,6 +70,8 @@
         <slot></slot>
       </template>
     </template>
+
+    <!-- 桌面端 -->
     <template v-else>
       <template v-if="mode && mode === 'manual'">
         <slot></slot>
@@ -103,8 +122,8 @@ const hasOptSlot = computed(() => {
 })
 </script>
 
-<style lang="scss" scoped>
-.settingItem {
+<style lang="scss">
+.enSettingItem {
   display: flex;
   width: 100%;
   min-height: 32px;
@@ -141,17 +160,27 @@ const hasOptSlot = computed(() => {
     min-width: 20%;
     max-width: 50%;
 
-    :deep(.arco-input-number),
-    :deep(.arco-select) {
+    .arco-input-number,
+    .arco-select {
       width: min(185px, 100%);
     }
   }
 
   &[data-isMobile="true"] {
-    :deep(.b3-select),
-    :deep(.arco-input-number),
-    :deep(.b3-text-field) {
-      width: 100%;
+
+    .settingItemOptionArea {
+      & > .arco-select,
+      & > .arco-input-number,
+      & > div,
+      & > span {
+        width: 100%;
+      }
+
+      .EnBlockAppendModeSelectorContainer .arco-select,
+      .arco-select,
+      .arco-input-number {
+        width: 100%;
+      }
     }
   }
 }
