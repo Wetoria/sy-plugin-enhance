@@ -37,6 +37,7 @@
           </div>
           <div
             v-if="hasOptSlot"
+            class="settingItemOptionArea"
           >
             <slot name="opt"></slot>
           </div>
@@ -139,10 +140,16 @@ const hasOptSlot = computed(() => {
 
     min-width: 20%;
     max-width: 50%;
+
+    :deep(.arco-input-number),
+    :deep(.arco-select) {
+      width: min(185px, 100%);
+    }
   }
 
   &[data-isMobile="true"] {
     :deep(.b3-select),
+    :deep(.arco-input-number),
     :deep(.b3-text-field) {
       width: 100%;
     }
