@@ -2,6 +2,7 @@ import { usePlugin } from '@/main'
 import { debounce } from '@/utils'
 import { useSiyuanEventTransactions } from '@/utils/EventBusHooks'
 import {
+  getAllModels,
   IOperation,
   IProtyle,
 } from 'siyuan'
@@ -27,6 +28,8 @@ export enum SyFrontendTypes {
 }
 
 export enum SyDomNodeTypes {
+  NodeDocument = 'NodeDocument',
+
   NodeParagraph = 'NodeParagraph',
   NodeHeading = 'NodeHeading',
   NodeTable = 'NodeTable',
@@ -383,3 +386,13 @@ export function getClosetSiyuanNodeByDom(dom: HTMLElement) {
   }
   return siyuanNode
 }
+
+
+/**
+ * 使用 protyle.element 进行判断
+ */
+export function isProtyleInEditor(element: HTMLElement) {
+  const { editor } = getAllModels()
+  return !!editor?.find((item: any) => item.element === element)
+}
+
