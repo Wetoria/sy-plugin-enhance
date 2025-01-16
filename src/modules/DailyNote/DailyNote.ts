@@ -31,7 +31,6 @@ export function useDailyNote() {
 
 export async function notebookIsOpened(notebookId: string) {
   const globalData = useGlobalData(EN_CONSTANTS.GLOBAL_DATA)
-  console.log('globalData is ', globalData)
   return globalData.moduleOptions.value.openedNotebookList.some((i) => i.id === notebookId)
 }
 

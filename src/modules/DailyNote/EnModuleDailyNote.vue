@@ -82,7 +82,6 @@ const plugin = usePlugin()
 
 const globalData = injectGlobalData()
 const openedNotebookList = computed(() => globalData.value.openedNotebookList)
-console.log('openedNotebookList is ', openedNotebookList.value)
 
 
 // #region 基本的模块配置
@@ -97,7 +96,6 @@ const {
     moduleDisplayName: EN_CONSTANTS.DAILY_NOTE_DISPLAY,
 
     dailyNoteNotebookId: '',
-    newBlockDelay: 5,
   },
 })
 

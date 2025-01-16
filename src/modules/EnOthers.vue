@@ -200,6 +200,7 @@ watchEffect((onCleanup) => {
   })
 })
 
+// 标记 protyle 是否为日记
 const markProtyleIsDailyNote = debounce(() => {
   const protyleContentDoms = queryAllByDom(document.body, '.protyle-content:not([data-en_is_dailynote])')
 
