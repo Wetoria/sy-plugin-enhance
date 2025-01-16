@@ -82,6 +82,7 @@
 
 <script setup lang="ts">
 import { usePlugin } from '@/main'
+import { isDailyNoteProtyle } from '@/modules/DailyNote/DailyNote'
 import {
   useModule,
 } from '@/modules/EnModuleControl/ModuleProvide'
@@ -205,16 +206,13 @@ const markProtyleIsDailyNote = debounce(() => {
   const protyleContentDoms = queryAllByDom(document.body, '.protyle-content:not([data-en_is_dailynote])')
 
   protyleContentDoms.forEach((protyleContentDom: HTMLElement) => {
-    const wysiwygEl: HTMLDivElement = protyleContentDom.querySelector('.protyle-wysiwyg')
-    if (!wysiwygEl) {
+    const isDailyNote = isDailyNoteProtyle(protyleContentDom)
+    if (!isDailyNote) {
       return
     }
-    const attrs = wysiwygEl.getAttributeNames()
-    const containsDailyNoteAttr = attrs.find((i) => i.startsWith('custom-dailynote'))
-    if (containsDailyNoteAttr) {
-      wysiwygEl.dataset.en_is_dailynote = 'true'
-      protyleContentDom.dataset.en_is_dailynote = 'true'
-    }
+    const wysiwygEl: HTMLDivElement = protyleContentDom.querySelector('.protyle-wysiwyg')
+    wysiwygEl.dataset.en_is_dailynote = 'true'
+    protyleContentDom.dataset.en_is_dailynote = 'true'
   })
 })
 const offMarkProtyleIsDailyNote = useSiyuanEventLoadedProtyleStatic(() => {

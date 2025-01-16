@@ -174,3 +174,17 @@ export function getAppendedDailyNoteBlockId(res: IResdoOperations[]) {
   const transaction = res[0]?.doOperations[0]
   return transaction?.id
 }
+
+
+export function isDailyNoteProtyle(protyleContentDom: HTMLElement): boolean {
+  if (!protyleContentDom) {
+    return false
+  }
+  const wysiwygEl: HTMLDivElement = protyleContentDom.querySelector('.protyle-wysiwyg')
+  if (!wysiwygEl) {
+    return false
+  }
+  const attrs = wysiwygEl.getAttributeNames()
+  const containsDailyNoteAttr = attrs.find((i) => i.startsWith('custom-dailynote'))
+  return !!containsDailyNoteAttr
+}
