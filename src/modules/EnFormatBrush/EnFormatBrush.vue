@@ -433,6 +433,7 @@ const unregisterToolbarBrushContainer = () => {
   toolbarDomList.value.forEach((dom) => {
     dom.remove()
   })
+  toolbarDomList.value = []
 }
 
 const removeToolbarBrushContainerNotInDocument = () => {
