@@ -84,8 +84,6 @@ const watchParagraphAttrChange = () => {
     handler()
     const ob = new MutationObserver(debounce(handler, 300))
     ob.observe(props.el, {
-      childList: true,
-      subtree: true,
       attributes: true,
     })
   }

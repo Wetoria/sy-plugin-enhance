@@ -108,7 +108,7 @@ import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
 import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue'
 import {
   debounce,
-  generateShortUUID,
+  generateUUIDWithTimestamp,
   moduleEnableStatusSwitcher,
 } from '@/utils'
 
@@ -159,7 +159,6 @@ useGlobalData(EN_CONSTANTS.PARAGRAPH_BLOCK_TIME_DIFF, {
 
 
 const paragraphListRef = ref<HTMLDivElement[]>([])
-window.paragraphListRef = paragraphListRef
 const removeRecordedParagraphList = () => {
   paragraphListRef.value = []
 }
@@ -179,7 +178,6 @@ const removeAllParagraphBlockAttrContainer = () => {
 
 const bindAttrContainer = () => {
   const paragraphList = paragraphListRef.value
-  console.log('paragraphList', paragraphList)
 
   const attrList = paragraphBlockAttrContainerRefList.value
   paragraphBlockAttrContainerRefList.value = attrList.filter((item) => {
@@ -194,7 +192,7 @@ const bindAttrContainer = () => {
     const span = document.createElement('div')
     span.className = 'enProtyleAttrContainer protyle-custom'
     span.contentEditable = 'false'
-    span.dataset.en_loop_key = generateShortUUID()
+    span.dataset.en_loop_key = generateUUIDWithTimestamp()
     const protyleAttr = dom.querySelector('.protyle-attr')
     if (!protyleAttr) return
 
