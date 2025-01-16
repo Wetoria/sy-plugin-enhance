@@ -45,7 +45,10 @@ import { useModule } from '@/modules/EnModuleControl/ModuleProvide'
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
 import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue'
 import { moduleEnableStatusSwitcher } from '@/utils'
-import { EN_MODULE_LIST } from '@/utils/Constants'
+import {
+  EN_CONSTANTS,
+  EN_MODULE_LIST,
+} from '@/utils/Constants'
 import { watchEffect } from 'vue'
 
 const plugin = usePlugin()
@@ -58,9 +61,9 @@ const {
   opacity: number
 } & EnModule>(EN_MODULE_LIST.BACKGROUND_IMG, {
   defaultData: {
-    enabled: true,
+    enabled: false,
     moduleName: EN_MODULE_LIST.BACKGROUND_IMG,
-    moduleDisplayName: EN_MODULE_LIST.BACKGROUND_IMG,
+    moduleDisplayName: EN_CONSTANTS.BACKGROUND_IMG_DISPLAY,
 
     enableBackgroundImg: false,
     opacity: 0.9,
