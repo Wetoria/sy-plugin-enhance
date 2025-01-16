@@ -74,21 +74,24 @@
           updated,
           updatedFormatted,
           nodeId,
+          content,
         }"
       >
-        <EnParagraphBlockTimeDiff
-          v-if="isVip"
-          :nodeId="nodeId"
-        />
-        <EnParagraphBlockTime
-          v-if="moduleOptions.enableBlockTime"
-          :created="created"
-          :createdFormatted="createdFormatted"
-          :updated="updated"
-          :updatedFormatted="updatedFormatted"
-          :pDom="attrItem.paragraphEl"
-          :defaultBlockType="moduleOptions.defaultBlockType"
-        />
+        <template v-if="content">
+          <EnParagraphBlockTimeDiff
+            v-if="isVip"
+            :nodeId="nodeId"
+          />
+          <EnParagraphBlockTime
+            v-if="moduleOptions.enableBlockTime"
+            :created="created"
+            :createdFormatted="createdFormatted"
+            :updated="updated"
+            :updatedFormatted="updatedFormatted"
+            :pDom="attrItem.paragraphEl"
+            :defaultBlockType="moduleOptions.defaultBlockType"
+          />
+        </template>
       </template>
     </EnParagraphBlockAttrContainer>
   </div>

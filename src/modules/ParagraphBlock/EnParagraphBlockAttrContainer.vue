@@ -13,6 +13,7 @@
         :updated="updated"
         :updatedFormatted="updatedFormatted"
         :nodeId="nodeId"
+        :content="paragraphBlockContent"
       ></slot>
     </div>
   </Teleport>
@@ -65,10 +66,13 @@ const created = computed(() => {
 })
 const createdFormatted = computed(() => `created: ${created.value.format(FORMAT_TIME)}`)
 
+const paragraphBlockContent = ref('')
 
 const watchParagraphAttrChange = () => {
   if (props.el) {
     const handler = () => {
+      const content = props.el.firstElementChild.textContent
+      paragraphBlockContent.value = content
       const newUpdated = getUpdated(props.el)
       if (!newUpdated) {
         return
