@@ -3,7 +3,6 @@
     <template
       #default="{
         isVip,
-        isNotFree,
       }"
     >
       <ArcoTheme />
@@ -26,14 +25,12 @@
       <EnModuleQuickNote />
       <!-- TODO -->
       <!-- <EnEditor /> -->
-      <EnOthers />
 
       <!-- TODO -->
       <!-- <EnVideoAndAudio v-if="isNotFree" /> -->
-      <EnFormatBrush v-if="isNotFree" />
-      <EnFont />
-      <TemplateEntry />
+      <!-- TODO -->
       <!-- <EnModuleComment v-if="isNotFree && !isInEnWindow" /> -->
+      <!-- TODO -->
       <!-- <EnModuleWhiteBoard /> -->
 
       <!-- 仅移动端 -->
@@ -64,6 +61,8 @@ import EnPWA from '@/modules/EnPWA.vue'
 import EnSiyuanEntry from '@/modules/EnSiyuanEntry.vue'
 import { isInWindow } from '@/modules/EnWindow.vue'
 import EnModuleLifeLog from '@/modules/LifeLog/EnModuleLifeLog.vue'
+import EnParagraphBlock from '@/modules/ParagraphBlock/EnParagraphBlock.vue'
+import EnModuleQuickNote from '@/modules/QuickNote/EnModuleQuickNote.vue'
 import EnSettings from '@/modules/Settings/EnSettings.vue'
 import TemplateEntry from '@/modules/Templates/TemplateEntry.vue'
 import { moduleEnableStatusSwitcher } from '@/utils'
