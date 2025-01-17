@@ -337,3 +337,49 @@ export function handleWith(judge: () => boolean, callback: () => void) {
     }, 0)
   })
 }
+
+export function getLastCharPositionFromTextNode(textNode) {
+  try {
+    // 检查参数是否为文本节点
+    if (!textNode || textNode.nodeType !== Node.TEXT_NODE) {
+      return null
+    }
+
+    const text = textNode.textContent
+
+    if (!text || text.length === 0) {
+      return null
+    }
+
+    // 创建 Range 对象
+    const range = document.createRange()
+
+    // 设置 Range 为最后一个字符
+    range.setStart(textNode, text.length - 1)
+    range.setEnd(textNode, text.length)
+
+    // 获取位置信息
+    const rects = range.getClientRects()
+
+    if (rects.length === 0) {
+      return null
+    }
+
+    // 获取最后一个 rect
+    const lastRect = rects[rects.length - 1]
+
+    // 如果需要相对于文档的位置，使用 getBoundingClientRect
+    // const lastRect = range.getBoundingClientRect();
+
+    return {
+      left: lastRect.left,
+      top: lastRect.top,
+      right: lastRect.right,
+      bottom: lastRect.bottom,
+      width: lastRect.width,
+      height: lastRect.height,
+    }
+  } catch (e) {
+    return null
+  }
+}

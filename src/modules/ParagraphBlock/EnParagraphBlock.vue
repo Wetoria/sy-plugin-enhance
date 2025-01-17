@@ -94,6 +94,16 @@
         </template>
       </template>
     </EnParagraphBlockAttrContainer>
+    <!-- <template
+      v-for="item of testTagListRef"
+      :key="item.loopKey"
+    >
+      <EnParagraphSuperTagContainer
+        :el="item.paragraphEl"
+        :toEl="item.attrEl"
+      />
+
+    </template> -->
   </div>
 </template>
 
@@ -107,6 +117,7 @@ import {
 import EnParagraphBlockAttrContainer from '@/modules/ParagraphBlock/EnParagraphBlockAttrContainer.vue'
 import EnParagraphBlockTime from '@/modules/ParagraphBlock/EnParagraphBlockTime.vue'
 import EnParagraphBlockTimeDiff from '@/modules/ParagraphBlock/EnParagraphBlockTimeDiff.vue'
+// import EnParagraphSuperTagContainer from '@/modules/ParagraphBlock/EnParagraphSuperTagContainer.vue'
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
 import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue'
 import {
@@ -179,6 +190,13 @@ const removeAllParagraphBlockAttrContainer = () => {
   paragraphBlockAttrContainerRefList.value = []
 }
 
+// TODO 如果加入 SuperTag 的功能的话，这个 ref 还需要像 paragraphBlockAttrContainerRefList 一样做清理
+// const testTagListRef = ref<{
+//   paragraphEl: HTMLDivElement
+//   attrEl: HTMLSpanElement
+//   loopKey: string
+// }[]>([])
+
 const bindAttrContainer = () => {
   const paragraphList = paragraphListRef.value
 
@@ -206,6 +224,31 @@ const bindAttrContainer = () => {
       loopKey: span.dataset.en_loop_key,
     })
   })
+
+
+  // paragraphList.forEach((dom: HTMLDivElement) => {
+
+  //   const target = dom
+  //   const exist = target.querySelector('.enTestTag') as HTMLElement
+  //   if (exist) {
+  //     return
+  //   }
+  //   const span = document.createElement('div')
+  //   span.className = 'enTestTag protyle-custom'
+  //   span.contentEditable = 'false'
+  //   span.dataset.en_loop_key = generateUUIDWithTimestamp()
+
+
+  //   const protyleAttr = dom.querySelector('.protyle-attr')
+  //   if (!protyleAttr) return
+  //   dom.insertBefore(span, protyleAttr)
+
+  //   testTagListRef.value.push({
+  //     paragraphEl: dom,
+  //     attrEl: span,
+  //     loopKey: span.dataset.en_loop_key,
+  //   })
+  // })
 }
 
 watch(paragraphListRef, () => {
