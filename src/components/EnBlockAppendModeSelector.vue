@@ -78,7 +78,7 @@ import { computed } from 'vue'
 
 const props = defineProps<{
   notebookList: Notebook[]
-  mode?: Array<'All' | 'targetDoc' | 'targetBlock' | 'currentDoc' | 'currentBlock'>
+  mode?: Array<EnBlockAppendMode>
 
   showPrompt?: boolean
   showTips?: boolean

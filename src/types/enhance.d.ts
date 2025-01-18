@@ -13,6 +13,8 @@ interface EnAuthStatus {
   computedLevel: (level: number | string) => ComputedRef<boolean>
 }
 
+type EnBlockAppendMode = 'All' | 'targetDoc' | 'targetBlock' | 'currentDoc' | 'currentBlock'
+
 interface EnSettings {
   isDebugging: boolean
   v: 0 | 1 | 2
@@ -25,7 +27,8 @@ interface GlobalData {
   notebookList: Notebook[]
   openedNotebookList: Notebook[]
 
-  quickNoteMode: Array<'targetDoc' | 'targetBlock' | 'currentDoc' | 'currentBlock'>
+  quickNoteMode: Array<EnBlockAppendMode>
+  commentMode: Array<EnBlockAppendMode>
 }
 
 interface GlobalWindowData {
@@ -149,3 +152,16 @@ interface EnModuleParagraphBlock extends EnModule {
   autoLockTimeDiff: number
   autoCheckTime: number
 }
+
+
+
+
+interface EnModuleComment extends EnModule {
+  notebookId: string
+  targetId: string
+  autoSaveConfigByWindow: boolean
+
+  customStyleBlock: string
+  customStyleInline: string
+}
+

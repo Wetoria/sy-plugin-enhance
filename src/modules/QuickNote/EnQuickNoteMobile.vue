@@ -46,7 +46,7 @@
 import { deleteBlock } from '@/api'
 import EnProtyle from '@/components/EnProtyle.vue'
 import {
-  injectGlobalData,
+  injectGlobalWindowData,
   useModule,
 } from '@/modules/EnModuleControl/ModuleProvide'
 import { appendBlockInto } from '@/utils/Block'
@@ -114,8 +114,8 @@ const {
 } = useModule<EnModuleQuickNote>(EN_MODULE_LIST.QUICK_NOTE)
 
 async function createTodayDailyNote() {
-  const globalData = injectGlobalData()
-  if (globalData.value.isSyncing) {
+  const globalWindowData = injectGlobalWindowData()
+  if (globalWindowData.value.isSyncing) {
     showMessage('正在同步中，请等待同步完成再创建笔记', 1000)
     return
   }
@@ -126,7 +126,7 @@ async function createTodayDailyNote() {
   isCreatingDailyNote.value = true
 
   const blockId = await appendBlockInto(
-    moduleOptions.value.dailyNoteNotebookId,
+    moduleOptions.value.notebookId,
     moduleOptions.value.targetId,
   )
 

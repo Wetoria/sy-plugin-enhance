@@ -28,7 +28,7 @@
           窗口中的配置独立于该设置。你随时可以在窗口中更改成你想要的模式。
         </div>
         <div v-if="moduleOptions.targetId">
-          已选文档：
+          已选择块：
           <a-link
             @click="openTargetDoc"
           >
@@ -49,7 +49,7 @@
     </EnSettingsItem>
     <EnSettingsItem>
       <div>
-        窗口中切换配置是否保存
+        同步窗口中的配置
       </div>
       <template #desc>
         <div>
@@ -134,7 +134,6 @@ const {
 })
 
 const globalData = injectGlobalData()
-globalData.value.quickNoteMode = ['targetBlock']
 const openedNotebookList = computed(() => globalData.value.openedNotebookList)
 
 const openTargetDoc = () => {

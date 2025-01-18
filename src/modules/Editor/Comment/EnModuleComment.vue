@@ -6,11 +6,55 @@
     :display="moduleOptions.moduleDisplayName"
     always
   >
-    <!-- 下划线样式 -->
-    <!-- 下划线宽度 -->
-    <!-- 下划线颜色 -->
-    <!-- 行内批注颜色 -->
-    <!-- 行内批注背景颜色 -->
+    <EnSettingsItem mode="vertical">
+      <div>
+        创建模式
+      </div>
+      <template #desc>
+        <div>
+          选择批注创建内容的模式：添加至目标块、当前块、或追加至笔记本的日记中。
+        </div>
+        <div>
+          <a-typography-text type="warning">
+            注：修改本设置会更新批注窗口中的配置。
+          </a-typography-text>
+        </div>
+        <div>
+          窗口中的配置独立于该设置。你随时可以在窗口中更改成你想要的模式。
+        </div>
+        <div v-if="moduleOptions.targetId">
+          已选择文档：
+          <a-link
+            @click="openTargetDoc"
+          >
+            点击跳转至目标文档
+          </a-link>
+        </div>
+      </template>
+      <template #opt>
+        <div class="EnNotebookSelector">
+          <EnBlockAppendModeSelector
+            v-model="moduleOptions.notebookId"
+            v-model:targetId="moduleOptions.targetId"
+            :notebookList="openedNotebookList"
+            :mode="globalData.commentMode"
+          />
+        </div>
+      </template>
+    </EnSettingsItem>
+    <EnSettingsItem>
+      <div>
+        同步窗口中的配置
+      </div>
+      <template #desc>
+        <div>
+          如果未开启该选项，修改窗口中的配置仅用作临时更改，重启思源/插件后，会恢复为上方的配置。
+        </div>
+      </template>
+      <template #opt>
+        <a-switch v-model="moduleOptions.autoSaveConfigByWindow" />
+      </template>
+    </EnSettingsItem>
     <EnSettingsItem>
       <div>
         默认配置
@@ -26,6 +70,9 @@
 
           &nbsp;&nbsp;--en-comment-text-shadow: 0px -5px 24px var(--en-comment-background-color);<br>
           }
+        </div>
+        <div>
+          下方配置中，在最外侧使用 <code>& {}</code>，即代表评论的目标块（可参考默认配置）
         </div>
       </template>
     </EnSettingsItem>
@@ -72,16 +119,22 @@
       </div>
     </EnSettingsItem>
   </EnSettingsTeleportModule>
-  <EnCommentDesktop v-if="!plugin.isMobile" />
-  <EnCommentMobile v-else />
+  <template v-if="enableComment">
+    <EnCommentDesktop v-if="!plugin.isMobile" />
+    <EnCommentMobile v-else />
+  </template>
 </template>
 
 <script setup lang="ts">
+import EnBlockAppendModeSelector from '@/components/EnBlockAppendModeSelector.vue'
 import { usePlugin } from '@/main'
 
 import EnCommentDesktop from '@/modules/Editor/Comment/EnCommentDesktop.vue'
 import EnCommentMobile from '@/modules/Editor/Comment/EnCommentMobile.vue'
 import {
+  injectAuthStatus,
+  injectGlobalData,
+  injectGlobalWindowData,
   useModule,
 } from '@/modules/EnModuleControl/ModuleProvide'
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
@@ -90,22 +143,38 @@ import {
   EN_CONSTANTS,
   EN_MODULE_LIST,
 } from '@/utils/Constants'
+import { openDocById } from '@/utils/Note'
+import {
+  computed,
+} from 'vue'
 
 
 
 const plugin = usePlugin()
 
+const globalWindowData = injectGlobalWindowData()
+const globalData = injectGlobalData()
+const openedNotebookList = computed(() => globalData.value.openedNotebookList)
+const {
+  isNotFree,
+} = injectAuthStatus()
+
+const enableComment = computed(() => {
+  return isNotFree.value && globalWindowData.value.isInSiyuanMain
+})
+
 const {
   module,
   moduleOptions,
-} = useModule<{
-  customStyleBlock: string
-  customStyleInline: string
-} & EnModule>(EN_MODULE_LIST.COMMENT, {
+} = useModule<EnModuleComment>(EN_MODULE_LIST.COMMENT, {
   defaultData: {
     enabled: true,
     moduleName: EN_MODULE_LIST.COMMENT,
     moduleDisplayName: EN_CONSTANTS.COMMENT_DISPLAY,
+
+    notebookId: '',
+    targetId: '',
+    autoSaveConfigByWindow: false,
 
     customStyleBlock: `& {
   &[data-type="NodeParagraph"],
@@ -160,6 +229,13 @@ const {
 const cancelSettingMouseMoveEvent = (e: MouseEvent) => {
   e.stopImmediatePropagation()
   e.stopPropagation()
+}
+
+const openTargetDoc = () => {
+  if (!moduleOptions.value.targetId) {
+    return
+  }
+  openDocById(moduleOptions.value.targetId)
 }
 </script>
 
