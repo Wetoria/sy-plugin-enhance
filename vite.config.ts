@@ -2,7 +2,6 @@
 import { resolve } from "node:path"
 import { vitePluginForArco } from "@arco-plugins/vite-vue"
 import vue from "@vitejs/plugin-vue"
-import vueJsx from '@vitejs/plugin-vue-jsx'
 import fg from "fast-glob"
 import minimist from "minimist"
 import livereload from "rollup-plugin-livereload"
@@ -30,7 +29,6 @@ export default defineConfig({
 
   plugins: [
     vue(),
-    vueJsx(),
     vitePluginForArco({
       style: true,
       modifyVars: {

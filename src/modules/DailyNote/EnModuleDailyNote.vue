@@ -29,7 +29,7 @@
 
 
 
-<script setup lang="tsx">
+<script setup lang="ts">
 
 
 import EnNotebookSelector from '@/components/EnNotebookSelector.vue'
