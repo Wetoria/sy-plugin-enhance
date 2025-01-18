@@ -4,9 +4,12 @@ export enum EN_CONSTANTS {
 
 
 
+  // 全局数据
   GLOBAL_DATA = 'GlobalData',
+  // 全局模块
   GLOBAL_MODULE = 'GlobalModule',
-
+  // 窗口的全局数据
+  GLOBAL_WINDOW_DATA = 'GlobalWindowData',
 
 
   EN_PLUGIN_SWITCH = 'En_Plugin_Switch',

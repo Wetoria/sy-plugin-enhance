@@ -22,6 +22,7 @@ import {
   provideAuthStatus,
   provideGlobalDataModule,
   provideGlobalModule,
+  provideGlobalWindowDataModule,
   provideParentAuth,
   useGlobalData,
 } from '@/modules/EnModuleControl/ModuleProvide'
@@ -75,15 +76,8 @@ provideGlobalModule(settingsGlobalData)
 
 const isInWindowHtml = location.href.includes('window.html')
 
-const globalDataModule: IGlobalData<GlobalData> = useGlobalData<GlobalData>(EN_CONSTANTS.GLOBAL_DATA, {
+const globalDataModule = useGlobalData<GlobalData>(EN_CONSTANTS.GLOBAL_DATA, {
   defaultData: {
-    isSyncing: false,
-    isStandalone: false,
-
-    isInSiyuanMain: !isInWindowHtml,
-    isInSiyuanWindowHtml: isInWindowHtml,
-    isInEnWindow: isInEnWindow(),
-
     notebookList: [],
     openedNotebookList: [],
 
@@ -97,13 +91,27 @@ const { moduleOptions: globalData } = globalDataModule
 provideGlobalDataModule(globalDataModule)
 
 
+const globalWindowDataModule = useGlobalData<GlobalWindowData>(EN_CONSTANTS.GLOBAL_WINDOW_DATA, {
+  defaultData: {
+    isSyncing: false,
+    isStandalone: false,
+
+    isInSiyuanMain: !isInWindowHtml,
+    isInSiyuanWindowHtml: isInWindowHtml,
+    isInEnWindow: isInEnWindow(),
+  },
+  needSave: false,
+  needSync: false,
+})
+const { moduleOptions: globalWindowData } = globalWindowDataModule
+provideGlobalWindowDataModule(globalWindowDataModule)
+
 // 测试模式绑定数据到 window 对象上
 watch(() => settings.value.isDebugging, (value) => {
   if (value) {
     window.SEP_GLOBAL.globalData = globalData
   }
 })
-
 
 // #region 笔记本相关数据控制逻辑
 
@@ -119,7 +127,7 @@ onMounted(() => {
 
   // 在思源本体中，监听思源的笔记本变化
   // 其实这样写，每一个终端都会监听，有一点点蠢
-  if (globalData.value.isInSiyuanMain) {
+  if (globalWindowData.value.isInSiyuanMain) {
     useSiyuanNotebookMount(() => {
       updateOpenedNotebookList()
     })
@@ -139,13 +147,13 @@ onMounted(() => {
 
 const plugin = usePlugin()
 plugin.eventBus.on('sync-start', () => {
-  globalData.value.isSyncing = true
+  globalWindowData.value.isSyncing = true
 })
 plugin.eventBus.on('sync-end', () => {
-  globalData.value.isSyncing = false
+  globalWindowData.value.isSyncing = false
 })
 plugin.eventBus.on('sync-fail', () => {
-  globalData.value.isSyncing = false
+  globalWindowData.value.isSyncing = false
 })
 
 // #endregion 不需要保存的全局数据

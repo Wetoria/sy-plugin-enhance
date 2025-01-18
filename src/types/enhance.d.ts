@@ -22,23 +22,21 @@ interface EnSettings {
 interface GlobalModule extends EnSettings {}
 
 interface GlobalData {
-  isSyncing: boolean
-  isStandalone: boolean
-
-  isInSiyuanMain: boolean
-  isInSiyuanWindowHtml: boolean
-  isInEnWindow: boolean
-
   notebookList: Notebook[]
   openedNotebookList: Notebook[]
 
   quickNoteMode: Array<'targetDoc' | 'targetBlock' | 'currentDoc' | 'currentBlock'>
 }
 
-interface IGlobalData<T> {
-  module: EnSyncModuleDataRef<T>
-  moduleOptions: WritableComputedRef<T>
+interface GlobalWindowData {
+  isSyncing: boolean
+  isStandalone: boolean
+
+  isInSiyuanMain: boolean
+  isInSiyuanWindowHtml: boolean
+  isInEnWindow: boolean
 }
+
 
 /**
  * 同步模块的数据结构

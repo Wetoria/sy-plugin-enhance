@@ -19,6 +19,13 @@ import {
 } from 'vue'
 
 
+interface IGlobalData<T> {
+  module: EnSyncModuleDataRef<T>
+  moduleOptions: WritableComputedRef<T>
+}
+
+type IGlobalDataOptions<T> = IGlobalData<T>['moduleOptions']
+
 export function useGlobalData<T>(
   namespace: Namespace,
   options?: Required<Pick<EnSyncModuleProps<T>, 'defaultData'>> &
@@ -29,7 +36,7 @@ export function useGlobalData<T>(
   const optionsCopy = cloneDeep(innerOptions)
   optionsCopy.namespace = namespace
   const module = useSyncModuleData<T>(optionsCopy)
-  const moduleOptions = computed({
+  const moduleOptions = computed<T>({
     get: () => module.value.data,
     set: (value) => {
       module.value.data = value
@@ -76,7 +83,7 @@ export function injectGlobalModule(): IGlobalData<EnSettings> {
 /**
  * 注入 settings 数据
  */
-export function injectSettings(): ComputedRef<EnSettings> {
+export function injectSettings(): IGlobalDataOptions<EnSettings> {
   const globalModule = injectGlobalModule()
   return globalModule.moduleOptions
 }
@@ -85,7 +92,7 @@ export function injectSettings(): ComputedRef<EnSettings> {
  * 使用 settings 数据。
  * ❗️仅在 export 的方法中使用，用于 inject 失败的场景
  */
-export function useSettingsExternal(): ComputedRef<EnSettings> {
+export function useSettingsExternal(): IGlobalDataOptions<EnSettings> {
   const {
     moduleOptions: settings,
   } = useGlobalData<EnSettings>(EN_CONSTANTS.SETTINGS)
@@ -114,7 +121,7 @@ export function injectGlobalDataModule(): IGlobalData<GlobalData> {
 /**
  * 注入全局数据 globalData，不需要保存
  */
-export function injectGlobalData(): ComputedRef<GlobalData> {
+export function injectGlobalData(): IGlobalDataOptions<GlobalData> {
   const globalData = injectGlobalDataModule()
   return globalData.moduleOptions
 }
@@ -124,13 +131,38 @@ export function injectGlobalData(): ComputedRef<GlobalData> {
  * 使用 globalData 数据。
  * ❗️仅在 export 的方法中使用，用于 inject 失败的场景
  */
-export function useGlobalDataExternal(): ComputedRef<GlobalData> {
+export function useGlobalDataExternal(): IGlobalDataOptions<GlobalData> {
   const {
     moduleOptions: globalData,
   } = useGlobalData<GlobalData>(EN_CONSTANTS.GLOBAL_DATA)
   return globalData
 }
 // #endregion 全局数据 GlobalData，不需要保存
+
+
+// #region 窗口的全局数据 GlobalWindowData，不需要保存，不需要同步
+export function provideGlobalWindowDataModule(globalData: IGlobalData<GlobalWindowData>) {
+  provide(`${EN_CONSTANTS.GLOBAL_WINDOW_DATA}_module`, globalData)
+}
+export function injectGlobalWindowDataModule(): IGlobalData<GlobalWindowData> {
+  const globalData = inject(`${EN_CONSTANTS.GLOBAL_WINDOW_DATA}_module`) as IGlobalData<GlobalWindowData>
+  return globalData
+}
+
+
+export function injectGlobalWindowData(): IGlobalDataOptions<GlobalWindowData> {
+  const globalData = injectGlobalWindowDataModule()
+  return globalData.moduleOptions
+}
+
+
+export function useGlobalWindowDataExternal(): IGlobalDataOptions<GlobalWindowData> {
+  const {
+    moduleOptions: globalData,
+  } = useGlobalData<GlobalWindowData>(EN_CONSTANTS.GLOBAL_WINDOW_DATA)
+  return globalData
+}
+// #endregion 窗口的全局数据 GlobalWindowData，不需要保存，不需要同步
 
 
 
@@ -150,11 +182,17 @@ export function injectAuthModule(): IGlobalData<EnAuth> {
 /**
  * 注入权限模块数据
  */
-export function injectAuth(): WritableComputedRef<EnAuth> {
+export function injectAuth(): IGlobalDataOptions<EnAuth> {
   const authModule = injectAuthModule()
   return authModule.moduleOptions
 }
 
+export function useAuthExternal(): IGlobalDataOptions<EnAuth> {
+  const {
+    moduleOptions: auth,
+  } = useGlobalData<EnAuth>(EN_CONSTANTS.AUTH)
+  return auth
+}
 
 
 /**
