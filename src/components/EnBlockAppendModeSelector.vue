@@ -1,5 +1,31 @@
 <template>
   <div class="EnBlockAppendModeSelectorContainer">
+    <div class="EnBlockAppendModeSelectorTips flexAlignCenter">
+      <a-tooltip
+        v-if="showTips"
+      >
+        <icon-exclamation-circle size="16" />
+        <template #content>
+          <slot
+            name="tips"
+          >
+            <div
+              v-for="item of usedModeList"
+              :key="item.id"
+            >
+              {{ `${item.name}: ${item.desc}` }}
+            </div>
+            <div>
+              笔记本：追加到笔记本的日记中
+            </div>
+            <div>
+              提示：插件会自动根据块 ID 选择创建的方式，以保证符合思源内部的处理方式。
+            </div>
+          </slot>
+          <slot name="extraTips"></slot>
+        </template>
+      </a-tooltip>
+    </div>
     <div
       v-if="showPrompt"
       class="flexAlignCenter"
@@ -38,28 +64,6 @@
       v-model="targetId"
       class="EnBlockAppendModeTargetIdInput"
     />
-    <div class="EnBlockAppendModeSelectorTips flexAlignCenter">
-      <a-tooltip
-        v-if="showTips"
-      >
-        <icon-exclamation-circle size="16" />
-        <template #content>
-          <slot
-            name="tips"
-          >
-            <div
-              v-for="item of usedModeList"
-              :key="item.id"
-            >
-              {{ `${item.name}: ${item.desc}` }}
-            </div>
-            <div>
-              插件会自动根据块 ID 选择创建的方式，以保证符合思源内部的处理方式。
-            </div>
-          </slot>
-        </template>
-      </a-tooltip>
-    </div>
   </div>
 </template>
 

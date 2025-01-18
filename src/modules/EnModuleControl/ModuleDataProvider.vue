@@ -86,6 +86,8 @@ const globalDataModule: IGlobalData<GlobalData> = useGlobalData<GlobalData>(EN_C
 
     notebookList: [],
     openedNotebookList: [],
+
+    quickNoteMode: [],
   },
   needSave: false,
 })

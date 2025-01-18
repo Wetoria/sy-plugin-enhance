@@ -18,7 +18,29 @@
               :mode="globalData.quickNoteMode"
               showPrompt
               showTips
-            />
+            >
+              <template #extraTips>
+                <div>
+                  注：未编辑过的块，将会自动删除
+                </div>
+              </template>
+            </EnBlockAppendModeSelector>
+          </div>
+          <div>
+            <a-tooltip>
+              <a-button
+                @click="appendNewBlock"
+              >
+                <template #icon>
+                  <icon-plus />
+                </template>
+              </a-button>
+              <template #content>
+                <div>
+                  追加新块 ({{ isMac ? '⌘ + N' : 'Ctrl + N' }})
+                </div>
+              </template>
+            </a-tooltip>
           </div>
         </div>
       </div>
@@ -52,6 +74,7 @@ import {
   removeCommand,
 } from '@/utils/Commands'
 import { EN_MODULE_LIST } from '@/utils/Constants'
+import { getOS } from '@/utils/System'
 import dayjs from 'dayjs'
 import { Protyle } from 'siyuan'
 import {
@@ -80,6 +103,7 @@ const enWinRef = ref()
 // #endregion 在思源本体中
 
 
+const { isMac } = getOS()
 
 // #region 在打开的窗口中
 
@@ -91,6 +115,7 @@ const {
   moduleOptions,
 } = useModule<EnModuleQuickNote>(EN_MODULE_LIST.QUICK_NOTE)
 
+// TODO 监听变化处理内容
 const selectedNotebookId = ref(moduleOptions.value.notebookId)
 const targetId = ref(moduleOptions.value.targetId)
 
@@ -139,6 +164,12 @@ const destoryProtyle = async () => {
   }
 }
 
+const appendNewBlock = () => {
+  destoryProtyle().then(() => {
+    initProtyle()
+  })
+}
+
 // #endregion 在打开的窗口中
 
 
@@ -166,46 +197,61 @@ const commands = [
     },
   },
 ]
+
+const runInQuickNoteWindow = () => {
+
+  document.documentElement.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
+      e.preventDefault()
+      e.stopImmediatePropagation()
+      e.stopPropagation()
+
+      appendNewBlock()
+    }
+  }, true)
+
+  const winRef = enWinRef.value.getWin()
+  let unwatchFunc = null
+  let lastHideTime = null
+  winRef.on('show', () => {
+    // 首次打开，所以没有上一次隐藏时间
+    if (!lastHideTime) {
+      initProtyle()
+    } else if (dayjs().diff(lastHideTime, 'seconds') > moduleOptions.value.newBlockDelay) {
+      // 如果上一次隐藏时间大于 newBlockDelay 秒，则创建新块
+      initProtyle()
+    } else if (!currentBlockId.value) {
+      // 如果当前没有块，也创建新块
+      // 比如刚打开就关闭，这个时候没有编辑，原来的块会被删掉
+      // 如果在 newBlockDelay 秒内，再次打开，需要重新创建
+      initProtyle()
+    }
+    enLog('quick note show')
+    unwatchFunc = watch(selectedNotebookId, () => {
+      destoryProtyle().then(() => {
+        initProtyle()
+      })
+    })
+  })
+
+  winRef.on('hide', () => {
+    lastHideTime = dayjs()
+
+    // 如果没编辑过的话，这里刚好删除
+    destoryProtyle()
+    enLog('quick note hide')
+    if (unwatchFunc) {
+      unwatchFunc()
+    }
+  })
+}
 onMounted(() => {
   if (!inWindow.value && location.pathname != '/stage/build/app/window.html') {
     commands.forEach((command) => {
       addCommand(command)
     })
   } else {
-    const winRef = enWinRef.value.getWin()
-    let unwatchFunc = null
-    let lastHideTime = null
-    winRef.on('show', () => {
-      // 首次打开，所以没有上一次隐藏时间
-      if (!lastHideTime) {
-        initProtyle()
-      } else if (dayjs().diff(lastHideTime, 'seconds') > moduleOptions.value.newBlockDelay) {
-        // 如果上一次隐藏时间大于 newBlockDelay 秒，则创建新块
-        initProtyle()
-      } else if (!currentBlockId.value) {
-        // 如果当前没有块，也创建新块
-        // 比如刚打开就关闭，这个时候没有编辑，原来的块会被删掉
-        // 如果在 newBlockDelay 秒内，再次打开，需要重新创建
-        initProtyle()
-      }
-      enLog('quick note show')
-      unwatchFunc = watch(selectedNotebookId, () => {
-        destoryProtyle().then(() => {
-          initProtyle()
-        })
-      })
-    })
-
-    winRef.on('hide', () => {
-      lastHideTime = dayjs()
-
-      // 如果没编辑过的话，这里刚好删除
-      destoryProtyle()
-      enLog('quick note hide')
-      if (unwatchFunc) {
-        unwatchFunc()
-      }
-    })
+    runInQuickNoteWindow()
   }
 })
 onBeforeUnmount(() => {
