@@ -99,6 +99,7 @@ interface EnModuleDailyNote extends EnModule {
 interface EnModuleQuickNote extends EnModule {
   notebookId: string
   targetId: string
+  autoSaveConfigByWindow: boolean
   newBlockDelay: number
 }
 

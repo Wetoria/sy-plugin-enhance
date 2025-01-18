@@ -19,6 +19,12 @@
               showPrompt
               showTips
             >
+              <template
+                v-if="isConfigValid"
+                #tipIcon
+              >
+                <icon-check-circle style="color: rgb(var(--success-6))" />
+              </template>
               <template #extraTips>
                 <div>
                   注：未编辑过的块，将会自动删除
@@ -26,7 +32,38 @@
               </template>
             </EnBlockAppendModeSelector>
           </div>
-          <div>
+          <div class="flexAlignCenter enGap">
+            <a-tooltip>
+              <template #content>
+                <div>
+                  是否自动保存当前窗口配置
+                </div>
+              </template>
+              <a-checkbox
+                v-model="moduleOptions.autoSaveConfigByWindow"
+                @change="onAutoSaveConfigChange"
+              >
+              </a-checkbox>
+            </a-tooltip>
+            <a-tooltip v-if="!moduleOptions.autoSaveConfigByWindow">
+              <template #content>
+                <div>
+                  保存当前窗口配置 {{ isNotSameConfig ? '（未保存）' : '' }}
+                </div>
+              </template>
+              <a-button
+                class="EnQuickNoteSaveConfigButton"
+                :class="{
+                  isNotSameConfig,
+                }"
+                :loading="savingConfig"
+                @click="saveConfig"
+              >
+                <template #icon>
+                  <icon-save />
+                </template>
+              </a-button>
+            </a-tooltip>
             <a-tooltip>
               <a-button
                 @click="appendNewBlock"
@@ -68,7 +105,11 @@ import {
   useModule,
 } from '@/modules/EnModuleControl/ModuleProvide'
 import EnWindow, { isInWindow } from '@/modules/EnWindow.vue'
-import { appendBlockInto } from '@/utils/Block'
+import { debounce } from '@/utils'
+import {
+  appendBlockInto,
+  isAppendDailyNoteMode,
+} from '@/utils/Block'
 import {
   addCommand,
   removeCommand,
@@ -76,7 +117,9 @@ import {
 import { EN_MODULE_LIST } from '@/utils/Constants'
 import { getOS } from '@/utils/System'
 import dayjs from 'dayjs'
-import { Protyle } from 'siyuan'
+import {
+  Protyle,
+} from 'siyuan'
 import {
   computed,
   onBeforeUnmount,
@@ -115,7 +158,6 @@ const {
   moduleOptions,
 } = useModule<EnModuleQuickNote>(EN_MODULE_LIST.QUICK_NOTE)
 
-// TODO 监听变化处理内容
 const selectedNotebookId = ref(moduleOptions.value.notebookId)
 const targetId = ref(moduleOptions.value.targetId)
 
@@ -127,12 +169,29 @@ watch(() => moduleOptions.value.targetId, () => {
   targetId.value = moduleOptions.value.targetId
 })
 
+const isSameConfig = computed(() => {
+  return selectedNotebookId.value === moduleOptions.value.notebookId && targetId.value === moduleOptions.value.targetId
+})
+const isNotSameConfig = computed(() => {
+  return !isSameConfig.value
+})
+
+const isConfigValid = computed(() => {
+  return isAppendDailyNoteMode(selectedNotebookId.value) || targetId.value
+})
 
 
 const protyleRef = ref<Protyle>()
 const currentBlockId = ref()
 const initProtyle = async () => {
   if (!inWindow.value) {
+    return
+  }
+
+  const isAppendDN = isAppendDailyNoteMode(selectedNotebookId.value)
+  const hasTargetId = targetId.value
+
+  if (!isAppendDN && !hasTargetId) {
     return
   }
 
@@ -168,6 +227,22 @@ const appendNewBlock = () => {
   destoryProtyle().then(() => {
     initProtyle()
   })
+}
+
+const savingConfig = ref(false)
+const saveConfig = () => {
+  savingConfig.value = true
+  moduleOptions.value.notebookId = selectedNotebookId.value
+  moduleOptions.value.targetId = targetId.value
+  setTimeout(() => {
+    savingConfig.value = false
+  }, 300)
+}
+
+function onAutoSaveConfigChange() {
+  if (moduleOptions.value.autoSaveConfigByWindow) {
+    saveConfig()
+  }
 }
 
 // #endregion 在打开的窗口中
@@ -227,11 +302,15 @@ const runInQuickNoteWindow = () => {
       initProtyle()
     }
     enLog('quick note show')
-    unwatchFunc = watch(selectedNotebookId, () => {
+    unwatchFunc = watch([selectedNotebookId, targetId], debounce(() => {
+      if (moduleOptions.value.autoSaveConfigByWindow) {
+        saveConfig()
+      }
       destoryProtyle().then(() => {
+        currentBlockId.value = ''
         initProtyle()
       })
-    })
+    }, 1000))
   })
 
   winRef.on('hide', () => {
@@ -276,6 +355,12 @@ onBeforeUnmount(() => {
     padding: 0px 16px;
     overflow-x: auto;
     z-index: 2;
+
+    .EnQuickNoteSaveConfigButton {
+      &.isNotSameConfig {
+        color: rgb(var(--warning-6));
+      }
+    }
   }
 
   .inputArea {

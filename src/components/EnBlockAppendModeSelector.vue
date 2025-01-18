@@ -4,7 +4,11 @@
       <a-tooltip
         v-if="showTips"
       >
-        <icon-exclamation-circle size="16" />
+        <slot
+          name="tipIcon"
+        >
+          <icon-exclamation-circle style="color: rgb(var(--warning-6))" />
+        </slot>
         <template #content>
           <slot
             name="tips"
@@ -63,12 +67,13 @@
       v-if="notebookId?.startsWith('target')"
       v-model="targetId"
       class="EnBlockAppendModeTargetIdInput"
+      placeholder="请输入块 ID"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { modeAppendDailyNote } from '@/utils/Block'
+import { isAppendDailyNoteMode } from '@/utils/Block'
 import { computed } from 'vue'
 
 const props = defineProps<{
@@ -82,7 +87,7 @@ const notebookId = defineModel<string>()
 const targetId = defineModel<string>('targetId')
 
 const isSelectedNotebook = computed(() => {
-  return modeAppendDailyNote(notebookId.value)
+  return isAppendDailyNoteMode(notebookId.value)
 })
 
 const modeList = [

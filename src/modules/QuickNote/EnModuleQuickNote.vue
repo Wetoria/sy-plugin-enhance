@@ -47,6 +47,19 @@
         </div>
       </template>
     </EnSettingsItem>
+    <EnSettingsItem>
+      <div>
+        窗口中切换配置是否保存
+      </div>
+      <template #desc>
+        <div>
+          如果未开启该选项，修改窗口中的配置仅用作临时更改，重启思源/插件后，会恢复为上方的配置。
+        </div>
+      </template>
+      <template #opt>
+        <a-switch v-model="moduleOptions.autoSaveConfigByWindow" />
+      </template>
+    </EnSettingsItem>
     <EnSettingsItem mode="vertical">
       <div>
         一键记事创建新块的延时
@@ -113,6 +126,9 @@ const {
 
     notebookId: '',
     targetId: '',
+
+    autoSaveConfigByWindow: false,
+
     newBlockDelay: 5,
   },
 })

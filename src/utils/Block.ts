@@ -14,7 +14,7 @@ import {
 } from '@/utils/Siyuan'
 import { showMessage } from 'siyuan'
 
-export function modeAppendDailyNote(notebookId: string) {
+export function isAppendDailyNoteMode(notebookId: string) {
   return !notebookId.startsWith('target') && !notebookId.startsWith('current')
 }
 
@@ -24,7 +24,7 @@ export function getTransactionFirstBlockId(res: IResdoOperations[]) {
 }
 
 export async function appendBlockInto(notebookId: string, targetId: string, text: string = '') {
-  const isAppendDailyNote = modeAppendDailyNote(notebookId)
+  const isAppendDailyNote = isAppendDailyNoteMode(notebookId)
 
   if (isAppendDailyNote) {
     const res = await appendBlockIntoDailyNote(
