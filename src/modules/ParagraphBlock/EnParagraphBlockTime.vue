@@ -54,7 +54,6 @@ const styledFormatted = computed(() => {
 
 <style lang="scss" scoped>
 .enBlockTimeContainer {
-  font-family: monospace;
   position: relative;
   font-size: var(--enTimeFontSize);
 

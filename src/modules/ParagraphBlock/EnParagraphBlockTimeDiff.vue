@@ -95,7 +95,6 @@ const bindedCreated = computed<Dayjs | undefined>(() => {
   gap: 2px;
 
   .TimeDiff {
-    font-family: monospace;
     font-size: var(--enTimeFontSize);
   }
 
