@@ -127,8 +127,6 @@ html[data-enhancer-enable-block-time="true"] {
       font-size: var(--timeFontSize);
       line-height: var(--timeFontSize);
 
-      font-family: monospace;
-
       display: flex;
       justify-content: flex-end;
 
