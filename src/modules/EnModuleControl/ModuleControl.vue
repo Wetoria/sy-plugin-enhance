@@ -28,8 +28,7 @@
 
       <!-- TODO -->
       <!-- <EnVideoAndAudio v-if="isNotFree" /> -->
-      <!-- TODO -->
-      <!-- <EnModuleComment v-if="isNotFree && !isInEnWindow" /> -->
+      <EnModuleComment />
       <!-- TODO -->
       <!-- <EnModuleWhiteBoard /> -->
 
@@ -52,6 +51,7 @@ import { usePlugin } from '@/main'
 import ArcoTheme from '@/modules/ArcoTheme.vue'
 import EnBackgroundImg from '@/modules/Background/EnBackgroundImg.vue'
 import EnModuleDailyNote from '@/modules/DailyNote/EnModuleDailyNote.vue'
+import EnModuleComment from '@/modules/Editor/Comment/EnModuleComment.vue'
 import EnFont from '@/modules/EnFontStyle/EnFont.vue'
 import EnFormatBrush from '@/modules/EnFormatBrush/EnFormatBrush.vue'
 import EnMobileNav from '@/modules/EnMobileNav.vue'
@@ -59,7 +59,6 @@ import ModuleDataProvider from '@/modules/EnModuleControl/ModuleDataProvider.vue
 import EnOthers from '@/modules/EnOthers.vue'
 import EnPWA from '@/modules/EnPWA.vue'
 import EnSiyuanEntry from '@/modules/EnSiyuanEntry.vue'
-import { isInWindow } from '@/modules/EnWindow.vue'
 import EnModuleLifeLog from '@/modules/LifeLog/EnModuleLifeLog.vue'
 import EnParagraphBlock from '@/modules/ParagraphBlock/EnParagraphBlock.vue'
 import EnModuleQuickNote from '@/modules/QuickNote/EnModuleQuickNote.vue'
@@ -80,8 +79,6 @@ import {
   ref,
   watchEffect,
 } from 'vue'
-
-const isInEnWindow = ref(isInWindow('QuickNote') || isInWindow('EnVideoAndAudio'))
 
 // 控制模块开关
 // 关闭时，应当几乎跟没开启插件一个效果

@@ -24,8 +24,8 @@
             </div>
             <div>
               <EnNotebookSelector
-                v-model="dailyNoteModuleOptions.dailyNoteNotebookId"
-                :notebook-list="openedNotebookList.data"
+                v-model="moduleOptions.notebookId"
+                :notebook-list="openedNotebookList"
               />
             </div>
           </template>
@@ -103,10 +103,9 @@ import EnNotebookSelector from '@/components/EnNotebookSelector.vue'
 import EnProtyle from '@/components/EnProtyle.vue'
 import {
   appendBlockIntoDailyNote,
-  useDailyNote,
 } from '@/modules/DailyNote/DailyNote'
 import {
-  useGlobalData,
+  injectGlobalData,
   useModule,
 } from '@/modules/EnModuleControl/ModuleProvide'
 import {
@@ -115,7 +114,6 @@ import {
 } from '@/utils'
 import { addCommand } from '@/utils/Commands'
 import {
-  EN_CONSTANTS,
   EN_MODULE_LIST,
 } from '@/utils/Constants'
 import {
@@ -149,24 +147,18 @@ import {
 
 const currentProtyle = useCurrentProtyle()
 
-const {
-  module: openedNotebookList,
-} = useGlobalData<any[]>(EN_CONSTANTS.NOTEBOOK_LIST_OPENED)
-const {
-  moduleOptions: dailyNoteModuleOptions,
-} = useDailyNote()
-const dailyNoteNotebookId = computed(() => dailyNoteModuleOptions.value.dailyNoteNotebookId)
+
+const globalData = injectGlobalData()
+const openedNotebookList = computed(() => globalData.value.openedNotebookList)
+
 // 是否默认新增一个输入的行
 const defaultInserNewLine = true
-// TODO 后续需要支持在当前文档中插入
-const appendType: 'daily-note' | 'cur-doc' | 'target-doc' = 'daily-note'
+
 
 const {
   moduleOptions,
-} = useModule<{
-  customStyleBlock: string
-  customStyleInline: string
-} & EnModule>(EN_MODULE_LIST.COMMENT)
+} = useModule<EnModuleComment>(EN_MODULE_LIST.COMMENT)
+const dailyNoteNotebookId = computed(() => moduleOptions.value.notebookId)
 
 
 const messageFlag = ref(null)
@@ -189,9 +181,11 @@ const onAfterRender = (protyle: Protyle) => {
     if (target) {
       clearInterval(flag)
 
+      // eslint-disable-next-line ts/no-use-before-define
       adjustCommentModal()
 
       protyle.focusBlock(target, false)
+      // eslint-disable-next-line ts/no-use-before-define
       isCommenting.value = false
       stopMessage()
     }

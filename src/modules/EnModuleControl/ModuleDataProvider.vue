@@ -82,7 +82,9 @@ const globalDataModule = useGlobalData<GlobalData>(EN_CONSTANTS.GLOBAL_DATA, {
     openedNotebookList: [],
 
     quickNoteMode: ['targetBlock'],
-    commentMode: ['targetDoc', 'currentDoc'],
+    // TODO 先注释，全部重构完再改
+    // commentMode: ['targetDoc', 'currentDoc'],
+    commentMode: [],
   },
   needSave: false,
 })
