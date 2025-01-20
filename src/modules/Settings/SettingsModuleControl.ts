@@ -6,6 +6,7 @@ import {
 } from '@/utils/SyncData'
 import {
   computed,
+  Ref,
   ref,
 } from 'vue'
 
@@ -43,7 +44,7 @@ export function unregisterSettingRef(refName: string) {
 }
 
 
-export function resetModuleOptions<T>(aModule: EnSyncModuleDataRef<T>) {
+export function resetModuleOptions<T>(aModule: Ref<EnSyncModuleData<T>>) {
   aModule.value.data = JSON.parse(JSON.stringify(aModule.value.defaultValue))
 }
 

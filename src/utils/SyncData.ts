@@ -9,6 +9,7 @@ import {
   merge,
 } from 'lodash-es'
 import {
+  Ref,
   ref,
   watch,
 } from 'vue'
@@ -47,7 +48,7 @@ export interface EnSyncModuleProps<T> {
 export type Namespace = string
 
 
-
+type EnSyncModuleDataRef<T> = Ref<EnSyncModuleData<T>>
 
 
 /**

@@ -51,11 +51,6 @@ interface EnSyncModuleData<T> {
   defaultValue: T
 }
 
-/**
- * 同步模块的数据引用 Ref<EnSyncModuleData<T>>
- */
-type EnSyncModuleDataRef<T> = Ref<EnSyncModuleData<T>>
-
 
 /**
  * 模块接口

@@ -15,12 +15,13 @@ import {
   inject,
   onMounted,
   provide,
+  Ref,
   WritableComputedRef,
 } from 'vue'
 
 
 interface IGlobalData<T> {
-  module: EnSyncModuleDataRef<T>
+  module: Ref<EnSyncModuleData<T>>
   moduleOptions: WritableComputedRef<T>
 }
 
