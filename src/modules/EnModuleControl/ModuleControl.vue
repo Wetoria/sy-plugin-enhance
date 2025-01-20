@@ -23,9 +23,13 @@
       <!-- 复杂模块 -->
       <EnModuleDailyNote />
       <EnModuleQuickNote />
+      <EnModuleBottomBacklink />
       <!-- TODO -->
       <!-- <EnEditor /> -->
 
+
+      <!-- TODO -->
+      <EnModuleVideoAndAudio />
       <!-- TODO -->
       <!-- <EnVideoAndAudio v-if="isNotFree" /> -->
       <EnModuleComment />

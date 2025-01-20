@@ -1,14 +1,20 @@
 <template>
   <div class="backlinkSearchArea">
-    <a-card :bordered="false" hoverable>
+    <a-card
+      :bordered="false"
+      hoverable
+    >
       <div class="searchMain">
-        <div class="flexColumn" style="flex: 1; overflow: hidden;">
+        <div
+          class="flexColumn"
+          style="flex: 1; overflow: hidden;"
+        >
 
 
           <div style="display: flex; gap: 2px; align-items: center;">
             <b>过滤</b>
             <a-popover
-                trigger="click"
+              trigger="click"
               position="tl"
             >
               <div
@@ -28,120 +34,130 @@
           </div>
 
 
-            <EnTagsContainer class="blockRefList" v-if="sortedRemainRefs.length">
+          <EnTagsContainer
+            v-if="sortedRemainRefs.length"
+            class="blockRefList"
+          >
+            <a-tag
+              v-for="item of sortedRemainRefs"
+              :key="`${item.id}_${item.name}`"
+              :title="item.name"
+              @click="event => handleClickFilterTag(event, item)"
+            >
+              <span class="optionName">
+                {{ item.name }}
+              </span>
+              <sup
+                style="
+                    margin-left: 2px
+                  "
+              >
+                {{ linkNumMap[`${item.id}_${item.name}`] }}
+              </sup>
+            </a-tag>
+          </EnTagsContainer>
+          <template v-if="includeRefs.length">
+            <div>
+              包括以下链接:
+            </div>
+            <EnTagsContainer class="blockRefList">
               <a-tag
-                v-for="item of sortedRemainRefs"
-                :key="`${item.id}_${item.name}`"
+                v-for="item of includeRefs"
+                :key="`in_${item.id}_${item.name}`"
                 :title="item.name"
                 @click="event => handleClickFilterTag(event, item)"
               >
                 <span class="optionName">
                   {{ item.name }}
                 </span>
-                <sup
-                  style="
-                    margin-left: 2px
-                  "
-                >
-                  {{ linkNumMap[`${item.id}_${item.name}`] }}
-                </sup>
               </a-tag>
             </EnTagsContainer>
-            <template v-if="includeRefs.length">
-              <div>
-                包括以下链接:
-              </div>
-              <EnTagsContainer class="blockRefList">
-                <a-tag
-                  v-for="item of includeRefs"
-                  :key="`in_${item.id}_${item.name}`"
-                  :title="item.name"
-                  @click="event => handleClickFilterTag(event, item)"
-                >
-                  <span class="optionName">
-                    {{ item.name }}
-                  </span>
-                </a-tag>
-              </EnTagsContainer>
-            </template>
-            <template v-if="excludeRefs.length">
-              <div>
-                不包括以下链接:
-              </div>
-              <EnTagsContainer class="blockRefList">
-                <a-tag
-                  v-for="item of excludeRefs"
-                  :key="`ex_${item.id}_${item.name}`"
-                  :title="item.name"
-                  @click="event => handleClickFilterTag(event, item)"
-                >
-                  <span class="optionName">
-                    {{ item.name }}
-                  </span>
-                </a-tag>
-              </EnTagsContainer>
-            </template>
-
+          </template>
+          <template v-if="excludeRefs.length">
             <div>
-              其他操作：
-            </div>
-            <EnTagsContainer class="blockRefList">
-              <a-popconfirm
-                position="tl"
-                v-model:popupVisible="saveFilterPopVisible"
-                @ok="saveCurrentProperties"
-                @popupVisibleChange="onSavePopconfirmVisibleChange"
-              >
-                <a-tag class="filterBtn">保存当前条件</a-tag>
-                <template #icon><div></div></template>
-                <template #content>
-                  <a-space>
-                    <div>名称</div>
-                    <a-input
-                      ref="filterNameInputRef"
-                      v-model="currentFilterName"
-                      @keyup.enter="saveCurrentProperties"
-                    />
-                  </a-space>
-                </template>
-              </a-popconfirm>
-              <a-tag
-                class="filterBtn"
-                @click="() => switchDisplayType()"
-              >
-                {{ displayTypeMap[displayType] }}
-              </a-tag>
-
-            </EnTagsContainer>
-
-            <div>
-              已保存的条件:
+              不包括以下链接:
             </div>
             <EnTagsContainer class="blockRefList">
               <a-tag
-                @click="() => properties = {}"
+                v-for="item of excludeRefs"
+                :key="`ex_${item.id}_${item.name}`"
+                :title="item.name"
+                @click="event => handleClickFilterTag(event, item)"
               >
-                <a-space>
-                  <span class="optionName">
-                    一键清空
-                  </span>
-                </a-space>
-              </a-tag>
-              <a-tag
-                v-for="item of savedNames"
-                :key="'saved-' + item"
-                @click="(event) => onSavedPropertiesClick(event, item)"
-              >
-                <a-space>
-                  <span class="optionName">
-                    {{ item }}
-                  </span>
-                  <span @click.stop="() => deleteSavedProperties(item)">
-                    <icon-minus style="color: red" class="removeSavedProperties" />
-                  </span>
-                </a-space>
+                <span class="optionName">
+                  {{ item.name }}
+                </span>
               </a-tag>
             </EnTagsContainer>
+          </template>
+
+          <div>
+            其他操作：
+          </div>
+          <EnTagsContainer class="blockRefList">
+            <a-popconfirm
+              v-model:popupVisible="saveFilterPopVisible"
+              position="tl"
+              @ok="saveCurrentProperties"
+              @popupVisibleChange="onSavePopconfirmVisibleChange"
+            >
+              <a-tag class="filterBtn">
+                保存当前条件
+              </a-tag>
+              <template #icon>
+                <div></div>
+              </template>
+              <template #content>
+                <a-space>
+                  <div>名称</div>
+                  <a-input
+                    ref="filterNameInputRef"
+                    v-model="currentFilterName"
+                    @keyup.enter="saveCurrentProperties"
+                  />
+                </a-space>
+              </template>
+            </a-popconfirm>
+            <a-tag
+              class="filterBtn"
+              @click="() => switchDisplayType()"
+            >
+              {{ displayTypeMap[displayType] }}
+            </a-tag>
+
+          </EnTagsContainer>
+
+          <div>
+            已保存的条件:
+          </div>
+          <EnTagsContainer class="blockRefList">
+            <a-tag
+              @click="() => properties = {}"
+            >
+              <a-space>
+                <span class="optionName">
+                  一键清空
+                </span>
+              </a-space>
+            </a-tag>
+            <a-tag
+              v-for="item of savedNames"
+              :key="`saved-${item}`"
+              @click="(event) => onSavedPropertiesClick(event, item)"
+            >
+              <a-space>
+                <span class="optionName">
+                  {{ item }}
+                </span>
+                <span @click.stop="() => deleteSavedProperties(item)">
+                  <icon-minus
+                    style="color: red"
+                    class="removeSavedProperties"
+                  />
+                </span>
+              </a-space>
+            </a-tag>
+          </EnTagsContainer>
 
         </div>
       </div>
@@ -150,33 +166,62 @@
 </template>
 
 <script lang="ts">
-export interface FilterProperties {
-  [key: string]: {
-    include: boolean;
-    origin: Node;
-  }
-}
 </script>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
-import { BottomBacklinkModuleName, BottomBacklinkModuleOptions, IBacklink } from './EnProtyleBottomBackLink.vue';
-import { sql } from '@/api';
-import { useSettingModuleData } from '@/modules/Settings/EnSettings.vue';
-import { chainHasRefNode, chainHasTargetBlockRefIdAndName, getTreeChainPathOfDoc, hasTargetBlockRef, hasTargetBlockRefIdAndName, hideDom, isSyBreadCrumbDom, isSyContainerNode, isSyDocNode, isSyHeadingNode, isSyListItemNode, isSyNodeCanContainerBlockRef, showDom, SyDomNodeTypes } from '@/utils/Siyuan';
-import { debounce, recursionTree } from '@/utils';
-import EnTagsContainer from '@/components/EnTagsContainer.vue';
-import { onCountClick, queryAllByDom } from '@/utils/DOM';
-import { usePlugin } from '@/main';
-import { getChildNodesBySqlWithAnyLevelIds, getParentNodesBySql } from './sql';
+import { sql } from '@/api'
+import EnTagsContainer from '@/components/EnTagsContainer.vue'
+import { usePlugin } from '@/main'
+import { useModule } from '@/modules/EnModuleControl/ModuleProvide'
+import {
+  debounce,
+  recursionTree,
+} from '@/utils'
+import { EN_MODULE_LIST } from '@/utils/Constants'
+import {
+  onCountClick,
+  queryAllByDom,
+} from '@/utils/DOM'
+
+import {
+  chainHasRefNode,
+  chainHasTargetBlockRefIdAndName,
+  getTreeChainPathOfDoc,
+  hasTargetBlockRef,
+  hasTargetBlockRefIdAndName,
+  hideDom,
+  isSyBreadCrumbDom,
+  isSyContainerNode,
+  isSyDocNode,
+  isSyHeadingNode,
+  isSyListItemNode,
+  isSyNodeCanContainerBlockRef,
+  showDom,
+} from '@/utils/Siyuan'
+import {
+  computed,
+  ref,
+  watch,
+} from 'vue'
+import {
+  getChildNodesBySqlWithAnyLevelIds,
+  getParentNodesBySql,
+} from './sql'
+
+export interface FilterProperties {
+  [key: string]: {
+    include: boolean
+    origin: Node
+  }
+}
 
 interface Node {
-  id: string;
-  blockRefId: string;
-  parent_id: string;
-  name: string;
-  treePath: string;
-  _type: 'doc' | 'blockRef';
+  id: string
+  blockRefId: string
+  parent_id: string
+  name: string
+  treePath: string
+  _type: 'doc' | 'blockRef'
 }
 
 const props = defineProps<{
@@ -186,7 +231,9 @@ const props = defineProps<{
   backlinkListDomRef: any
 }>()
 
-const moduleOptions = useSettingModuleData<BottomBacklinkModuleOptions>(BottomBacklinkModuleName)
+const {
+  moduleOptions,
+} = useModule<BottomBacklinkModuleOptions>(EN_MODULE_LIST.EN_BOTTOM_BACKLINK)
 const docFilterPropertiesSaved = computed(() => moduleOptions.value.docFilterPropertiesSaved[props.currentDocId] || {})
 const savedNames = computed(() => Object.keys(docFilterPropertiesSaved.value))
 
@@ -204,9 +251,9 @@ const dynamicBlockRefNodes = ref<Node[]>([])
 const staticBlockRefNodes = ref<Node[]>([])
 
 const getDynamicAndStaticBlockRefs = async () => {
-  const blockRefs = backlinkBlockRefNodes.value.filter(i => i._type == 'blockRef')
-  const blockRefDefIds = blockRefs.map(i => i.id)
-  const blockRefIds = blockRefs.map(i => i.blockRefId)
+  const blockRefs = backlinkBlockRefNodes.value.filter((i) => i._type == 'blockRef')
+  const blockRefDefIds = blockRefs.map((i) => i.id)
+  const blockRefIds = blockRefs.map((i) => i.blockRefId)
 
   const getSql = (isStatic: boolean) => {
     return `
@@ -218,9 +265,9 @@ const getDynamicAndStaticBlockRefs = async () => {
         refs
         JOIN blocks ON refs.def_block_id = blocks.id
       WHERE
-        refs.def_block_id in (${blockRefDefIds.map(i => `'${i}'`).join(', ')})
+        refs.def_block_id in (${blockRefDefIds.map((i) => `'${i}'`).join(', ')})
         AND refs.content ${isStatic ? '!=' : '='} blocks.content
-        AND refs.id in (${blockRefIds.map(i => `'${i}'`).join(', ')})
+        AND refs.id in (${blockRefIds.map((i) => `'${i}'`).join(', ')})
       limit ${moduleOptions.value.sqlLimit}
     `
   }
@@ -271,7 +318,7 @@ const getBlockRefsInDoc = async (ids: string[]) => {
       def_block_id as id,
       content as name
     from refs where block_id in (
-      ${ids.map(i => `'${i}'`).join(', ')}
+      ${ids.map((i) => `'${i}'`).join(', ')}
     ) group by def_block_id, content
     limit ${moduleOptions.value.sqlLimit}
   `
@@ -280,7 +327,7 @@ const getBlockRefsInDoc = async (ids: string[]) => {
 
 const getTreeStruct = async () => {
 
-  if (!docBacklinks.value.length || !Object.values(blockBackLinks.value).filter(i => i).length) {
+  if (!docBacklinks.value.length || !Object.values(blockBackLinks.value).filter((i) => i).length) {
     return
   }
 
@@ -308,13 +355,13 @@ const getTreeStruct = async () => {
   const sqlResult = []
 
   parentNodeList.forEach((item) => {
-    const exist = sqlResult.find(i => i.id == item.id)
+    const exist = sqlResult.find((i) => i.id == item.id)
     if (!exist) {
       sqlResult.push(item)
     }
   })
   childNodeList.forEach((item) => {
-    const exist = sqlResult.find(i => i.id == item.id)
+    const exist = sqlResult.find((i) => i.id == item.id)
     if (!exist) {
       sqlResult.push(item)
     }
@@ -331,12 +378,12 @@ const getTreeStruct = async () => {
     } else {
       tempNode._markdown = ''
     }
-    const childNodeList = sqlResult.filter(i => i.parent_id === id)
+    const childNodeList = sqlResult.filter((i) => i.parent_id === id)
     tempNode.children = childNodeList
   })
 
   backlinkFlatTree.value.push(...sqlResult)
-  backlinkDocTreeStruct.value.push(...sqlResult.filter(i => !i.parent_id))
+  backlinkDocTreeStruct.value.push(...sqlResult.filter((i) => !i.parent_id))
 
   // #endregion 获取并构建文档树结构
 
@@ -367,34 +414,34 @@ const getTreeStruct = async () => {
   rc(backlinkDocTreeStruct.value, [])
 
   result = result.filter((item) => {
-    return item.some(i => hasTargetBlockRef(i._markdown, currentDocId.value))
+    return item.some((i) => hasTargetBlockRef(i._markdown, currentDocId.value))
   })
   backlinkTreePathChains.value = result
 
   // #endregion 构建树链路
 
 
-  const ids = sqlResult.filter(i => isSyNodeCanContainerBlockRef(i)).map(i => i.id)
+  const ids = sqlResult.filter((i) => isSyNodeCanContainerBlockRef(i)).map((i) => i.id)
   const allDocBlockRefs = await getBlockRefsInDoc(ids)
   const blockRefsOptions = allDocBlockRefs.filter((blockRef) => {
     if (blockRef.id === currentDocId.value) {
       return false
     }
-    return backlinkTreePathChains.value.some(chain => chain.some(i => {
+    return backlinkTreePathChains.value.some((chain) => chain.some((i) => {
       const result = hasTargetBlockRefIdAndName(i._markdown, blockRef.id, blockRef.name)
       return result
     }))
   })
   backlinkBlockRefNodes.value = [
-    ...blockRefsOptions.map(i => ({
+    ...blockRefsOptions.map((i) => ({
       ...i,
       _type: 'blockRef',
     })),
-    ...docBacklinks.value.map(i => ({
+    ...docBacklinks.value.map((i) => ({
       id: i.id,
       name: i.name,
       _type: 'doc',
-    }))
+    })),
   ]
 }
 
@@ -442,7 +489,7 @@ const onSavePopconfirmVisibleChange = (visible) => {
 const deleteSavedProperties = (name) => {
   const saved = Object.keys(docFilterPropertiesSaved.value)
   const temp = {}
-  saved.filter(i => i != name)
+  saved.filter((i) => i != name)
     .forEach((name) => {
       temp[name] = docFilterPropertiesSaved.value[name]
     })
@@ -454,7 +501,7 @@ const onSavedPropertiesClick = onCountClick((time, event, name) => {
   if (!savedProperties) {
     return
   }
-  properties.value = Object.assign({}, savedProperties) as any as FilterProperties;
+  properties.value = Object.assign({}, savedProperties) as any as FilterProperties
 })
 
 const plugin = usePlugin()
@@ -492,7 +539,7 @@ const handleClickFilterTag = onCountClick((time, event, item) => {
 const validBacklinkTreePathChain = computed(() => {
   return [...backlinkTreePathChains.value].filter((chain) => {
     if (excludeRefs.value.length) {
-      const hasExNode = excludeRefs.value.some(i => chainHasRefNode(chain, i))
+      const hasExNode = excludeRefs.value.some((i) => chainHasRefNode(chain, i))
       if (hasExNode) {
         return false
       }
@@ -500,7 +547,7 @@ const validBacklinkTreePathChain = computed(() => {
 
     const selectIncludes = !!includeRefs.value.length
     if (selectIncludes) {
-      const someNotIn = includeRefs.value.some(i => !chainHasRefNode(chain, i))
+      const someNotIn = includeRefs.value.some((i) => !chainHasRefNode(chain, i))
       if (someNotIn) {
         return false
       }
@@ -522,9 +569,9 @@ const remainRefs = computed<Array<Node>>(() => {
   })
 
   if (displayType.value == 'd') {
-    list = list.filter((node) => dynamicBlockRefNodes.value.find(i => i.id == node.id && i.name == node.name))
+    list = list.filter((node) => dynamicBlockRefNodes.value.find((i) => i.id == node.id && i.name == node.name))
   } else if (displayType.value == 's') {
-    list = list.filter((node) => staticBlockRefNodes.value.find(i => i.id == node.id && i.name == node.name))
+    list = list.filter((node) => staticBlockRefNodes.value.find((i) => i.id == node.id && i.name == node.name))
   }
 
   return list
@@ -607,7 +654,7 @@ const storeAndHidDom = (dom) => {
 }
 const recoverDom = (dom) => {
   showDom(dom)
-  dealedDomList.value = dealedDomList.value.filter(i => i != dom)
+  dealedDomList.value = dealedDomList.value.filter((i) => i != dom)
 }
 const recoverAllDealedDoms = () => {
   dealedDomList.value.forEach((node) => {
@@ -656,7 +703,7 @@ const hideDomByBlockRefTree = () => {
   enLog('backlinkDocTreeStruct is ', backlinkDocTreeStruct.value)
   const needDealChildContent = []
   recursionTree(backlinkDocTreeStruct.value, null, (curNode) => {
-    const targetChain = validBacklinkTreePathChain.value.find((chain) => chain.some(i => i.id == curNode.id))
+    const targetChain = validBacklinkTreePathChain.value.find((chain) => chain.some((i) => i.id == curNode.id))
     const inChain = !!targetChain
     if (!inChain) {
       getDomAndDeal(curNode, true)
@@ -668,7 +715,7 @@ const hideDomByBlockRefTree = () => {
   })
 
   needDealChildContent.forEach((listItemNode) => {
-    const childContent = backlinkFlatTree.value.filter(i => i.parent_id == listItemNode.id && !isSyContainerNode(i))
+    const childContent = backlinkFlatTree.value.filter((i) => i.parent_id == listItemNode.id && !isSyContainerNode(i))
     childContent.forEach((childContentNode) => {
       getDomAndDeal(childContentNode, false)
     })

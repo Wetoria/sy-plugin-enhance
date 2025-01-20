@@ -1,8 +1,8 @@
 <template>
   <a-collapse-item
+    :key="backmention.id"
     class="backlinkMentionBlock"
     header="底部反链"
-    :key="backmention.id"
   >
     <template #header>
       <li class="b3-list-item b3-list-item--hide-action">
@@ -22,71 +22,69 @@
 </template>
 
 <script setup lang="ts">
-import { usePlugin } from '@/main';
-import { hideGutterOnTarget } from '@/utils/DOM';
-import { openDocById } from '@/utils/Note';
-import { Protyle } from 'siyuan';
-import { computed, onBeforeUnmount, ref, watch, watchEffect } from 'vue';
-import { IBacklink } from './EnProtyleBottomBackLink.vue';
-import { request } from '@/api';
-import { debounce } from '@/utils';
+import { request } from '@/api'
+import { usePlugin } from '@/main'
+import { hideGutterOnTarget } from '@/utils/DOM'
+import { openDocById } from '@/utils/Note'
+import { Protyle } from 'siyuan'
+import {
+  computed,
+  onBeforeUnmount,
+  ref,
+  watch,
+} from 'vue'
 
 
 const props = defineProps<{
   backmention: IBacklink
   activedBacklinkKeys: (string | number)[]
   currentDocId: string
-  element: HTMLDivElement
 }>()
 
 const plugin = usePlugin()
 const isExpand = computed(() => {
-  return !!props.activedBacklinkKeys.find(i => i === props.backmention.id)
+  return !!props.activedBacklinkKeys.find((i) => i === props.backmention.id)
 })
 
 const jumpToDoc = (event: MouseEvent, docId) => {
-  event.preventDefault();
-  event.stopPropagation();
+  event.preventDefault()
+  event.stopPropagation()
 
   openDocById(docId)
-}
-
-
-watchEffect(() => {
-  props.element.addEventListener('scroll', debounce(() => {
-    hideGutterOnTarget(renderRef.value)
-  }, 50))
-})
-const onMouseLeave = (event) => {
-  hideGutterOnTarget(event.target)
 }
 
 const renderRef = ref()
 const protyleRef = ref<Protyle>()
 
-// @ts-ignore
 const backmentions = ref([])
+
+const onMouseLeave = (event) => {
+  hideGutterOnTarget(event.target)
+}
+
 
 watch([isExpand, renderRef, backmentions], () => {
   if (isExpand.value && renderRef.value) {
     protyleRef.value = new Protyle(plugin.app, renderRef.value, {
       blockId: props.currentDocId,
-      // @ts-ignore
       backlinkData: backmentions.value,
       render: {
-          background: false,
-          title: false,
-          gutter: true,
-          scroll: false,
-          breadcrumb: false,
-      }
+        background: false,
+        title: false,
+        gutter: true,
+        scroll: false,
+        breadcrumb: false,
+      },
     })
   } else {
     if (protyleRef.value) {
       protyleRef.value.destroy()
     }
   }
-}, {immediate: true, deep: true})
+}, {
+  immediate: true,
+  deep: true,
+})
 
 watch([isExpand, props.currentDocId, props.backmention.id], async () => {
   backmentions.value = []
@@ -98,7 +96,7 @@ watch([isExpand, props.currentDocId, props.backmention.id], async () => {
     })
     backmentions.value = backmentionsRes
   }
-}, {immediate: true})
+}, { immediate: true })
 onBeforeUnmount(() => {
   if (protyleRef.value) {
     protyleRef.value.destroy()

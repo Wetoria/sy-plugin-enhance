@@ -61,11 +61,11 @@
           >
             <template
               v-for="backlink of backlinkRes.backlinks"
+              :key="backlink.id"
             >
               <EnProtyleBottomBackLinkDoc
                 :backlink="backlink"
                 :blockBacklinks="blockBacklinks"
-                :element="element"
                 :activedBacklinkKeys="activedBacklinkKeys"
                 :currentDocId="currentDocId"
               />
@@ -80,7 +80,6 @@
       :header="`提及 (${backlinkRes.mentionsCount})`"
     >
       <a-collapse
-        ref="mentionListDomRef"
         v-model:activeKey="activedMentionsKeys"
         class="backlinkDocsArea backlinkList"
         :bordered="false"
@@ -89,10 +88,10 @@
           <ul class="b3-list b3-list--background">
             <template
               v-for="backmention of backlinkRes.backmentions"
+              :key="backmention.id"
             >
               <EnProtyleBottomBackMention
                 :backmention="backmention"
-                :element="element"
                 :activedBacklinkKeys="activedMentionsKeys"
                 :currentDocId="currentDocId"
               />
@@ -102,89 +101,16 @@
       </a-collapse>
     </a-collapse-item>
   </a-collapse>
-
-  <EnSettingsTeleportModule
-    :name="BottomBacklinkModuleName"
-    :display="moduleDisplayName"
-    :module="module"
-  >
-    <EnSettingsItem>
-      <div>
-        启用底部反链
-      </div>
-      <template #desc>
-        <div>
-          是否启用底部反链功能
-        </div>
-      </template>
-      <template #opt>
-        <a-switch v-model="moduleOptions.enableBottomBacklink" />
-      </template>
-    </EnSettingsItem>
-    <EnSettingsItem>
-      <div>
-        启用反链过滤
-      </div>
-      <template #desc>
-        <div>
-          是否启用底部反链的过滤功能
-        </div>
-      </template>
-      <template #opt>
-        <a-switch v-model="moduleOptions.enableBacklinkFilter" />
-      </template>
-    </EnSettingsItem>
-    <EnSettingsItem>
-      <div>
-        默认展开过滤区域
-      </div>
-      <template #desc>
-        <div>
-          是否默认展开底部反链的过滤区域。
-        </div>
-      </template>
-      <template #opt>
-        <a-switch v-model="moduleOptions.defaultShowBacklinkFilter" />
-      </template>
-    </EnSettingsItem>
-    <EnSettingsItem mode="vertical">
-      <div>
-        反链筛选 SQL 查询上限
-      </div>
-      <template #desc>
-        <div>
-          与反链筛选功能有关。如果设置的太小，可能会导致数据不正确。<br />
-          请输入正确的数字，否则会重置为默认的 999999999.
-        </div>
-      </template>
-      <template #opt>
-        <a-input-number
-          v-model="moduleOptions.sqlLimit"
-          class="input-demo"
-          placeholder="Please Enter"
-          mode="button"
-          :min="1"
-          :readOnly="plugin.isMobile"
-        />
-      </template>
-    </EnSettingsItem>
-  </EnSettingsTeleportModule>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { request } from '@/api'
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
-import { usePlugin } from '@/main'
 import {
-  EnModule,
-  useSettingModule,
-  useSettingModuleData,
-  useSettings,
-} from "@/modules/Settings/EnSettings.vue"
-import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
-import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue'
-import { loadModuleDataByNamespace } from '@/utils/SyncData'
-import { IProtyle } from 'siyuan'
+  injectSettings,
+  useModule,
+} from '@/modules/EnModuleControl/ModuleProvide'
+import { EN_MODULE_LIST } from '@/utils/Constants'
 import {
   computed,
   ref,
@@ -192,98 +118,22 @@ import {
   watchEffect,
 } from 'vue'
 import EnProtyleBottomBackLinkDoc from './EnProtyleBottomBackLinkDoc.vue'
-import EnProtyleBottomBackLinkFilterArea, { FilterProperties } from './EnProtyleBottomBackLinkFilterArea.vue'
+import EnProtyleBottomBackLinkFilterArea from './EnProtyleBottomBackLinkFilterArea.vue'
 import EnProtyleBottomBackMention from './EnProtyleBottomBackMention.vue'
 
-export interface IBacklink {
-  id: string
-  box: string
-  name: string
-  hPath: string
-  type: string
-  nodeType: string
-  subType: string
-  depth: number
-  count: number
-  updated: string
-  created: string
-}
-
-export const BottomBacklinkModuleName = 'EnBottomBacklink'
-
-
-export interface BottomBacklinkModuleOptions extends EnModule {
-  enableBottomBacklink: boolean
-
-
-  enableBacklinkFilter: boolean
-  defaultShowBacklinkFilter: boolean
-  sqlLimit: number
-  docFilterProperties: {
-    [id: string]: FilterProperties
-  }
-  docFilterPropertiesSaved: {
-    [id: string]: {
-      [name: string]: FilterProperties
-    }
-  }
-}
-</script>
-
-<script setup lang="ts">
-
 const props = defineProps<{
-  detail: {
-    protyle: IProtyle
-  }
-  element: HTMLDivElement
+  targetBlockId: string
 }>()
-const moduleName = 'EnBottomBacklink'
-const moduleDisplayName = '底部反链'
 
-const defaultOptions: BottomBacklinkModuleOptions = {
-  enabled: true,
-  moduleName,
-  moduleDisplayName,
+const {
+  moduleOptions,
+} = useModule<BottomBacklinkModuleOptions>(EN_MODULE_LIST.EN_BOTTOM_BACKLINK)
 
-  enableBottomBacklink: false,
-
-  enableBacklinkFilter: false,
-  defaultShowBacklinkFilter: false,
-  sqlLimit: 999999999,
-  docFilterProperties: {},
-  docFilterPropertiesSaved: {
-  },
-}
-
-const plugin = usePlugin()
-
-const module = useSettingModule<BottomBacklinkModuleOptions>(moduleName, {
-  defaultData: defaultOptions,
-})
-const moduleOptions = useSettingModuleData<BottomBacklinkModuleOptions>(moduleName)
-loadModuleDataByNamespace(moduleName)
-
-watch(() => moduleOptions.value.sqlLimit, () => {
-  if (!moduleOptions.value.sqlLimit) {
-    moduleOptions.value.sqlLimit = defaultOptions.sqlLimit
-  }
-}, { immediate: true })
-
-interface Node {
-  id: string
-  parent_id: string
-  name: string
-  treePath: string
-  _type: 'doc' | 'block_Ref'
-}
-
-const protyle = computed(() => props.detail.protyle as IProtyle)
-const currentDocId = computed(() => protyle.value?.block?.id)
+const currentDocId = computed(() => props.targetBlockId)
 
 const enableBacklinkFilter = computed(() => moduleOptions.value.enableBacklinkFilter)
 
-const settings = useSettings()
+const settings = injectSettings()
 
 // TODO 需要调整设置逻辑
 const showFilterArea = ref(moduleOptions.value.defaultShowBacklinkFilter || settings.value.isDebugging)
@@ -333,7 +183,7 @@ watch(backlinks, () => {
 }, { immediate: true })
 
 const getData = async () => {
-  backlinkRes.value = Object.assign({}, defaultRes)
+  // backlinkRes.value = Object.assign({}, defaultRes)
   const res = await request('/api/ref/getBacklink2', searchParams.value)
   // IMP 如果性能有问题了，考虑在 id 相同的情况下，不进行更新
   backlinkRes.value = res
@@ -365,6 +215,9 @@ const backlinkListDomRef = ref()
 const refresh = () => {
   getData()
 }
+defineExpose({
+  refresh,
+})
 </script>
 
 <style lang="scss" scoped>

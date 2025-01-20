@@ -160,3 +160,41 @@ interface EnModuleComment extends EnModule {
   customStyleInline: string
 }
 
+
+
+
+
+
+interface BottomBacklinkModuleOptions extends EnModule {
+  enableBottomBacklink: boolean
+  bottomBacklinkTopDistance: number
+  autoRenderBacklinkMap: {
+    [id: string]: boolean
+  }
+
+  enableBacklinkFilter: boolean
+  defaultShowBacklinkFilter: boolean
+  sqlLimit: number
+  docFilterProperties: {
+    [id: string]: FilterProperties
+  }
+  docFilterPropertiesSaved: {
+    [id: string]: {
+      [name: string]: FilterProperties
+    }
+  }
+}
+
+interface IBacklink {
+  id: string
+  box: string
+  name: string
+  hPath: string
+  type: string
+  nodeType: string
+  subType: string
+  depth: number
+  count: number
+  updated: string
+  created: string
+}

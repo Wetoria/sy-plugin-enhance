@@ -21,6 +21,10 @@ export enum EN_CONSTANTS {
   BACKGROUND_IMG_DISPLAY = '背景图',
 
 
+  EN_BOTTOM_BACKLINK = 'EnBottomBacklink',
+  EN_BOTTOM_BACKLINK_DISPLAY = '底部反链',
+
+
   COMMENT = 'EnComment',
   COMMENT_DISPLAY = '批注',
 
@@ -125,6 +129,8 @@ export enum EN_MODULE_LIST {
 
   BACKGROUND_IMG = EN_CONSTANTS.BACKGROUND_IMG,
 
+  EN_BOTTOM_BACKLINK = EN_CONSTANTS.EN_BOTTOM_BACKLINK,
+
   COMMENT = EN_CONSTANTS.COMMENT,
 
   DAILY_NOTE = EN_CONSTANTS.DAILY_NOTE,
@@ -162,4 +168,5 @@ export enum EN_EVENT_BUS_KEYS {
 export enum EN_STYLE_KEYS {
   enTimeFontSize = '--enTimeFontSize',
   enAttrContainerWidth = '--enAttrContainerWidth',
+  enBottomBacklinkTopDistance = '--enBottomBacklinkTopDistance',
 }
