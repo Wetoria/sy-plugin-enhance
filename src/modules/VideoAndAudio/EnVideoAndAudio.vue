@@ -30,7 +30,6 @@
 <script setup lang="ts">
 import { usePlugin } from '@/main'
 import EnWindow, { isInWindow } from '@/modules/EnWindow.vue'
-import { useProWatcher } from '@/modules/Settings/EnSettings.vue'
 import { debounce } from '@/utils'
 import { addCommand } from '@/utils/Commands'
 import { queryAllByDom } from '@/utils/DOM'
@@ -47,6 +46,7 @@ import {
   showMessage,
 } from 'siyuan'
 import {
+  onBeforeUnmount,
   onMounted,
   ref,
 } from 'vue'
@@ -212,7 +212,7 @@ const getVideoTimeLink = (videoNode, siyuanVideoNode) => {
 
 const getCurrentVideoTimeLink = () => {
   if (!currentTarget) {
-    showMessage('请先播放视频或音频')
+    showMessage('叶归｜请先播放视频或音频')
     return
   }
   const {
@@ -223,7 +223,7 @@ const getCurrentVideoTimeLink = () => {
 
 const getCurrentVideoTimeLinkMd = () => {
   if (!currentTarget) {
-    showMessage('请先播放视频或音频')
+    showMessage('叶归｜请先播放视频或音频')
     return
   }
   const {
@@ -242,7 +242,7 @@ const copyCurrentVideoTimeLink = async () => {
   const link = getCurrentVideoTimeLink()
   try {
     await navigator.clipboard.writeText(link)
-    showMessage('已复制当前视频/音频的时间戳链接')
+    showMessage('叶归｜已复制当前视频/音频的时间戳链接')
   } catch (err) {
     enError(err)
   }
@@ -251,7 +251,7 @@ const copyCurrentVideoTimeLinkMD = async () => {
   const link = getCurrentVideoTimeLinkMd()
   try {
     await navigator.clipboard.writeText(link)
-    showMessage('已复制当前视频/音频的时间戳(Markdown)链接')
+    showMessage('叶归｜已复制当前视频/音频的时间戳(Markdown)链接')
   } catch (err) {
     enError(err)
   }
@@ -378,7 +378,7 @@ const setVideoTime = ({
   const isValidTimeStr = validTimeStrReg.test(time)
 
   if (!isValidTimeStr) {
-    showMessage('时间格式有误，将不会设置视频时间。支持的格式请看<a href="https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse#NHKddhyDqow7I8xSxsEcnKoAn8c">这里</a>')
+    showMessage('叶归｜时间格式有误，将不会设置视频时间。支持的格式请看<a href="https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse#NHKddhyDqow7I8xSxsEcnKoAn8c">这里</a>')
     return
   }
 
@@ -447,7 +447,7 @@ const protyleSlashList = [
       'aat',
       'charu',
     ],
-    html: `<div class="b3-list-item__first"><span class="b3-list-item__text">${'插入当前视频/音频的时间戳（Markdown）'}</span><span class="b3-list-item__meta">🎥</span></div>`,
+    html: `<div class="b3-list-item__first"><span class="b3-list-item__text">${'叶归｜插入当前视频/音频的时间戳（Markdown）'}</span><span class="b3-list-item__meta">🎥</span></div>`,
     id: "insertCurrentVideoOrAudioTimestamp",
     callback(protyle: Protyle) {
       const timestamp = getCurrentVideoTimeLinkMd()
@@ -459,7 +459,7 @@ const protyleSlashList = [
 const commands = [
   {
     langKey: "En_VideoAndAudio_Pin",
-    langText: '切换当前视频/音频的钉住状态',
+    langText: '叶归｜切换当前视频/音频的钉住状态',
     hotkey: "",
     callback: () => {
       const pinned = 'envp' in document.documentElement.dataset
@@ -532,13 +532,11 @@ const initProtyle = async () => {
     },
   })
 }
-useProWatcher({
-  onEnabled: () => {
-    enable()
-  },
-  onDisabled: () => {
-    disable()
-  },
+onMounted(() => {
+  enable()
+})
+onBeforeUnmount(() => {
+  disable()
 })
 onMounted(() => {
   if (inWindow.value) {

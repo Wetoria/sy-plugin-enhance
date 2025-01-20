@@ -77,7 +77,7 @@ const plugin = usePlugin()
 const {
   module,
   moduleOptions,
-} = useModule(EN_MODULE_LIST.EN_FORMAT_BRUSH, {
+} = useModule<{} & EnModule>(EN_MODULE_LIST.EN_FORMAT_BRUSH, {
   defaultData: {
     enabled: false,
     moduleName: EN_MODULE_LIST.EN_FORMAT_BRUSH,
@@ -91,7 +91,7 @@ const hasAuth = computedLevel(1)
 // 有权限时，自动开启格式刷功能
 watch(hasAuth, () => {
   if (hasAuth.value) {
-    moduleOptions.value.enable = true
+    moduleOptions.value.enabled = true
   }
 })
 

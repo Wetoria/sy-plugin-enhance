@@ -1,9 +1,9 @@
 {
-  "copyVideoTimestamp": "Copy video or audio timestamp (url)",
-  "copyVideoTimestampMarkdown": "Copy video or audio timestamp (markdown)",
-  "displayName": "Video and Audio Timestamp Tools",
-  "pinVideo": "Pin Video or Audio",
+  "copyVideoTimestamp": "Copy timestamp (url)",
+  "copyVideoTimestampMarkdown": "Copy timestamp (markdown)",
+  "displayName": "FL｜Video/Audio Tools",
+  "pinVideo": "Pin",
   "pluginName": "Fallen Leaves",
-  "unpinVideo": "Unpin Video or Audio",
+  "unpinVideo": "Unpin",
   "z_base": "Z-Base"
 }
