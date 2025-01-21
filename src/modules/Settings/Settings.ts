@@ -8,6 +8,7 @@ import { onCountClick } from '@/utils/DOM'
 
 
 import {
+  onBeforeUnmount,
   ref,
   watchEffect,
 } from 'vue'
@@ -50,6 +51,9 @@ export const useDebugSwitcher = () => {
   })
   watchEffect(() => {
     moduleEnableStatusSwitcher('EnDebugging', settings.value.isDebugging)
+  })
+  onBeforeUnmount(() => {
+    moduleEnableStatusSwitcher('EnDebugging')
   })
 
   return {

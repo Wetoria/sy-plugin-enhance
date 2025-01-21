@@ -82,7 +82,6 @@
 
 <script setup lang="ts">
 import { usePlugin } from '@/main'
-import { isDailyNoteProtyle } from '@/modules/DailyNote/DailyNote'
 import {
   useModule,
   watchConfigChanged,
@@ -90,21 +89,12 @@ import {
 } from '@/modules/EnModuleControl/ModuleProvide'
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
 import {
-  debounce,
   moduleEnableStatusSwitcher,
 } from '@/utils'
 import {
   EN_CONSTANTS,
   EN_MODULE_LIST,
 } from '@/utils/Constants'
-import {
-  queryAllByDom,
-} from '@/utils/DOM'
-import { useSiyuanEventLoadedProtyleStatic } from '@/utils/EventBusHooks'
-import {
-  onBeforeUnmount,
-  onMounted,
-} from 'vue'
 import EnSettingsTeleportModule from '../modules/Settings/EnSettingsTeleportModule.vue'
 
 const plugin = usePlugin()
@@ -221,32 +211,6 @@ watchConfigChanged(
     }
   },
 )
-
-
-// 标记 protyle 是否为日记
-const markProtyleIsDailyNote = debounce(() => {
-  const protyleContentDoms = queryAllByDom(document.body, '.protyle-content:not([data-en_is_dailynote])')
-
-  protyleContentDoms.forEach((protyleContentDom: HTMLElement) => {
-    const isDailyNote = isDailyNoteProtyle(protyleContentDom)
-    if (!isDailyNote) {
-      return
-    }
-    const wysiwygEl: HTMLDivElement = protyleContentDom.querySelector('.protyle-wysiwyg')
-    wysiwygEl.dataset.en_is_dailynote = 'true'
-    protyleContentDom.dataset.en_is_dailynote = 'true'
-  })
-})
-const offMarkProtyleIsDailyNote = useSiyuanEventLoadedProtyleStatic(() => {
-  markProtyleIsDailyNote()
-})
-onMounted(() => {
-  // 在启动时，处理未被标记的 protyle
-  markProtyleIsDailyNote()
-})
-onBeforeUnmount(() => {
-  offMarkProtyleIsDailyNote()
-})
 </script>
 
 <style lang="scss" scoped>

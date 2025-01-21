@@ -7,7 +7,7 @@
     :authLevel="1"
   >
     <div>
-      本地音视频功能{{ hasAuth ? '已开启' : '未开启' }}
+      本地音视频功能{{ moduleOptions.enabled ? '已开启' : '未开启' }}
     </div>
   </EnSettingsTeleportModule>
   <EnVideoAndAudio v-if="moduleOptions.enabled" />
@@ -40,10 +40,11 @@ const {
 
 const { computedLevel } = injectAuthStatus()
 const hasAuth = computedLevel(1)
-// 有权限时，自动开启格式刷功能
 watch(hasAuth, () => {
   if (hasAuth.value) {
     moduleOptions.value.enabled = true
+  } else {
+    moduleOptions.value.enabled = false
   }
 })
 </script>

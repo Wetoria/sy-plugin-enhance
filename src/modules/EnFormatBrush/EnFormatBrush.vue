@@ -8,7 +8,10 @@
     @moduleDisabled="onModuleDisabled"
   >
     <div>
-      格式刷功能{{ hasAuth ? '已开启' : '未开启' }}
+      格式刷功能{{ moduleOptions.enabled ? '已开启' : '未开启' }}
+    </div>
+    <div v-if="moduleOptions.enabled">
+      选中文本以后，在工具栏中点击格式刷按钮，即可复制当前选中文本的样式。
     </div>
   </EnSettingsTeleportModule>
   <template
@@ -92,6 +95,8 @@ const hasAuth = computedLevel(1)
 watch(hasAuth, () => {
   if (hasAuth.value) {
     moduleOptions.value.enabled = true
+  } else {
+    moduleOptions.value.enabled = false
   }
 })
 

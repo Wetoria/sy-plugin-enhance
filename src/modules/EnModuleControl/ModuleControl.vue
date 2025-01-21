@@ -16,18 +16,26 @@
 
 
       <TemplateEntry />
-      <EnModuleLifeLog />
 
-      <EnParagraphBlock />
 
       <!-- 复杂模块 -->
       <EnModuleDailyNote />
+
+      <!-- TODO -->
       <EnModuleQuickNote />
+      <!-- TODO -->
       <EnModuleBottomBacklink />
+      <!-- TODO -->
+      <EnModuleLifeLog />
+      <!-- TODO -->
+      <EnParagraphBlock />
 
 
+      <!-- IMP 内部逻辑需要重写一下，现在这样比较乱 -->
       <EnModuleVideoAndAudio />
+      <!-- TODO 需要重写相关逻辑 -->
       <EnModuleComment />
+      <!-- TODO -->
       <EnModuleWhiteBoard />
 
       <!-- 仅移动端 -->

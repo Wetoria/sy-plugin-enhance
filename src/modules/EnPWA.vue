@@ -58,7 +58,7 @@
 <script setup lang="ts">
 import { usePlugin } from '@/main'
 import {
-  injectGlobalData,
+  injectGlobalWindowData,
   useModule,
 } from '@/modules/EnModuleControl/ModuleProvide'
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
@@ -77,7 +77,7 @@ import {
 
 const plugin = usePlugin()
 
-const globalData = injectGlobalData()
+const globalWindowData = injectGlobalWindowData()
 
 // #region 基本的模块配置
 
@@ -131,7 +131,7 @@ onMounted(() => {
 
   // @ts-expect-error standalone
   const isStandalone = window.navigator.standalone
-  globalData.value.isStandalone = isStandalone
+  globalWindowData.value.isStandalone = isStandalone
   if (isStandalone) {
     document.documentElement.dataset.enIsStandalone = isStandalone
   }

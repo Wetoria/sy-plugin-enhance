@@ -77,6 +77,15 @@ const recordProtyleContentOnInit = () => {
       dailyNoteValues,
     } = getDailyNoteInfoByProtyleContentEl(protyleContentEl)
 
+    if (isDailyNote) {
+      protyleContentEl.dataset.en_is_dailynote = 'true'
+
+      const wysiwygEl: HTMLDivElement = protyleContentEl.querySelector('.protyle-wysiwyg')
+      if (wysiwygEl) {
+        wysiwygEl.dataset.en_is_dailynote = 'true'
+      }
+    }
+
     const docId = protyleTitleEl.dataset.nodeId
     globalWindowData.value.protyleList.push({
       enLoopKey: generateUUIDWithTimestamp(),
