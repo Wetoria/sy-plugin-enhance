@@ -129,8 +129,8 @@
 import EnBlockAppendModeSelector from '@/components/EnBlockAppendModeSelector.vue'
 import { usePlugin } from '@/main'
 
-import EnCommentDesktop from '@/modules/Editor/Comment/EnCommentDesktop.vue'
-import EnCommentMobile from '@/modules/Editor/Comment/EnCommentMobile.vue'
+import EnCommentDesktop from '@/modules/Comment/EnCommentDesktop.vue'
+import EnCommentMobile from '@/modules/Comment/EnCommentMobile.vue'
 import {
   injectAuthStatus,
   injectGlobalData,
