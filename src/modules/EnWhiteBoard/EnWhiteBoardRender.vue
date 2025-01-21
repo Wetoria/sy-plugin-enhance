@@ -57,7 +57,7 @@
         :zoom-on-scroll="false"
         snap-to-grid
         :zoom-on-double-click="false"
-        :minZoom="0.2"
+        :minZoom="0.075"
 
         :edge-updater-radius="24"
         :connectionRadius="100"
