@@ -154,13 +154,6 @@ const onModuleSwitch = (enabled) => {
   })
 }
 
-// 如果没权限，关闭当前模块
-watch([hasAuth, moduleData], () => {
-  if (!hasAuth.value) {
-    onModuleSwitch(false)
-  }
-})
-
 // 防止重复处理模块的开关
 let resetFlag = false
 const resetModule = () => {
