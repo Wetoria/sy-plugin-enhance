@@ -147,11 +147,6 @@ onMounted(() => {
 
 // #endregion 笔记本相关数据控制逻辑
 
-// TODO 需要测试
-// watchEffect(() => {
-//   console.log('globalData isSyncing', globalDataModule.moduleOptions.value.isSyncing)
-// })
-
 
 const plugin = usePlugin()
 plugin.eventBus.on('sync-start', () => {
