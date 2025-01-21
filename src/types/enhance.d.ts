@@ -124,6 +124,7 @@ interface ILifeLogTypeItem {
 interface LifeLogModule extends EnModule {
   enableMarker: boolean
   showLifeLogFlag: boolean
+  showLifeLogTimelineAtProtyleLeft: boolean
 
   lifelogTypes: {
     fixed: ILifeLogTypeItem

@@ -84,7 +84,6 @@
 
 <script lang="ts">
 import { sql } from '@/api'
-import { ILifeLog } from '@/modules/LifeLog/EnModuleLifeLog.vue'
 import { diffFormat } from '@/utils/Date'
 import { queryAllByDom } from '@/utils/DOM'
 import dayjs from 'dayjs'
@@ -108,7 +107,7 @@ export function reloadLifeLogData(newLifeLogParagraphId: string) {
 
 
 const props = defineProps<{
-  element: HTMLDivElement
+  element: HTMLElement
 }>()
 
 const wysiwyg = computed<HTMLDivElement | null>(() => props?.element?.querySelector('.protyle-wysiwyg'))

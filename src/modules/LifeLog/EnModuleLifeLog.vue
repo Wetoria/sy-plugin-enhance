@@ -57,6 +57,19 @@
     </EnSettingsItem>
     <EnSettingsItem>
       <div>
+        展示时间轴
+      </div>
+      <template #desc>
+        <div>
+          是否在笔记区的日记文档左侧展示时间轴
+        </div>
+      </template>
+      <template #opt>
+        <a-switch v-model="moduleOptions.showLifeLogTimelineAtProtyleLeft" />
+      </template>
+    </EnSettingsItem>
+    <EnSettingsItem>
+      <div>
         LifeLog 类型
       </div>
       <template #desc>
@@ -156,6 +169,9 @@
 
   </EnSettingsTeleportModule>
   <template v-if="moduleOptions.enabled">
+    <template v-if="moduleOptions.showLifeLogTimelineAtProtyleLeft">
+      <RenderControl />
+    </template>
   </template>
 </template>
 
@@ -166,6 +182,7 @@ import { usePlugin } from '@/main'
 import { useModule } from '@/modules/EnModuleControl/ModuleProvide'
 import EnLifeLogSettingTypeItem from '@/modules/LifeLog/EnLifeLogSettingTypeItem.vue'
 import { markLifeLogBlock } from '@/modules/LifeLog/LifeLog'
+import RenderControl from '@/modules/LifeLog/RenderControl.vue'
 import { moduleEnableStatusSwitcher } from '@/utils'
 import {
   EN_CONSTANTS,
@@ -204,6 +221,7 @@ const {
 
     enableMarker: false,
     showLifeLogFlag: false,
+    showLifeLogTimelineAtProtyleLeft: false,
 
     lifelogTypes: null,
   },

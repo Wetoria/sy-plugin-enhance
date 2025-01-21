@@ -197,3 +197,17 @@ export function isDailyNoteProtyle(protyleContentDom: HTMLElement): boolean {
   const containsDailyNoteAttr = attrs.find((i) => i.startsWith('custom-dailynote'))
   return !!containsDailyNoteAttr
 }
+
+export function markProtyleIsDailyNote(protyleContentDom: HTMLElement) {
+  const isDN = isDailyNoteProtyle(protyleContentDom)
+  if (!isDN) {
+    return
+  }
+  protyleContentDom.dataset.en_is_dailynote = 'true'
+
+  const wysiwygEl: HTMLDivElement = protyleContentDom.querySelector('.protyle-wysiwyg')
+  if (!wysiwygEl) {
+    return
+  }
+  wysiwygEl.dataset.en_is_dailynote = 'true'
+}
