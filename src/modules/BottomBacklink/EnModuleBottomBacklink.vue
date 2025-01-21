@@ -3,6 +3,8 @@
     :name="moduleOptions.moduleName"
     :display="moduleOptions.moduleDisplayName"
     :module="module"
+    @moduleEnabled="onModuleEnable"
+    @moduleDisabled="onModuleDisable"
   >
     <EnSettingsItem>
       <div>
@@ -85,8 +87,10 @@
 </template>
 
 <script setup lang="ts">
+import { request } from '@/api'
 import { usePlugin } from '@/main'
 import RenderControl from '@/modules/BottomBacklink/RenderControl.vue'
+import { getCurrentDocTitleDomByDom } from '@/modules/DailyNote/DailyNote'
 import { useModule } from '@/modules/EnModuleControl/ModuleProvide'
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
 import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue'
@@ -94,6 +98,10 @@ import {
   EN_CONSTANTS,
   EN_MODULE_LIST,
 } from '@/utils/Constants'
+import {
+  Protyle,
+  showMessage,
+} from 'siyuan'
 import { watch } from 'vue'
 
 const plugin = usePlugin()
@@ -126,6 +134,52 @@ watch(() => moduleOptions.value.sqlLimit, () => {
   }
 }, { immediate: true })
 
+const searchParams = {
+  id: '',
+  k: '',
+  sort: '3',
+  mk: '',
+  mSort: '3',
+}
+const insertBacklinkTOCSlash = {
+  filter: [
+    '插入当前反链 MOC',
+    'insert current moc',
+  ],
+  html: `<div class="b3-list-item__first"><span class="b3-list-item__text">${'叶归｜插入当前反链 MOC'}</span></div>`,
+  id: 'enInsertMocCurrent',
+  callback(protyle: Protyle) {
+    const titleDom = getCurrentDocTitleDomByDom(protyle.protyle.contentElement)
+    if (!titleDom) {
+      return
+    }
+
+    searchParams.id = titleDom.dataset.nodeId
+    request('/api/ref/getBacklink2', searchParams).then((res) => {
+      const {
+        backlinks,
+      } = res
+      if (!backlinks.length) {
+        showMessage('当前文档暂无反链')
+        return
+      }
+
+      const insertMD = []
+      backlinks.forEach((backlink) => {
+        insertMD.push(`- [${backlink.name}](siyuan://blocks/${backlink.id})`)
+      })
+      const result = insertMD.join('\n')
+      protyle.insert(result)
+    })
+  },
+}
+
+const onModuleEnable = () => {
+  plugin.protyleSlash.push(insertBacklinkTOCSlash)
+}
+const onModuleDisable = () => {
+  plugin.protyleSlash = plugin.protyleSlash.filter((item) => item.id !== insertBacklinkTOCSlash.id)
+}
 </script>
 
 <style lang="scss" scoped>
