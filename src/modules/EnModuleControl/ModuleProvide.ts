@@ -13,9 +13,11 @@ import {
   computed,
   ComputedRef,
   inject,
+  onBeforeUnmount,
   onMounted,
   provide,
   Ref,
+  watch,
   WritableComputedRef,
 } from 'vue'
 
@@ -223,3 +225,26 @@ export function injectParentAuth(): ComputedRef<boolean> {
 
 // #endregion 👆 全局 inject 方法（方便后续不需要编写 TS 类型）
 
+// 监听模块配置的开关，并执行开启和关闭时的逻辑
+export function watchConfigEnableStatus(enableStatus: () => boolean, options: {
+  onEnabled?: () => void
+  onDisabled?: () => void
+}) {
+  const {
+    onEnabled,
+    onDisabled,
+  } = options
+  watch(enableStatus, (value) => {
+    if (value) {
+      onEnabled?.()
+    }
+    else {
+      onDisabled?.()
+    }
+  }, {
+    immediate: true,
+  })
+  onBeforeUnmount(() => {
+    onDisabled?.()
+  })
+}
