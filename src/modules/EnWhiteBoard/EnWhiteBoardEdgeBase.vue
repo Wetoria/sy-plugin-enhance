@@ -53,23 +53,23 @@ const edgePathParams = computed(() => {
   let targetY = props.targetY
 
   if (isSourceRight) {
-    sourceX -= 16
+    sourceX -= 25
   } else if (isSourceLeft) {
-    sourceX += 16
+    sourceX += 25
   } else if (isSourceTop) {
-    sourceY += 16
+    sourceY += 25
   } else if (isSourceBottom) {
-    sourceY -= 16
+    sourceY -= 25
   }
 
   if (isTargetRight) {
-    targetX -= 16
+    targetX -= 25
   } else if (isTargetLeft) {
-    targetX += 16
+    targetX += 25
   } else if (isTargetTop) {
-    targetY += 16
+    targetY += 25
   } else if (isTargetBottom) {
-    targetY -= 16
+    targetY -= 25
   }
 
   const path = getSmoothStepPath({
