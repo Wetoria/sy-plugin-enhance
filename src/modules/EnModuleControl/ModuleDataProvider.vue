@@ -10,6 +10,7 @@
       }"
     ></slot>
     <EnAuth />
+    <EnProtyleObserver />
   </template>
 </template>
 
@@ -17,6 +18,7 @@
 import { lsNotebooks } from '@/api'
 import { usePlugin } from '@/main'
 import EnAuth from '@/modules/EnModuleControl/EnAuth.vue'
+import EnProtyleObserver from '@/modules/EnModuleControl/EnProtyleObserver.vue'
 import {
   provideAuthModule,
   provideAuthStatus,
@@ -102,6 +104,8 @@ const globalWindowDataModule = useGlobalData<GlobalWindowData>(EN_CONSTANTS.GLOB
     isInSiyuanMain: !isInWindowHtml,
     isInSiyuanWindowHtml: isInWindowHtml,
     isInEnWindow: isInEnWindow(),
+
+    protyleList: [],
   },
   needSave: false,
   needSync: false,
@@ -113,6 +117,7 @@ provideGlobalWindowDataModule(globalWindowDataModule)
 watch(() => settings.value.isDebugging, (value) => {
   if (value) {
     window.SEP_GLOBAL.globalData = globalData
+    window.SEP_GLOBAL.globalWindowData = globalWindowData
   }
 })
 

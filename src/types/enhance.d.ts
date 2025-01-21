@@ -25,12 +25,30 @@ interface EnSettings {
 
 interface GlobalModule extends EnSettings {}
 
+
+
+interface IProtyleObserverItem {
+  enLoopKey: string
+  protyleBlockId: string
+  protyleEl: HTMLElement
+  protyleContentEl: HTMLElement
+
+  isFlashCardProtyle: boolean
+  isEditorProtyle: boolean
+  isDailyNote: boolean
+  dailyNoteValues: {
+    [key: string]: string
+  }
+}
+
+
 interface GlobalData {
   notebookList: Notebook[]
   openedNotebookList: Notebook[]
 
   quickNoteMode: Array<EnBlockAppendMode>
   commentMode: Array<EnBlockAppendMode>
+
 }
 
 interface GlobalWindowData {
@@ -40,6 +58,8 @@ interface GlobalWindowData {
   isInSiyuanMain: boolean
   isInSiyuanWindowHtml: boolean
   isInEnWindow: boolean
+
+  protyleList: IProtyleObserverItem[]
 }
 
 
