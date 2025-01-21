@@ -7,12 +7,18 @@
   >
     <template #header>
       <li class="b3-list-item b3-list-item--hide-action">
-        <span
-          class="b3-list-item__text backlinkDocTitle"
-          @click="jumpToDoc($event, backlink.id)"
-        >
-          {{ backlink.name }}
-        </span>
+        <a-space>
+          <EnSyEmoji
+            v-if="backlinkInfo.icon"
+            :icon-attr="backlinkInfo.icon"
+          />
+          <span
+            class="b3-list-item__text backlinkDocTitle"
+            @click="jumpToDoc($event, backlink.id)"
+          >
+            {{ backlink.name }}
+          </span>
+        </a-space>
       </li>
     </template>
     <div
@@ -24,6 +30,7 @@
 
 <script setup lang="ts">
 import { request } from '@/api'
+import EnSyEmoji from '@/components/EnSyEmoji.vue'
 import { usePlugin } from '@/main'
 import { hideGutterOnTarget } from '@/utils/DOM'
 import { openDocById } from '@/utils/Note'
@@ -32,6 +39,7 @@ import {
   computed,
   onBeforeUnmount,
   ref,
+  watch,
   watchEffect,
 } from 'vue'
 
@@ -102,6 +110,27 @@ onBeforeUnmount(() => {
   if (protyleRef.value) {
     protyleRef.value.destroy()
   }
+})
+
+const backlinkInfo = ref<{
+  icon: string
+  id: string
+  name: string
+}>({
+  icon: '',
+  id: '',
+  name: '',
+})
+const getBacklinkInfo = async () => {
+  const res = await request('/api/block/getDocInfo', {
+    id: props.backlink.id,
+  })
+  backlinkInfo.value = res
+}
+watch(() => props.backlink.id, () => {
+  getBacklinkInfo()
+}, {
+  immediate: true,
 })
 </script>
 

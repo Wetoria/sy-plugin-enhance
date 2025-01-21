@@ -16,7 +16,10 @@
               color: var(--b3-theme-on-surface);
             "
           >
-            引用
+            <a-space>
+              <SyIcon name="iconRef" />
+              引用
+            </a-space>
           </a-typography-title>
         </div>
         <div class="optArea">
@@ -189,6 +192,9 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
 
+  padding-top: 16px;
+  padding-bottom: 16px;
+
   .titleArea {
     width: 100%;
     display: flex;
@@ -207,8 +213,7 @@ onBeforeUnmount(() => {
 
 <style lang="scss">
 .protyle-content[data-en_with_bottom_backlink='true'] {
-  .protyle-wysiwyg {
-    // IMP 改成可以配置的
+  & > .protyle-wysiwyg {
     padding-bottom: var(--enBottomBacklinkTopDistance) !important;
   }
 }

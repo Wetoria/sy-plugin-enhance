@@ -206,6 +206,7 @@ defineExpose({
   :deep(.arco-collapse-item),
   :deep(.arco-collapse-item-header) {
     border-bottom: unset;
+    color: var(--b3-theme-on-surface);
   }
 
   &.arco-collapse {

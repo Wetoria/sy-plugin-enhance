@@ -116,7 +116,7 @@ const {
     moduleDisplayName: EN_CONSTANTS.EN_BOTTOM_BACKLINK_DISPLAY,
 
     enableBottomBacklink: false,
-    bottomBacklinkTopDistance: 30,
+    bottomBacklinkTopDistance: 68,
     autoRenderBacklinkMap: {},
 
     enableBacklinkFilter: false,
