@@ -150,6 +150,7 @@
 <script setup lang="ts">
 import { usePlugin } from '@/main'
 import {
+  injectAuthStatus,
   useModule,
 } from '@/modules/EnModuleControl/ModuleProvide'
 import {
@@ -160,7 +161,6 @@ import {
   unloadWhiteBoard,
 } from '@/modules/EnWhiteBoard/EnWhiteBoard'
 import EnWhiteBoardRenderEmbed from '@/modules/EnWhiteBoard/EnWhiteBoardRenderEmbed.vue'
-import { useAuthLevel } from '@/modules/Settings/EnSettingsAuth.vue'
 import {
   debounce,
 } from '@/utils'
@@ -187,7 +187,10 @@ import EnWhiteBoardEntrySlash from './EnWhiteBoardEntrySlash.vue'
 
 const plugin = usePlugin()
 
-const hasAuth = useAuthLevel(2)
+const {
+  computedLevel,
+} = injectAuthStatus()
+const hasAuth = computedLevel(2)
 
 const cannotEdit = computed(() => {
   return !hasAuth.value || plugin.isMobile

@@ -20,7 +20,7 @@ import {
 } from 'vue'
 
 
-interface IGlobalData<T> {
+export interface IGlobalData<T> {
   module: Ref<EnSyncModuleData<T>>
   moduleOptions: WritableComputedRef<T>
 }

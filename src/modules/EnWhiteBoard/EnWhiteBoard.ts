@@ -1,9 +1,8 @@
 import {
-  GlobalData,
+  IGlobalData,
   useGlobalData,
   useModule,
 } from '@/modules/EnModuleControl/ModuleProvide'
-import { EnModule } from '@/modules/Settings/EnSettings.vue'
 import {
   generateUUIDWithTimestamp,
 } from '@/utils'
@@ -13,7 +12,6 @@ import {
 } from '@/utils/Constants'
 import { isSequentialMatch } from '@/utils/String'
 import {
-  EnSyncModuleDataRef,
   loadModuleDataByNamespace,
   unuseModuleByNamespace,
 } from '@/utils/SyncData'
@@ -27,7 +25,6 @@ import { cloneDeep } from 'lodash-es'
 
 import {
   computed,
-  ComputedRef,
   reactive,
   ref,
   Ref,
@@ -78,10 +75,7 @@ export interface EnWhiteBoardSetting extends EnModule {
   cardWidthDefault: number
   cardHeightDefault: number
 }
-export function useWhiteBoardModule(): {
-  module: EnSyncModuleDataRef<EnWhiteBoardSetting>
-  moduleOptions: ComputedRef<EnWhiteBoardSetting>
-} {
+export function useWhiteBoardModule() {
   return useModule<EnWhiteBoardSetting>(EN_MODULE_LIST.EN_WHITE_BOARD)
 }
 
@@ -153,20 +147,18 @@ export interface EnWhiteBoardConfig {
 }
 
 interface ConfigList {
-  [id: string]: GlobalData<EnWhiteBoardConfig>
+  [id: string]: IGlobalData<EnWhiteBoardConfig>
 }
 export const whiteBoardRef: {
   // 每一个白板的配置。包括数据等
   // 这个对象不应该存储，而是应该存储每一个 EnWhiteBoardConfig
   configList: Ref<ConfigList>
-  indexMap: GlobalData<EnWhiteBoardIndexMap>
+  indexMap: IGlobalData<EnWhiteBoardIndexMap>
 } = {
   configList: ref({}),
   indexMap: null,
 }
 export const whiteBoardConfigList = computed<ConfigList>(() => whiteBoardRef.configList.value)
-
-window.SEP_GLOBAL.whiteBoardRef = whiteBoardRef
 
 
 export function getWhiteBoardListBySearchValue(searchValue: string) {

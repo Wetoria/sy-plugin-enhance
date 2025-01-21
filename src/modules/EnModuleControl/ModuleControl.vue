@@ -24,15 +24,11 @@
       <EnModuleDailyNote />
       <EnModuleQuickNote />
       <EnModuleBottomBacklink />
-      <!-- TODO -->
-      <!-- <EnEditor /> -->
 
 
-      <!-- TODO -->
       <EnModuleVideoAndAudio />
       <EnModuleComment />
-      <!-- TODO -->
-      <!-- <EnModuleWhiteBoard /> -->
+      <EnModuleWhiteBoard />
 
       <!-- 仅移动端 -->
       <template v-if="plugin.isMobile">
@@ -62,6 +58,7 @@ import ModuleDataProvider from '@/modules/EnModuleControl/ModuleDataProvider.vue
 import EnOthers from '@/modules/EnOthers.vue'
 import EnPWA from '@/modules/EnPWA.vue'
 import EnSiyuanEntry from '@/modules/EnSiyuanEntry.vue'
+import EnModuleWhiteBoard from '@/modules/EnWhiteBoard/EnModuleWhiteBoard.vue'
 import EnModuleLifeLog from '@/modules/LifeLog/EnModuleLifeLog.vue'
 import EnParagraphBlock from '@/modules/ParagraphBlock/EnParagraphBlock.vue'
 import EnModuleQuickNote from '@/modules/QuickNote/EnModuleQuickNote.vue'

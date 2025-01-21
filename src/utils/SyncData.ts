@@ -48,7 +48,7 @@ export interface EnSyncModuleProps<T> {
 export type Namespace = string
 
 
-type EnSyncModuleDataRef<T> = Ref<EnSyncModuleData<T>>
+export type EnSyncModuleDataRef<T> = Ref<EnSyncModuleData<T>>
 
 
 /**
