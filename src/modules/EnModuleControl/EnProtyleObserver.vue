@@ -150,7 +150,20 @@ const offOnLoadedProtyleStatic = useSiyuanEventLoadedProtyleStatic(({ detail }) 
 })
 
 const offOnProtyleDestroy = useSiyuanEventProtyleDestroy(({ detail }) => {
-  globalWindowData.value.protyleList = globalWindowData.value.protyleList.filter((item) => item.protyleEl !== detail.protyle.element)
+  let target = null
+  globalWindowData.value.protyleList = globalWindowData.value.protyleList.filter((item) => {
+    const isTarget = item.protyleEl === detail.protyle.element
+    if (isTarget) {
+      target = item
+    }
+    return !isTarget
+  })
+  if (target) {
+    Object.keys(target).forEach((key) => {
+      target[key] = null
+    })
+    target = null
+  }
 })
 
 onMounted(() => {
@@ -160,6 +173,11 @@ onMounted(() => {
 onBeforeUnmount(() => {
   offOnProtyleDestroy()
   offOnLoadedProtyleStatic()
+  globalWindowData.value.protyleList.forEach((item) => {
+    Object.keys(item).forEach((key) => {
+      item[key] = null
+    })
+  })
   globalWindowData.value.protyleList = []
 })
 </script>
