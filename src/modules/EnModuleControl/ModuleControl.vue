@@ -30,8 +30,6 @@
 
       <!-- TODO -->
       <EnModuleVideoAndAudio />
-      <!-- TODO -->
-      <!-- <EnVideoAndAudio v-if="isNotFree" /> -->
       <EnModuleComment />
       <!-- TODO -->
       <!-- <EnModuleWhiteBoard /> -->
@@ -54,6 +52,7 @@
 import { usePlugin } from '@/main'
 import ArcoTheme from '@/modules/ArcoTheme.vue'
 import EnBackgroundImg from '@/modules/Background/EnBackgroundImg.vue'
+import EnModuleBottomBacklink from '@/modules/BottomBacklink/EnModuleBottomBacklink.vue'
 import EnModuleDailyNote from '@/modules/DailyNote/EnModuleDailyNote.vue'
 import EnModuleComment from '@/modules/Editor/Comment/EnModuleComment.vue'
 import EnFont from '@/modules/EnFontStyle/EnFont.vue'
@@ -68,6 +67,7 @@ import EnParagraphBlock from '@/modules/ParagraphBlock/EnParagraphBlock.vue'
 import EnModuleQuickNote from '@/modules/QuickNote/EnModuleQuickNote.vue'
 import EnSettings from '@/modules/Settings/EnSettings.vue'
 import TemplateEntry from '@/modules/Templates/TemplateEntry.vue'
+import EnModuleVideoAndAudio from '@/modules/VideoAndAudio/EnModuleVideoAndAudio.vue'
 import { moduleEnableStatusSwitcher } from '@/utils'
 import {
   addCommand,

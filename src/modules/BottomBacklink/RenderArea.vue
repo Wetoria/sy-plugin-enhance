@@ -8,7 +8,16 @@
     >
       <div class="titleArea">
         <div class="title">
-          底部反链
+          <a-typography-title
+            :heading="6"
+            style="
+              margin: 0;
+              line-height: unset;
+              color: var(--b3-theme-on-surface);
+            "
+          >
+            引用
+          </a-typography-title>
         </div>
         <div class="optArea">
           <a-tooltip>
@@ -70,6 +79,7 @@ import {
   EN_STYLE_KEYS,
 } from '@/utils/Constants'
 import { onCountClick } from '@/utils/DOM'
+import { hideHelperByTarget } from '@/utils/Siyuan'
 import {
   computed,
   onBeforeUnmount,
@@ -141,6 +151,16 @@ const backlinkRenderRef = ref()
 const refreshData = () => {
   backlinkRenderRef.value.refresh()
 }
+
+const hideHelpers = () => {
+  hideHelperByTarget(EnBottomBacklinkRenderArea.value)
+}
+onMounted(() => {
+  props.protyleContentEl.addEventListener('scroll', hideHelpers)
+})
+onBeforeUnmount(() => {
+  props.protyleContentEl.removeEventListener('scroll', hideHelpers)
+})
 </script>
 
 <style lang="scss" scoped>
