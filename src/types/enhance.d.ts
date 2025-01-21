@@ -1,3 +1,5 @@
+type Noop = () => void
+
 interface EnAuth {
   lv: number
   expiration: string | number | null

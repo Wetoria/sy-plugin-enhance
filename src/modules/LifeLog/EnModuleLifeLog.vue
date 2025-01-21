@@ -404,28 +404,30 @@ const offListenerSticky = () => {
   bindedProtyleList.value = []
 }
 
-watchConfigEnableStatus(() => moduleOptions.value.showLifeLogFlag, {
-  onEnabled: () => {
+watchConfigEnableStatus(
+  () => moduleOptions.value.showLifeLogFlag,
+  () => {
     moduleEnableStatusSwitcher('EnableLifelogTag', moduleOptions.value.showLifeLogFlag)
     listenerSticky()
+    return () => {
+      moduleEnableStatusSwitcher('EnableLifelogTag')
+      offListenerSticky()
+    }
   },
-  onDisabled: () => {
-    moduleEnableStatusSwitcher('EnableLifelogTag')
-    offListenerSticky()
-  },
-})
+)
 
 
 let offLifeLogMarker = null
-watchConfigEnableStatus(() => moduleOptions.value.enableMarker, {
-  onEnabled: () => {
+watchConfigEnableStatus(
+  () => moduleOptions.value.enableMarker,
+  () => {
     offLifeLogMarker = markLifeLogBlock()
+    return () => {
+      offLifeLogMarker?.()
+      offLifeLogMarker = null
+    }
   },
-  onDisabled: () => {
-    offLifeLogMarker?.()
-    offLifeLogMarker = null
-  },
-})
+)
 
 
 const insertCurrentTimeSlas = {
