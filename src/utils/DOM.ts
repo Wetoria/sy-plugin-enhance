@@ -1,8 +1,6 @@
-import { usePlugin } from '@/main'
 import {
   onBeforeUnmount,
   onMounted,
-  reactive,
   ref,
 } from 'vue'
 
@@ -30,57 +28,6 @@ export function hideGutterOnTarget(target) {
   })
 }
 
-export const protyleBottomMap = ref(new Map())
-export function registerProtyleBottomArea() {
-  const plugin = usePlugin()
-  plugin.eventBus.on('loaded-protyle-static', (event) => {
-    const {
-      detail,
-    } = event
-    const element = detail.protyle.contentElement
-    if (!element) {
-      return
-    }
-
-    // 标记是不是日记文档
-    const wysiwygEl: HTMLDivElement = element.querySelector('.protyle-wysiwyg')
-    if (wysiwygEl) {
-      const attrs = wysiwygEl.getAttributeNames()
-      const containsDailyNoteAttr = attrs.find((i) => i.startsWith('custom-dailynote'))
-      if (containsDailyNoteAttr) {
-        wysiwygEl.dataset.en_is_dailynote = 'true'
-        wysiwygEl.dataset.en_dailynote_date = wysiwygEl.getAttribute(containsDailyNoteAttr)
-        element.dataset.en_is_dailynote = 'true'
-        element.dataset.en_dailynote_date = wysiwygEl.getAttribute(containsDailyNoteAttr)
-      }
-    }
-
-    if (protyleBottomMap.value.has(element)) {
-      const detailRef = protyleBottomMap.value.get(element)
-      detailRef.detail = detail
-      detailRef.element = element
-      return
-    }
-    const div = document.createElement('div')
-    protyleBottomMap.value.set(element, reactive({
-      detail,
-      element,
-      enArea: div,
-    }))
-    div.className = 'enhanceProtyleBottomContainer'
-    element.appendChild(div)
-  })
-
-  plugin.eventBus.on("destroy-protyle", (event) => {
-    const {
-      detail,
-    } = event
-    const element = detail.protyle.contentElement
-    if (protyleBottomMap.value.has(element)) {
-      protyleBottomMap.value.delete(element)
-    }
-  })
-}
 
 export const onCountClick = (fn) => {
   const countTime = ref(0)
