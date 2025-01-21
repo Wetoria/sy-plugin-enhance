@@ -41,7 +41,11 @@
 
 <script setup lang="ts">
 import { usePlugin } from '@/main'
-import { useModule } from '@/modules/EnModuleControl/ModuleProvide'
+import {
+  useModule,
+  watchConfigChanged,
+  watchConfigEnableStatus,
+} from '@/modules/EnModuleControl/ModuleProvide'
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
 import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue'
 import { moduleEnableStatusSwitcher } from '@/utils'
@@ -49,10 +53,8 @@ import {
   EN_CONSTANTS,
   EN_MODULE_LIST,
 } from '@/utils/Constants'
-import {
-  onBeforeUnmount,
-  watch,
-} from 'vue'
+
+
 
 const plugin = usePlugin()
 
@@ -73,29 +75,30 @@ const {
   },
 })
 
-const unwatchEnableBkImg = watch(() => moduleOptions.value.enableBackgroundImg, () => {
-  moduleEnableStatusSwitcher(
-    EN_MODULE_LIST.BACKGROUND_IMG,
-    moduleOptions.value.enableBackgroundImg,
-  )
-}, {
-  immediate: true,
-})
-const unwatchBkOpacity = watch(() => moduleOptions.value.opacity, () => {
-  document.documentElement.style.setProperty('--en-opacity', `${moduleOptions.value.opacity}`)
-}, {
-  immediate: true,
-})
+watchConfigEnableStatus(
+  () => moduleOptions.value.enableBackgroundImg,
+  () => {
+    moduleEnableStatusSwitcher(
+      EN_MODULE_LIST.BACKGROUND_IMG,
+      moduleOptions.value.enableBackgroundImg,
+    )
+    return () => {
+      moduleEnableStatusSwitcher(EN_MODULE_LIST.BACKGROUND_IMG)
+    }
+  },
+)
 
-const disableAll = () => {
-  unwatchEnableBkImg()
-  unwatchBkOpacity()
-  moduleEnableStatusSwitcher(EN_MODULE_LIST.BACKGROUND_IMG)
-  document.documentElement.style.removeProperty('--en-opacity')
-}
-onBeforeUnmount(() => {
-  disableAll()
-})
+watchConfigChanged(
+  () => moduleOptions.value.opacity,
+  () => {
+    document.documentElement.style.setProperty('--en-bk-img-opacity', `${moduleOptions.value.opacity}`)
+
+    return () => {
+      document.documentElement.style.removeProperty('--en-bk-img-opacity')
+    }
+  },
+)
+
 </script>
 
 <style lang="scss">
@@ -116,7 +119,7 @@ html[data-en_enabled_module~="EnBackgroundImg"] {
     display: flex;
   }
   body {
-    opacity: var(--en-opacity);
+    opacity: var(--en-bk-img-opacity);
   }
 
   &[data-en-is-standalone="true"] {

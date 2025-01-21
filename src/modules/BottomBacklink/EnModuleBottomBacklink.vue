@@ -82,16 +82,27 @@
     </EnSettingsItem>
   </EnSettingsTeleportModule>
   <template v-if="moduleOptions.enabled">
-    <RenderControl />
+    <template
+      v-for="item of protyleContentRefList"
+      :key="item.protyleBlockId"
+    >
+      <RenderArea
+        :blockId="item.protyleBlockId"
+        :protyleContentEl="item.protyleContentEl"
+      />
+    </template>
   </template>
 </template>
 
 <script setup lang="ts">
 import { request } from '@/api'
 import { usePlugin } from '@/main'
-import RenderControl from '@/modules/BottomBacklink/RenderControl.vue'
+import RenderArea from '@/modules/BottomBacklink/RenderArea.vue'
 import { getCurrentDocTitleDomByDom } from '@/modules/DailyNote/DailyNote'
-import { useModule } from '@/modules/EnModuleControl/ModuleProvide'
+import {
+  injectGlobalWindowData,
+  useModule,
+} from '@/modules/EnModuleControl/ModuleProvide'
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
 import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue'
 import {
@@ -102,7 +113,10 @@ import {
   Protyle,
   showMessage,
 } from 'siyuan'
-import { watch } from 'vue'
+import {
+  computed,
+  watch,
+} from 'vue'
 
 const plugin = usePlugin()
 
@@ -116,7 +130,7 @@ const {
     moduleDisplayName: EN_CONSTANTS.EN_BOTTOM_BACKLINK_DISPLAY,
 
     enableBottomBacklink: false,
-    bottomBacklinkTopDistance: 30,
+    bottomBacklinkTopDistance: 68,
     autoRenderBacklinkMap: {},
 
     enableBacklinkFilter: false,
@@ -180,6 +194,10 @@ const onModuleEnable = () => {
 const onModuleDisable = () => {
   plugin.protyleSlash = plugin.protyleSlash.filter((item) => item.id !== insertBacklinkTOCSlash.id)
 }
+
+const globalWindowData = injectGlobalWindowData()
+
+const protyleContentRefList = computed(() => globalWindowData.value.protyleList.filter((item) => item.isEditorProtyle || item.isFlashCardProtyle))
 </script>
 
 <style lang="scss" scoped>

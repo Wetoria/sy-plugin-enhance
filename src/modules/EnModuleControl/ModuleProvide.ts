@@ -13,9 +13,11 @@ import {
   computed,
   ComputedRef,
   inject,
+  onBeforeUnmount,
   onMounted,
   provide,
   Ref,
+  watch,
   WritableComputedRef,
 } from 'vue'
 
@@ -209,12 +211,17 @@ export function injectAuthStatus(): EnAuthStatus {
 
 /**
  * 提供父级权限
+ *
  * 如果父级使用过 computedLevel, 则会自动注入父级权限
- * 在 TeleportModule 中，则可以自动获取父级的权限
+ *
+ * 在 `TeleportModule` 中，则可以自动获取父级的权限
  */
 export function provideParentAuth(parentAuth: ComputedRef<boolean>) {
   provide('parentAuth', parentAuth)
 }
+/**
+ * 用于在 TeleportModule 中，自动获取父级的权限
+ */
 export function injectParentAuth(): ComputedRef<boolean> {
   const parentAuth = inject('parentAuth') as ComputedRef<boolean>
   return parentAuth
@@ -223,3 +230,96 @@ export function injectParentAuth(): ComputedRef<boolean> {
 
 // #endregion 👆 全局 inject 方法（方便后续不需要编写 TS 类型）
 
+
+
+
+
+type DisableFunction = Noop
+
+/**
+ * 监听模块配置的变化（开关型：只有 true 和 false 两种状态），并执行开启和关闭时的逻辑
+ *
+ * @param enableStatusGetter - 返回模块配置开关状态的函数。必须使用函数形式，以确保值变化时能正确触发
+ * @param onEnabled - 开启时执行的函数，需要返回一个用于关闭时执行的清理函数
+ *
+ * @example
+ * ```typescript
+ * // 示例1：监听模块启用状态
+ * watchConfigEnableStatus(
+ *   () => moduleOptions.value.enabled,
+ *   () => {
+ *     // 开启时的逻辑
+ *     return () => {
+ *       // 关闭时的逻辑
+ *     }
+ *   }
+ * )
+ *
+ * // 示例2：监听生命日志显示状态
+ * watchConfigEnableStatus(
+ *   () => moduleOptions.value.showLifeLogFlag,
+ *   () => {
+ *     // 开启时的逻辑
+ *     return () => {
+ *       // 关闭时的逻辑
+ *     }
+ *   }
+ * )
+ * ```
+ */
+export function watchConfigEnableStatus(
+  enableStatusGetter: () => boolean,
+  onEnabled: () => (DisableFunction),
+) {
+  let disableFunction: DisableFunction = null
+  watch(enableStatusGetter, (value) => {
+    if (value) {
+      disableFunction = onEnabled()
+    } else {
+      disableFunction?.()
+    }
+  }, {
+    immediate: true,
+    deep: true,
+  })
+  onBeforeUnmount(() => {
+    disableFunction?.()
+  })
+}
+
+
+/**
+ * 监听模块配置的变化执行相应的操作
+ *
+ * @param statusGetter - 返回模块配置的函数。必须使用函数形式，以确保值变化时能正确触发
+ * @param callback - 回调函数，需要返回一个用于关闭时执行的清理函数
+ *
+ * @example
+ * ```typescript
+ * // 示例1：监听模块启用状态
+ * watchConfigEnableStatus(
+ *   () => moduleOptions.value.defaultImageWidth,
+ *   () => {
+ *     document.documentElement.style.setProperty('--en-img-default-width', `${moduleOptions.value.defaultImageWidth}%`)
+ *     return () => {
+ *       document.documentElement.style.removeProperty('--en-img-default-width')
+ *     }
+ *   },
+ * )
+ * ```
+ */
+export function watchConfigChanged<T>(
+  statusGetter: () => T,
+  callback: (newValue: T, oldValue: T) => (DisableFunction),
+) {
+  let disableFunction: DisableFunction = null
+  watch(statusGetter, (newValue, oldValue) => {
+    disableFunction = callback(newValue, oldValue)
+  }, {
+    immediate: true,
+    deep: true,
+  })
+  onBeforeUnmount(() => {
+    disableFunction?.()
+  })
+}

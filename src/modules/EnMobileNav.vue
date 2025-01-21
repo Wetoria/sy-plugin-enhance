@@ -48,7 +48,6 @@
             <div class="NavItemIcon">
               <SyIcon
                 name="iconAdd"
-                :disabled="isNewset"
                 size="18"
               />
             </div>
@@ -57,10 +56,12 @@
             class="NavItem"
             @click="entryOpenSettings"
           >
-            <div class="NavItemIcon">
+            <div class="NavItemIcon EnEntryIcon">
+              <EnIconLeaf2 v-if="!settings.v" />
+              <EnIconDragon v-else-if="settings.v === 1" />
               <SyIcon
-                :name="['iconHeart', 'iconVIP', 'iconSuper'][settings.v]"
-                :disabled="isNewset"
+                v-else
+                name="iconSuper"
                 size="18"
               />
             </div>
@@ -134,6 +135,8 @@
 </template>
 
 <script lang="ts">
+import EnIconDragon from '@/components/EnIconDragon.vue'
+import EnIconLeaf2 from '@/components/EnIconLeaf2.vue'
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import { usePlugin } from '@/main'
 import {
@@ -331,6 +334,14 @@ html[data-theme-mode="light"] {
         font-size: 14px;
         flex: 1;
       }
+    }
+  }
+
+  .EnEntryIcon {
+    font-size: 18px;
+    svg {
+      width: 18px;
+      height: 18px;
     }
   }
 }

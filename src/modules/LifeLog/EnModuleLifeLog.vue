@@ -179,7 +179,10 @@
 import EnColorPicker from '@/components/EnColorPicker.vue'
 import EnDivider from '@/components/EnDivider.vue'
 import { usePlugin } from '@/main'
-import { useModule } from '@/modules/EnModuleControl/ModuleProvide'
+import {
+  useModule,
+  watchConfigEnableStatus,
+} from '@/modules/EnModuleControl/ModuleProvide'
 import EnLifeLogSettingTypeItem from '@/modules/LifeLog/EnLifeLogSettingTypeItem.vue'
 import { markLifeLogBlock } from '@/modules/LifeLog/LifeLog'
 import RenderControl from '@/modules/LifeLog/RenderControl.vue'
@@ -335,6 +338,8 @@ watchEffect((onCleanup) => {
   styleDomRef.value.textContent = `
   html[data-en_enabled_module~="EnableLifelogTag"] {
     ${flatLifelogTypes.value.map((i) => `
+      --en-lifelog-color-type-${i.type}: ${i.color};
+
       [data-type="NodeParagraph"] {
         &[custom-lifelog-type="${i.type}"] {
           --en-lifelog-border-color: ${i.color};
@@ -399,27 +404,30 @@ const offListenerSticky = () => {
   bindedProtyleList.value = []
 }
 
+watchConfigEnableStatus(
+  () => moduleOptions.value.showLifeLogFlag,
+  () => {
+    moduleEnableStatusSwitcher('EnableLifelogTag', moduleOptions.value.showLifeLogFlag)
+    listenerSticky()
+    return () => {
+      moduleEnableStatusSwitcher('EnableLifelogTag')
+      offListenerSticky()
+    }
+  },
+)
 
-watchEffect((onCleanup) => {
-  moduleEnableStatusSwitcher('EnableLifelogTag', moduleOptions.value.showLifeLogFlag)
-  listenerSticky()
-  onCleanup(() => {
-    moduleEnableStatusSwitcher('EnableLifelogTag')
-    offListenerSticky()
-  })
-})
 
-let off = null
-watchEffect((onCleanup) => {
-  if (moduleOptions.value.enableMarker) {
-    off = markLifeLogBlock()
-  } else {
-    off?.()
-  }
-  onCleanup(() => {
-    off?.()
-  })
-})
+let offLifeLogMarker = null
+watchConfigEnableStatus(
+  () => moduleOptions.value.enableMarker,
+  () => {
+    offLifeLogMarker = markLifeLogBlock()
+    return () => {
+      offLifeLogMarker?.()
+      offLifeLogMarker = null
+    }
+  },
+)
 
 
 const insertCurrentTimeSlas = {

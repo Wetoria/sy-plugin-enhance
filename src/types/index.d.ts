@@ -138,6 +138,7 @@ interface Window {
     topBarEntryRef: HTMLElement
     currentProtyle: Ref<IProtyle>
     globalData: any
+    globalWindowData: any
   }
 }
 

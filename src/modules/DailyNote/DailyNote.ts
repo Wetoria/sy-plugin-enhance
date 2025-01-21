@@ -4,6 +4,7 @@
 import { request } from '@/api'
 import { usePlugin } from '@/main'
 import {
+  IGlobalData,
   useGlobalData,
   useModule,
 } from '@/modules/EnModuleControl/ModuleProvide'
@@ -21,7 +22,7 @@ export function useDailyNote() {
   const {
     module,
     moduleOptions,
-  } = useModule(EN_MODULE_LIST.DAILY_NOTE)
+  } = useModule(EN_MODULE_LIST.DAILY_NOTE) as IGlobalData<EnModuleDailyNote>
   return {
     module,
     moduleOptions,
@@ -30,7 +31,7 @@ export function useDailyNote() {
 
 
 export async function notebookIsOpened(notebookId: string) {
-  const globalData = useGlobalData(EN_CONSTANTS.GLOBAL_DATA)
+  const globalData = useGlobalData(EN_CONSTANTS.GLOBAL_DATA) as IGlobalData<GlobalData>
   return globalData.moduleOptions.value.openedNotebookList.some((i) => i.id === notebookId)
 }
 

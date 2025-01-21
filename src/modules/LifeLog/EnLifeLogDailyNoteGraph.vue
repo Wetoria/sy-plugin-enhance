@@ -1,6 +1,5 @@
 <template>
   <Teleport
-    v-if="isProtyleInEditor"
     :to="element?.parentNode"
   >
     <div
@@ -21,7 +20,7 @@
         <div
           class="EnLifeLogItemBg"
           :style="{
-            backgroundColor: `var(--en-lifelog-${record.record['custom-lifelog-type']})`,
+            backgroundColor: `var(--en-lifelog-color-type-${record.record['custom-lifelog-type']})`,
           }"
         >
 
@@ -87,7 +86,6 @@ import { sql } from '@/api'
 import { diffFormat } from '@/utils/Date'
 import { queryAllByDom } from '@/utils/DOM'
 import dayjs from 'dayjs'
-import { getAllModels } from 'siyuan'
 import {
   computed,
   onBeforeUnmount,
@@ -117,10 +115,6 @@ const isDailyNote = computed(() => {
 
 const secondsOfADay = 60 * 60 * 24
 
-const { editor } = getAllModels()
-const isProtyleInEditor = !!editor?.find((item: any) => item.element === props.element?.parentElement)
-const isProtyleNotInEditor = !isProtyleInEditor
-
 
 const EnLifeLogDailyNoteGraphRef = ref()
 function checkHeight() {
@@ -145,9 +139,6 @@ function checkHeight() {
 }
 
 onMounted(() => {
-  if (isProtyleNotInEditor) {
-    return
-  }
   load()
   window.addEventListener('resize', checkHeight)
 })
@@ -155,17 +146,11 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', checkHeight)
 })
 onUpdated(() => {
-  if (isProtyleNotInEditor) {
-    return
-  }
   checkHeight()
 })
 
 const current = ref(dayjs())
 onMounted(() => {
-  if (isProtyleNotInEditor) {
-    return
-  }
   setInterval(() => {
     current.value = dayjs()
   }, 1000)
@@ -363,9 +348,6 @@ const load = async () => {
 
 watchEffect(() => {
   if (dailyNoteId.value) {
-    if (isProtyleNotInEditor) {
-      return
-    }
     load()
   }
 })

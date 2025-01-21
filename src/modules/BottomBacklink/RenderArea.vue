@@ -6,17 +6,18 @@
       ref="EnBottomBacklinkRenderArea"
       class="EnBottomBacklinkRenderArea"
     >
-      <div class="titleArea">
-        <div class="title">
+      <div class="EnBottomBacklinkRenderAreaHeader">
+        <div
+          class="titleArea"
+          @click="onBacklinkShownSwitch"
+        >
           <a-typography-title
             :heading="6"
-            style="
-              margin: 0;
-              line-height: unset;
-              color: var(--b3-theme-on-surface);
-            "
           >
-            引用
+            <a-space>
+              <SyIcon name="iconRef" />
+              引用
+            </a-space>
           </a-typography-title>
         </div>
         <div class="optArea">
@@ -44,37 +45,39 @@
               </template>
             </a-button>
           </a-tooltip>
-          <a-tooltip>
-            <template #content>
-              <div>
-                刷新反链数据
-              </div>
-            </template>
-            <a-button
-              type="text"
-              @click="refreshData"
-            >
-              <template #icon>
-                <SyIcon name="iconRefresh" />
+          <template v-if="isBacklinkShown">
+            <a-tooltip>
+              <template #content>
+                <div>
+                  刷新反链数据
+                </div>
               </template>
-            </a-button>
-          </a-tooltip>
-          <a-tooltip>
-            <template #content>
-              <div>
-                筛选反链
-              </div>
-            </template>
-            <a-button
-              v-if="moduleOptions.enableBacklinkFilter"
-              type="text"
-              @click.stop="switchFilterShown"
-            >
-              <template #icon>
-                <SyIcon name="iconFilter" />
+              <a-button
+                type="text"
+                @click="refreshData"
+              >
+                <template #icon>
+                  <SyIcon name="iconRefresh" />
+                </template>
+              </a-button>
+            </a-tooltip>
+            <a-tooltip>
+              <template #content>
+                <div>
+                  筛选反链
+                </div>
               </template>
-            </a-button>
-          </a-tooltip>
+              <a-button
+                v-if="moduleOptions.enableBacklinkFilter"
+                type="text"
+                @click.stop="switchFilterShown"
+              >
+                <template #icon>
+                  <SyIcon name="iconFilter" />
+                </template>
+              </a-button>
+            </a-tooltip>
+          </template>
         </div>
       </div>
       <div v-if="isBacklinkShown">
@@ -168,6 +171,9 @@ const refreshData = () => {
   backlinkRenderRef.value.refresh()
 }
 const switchFilterShown = () => {
+  if (!isBacklinkShown.value) {
+    isBacklinkShown.value = true
+  }
   backlinkRenderRef.value.switchFilterShown()
 }
 
@@ -189,11 +195,31 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
 
-  .titleArea {
+  padding-top: 16px;
+  padding-bottom: 16px;
+
+  .EnBottomBacklinkRenderAreaHeader {
     width: 100%;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    padding: 2px var(--en-gap);
+    border-radius: var(--b3-border-radius);
+
+    &:hover {
+      background-color: var(--b3-list-icon-hover);
+    }
+
+    .titleArea {
+      flex: 1;
+      cursor: pointer;
+      color: var(--b3-theme-on-surface);
+
+      :deep(.arco-typography) {
+        margin: 0;
+        line-height: unset;
+      }
+    }
 
 
     .optArea {
@@ -207,8 +233,7 @@ onBeforeUnmount(() => {
 
 <style lang="scss">
 .protyle-content[data-en_with_bottom_backlink='true'] {
-  .protyle-wysiwyg {
-    // IMP 改成可以配置的
+  & > .protyle-wysiwyg {
     padding-bottom: var(--enBottomBacklinkTopDistance) !important;
   }
 }

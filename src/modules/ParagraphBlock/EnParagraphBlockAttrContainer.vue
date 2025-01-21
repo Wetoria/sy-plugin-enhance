@@ -123,5 +123,7 @@ onBeforeUnmount(() => {
   gap: var(--en-gap);
 
   width: 100%;
+
+  font-variant-numeric: tabular-nums;
 }
 </style>

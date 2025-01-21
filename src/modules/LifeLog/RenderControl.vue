@@ -11,7 +11,10 @@
 
 <script setup lang="ts">
 import { usePlugin } from '@/main'
-import { markProtyleIsDailyNote } from '@/modules/DailyNote/DailyNote'
+import {
+  isDailyNoteProtyle,
+  markProtyleIsDailyNote,
+} from '@/modules/DailyNote/DailyNote'
 import EnLifeLogDailyNoteGraph from '@/modules/LifeLog/EnLifeLogDailyNoteGraph.vue'
 import { generateUUIDWithTimestamp } from '@/utils'
 import {
@@ -65,6 +68,10 @@ const recordProtyleContentOnInit = () => {
       return
     }
     const docId = protyleTitleEl.dataset.nodeId
+    const isDNProtyle = isDailyNoteProtyle(protyleContentEl)
+    if (!isDNProtyle) {
+      return
+    }
     markProtyleIsDailyNote(protyleContentEl)
     protyleContentRefList.value.push({
       enLoopKey: generateUUIDWithTimestamp(),
@@ -82,6 +89,10 @@ const recordProtyleContentOnInit = () => {
       editor,
     } = item
     const protyle = editor.protyle as IProtyle
+    const isDNProtyle = isDailyNoteProtyle(protyle.contentElement)
+    if (!isDNProtyle) {
+      return
+    }
     markProtyleIsDailyNote(protyle.contentElement)
     protyleContentRefList.value.push({
       enLoopKey: generateUUIDWithTimestamp(),
@@ -100,6 +111,12 @@ const offOnLoadedProtyleStatic = useSiyuanEventLoadedProtyleStatic(({ detail }) 
     return
   }
 
+  const isDNProtyle = isDailyNoteProtyle(protyle.contentElement)
+  if (!isDNProtyle) {
+    return
+  }
+  markProtyleIsDailyNote(protyle.contentElement)
+
   const existRef = protyleContentRefList.value.find((item) => item.protyleEl === protyleEl)
   if (existRef) {
     existRef.protyleBlockId = protyle.block.id
@@ -108,7 +125,6 @@ const offOnLoadedProtyleStatic = useSiyuanEventLoadedProtyleStatic(({ detail }) 
     return
   }
 
-  markProtyleIsDailyNote(protyle.contentElement)
   protyleContentRefList.value.push({
     enLoopKey: generateUUIDWithTimestamp(),
     protyleBlockId: protyle.block.id,
