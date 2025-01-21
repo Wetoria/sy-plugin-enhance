@@ -10,31 +10,6 @@
       class="backlinkAreaCollapse"
       :header="`反链 (${backlinkRes.linkRefsCount})`"
     >
-      <template #extra>
-        <div>
-          <!-- <a-button @click.stop type="text" size="mini">
-            <SyIcon name="iconExpand" />
-          </a-button>
-          <a-button @click.stop type="text" size="mini">
-            <SyIcon name="iconContract" />
-          </a-button> -->
-          <a-button
-            type="text"
-            size="mini"
-            @click.stop="refresh"
-          >
-            <SyIcon name="iconRefresh" />
-          </a-button>
-          <a-button
-            v-if="enableBacklinkFilter"
-            type="text"
-            size="mini"
-            @click.stop="switchFilterShown"
-          >
-            <SyIcon name="iconFilter" />
-          </a-button>
-        </div>
-      </template>
       <EnProtyleBottomBackLinkFilterArea
         v-if="enableBacklinkFilter"
         v-show="showFilterArea"
@@ -105,7 +80,6 @@
 
 <script setup lang="ts">
 import { request } from '@/api'
-import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import {
   injectSettings,
   useModule,
@@ -147,6 +121,7 @@ const searchParams = ref({
   sort: '3',
   mk: '',
   mSort: '3',
+  containChildren: true,
 })
 
 watchEffect(() => {
@@ -217,6 +192,7 @@ const refresh = () => {
 }
 defineExpose({
   refresh,
+  switchFilterShown,
 })
 </script>
 

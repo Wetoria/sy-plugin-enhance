@@ -59,6 +59,22 @@
               </template>
             </a-button>
           </a-tooltip>
+          <a-tooltip>
+            <template #content>
+              <div>
+                筛选反链
+              </div>
+            </template>
+            <a-button
+              v-if="moduleOptions.enableBacklinkFilter"
+              type="text"
+              @click.stop="switchFilterShown"
+            >
+              <template #icon>
+                <SyIcon name="iconFilter" />
+              </template>
+            </a-button>
+          </a-tooltip>
         </div>
       </div>
       <div v-if="isBacklinkShown">
@@ -150,6 +166,9 @@ const onBacklinkShownSwitch = onCountClick((count) => {
 const backlinkRenderRef = ref()
 const refreshData = () => {
   backlinkRenderRef.value.refresh()
+}
+const switchFilterShown = () => {
+  backlinkRenderRef.value.switchFilterShown()
 }
 
 const hideHelpers = () => {
