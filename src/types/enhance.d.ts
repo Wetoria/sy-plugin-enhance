@@ -165,6 +165,7 @@ interface LifeLogModule extends EnModule {
   enableMarker: boolean
   showLifeLogFlag: boolean
   showLifeLogTimelineAtProtyleLeft: boolean
+  enablePrivacyMode: boolean
 
   lifelogTypes: {
     fixed: ILifeLogTypeItem

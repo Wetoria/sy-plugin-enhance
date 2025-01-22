@@ -68,6 +68,19 @@
         <a-switch v-model="moduleOptions.showLifeLogTimelineAtProtyleLeft" />
       </template>
     </EnSettingsItem>
+    <EnSettingsItem>
+      <div>
+        隐私模式
+      </div>
+      <template #desc>
+        <div>
+          是否开启隐私保护。开启后，仅展示 LifeLog 的类型，不展示具体内容。
+        </div>
+      </template>
+      <template #opt>
+        <a-switch v-model="moduleOptions.enablePrivacyMode" />
+      </template>
+    </EnSettingsItem>
 
     <EnSettingsItem>
       <div>
@@ -252,6 +265,7 @@ const {
     enableMarker: false,
     showLifeLogFlag: false,
     showLifeLogTimelineAtProtyleLeft: false,
+    enablePrivacyMode: false,
 
     lifelogTypes: null,
   },

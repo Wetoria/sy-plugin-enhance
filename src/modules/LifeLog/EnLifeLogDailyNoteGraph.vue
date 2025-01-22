@@ -35,7 +35,7 @@
             {{
               [
                 record.type,
-                record.content,
+                moduleOptions.enablePrivacyMode ? '' : record.content,
               ].filter(Boolean).join('：')
             }}
           </div>
@@ -81,11 +81,15 @@
 </template>
 
 <script setup lang="ts">
+import { useModule } from '@/modules/EnModuleControl/ModuleProvide'
 import {
   getTargetLifelogRecordsByDateList,
   injectSplitedLifeLogRecords,
 } from '@/modules/LifeLog/LifeLog'
-import { EN_EVENT_BUS_KEYS } from '@/utils/Constants'
+import {
+  EN_EVENT_BUS_KEYS,
+  EN_MODULE_LIST,
+} from '@/utils/Constants'
 import { queryAllByDom } from '@/utils/DOM'
 import { enEventBus } from '@/utils/EnEventBus'
 import dayjs from 'dayjs'
@@ -102,6 +106,10 @@ import { lifelogKeyMap } from './LifeLog'
 const props = defineProps<{
   enProtyleItem: IProtyleObserverItem
 }>()
+
+const {
+  moduleOptions,
+} = useModule<LifeLogModule>(EN_MODULE_LIST.LIFELOG)
 
 const dayList = computed(() => {
   return props.enProtyleItem.dailyNoteValues
