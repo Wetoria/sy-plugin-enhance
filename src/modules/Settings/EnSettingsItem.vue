@@ -164,6 +164,10 @@ const hasOptSlot = computed(() => {
     .arco-select {
       width: min(185px, 100%);
     }
+
+    .arco-select.isSelectedNotebook {
+      min-width: 185px;
+    }
   }
 
   &[data-isMobile="true"] {
