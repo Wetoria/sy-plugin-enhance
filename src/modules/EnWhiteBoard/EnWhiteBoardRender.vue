@@ -86,6 +86,7 @@
             v-bind="connectionLineProps"
           />
         </template>
+        <MiniMap />
       </VueFlow>
       <div
         ref="EnWhiteBoardProtyleUtilAreaRef"
@@ -159,6 +160,7 @@ import {
   useVueFlow,
   VueFlow,
 } from '@vue-flow/core'
+import { MiniMap } from '@vue-flow/minimap'
 import { cloneDeep } from 'lodash-es'
 import {
   computed,
@@ -169,6 +171,7 @@ import {
   watchEffect,
 } from 'vue'
 import EnWhiteBoardNodeProtyle from './EnWhiteBoardNodeProtyle.vue'
+import '@vue-flow/minimap/dist/style.css'
 
 const props = defineProps<{
   data: EnWhiteBoardBlockDomTarget
@@ -482,6 +485,14 @@ watchEffect(() => {
   position: relative;
   display: flex;
   z-index: 0;
+
+  :deep(.vue-flow__minimap) {
+    transform: scale(0.8);
+    transform-origin: bottom right;
+    margin: 16px;
+    border-radius: var(--b3-border-radius);
+    background-color: var(--b3-theme-surface);
+  }
 
   .EnWhiteBoardContentContainer {
     flex: 1;
