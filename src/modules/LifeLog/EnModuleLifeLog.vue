@@ -190,8 +190,12 @@
 
   </EnSettingsTeleportModule>
   <template v-if="moduleOptions.enabled">
-    <template v-if="moduleOptions.showLifeLogTimelineAtProtyleLeft">
-      <RenderControl />
+    <template v-if="useLifeLogDataControl">
+      <EnLifeLogDataControl>
+        <template v-if="moduleOptions.showLifeLogTimelineAtProtyleLeft">
+          <RenderControl />
+        </template>
+      </EnLifeLogDataControl>
     </template>
   </template>
 </template>
@@ -205,6 +209,7 @@ import {
   watchConfigChanged,
   watchConfigEnableStatus,
 } from '@/modules/EnModuleControl/ModuleProvide'
+import EnLifeLogDataControl from '@/modules/LifeLog/EnLifeLogDataControl.vue'
 import EnLifeLogSettingTypeItem from '@/modules/LifeLog/EnLifeLogSettingTypeItem.vue'
 import { markLifeLogBlock } from '@/modules/LifeLog/LifeLog'
 import RenderControl from '@/modules/LifeLog/RenderControl.vue'
@@ -251,6 +256,8 @@ const {
     lifelogTypes: null,
   },
 })
+
+const useLifeLogDataControl = computed(() => moduleOptions.value.showLifeLogTimelineAtProtyleLeft)
 
 // 重置模块数据后为 null，设置默认的 lifelogTypes
 // 不使用默认值的方式，是为了防止每次修改后，如果没有下面列出的类型，会自动添加。
