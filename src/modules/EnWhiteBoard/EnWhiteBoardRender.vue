@@ -55,7 +55,7 @@
         v-model:edges="edges"
         :defaultViewport="embedWhiteBoardConfigData.boardOptions.viewport"
         :zoom-on-scroll="false"
-        snap-to-grid
+        :snap-to-grid="isCtrlPressed"
         :zoom-on-double-click="false"
         :minZoom="0.075"
 
@@ -162,6 +162,8 @@ import {
 import { cloneDeep } from 'lodash-es'
 import {
   computed,
+  onMounted,
+  onUnmounted,
   ref,
   watch,
   watchEffect,
@@ -218,6 +220,31 @@ const hideAllHelper = () => {
 }
 
 const dragging = ref(false)
+const isCtrlPressed = ref(false)
+
+// 添加键盘事件监听
+const handleKeyDown = (event: KeyboardEvent) => {
+  if (event.key === 'Control') {
+    isCtrlPressed.value = true
+  }
+}
+
+const handleKeyUp = (event: KeyboardEvent) => {
+  if (event.key === 'Control') {
+    isCtrlPressed.value = false
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown)
+  window.addEventListener('keyup', handleKeyUp)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown)
+  window.removeEventListener('keyup', handleKeyUp)
+})
+
 const onMoveStart = (event) => {
   console.log('onMoveStart', event)
   dragging.value = true
