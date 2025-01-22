@@ -202,11 +202,13 @@ const levelLabel = computed(() => {
   return map[authModuleData.value.lv] || (authModuleData.value.lv ? `Lv. ${authModuleData.value.lv}` : '--')
 })
 
-const computedLevel = (level: number | string) => {
+const computedLevel = (level: number | string, provideParent = true) => {
   const hasAuth = computed(() => {
     return !level || authModuleData.value.lv >= Number(level) || settings.value.v >= 1
   })
-  provideParentAuth(hasAuth)
+  if (provideParent) {
+    provideParentAuth(hasAuth)
+  }
   return hasAuth
 }
 

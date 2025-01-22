@@ -170,6 +170,19 @@ watchEffect(() => {
   document.body.style.setProperty(`--en-cornell-summary-title-color`, cornellOptions.value.summaryTitleColor || `var(--b3-font-color12)`)
   document.body.style.setProperty(`--en-cornell-summary-font-color`, cornellOptions.value.summaryFontColor || `var(--b3-theme-on-background)`)
 })
+onBeforeUnmount(() => {
+  document.body.style.removeProperty(`--en-cornell-note-bg-color`)
+  document.body.style.removeProperty(`--en-cornell-note-title-color`)
+  document.body.style.removeProperty(`--en-cornell-note-font-color`)
+
+  document.body.style.removeProperty(`--en-cornell-clue-bg-color`)
+  document.body.style.removeProperty(`--en-cornell-clue-title-color`)
+  document.body.style.removeProperty(`--en-cornell-clue-font-color`)
+
+  document.body.style.removeProperty(`--en-cornell-summary-bg-color`)
+  document.body.style.removeProperty(`--en-cornell-summary-title-color`)
+  document.body.style.removeProperty(`--en-cornell-summary-font-color`)
+})
 
 
 const configModalVisible = ref(false)

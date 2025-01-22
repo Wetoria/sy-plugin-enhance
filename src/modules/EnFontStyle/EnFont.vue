@@ -78,13 +78,19 @@
             >
               A
             </span>
-            <a-button
-              type="primary"
-              size="mini"
-              @click="createCommand"
+            <a-tooltip
+              :disabled="!cannotCreateNewFontStyleCommand"
+              content="免费版最多添加一个样式快捷键"
             >
-              添加该选项
-            </a-button>
+              <a-button
+                type="primary"
+                size="mini"
+                :disabled="cannotCreateNewFontStyleCommand"
+                @click="createCommand"
+              >
+                添加该选项
+              </a-button>
+            </a-tooltip>
             <a-button
               size="mini"
               @click="clearCurrentFontStyle"
@@ -388,6 +394,11 @@ watch(() => configgedFontStyleList.value, () => {
 })
 
 const { isFree } = injectAuthStatus()
+
+const cannotCreateNewFontStyleCommand = computed(() => {
+  return isFree.value && configgedFontStyleList.value.length + 1 > 1
+})
+
 const createCommand = () => {
   const color = currentColor.value
   const bgColor = currentBgColor.value
@@ -399,8 +410,8 @@ const createCommand = () => {
     showMessage('已经添加过该样式')
     return
   }
-  const newLen = configgedFontStyleList.value.length + 1
-  if (isFree.value && newLen > 1) {
+
+  if (cannotCreateNewFontStyleCommand.value) {
     showMessage('免费版最多添加一个样式快捷键')
     return
   }

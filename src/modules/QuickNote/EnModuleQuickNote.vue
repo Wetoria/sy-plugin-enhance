@@ -11,13 +11,13 @@
       </div>
       <template #desc>
         <div>
-          选择一键记事创建内容的模式：添加至目标块，或追加至笔记本的日记中。
+          一键记事创建内容的模式：添加至目标块（仅订阅用户可选），或追加至笔记本的日记中。
         </div>
         <div>
-          如果目标为容器块（比如文档），则会插入容器块的末尾。
+          如果目标为容器块（比如文档、列表项、超级块），则会插入容器块的末尾。
         </div>
         <div>
-          如果目标非容器块（比如段落），则会插入目标块的后方。
+          如果目标非容器块（比如段落），则会插入目标块的后方。建议使用时填入容器块或某篇文档的 ID。
         </div>
         <div>
           <a-typography-text type="warning">
@@ -42,7 +42,7 @@
             v-model="moduleOptions.notebookId"
             v-model:targetId="moduleOptions.targetId"
             :notebookList="openedNotebookList"
-            :mode="globalData.quickNoteMode"
+            :mode="quickNoteMode"
           />
         </div>
       </template>
@@ -71,6 +71,9 @@
         <div>
           应用场景：比如关闭了一键记事以后，突然又想追加内容，在延时时间内，不会创建新块，可继续编写之前的内容。
         </div>
+        <div>
+          如果你不想插件自动清理一键记事中的内容，可以将该设置设置的很大，比如 3600 秒（即 1 小时）。
+        </div>
       </template>
       <template #opt>
         <a-input-number
@@ -97,6 +100,7 @@
 import EnBlockAppendModeSelector from '@/components/EnBlockAppendModeSelector.vue'
 import { usePlugin } from '@/main'
 import {
+  injectAuthStatus,
   injectGlobalData,
   useModule,
 } from '@/modules/EnModuleControl/ModuleProvide'
@@ -135,6 +139,15 @@ const {
 
 const globalData = injectGlobalData()
 const openedNotebookList = computed(() => globalData.value.openedNotebookList)
+
+const { computedLevel } = injectAuthStatus()
+const hasAuth = computedLevel(1, false)
+const quickNoteMode = computed(() => {
+  if (hasAuth.value) {
+    return globalData.value.quickNoteMode
+  }
+  return []
+})
 
 const openTargetDoc = () => {
   if (!moduleOptions.value.targetId) {

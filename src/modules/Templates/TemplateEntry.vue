@@ -103,7 +103,9 @@
       </template>
     </EnSettingsItem>
   </EnSettingsTeleportModule>
-  <TemplateCornell />
+  <template v-if="moduleOptions.enabled">
+    <TemplateCornell />
+  </template>
 </template>
 
 <script setup lang="ts">

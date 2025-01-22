@@ -76,6 +76,9 @@
                 <div>
                   追加新块 ({{ isMac ? '⌘ + N' : 'Ctrl + N' }})
                 </div>
+                <div>
+                  可以认为是创建一个新的段落并聚焦。
+                </div>
               </template>
             </a-tooltip>
           </div>

@@ -12,7 +12,7 @@ interface EnAuthStatus {
   isVip: ComputedRef<boolean>
   isPermanent: ComputedRef<boolean>
   levelLabel: ComputedRef<string>
-  computedLevel: (level: number | string) => ComputedRef<boolean>
+  computedLevel: (level: number | string, provideParent?: boolean) => ComputedRef<boolean>
 }
 
 type EnBlockAppendMode = 'All' | 'targetDoc' | 'targetBlock' | 'currentDoc' | 'currentBlock'
