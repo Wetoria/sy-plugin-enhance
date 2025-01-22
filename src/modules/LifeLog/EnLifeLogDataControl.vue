@@ -129,6 +129,7 @@ const loadDataByDateList = async (dateList: Array<string>) => {
   const startDate = firstDateInList.subtract(1, 'day')
 
   const sqlStmt = `
+    -- en query lifelog records\n
     SELECT
       block_id,
       '{' || GROUP_CONCAT('"' || name || '":"' || value || '"') || '}' as json_attributes

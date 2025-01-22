@@ -1,3 +1,3 @@
 export function trimSqlBlank(sql: string) {
-  return sql.replace(/\s+/g, ' ').trim()
+  return sql.replace(/[ \t]+/g, ' ').replace(/\n+/g, ' \n ').trim()
 }
