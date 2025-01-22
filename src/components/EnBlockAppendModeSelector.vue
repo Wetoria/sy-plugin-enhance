@@ -74,7 +74,10 @@
 
 <script setup lang="ts">
 import { isAppendDailyNoteMode } from '@/utils/Block'
-import { computed } from 'vue'
+import {
+  computed,
+  watchEffect,
+} from 'vue'
 
 const props = defineProps<{
   notebookList: Notebook[]
@@ -139,6 +142,14 @@ const options = computed(() => {
 const onSelectChange = () => {
   targetId.value = ''
 }
+
+watchEffect(() => {
+  const isValid = options.value.find((item) => item.id === notebookId.value)
+  if (!isValid) {
+    notebookId.value = options.value[0].id
+    targetId.value = ''
+  }
+})
 </script>
 
 <style lang="scss" scoped>
