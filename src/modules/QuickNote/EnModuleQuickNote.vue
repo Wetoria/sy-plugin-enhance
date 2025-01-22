@@ -160,9 +160,5 @@ const openTargetDoc = () => {
 <style lang="scss" scoped>
 .EnNotebookSelector {
   min-width: 100%;
-
-  :deep(.arco-select.isSelectedNotebook) {
-    min-width: 185px;
-  }
 }
 </style>

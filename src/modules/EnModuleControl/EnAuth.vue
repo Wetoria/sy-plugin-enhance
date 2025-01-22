@@ -62,7 +62,8 @@
         <a-button
           style="width: 100%;"
           type="primary"
-          @click="updateAuthSubscription"
+          :loading="loading"
+          @click="updateByUser"
         >
           更新订阅状态
         </a-button>
@@ -95,6 +96,7 @@ import { request } from '@/api'
 import {
   injectAuth,
   injectAuthStatus,
+  injectSettings,
 } from '@/modules/EnModuleControl/ModuleProvide'
 import {
   EN_EVENT_BUS_KEYS,
@@ -131,11 +133,12 @@ const serverList = [
 ]
 
 const validServer = ref('')
+const getValidServerTimeout = 5
 const getValidServer = async () => {
   for (const server of serverList) {
     try {
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 1000)
+      const timeoutId = setTimeout(() => controller.abort(), 1000 * getValidServerTimeout)
 
       const res = await Promise.race([
         fetch(`${server}/ping`, {
@@ -143,14 +146,13 @@ const getValidServer = async () => {
           signal: controller.signal,
         }),
         new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Timeout')), 1000),
+          setTimeout(() => reject(new Error('Timeout')), 1000 * getValidServerTimeout),
         ),
       ])
 
       clearTimeout(timeoutId)
 
       if ((res as Response)?.ok) {
-        console.log('valid server', server)
         validServer.value = server
         break
       }
@@ -165,6 +167,7 @@ onMounted(() => {
   getValidServer()
   getValidServerFlag = setInterval(() => {
     getValidServer()
+    // 30分钟检查一次可用的服务器
   }, 1000 * 60 * 30)
 })
 onBeforeUnmount(() => {
@@ -214,9 +217,9 @@ const getSiyuanAccount = () => {
 let flag = null
 onMounted(() => {
   getSiyuanAccount()
-  flag = setTimeout(() => {
+  flag = setInterval(() => {
     if (siyuanAccount.value.userId) {
-      clearTimeout(flag)
+      clearInterval(flag)
       return
     }
     getSiyuanAccount()
@@ -226,33 +229,38 @@ onMounted(() => {
 const {
   isPermanent,
 } = injectAuthStatus()
+const settings = injectSettings()
+
+const getT = () => String(Date.now()).slice(0, 10)
+const recordPermanentUser = () => {
+  const data = {
+    userId: siyuanAccount.value.userId,
+    userName: siyuanAccount.value.userName,
+    userNickname: siyuanAccount.value.userNickname,
+    t: `${getT()}${settings.value.v}`,
+  }
+  updateRequest(data, false)
+}
+
+watch(isPermanent, (newIsPermanent) => {
+  if (newIsPermanent) {
+    recordPermanentUser()
+  }
+})
 
 const apiPath = '/siyuan/enhance/auth/update'
 
 const afdOrderNo = ref('')
-const updateAuthSubscription = async (showMessage = true) => {
-  if (isPermanent.value) {
-    enLog('Auth subscription update canceled, current version is permanent')
-    return true
-  }
-  if (!siyuanAccount.value.userId) {
-    enLog('Auth subscription update canceled, userId is empty')
-    if (showMessage) {
-      Notification.error({
-        content: `叶归｜请先登录思源`,
-      })
-    }
-    return
-  }
+const loading = ref(false)
+const updateRequest = async (data, showMessage = true) => {
   try {
-    const data = {
-      userId: siyuanAccount.value.userId,
-      userName: siyuanAccount.value.userName,
-      userNickname: siyuanAccount.value.userNickname,
-      afdOrderNo: afdOrderNo.value,
+    if (!validServer.value) {
+      await getValidServer()
     }
-    const res = await request(`${validServer.value}${apiPath}?data=${JSON.stringify(data)}`, data)
 
+    loading.value = true
+    const res = await request(`${validServer.value}${apiPath}?data=${JSON.stringify(data)}`, data)
+    loading.value = false
     if (!res) {
       enError('Update auth subscription error. response is empty')
       return false
@@ -285,10 +293,62 @@ const updateAuthSubscription = async (showMessage = true) => {
   }
 }
 
-watch([siyuanAccount, validServer], ([newSiyuanAccount, newValidServer], [oldSiyuanAccount]) => {
-  const userChanged = newSiyuanAccount.userId !== oldSiyuanAccount.userId
-  if (userChanged && newValidServer) {
-    updateAuthSubscription(false)
+const updateByUser = async (showMessage = true) => {
+  if (isPermanent.value) {
+    enLog('Auth subscription update canceled, current version is permanent')
+    return true
+  }
+  if (!siyuanAccount.value.userId) {
+    enLog('Auth subscription update canceled, userId is empty')
+    if (showMessage) {
+      Notification.error({
+        content: `叶归｜请先登录思源`,
+      })
+    }
+    return
+  }
+  const data = {
+    userId: siyuanAccount.value.userId,
+    userName: siyuanAccount.value.userName,
+    userNickname: siyuanAccount.value.userNickname,
+    t: `${getT()}100`,
+    afdOrderNo: afdOrderNo.value,
+  }
+  updateRequest(data, showMessage)
+}
+
+const updateOnUserChange = () => {
+  if (!siyuanAccount.value.userId) {
+    // 如果没有用户 id，则不发送情况
+    return
+  }
+  const data = {
+    userId: siyuanAccount.value.userId,
+    userName: siyuanAccount.value.userName,
+    userNickname: siyuanAccount.value.userNickname,
+    t: `${getT()}100`,
+  }
+  updateRequest(data, false)
+}
+
+let autoUpdateFlag = null
+onMounted(() => {
+  autoUpdateFlag = setInterval(() => {
+    updateOnUserChange()
+    // 每小时自动更新一次用户状态
+  }, 1000 * 60 * 60)
+})
+onBeforeUnmount(() => {
+  if (autoUpdateFlag) {
+    clearInterval(autoUpdateFlag)
+  }
+})
+
+// 用户信息变化时，重新更新订阅状态
+watch(siyuanAccount, (newSiyuanAccount, oldSiyuanAccount) => {
+  const userChanged = newSiyuanAccount.userId && newSiyuanAccount.userId !== oldSiyuanAccount.userId
+  if (userChanged) {
+    updateOnUserChange()
   }
 })
 </script>
