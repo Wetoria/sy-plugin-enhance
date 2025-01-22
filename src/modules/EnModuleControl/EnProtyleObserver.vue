@@ -40,6 +40,12 @@ const isEditorProtyle = (protyleEl: HTMLElement) => {
 
 const getDailyNoteInfoByProtyleContentEl = (protyleContentEl: HTMLElement) => {
   const wysiwygEl: HTMLDivElement = protyleContentEl.querySelector('.protyle-wysiwyg')
+  if (!wysiwygEl) {
+    return {
+      isDailyNote: false,
+      dailyNoteValues: {},
+    }
+  }
   const attrs = wysiwygEl?.getAttributeNames() || []
   const containsDailyNoteAttr = attrs.filter((i) => i.startsWith('custom-dailynote'))
   const isDailyNote = !!containsDailyNoteAttr.length
@@ -47,6 +53,10 @@ const getDailyNoteInfoByProtyleContentEl = (protyleContentEl: HTMLElement) => {
   containsDailyNoteAttr.forEach((i) => {
     dailyNoteValues[i] = wysiwygEl?.getAttribute(i) || ''
   })
+  if (isDailyNote) {
+    protyleContentEl.dataset.en_is_dailynote = 'true'
+    wysiwygEl.dataset.en_is_dailynote = 'true'
+  }
   return {
     isDailyNote,
     dailyNoteValues,
@@ -77,14 +87,6 @@ const recordProtyleContentOnInit = () => {
       dailyNoteValues,
     } = getDailyNoteInfoByProtyleContentEl(protyleContentEl)
 
-    if (isDailyNote) {
-      protyleContentEl.dataset.en_is_dailynote = 'true'
-
-      const wysiwygEl: HTMLDivElement = protyleContentEl.querySelector('.protyle-wysiwyg')
-      if (wysiwygEl) {
-        wysiwygEl.dataset.en_is_dailynote = 'true'
-      }
-    }
 
     const docId = protyleTitleEl.dataset.nodeId
     globalWindowData.value.protyleList.push({

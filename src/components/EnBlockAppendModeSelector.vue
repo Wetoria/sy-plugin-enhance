@@ -146,7 +146,7 @@ const onSelectChange = () => {
 watchEffect(() => {
   const isValid = options.value.find((item) => item.id === notebookId.value)
   if (!isValid) {
-    notebookId.value = options.value[0].id
+    notebookId.value = options.value[0]?.id
     targetId.value = ''
   }
 })

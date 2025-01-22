@@ -319,7 +319,7 @@ const openAuthModal = () => {
     background-color: rgba(0, 0, 0, 0.2);
   }
   .arco-drawer {
-    max-width: 520px;
+    max-width: 560px;
     left: unset;
     right: 0;
   }

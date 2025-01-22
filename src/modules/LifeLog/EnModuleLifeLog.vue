@@ -68,6 +68,27 @@
         <a-switch v-model="moduleOptions.showLifeLogTimelineAtProtyleLeft" />
       </template>
     </EnSettingsItem>
+
+    <EnSettingsItem>
+      <div>
+        其他功能说明
+      </div>
+      <template #desc>
+        <div>
+          插件会增加插入时间的 / 菜单选项，可以快速插入当前时间。格式：00:00。
+        </div>
+        <div>可输入下方选项进行过滤，建议使用：/df </div>
+        <div class="flexColumn">
+          <div>- add current time</div>
+          <div>- insert current time</div>
+          <div>- 插入当前时间</div>
+          <div>- adt</div>
+          <div>- df now</div>
+          <div>- now</div>
+        </div>
+      </template>
+    </EnSettingsItem>
+
     <EnSettingsItem>
       <div>
         LifeLog 类型
@@ -181,6 +202,7 @@ import EnDivider from '@/components/EnDivider.vue'
 import { usePlugin } from '@/main'
 import {
   useModule,
+  watchConfigChanged,
   watchConfigEnableStatus,
 } from '@/modules/EnModuleControl/ModuleProvide'
 import EnLifeLogSettingTypeItem from '@/modules/LifeLog/EnLifeLogSettingTypeItem.vue'
@@ -230,6 +252,8 @@ const {
   },
 })
 
+// 重置模块数据后为 null，设置默认的 lifelogTypes
+// 不使用默认值的方式，是为了防止每次修改后，如果没有下面列出的类型，会自动添加。
 watchEffect(() => {
   if (!moduleOptions.value.lifelogTypes) {
     moduleOptions.value.lifelogTypes = {
@@ -333,26 +357,29 @@ const flatLifelogTypes = computed(() => {
   ]
 })
 
-watchEffect((onCleanup) => {
-  const styleDomRef = useRegisterStyle('en-lifelog-style')
-  styleDomRef.value.textContent = `
-  html[data-en_enabled_module~="EnableLifelogTag"] {
-    ${flatLifelogTypes.value.map((i) => `
-      --en-lifelog-color-type-${i.type}: ${i.color};
+watchConfigChanged(
+  () => moduleOptions.value.lifelogTypes,
+  () => {
+    const styleDomRef = useRegisterStyle('en-lifelog-style')
+    styleDomRef.value.textContent = `
+    html[data-en_enabled_module~="EnableLifelogTag"] {
+      ${flatLifelogTypes.value.map((i) => `
+        --en-lifelog-color-type-${i.type}: ${i.color};
 
-      [data-type="NodeParagraph"] {
-        &[custom-lifelog-type="${i.type}"] {
-          --en-lifelog-border-color: ${i.color};
+        [data-type="NodeParagraph"] {
+          &[custom-lifelog-type="${i.type}"] {
+            --en-lifelog-border-color: ${i.color};
+          }
         }
-      }
-    `).join('')}
-  }
-  `
-  onCleanup(() => {
-    styleDomRef.value.textContent = ''
-    styleDomRef.value.remove()
-  })
-})
+      `).join('')}
+    }
+    `
+    return () => {
+      styleDomRef.value.textContent = ''
+      styleDomRef.value.remove()
+    }
+  },
+)
 
 
 const handler = (event: Event) => {
