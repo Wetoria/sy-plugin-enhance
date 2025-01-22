@@ -150,7 +150,6 @@ const getValidServer = async () => {
       clearTimeout(timeoutId)
 
       if ((res as Response)?.ok) {
-        console.log('valid server', server)
         validServer.value = server
         break
       }
