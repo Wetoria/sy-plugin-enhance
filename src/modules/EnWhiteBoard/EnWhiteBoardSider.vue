@@ -36,8 +36,47 @@
         }"
         @moving="calcWidthEnough"
       >
-        <div>
-          <slot></slot>
+        <div class="SiderContent">
+          <template v-if="pos === 'Right' && showSettingsDrawer">
+            <div class="WhiteBoardSettings">
+              <div class="SettingsTitle">
+                白板设置
+              </div>
+              <div class="SettingsItem">
+                <div class="ItemTitle">
+                  白板背景样式
+                </div>
+                <div class="ItemDesc">
+                  选择白板的背景样式
+                </div>
+                <div class="ItemOpt">
+                  <a-select
+                    v-model="embedWhiteBoardConfigData.boardOptions.backgroundVariant"
+                    placeholder="请选择背景样式"
+                  >
+                    <a-option value="dots">
+                      点状
+                    </a-option>
+                    <a-option value="lines">
+                      网格
+                    </a-option>
+                    <a-option value="none">
+                      无
+                    </a-option>
+                  </a-select>
+                  <div
+                    class="ResetButton"
+                    @click="resetBackgroundToGlobal"
+                  >
+                    重置为全局设置
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+          <template v-else>
+            <slot></slot>
+          </template>
         </div>
       </a-resize-box>
     </div>
@@ -52,7 +91,13 @@
       <a-button-group
         class="ButtonGroup"
       >
-        <slot name="SiderBottomButtonGroupBefore" />
+        <slot name="SiderBottomButtonGroupBefore">
+          <template v-if="pos === 'Right' && needSider">
+            <a-button @click="showSettingsDrawer = true">
+              <SyIcon name="iconSettings" />
+            </a-button>
+          </template>
+        </slot>
         <a-button
           v-if="needSider"
           @click="changeSiderShown()"
@@ -67,7 +112,11 @@
 
 <script setup lang="ts">
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
-import { EnWhiteBoardConfig } from '@/modules/EnWhiteBoard/EnWhiteBoard'
+import {
+  EnWhiteBoardConfig,
+  useWhiteBoardModule,
+
+} from '@/modules/EnWhiteBoard/EnWhiteBoard'
 import {
   computed,
   onMounted,
@@ -79,6 +128,7 @@ const props = defineProps<{
   needSider: boolean
   pos: 'Left' | 'Right'
   embedBlockOptions: EnWhiteBoardConfig['embedOptions']['id']
+  embedWhiteBoardConfigData: EnWhiteBoardConfig
 }>()
 
 const isLeft = computed(() => props.pos === 'Left')
@@ -156,6 +206,14 @@ const folderIconName = computed(() => {
     props.embedBlockOptions[`Sider${props.pos}Show`] ? 0 : 1
   ]
 })
+
+const showSettingsDrawer = ref(false)
+
+const { moduleOptions: moduleWhiteBoardOptions } = useWhiteBoardModule()
+
+const resetBackgroundToGlobal = () => {
+  props.embedWhiteBoardConfigData.boardOptions.backgroundVariant = moduleWhiteBoardOptions.value.backgroundVariant
+}
 
 </script>
 
@@ -383,6 +441,60 @@ const folderIconName = computed(() => {
 
   .ToolbarArea:not(.showAngle)::after {
     opacity: 0;
+  }
+}
+
+.SiderContent {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.WhiteBoardSettings {
+  padding: var(--en-gap);
+
+  .SettingsTitle {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: var(--en-gap);
+    padding-bottom: var(--en-gap);
+    border-bottom: 1px solid var(--b3-border-color);
+  }
+
+  .SettingsItem {
+    margin-bottom: var(--en-gap);
+
+    .ItemTitle {
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+
+    .ItemDesc {
+      color: var(--b3-theme-on-surface);
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+
+    .ItemOpt {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+
+      .ResetButton {
+        color: var(--b3-theme-error);
+        font-size: 12px;
+        cursor: pointer;
+        padding: 4px;
+        border: 1px solid var(--b3-theme-error);
+        text-align: center;
+        transition: all 0.15s ease-in-out;
+
+        &:hover {
+          color: var(--b3-theme-error);
+          background-color: var(--b3-theme-error-light);
+        }
+      }
+    }
   }
 }
 </style>

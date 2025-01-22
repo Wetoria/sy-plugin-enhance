@@ -6,6 +6,7 @@
     <EnWhiteBoardSider
       :needSider="needSider"
       :embedBlockOptions="embedBlockOptions"
+      :embedWhiteBoardConfigData="embedWhiteBoardConfigData"
       pos="Left"
     >
       <template #SiderTopButtonGroupBefore>
@@ -89,15 +90,26 @@
             v-bind="connectionLineProps"
           />
         </template>
-        <Background
-          variant="dots"
-          pattern-color="var(--b3-border-color)"
-          :gap="48"
-          :size="2.5"
-          :offset="{
-            x: 0, y: 0,
-          }"
-        />
+        <template v-if="embedWhiteBoardConfigData.boardOptions.backgroundVariant !== 'none'">
+          <!-- 网格背景 -->
+          <Background
+            v-if="embedWhiteBoardConfigData.boardOptions.backgroundVariant === 'lines'"
+            variant="lines"
+            pattern-color="var(--b3-border-color)"
+            :gap="48"
+            :size="1"
+            :offset="[0, 0]"
+          />
+          <!-- 点状背景 -->
+          <Background
+            v-if="embedWhiteBoardConfigData.boardOptions.backgroundVariant === 'dots'"
+            variant="dots"
+            pattern-color="var(--b3-border-color)"
+            :gap="48"
+            :size="2.5"
+            :offset="[0, 0]"
+          />
+        </template>
         <MiniMap
           :zoomable="true"
           :pannable="true"
@@ -121,6 +133,7 @@
     <EnWhiteBoardSider
       :needSider="needSider"
       :embedBlockOptions="embedBlockOptions"
+      :embedWhiteBoardConfigData="embedWhiteBoardConfigData"
       pos="Right"
     >
       <template #SiderTopButtonGroupBefore>
@@ -237,6 +250,35 @@ const edges = computed(() => embedWhiteBoardConfigData.value?.boardOptions.edges
 const EnWhiteBoardProtyleUtilAreaRef = ref<HTMLElement | null>(null)
 
 const EnWhiteBoardRenderContainerRef = ref<HTMLElement | null>(null)
+
+// 计算右侧按钮组的宽度
+const rightButtonGroupWidth = ref(0)
+const updateRightButtonGroupWidth = () => {
+  const rightButtonGroup = EnWhiteBoardRenderContainerRef.value?.querySelector('.EnWhiteBoardSider.Right .ButtonGroup')
+  const settingsButton = rightButtonGroup?.querySelector('.arco-btn') as HTMLElement
+  if (rightButtonGroup) {
+    // 减去设置按钮的宽度，因为它在计算偏移时不需要考虑
+    rightButtonGroupWidth.value = rightButtonGroup.clientWidth - (settingsButton?.offsetWidth || 0)
+  }
+}
+
+// 监听右侧按钮组的变化
+onMounted(() => {
+  updateRightButtonGroupWidth()
+  const resizeObserver = new ResizeObserver(updateRightButtonGroupWidth)
+  const rightButtonGroup = EnWhiteBoardRenderContainerRef.value?.querySelector('.EnWhiteBoardSider.Right .ButtonGroup')
+  if (rightButtonGroup) {
+    resizeObserver.observe(rightButtonGroup)
+  }
+  onUnmounted(() => {
+    resizeObserver.disconnect()
+  })
+})
+
+// 计算是否需要偏移
+const needMiniMapOffset = computed(() => {
+  return embedBlockOptions.value?.SiderRightWidth < rightButtonGroupWidth.value && props.needSider
+})
 
 const hideAllHelper = () => {
   hideHelperByTarget(EnWhiteBoardProtyleUtilAreaRef.value)
@@ -525,7 +567,9 @@ const onNodeMinimapClick = (event: NodeMouseEvent) => {
   :deep(.vue-flow__minimap) {
     transform: scale(0.8);
     transform-origin: bottom right;
-    margin: 16px;
+    margin: var(--en-gap);
+    margin-bottom: v-bind("needMiniMapOffset ? 'calc(var(--en-gap) * 2 + 24px + var(--en-gap))' : 'var(--en-gap)'");
+    transition: margin-bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border-radius: var(--b3-border-radius);
     background-color: var(--b3-theme-surface);
     border: 1px solid var(--b3-border-color);
