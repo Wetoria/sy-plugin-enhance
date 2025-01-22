@@ -98,7 +98,12 @@
             x: 0, y: 0,
           }"
         />
-        <MiniMap />
+        <MiniMap
+          :zoomable="true"
+          :pannable="true"
+          maskColor="transparent"
+          @nodeClick="onNodeMinimapClick"
+        />
       </VueFlow>
       <div
         ref="EnWhiteBoardProtyleUtilAreaRef"
@@ -169,6 +174,7 @@ import {
   MarkerType,
   NodeAddChange,
   NodeChange,
+  NodeMouseEvent,
   pointToRendererPoint,
   useVueFlow,
   VueFlow,
@@ -219,6 +225,7 @@ const {
 
   viewport,
   onViewportChange,
+  setCenter,
 } = useVueFlow({
   connectOnClick: true,
 })
@@ -495,6 +502,16 @@ watchEffect(() => {
   console.log('nodes is ', nodes.value)
   console.log('edges is ', edges.value)
 })
+
+const onNodeMinimapClick = (event: NodeMouseEvent) => {
+  const targetNode = findNode(event.node.id)
+  if (!targetNode) return
+
+  const x = Number(targetNode.position.x) + (Number(targetNode.width) || 0) / 2
+  const y = Number(targetNode.position.y) + (Number(targetNode.height) || 0) / 2
+
+  setCenter(x, y, { duration: 800 })
+}
 </script>
 
 <style lang="scss" scoped>
@@ -511,6 +528,33 @@ watchEffect(() => {
     margin: 16px;
     border-radius: var(--b3-border-radius);
     background-color: var(--b3-theme-surface);
+    border: 1px solid var(--b3-border-color);
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+    opacity: 0.85;
+
+    &:hover {
+      opacity: 1;
+    }
+
+    .vue-flow__minimap-mask {
+      fill: var(--b3-theme-background);
+      opacity: 0.4;
+      pointer-events: none;
+      stroke: var(--b3-theme-primary);
+      stroke-width: 2;
+    }
+
+    .vue-flow__minimap-node {
+      fill: var(--b3-theme-primary);
+      stroke: var(--b3-theme-on-surface);
+      stroke-width: 1;
+      cursor: pointer;
+      opacity: 0.6;
+
+      &:hover {
+        opacity: 1;
+      }
+    }
   }
 
   :deep(.vue-flow__background) {
