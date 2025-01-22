@@ -120,6 +120,59 @@ const expiration = computed(() => {
   return authModuleData.value.expiration ? dayjs(authModuleData.value.expiration).format('YYYY-MM-DD HH:mm') : '--'
 })
 
+const server1 = 'https://server.wetoria.vip'
+const server2 = 'https://api.wetoria.vip'
+const server3 = 'http://wetoria.cn:2847'
+
+const serverList = [
+  server3,
+  server1,
+  server2,
+]
+
+const validServer = ref('')
+const getValidServer = async () => {
+  for (const server of serverList) {
+    try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 1000)
+
+      const res = await Promise.race([
+        fetch(`${server}/ping`, {
+          method: 'POST',
+          signal: controller.signal,
+        }),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Timeout')), 1000),
+        ),
+      ])
+
+      clearTimeout(timeoutId)
+
+      if ((res as Response)?.ok) {
+        console.log('valid server', server)
+        validServer.value = server
+        break
+      }
+    } catch (err) {
+      validServer.value = ''
+      continue
+    }
+  }
+}
+let getValidServerFlag = null
+onMounted(() => {
+  getValidServer()
+  getValidServerFlag = setInterval(() => {
+    getValidServer()
+  }, 1000 * 60 * 30)
+})
+onBeforeUnmount(() => {
+  if (getValidServerFlag) {
+    clearInterval(getValidServerFlag)
+  }
+})
+
 
 const authModalVisible = ref(false)
 const openAuthModal = () => {
@@ -174,6 +227,8 @@ const {
   isPermanent,
 } = injectAuthStatus()
 
+const apiPath = '/siyuan/enhance/auth/update'
+
 const afdOrderNo = ref('')
 const updateAuthSubscription = async (showMessage = true) => {
   if (isPermanent.value) {
@@ -196,7 +251,7 @@ const updateAuthSubscription = async (showMessage = true) => {
       userNickname: siyuanAccount.value.userNickname,
       afdOrderNo: afdOrderNo.value,
     }
-    const res = await request(`https://api.wetoria.vip/siyuan/enhance/auth/update?data=${JSON.stringify(data)}`, data)
+    const res = await request(`${validServer.value}${apiPath}?data=${JSON.stringify(data)}`, data)
 
     if (!res) {
       enError('Update auth subscription error. response is empty')
@@ -230,9 +285,9 @@ const updateAuthSubscription = async (showMessage = true) => {
   }
 }
 
-watch(siyuanAccount, (newValue, oldValue) => {
-  const userChanged = newValue.userId !== oldValue.userId
-  if (userChanged) {
+watch([siyuanAccount, validServer], ([newSiyuanAccount, newValidServer], [oldSiyuanAccount]) => {
+  const userChanged = newSiyuanAccount.userId !== oldSiyuanAccount.userId
+  if (userChanged && newValidServer) {
     updateAuthSubscription(false)
   }
 })
