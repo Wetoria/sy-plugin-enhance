@@ -129,46 +129,70 @@ const loadDataByDateList = async (dateList: Array<string>) => {
   const startDate = firstDateInList.subtract(1, 'day')
 
   const sqlStmt = `
-    -- en query lifelog records\n
+    /* en query lifelog records */
     SELECT
-      block_id,
-      '{' || GROUP_CONCAT('"' || name || '":"' || value || '"') || '}' as json_attributes
+      *
     FROM
       attributes
     WHERE
       block_id IN (
-        SELECT block_id
-        FROM attributes
-        WHERE name = '${lifelogKeyMap.type}'
-      )
-      AND block_id IN (
-        SELECT a.block_id
-        FROM attributes a
-        WHERE (
-          EXISTS (
-            SELECT 1 FROM attributes b
-            WHERE b.block_id = a.block_id
-            AND b.name = '${lifelogKeyMap.date}'
-            AND b.value >= '${startDate.format(lifelogKeyMap.YYYY_MM_DD)}'
-            AND b.value <= '${endDate.format(lifelogKeyMap.YYYY_MM_DD)}'
-          )
+        select
+          a.block_id
+        from
+          attributes a
+        where (
+          a.name = '${lifelogKeyMap.date}'
+          AND a.value >= '${startDate.format(lifelogKeyMap.YYYY_MM_DD)}'
+          AND a.value <= '${endDate.format(lifelogKeyMap.YYYY_MM_DD)}'
         ) OR (
-          NOT EXISTS (
-            SELECT 1 FROM attributes b
-            WHERE b.block_id = a.block_id
-            AND b.name = '${lifelogKeyMap.date}'
-          )
-          AND a.name = '${lifelogKeyMap.created}'
+          a.name = '${lifelogKeyMap.created}'
           AND a.value >= '${startDate.format(lifelogKeyMap.YYYY_MM_DD_00_00_00)}'
           AND a.value <= '${endDate.format(lifelogKeyMap.YYYY_MM_DD_23_59_59)}'
         )
       )
-    GROUP BY
-      block_id
     limit 9999999
   `
 
   const res = await sql(trimSqlBlank(sqlStmt))
+
+  const groupedRes = {}
+  res.forEach((item) => {
+    const blockId = item.block_id
+    if (!groupedRes[blockId]) {
+      groupedRes[blockId] = []
+    }
+    groupedRes[blockId].push(item)
+  })
+
+  const tempResult = []
+  Object.keys(groupedRes).forEach((blockId) => {
+    const blockAttrList = groupedRes[blockId]
+    const jsonRecord = {}
+    blockAttrList.forEach((item) => {
+      jsonRecord[item.name] = item.value
+    })
+
+    let valid = false
+    // 新版本数据全都采用 date 字段
+    if (jsonRecord[lifelogKeyMap.date]) {
+      if (jsonRecord[lifelogKeyMap.date] >= startDate.format(lifelogKeyMap.YYYY_MM_DD)
+        && jsonRecord[lifelogKeyMap.date] <= endDate.format(lifelogKeyMap.YYYY_MM_DD)) {
+        valid = true
+      }
+    } else {
+      // 如果没有 date 字段，则是旧版本数据
+      if (jsonRecord[lifelogKeyMap.created] >= startDate.format(lifelogKeyMap.YYYY_MM_DD_00_00_00)
+        && jsonRecord[lifelogKeyMap.created] <= endDate.format(lifelogKeyMap.YYYY_MM_DD_23_59_59)) {
+        valid = true
+      }
+    }
+    if (valid) {
+      tempResult.push({
+        block_id: blockId,
+        jsonRecord,
+      })
+    }
+  })
 
   if (!res) {
     return
@@ -178,8 +202,8 @@ const loadDataByDateList = async (dateList: Array<string>) => {
     record: ILifeLog
     endTime: string
     date: string
-  }[] = res.map((item) => {
-    const jsonRecord = JSON.parse(item.json_attributes) as ILifeLog
+  }[] = tempResult.map((item) => {
+    const jsonRecord = item.jsonRecord as ILifeLog
 
     let endTime = jsonRecord[lifelogKeyMap.time]
     const date = getDate(jsonRecord)
