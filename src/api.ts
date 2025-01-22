@@ -6,6 +6,7 @@
  * API 文档见 [API_zh_CN.md](https://github.com/siyuan-note/siyuan/blob/master/API_zh_CN.md)
  */
 
+import { trimSqlBlank } from '@/utils/sql'
 import {
   fetchSyncPost,
   IWebSocketData,
@@ -363,7 +364,7 @@ export async function batchGetBlockAttrs(
 
 export async function sql(sql: string): Promise<any[]> {
   const sqldata = {
-    stmt: sql,
+    stmt: trimSqlBlank(sql),
   }
   const url = "/api/query/sql"
   return request(url, sqldata)
