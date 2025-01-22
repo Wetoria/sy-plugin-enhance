@@ -162,6 +162,7 @@ export enum EN_EVENT_BUS_KEYS {
   SETTINGS_OPEN_ON_ENTRY = 'settings:openOnEntry',
   AUTH_OPEN_MODAL = 'auth:openModal',
   CREATE_TODAY_DAILY_NOTE_MOBILE = 'createTodayDailyNote_mobile',
+  LIFELOG_LOAD_RECORDS_BY_DATE_LIST = 'LIFELOG_LOAD_RECORDS_BY_DATE_LIST',
 }
 
 

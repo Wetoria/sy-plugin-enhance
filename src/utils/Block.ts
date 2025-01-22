@@ -14,7 +14,7 @@ import {
 } from '@/utils/Siyuan'
 import { showMessage } from 'siyuan'
 
-export function isAppendDailyNoteMode(notebookId: string) {
+export function isAppendDailyNoteMode(notebookId: string = '') {
   return !notebookId.startsWith('target') && !notebookId.startsWith('current')
 }
 
