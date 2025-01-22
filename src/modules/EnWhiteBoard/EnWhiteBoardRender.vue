@@ -56,11 +56,14 @@
         :defaultViewport="embedWhiteBoardConfigData.boardOptions.viewport"
         :zoom-on-scroll="false"
         :snap-to-grid="isCtrlPressed"
+        :snapGrid="[48, 48]"
         :zoom-on-double-click="false"
         :minZoom="0.075"
-
+        :translateExtent="[[-Infinity, -Infinity], [Infinity, Infinity]]"
         :edge-updater-radius="24"
         :connectionRadius="100"
+        :fitView="false"
+        :panOnDrag="true"
         @nodeDragStart="onMoveStart"
         @nodeDrag="onMove"
         @nodeDragStop="onMoveEnd"
@@ -86,6 +89,15 @@
             v-bind="connectionLineProps"
           />
         </template>
+        <Background
+          variant="dots"
+          pattern-color="var(--b3-border-color)"
+          :gap="48"
+          :size="2.5"
+          :offset="{
+            x: 0, y: 0,
+          }"
+        />
         <MiniMap />
       </VueFlow>
       <div
@@ -149,6 +161,7 @@ import {
   hideHelperByTarget,
   SyDomNodeTypes,
 } from '@/utils/Siyuan'
+import { Background } from '@vue-flow/background'
 import {
   Edge,
   EdgeAddChange,
@@ -249,14 +262,20 @@ onUnmounted(() => {
 })
 
 const onMoveStart = (event) => {
-  console.log('onMoveStart', event)
+  if (event.target.classList.contains('nodrag')) {
+    return
+  }
   dragging.value = true
 }
 const onMove = (event) => {
-  console.log('onMove', event)
+  if (event.target.classList.contains('nodrag')) {
+
+  }
 }
 const onMoveEnd = (event) => {
-  console.log('onMoveEnd', event)
+  if (event.target.classList.contains('nodrag')) {
+    return
+  }
   dragging.value = false
 }
 
@@ -492,6 +511,25 @@ watchEffect(() => {
     margin: 16px;
     border-radius: var(--b3-border-radius);
     background-color: var(--b3-theme-surface);
+  }
+
+  :deep(.vue-flow__background) {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    will-change: transform;
+    transform: none !important;
+    backface-visibility: hidden;
+    perspective: 1000;
+    z-index: 0;
+  }
+
+  :deep(.vue-flow__pane) {
+    z-index: 1;
+    transform-style: preserve-3d;
   }
 
   .EnWhiteBoardContentContainer {
