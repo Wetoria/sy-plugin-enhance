@@ -60,9 +60,9 @@ const moduleOrder = [
   EN_MODULE_LIST.DAILY_NOTE,
   EN_MODULE_LIST.QUICK_NOTE,
   'EnComment',
-  EN_MODULE_LIST.EN_WHITE_BOARD,
   'EnBottomBacklink',
   'EnLifeLog',
+  EN_MODULE_LIST.EN_WHITE_BOARD,
 ]
 
 // 将模块进行排序，用于固定在设置页面的顺序
