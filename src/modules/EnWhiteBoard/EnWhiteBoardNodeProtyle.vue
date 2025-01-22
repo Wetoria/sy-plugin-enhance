@@ -219,17 +219,20 @@ const afterProtyleLoad = (protyle: Protyle) => {
 
 const captureMouseDown = (event: MouseEvent) => {
   const target = event.target as HTMLElement
-  console.log('captureMouseDown', event)
   const mainElement = target.closest('.EnWhiteBoardNodeProtyleMain')
   if (mainElement && !mainElement.classList.contains('nodrag')) {
-    event.stopImmediatePropagation()
-    const newEvent = new MouseEvent('mousedown', {
-      bubbles: true,
-      cancelable: true,
-      view: window,
-      ...event,
-    })
-    mainElement.parentElement?.dispatchEvent(newEvent)
+    event.stopPropagation()
+    containerRef.value?.dispatchEvent(
+      new MouseEvent('mousedown', {
+        bubbles: true,
+        cancelable: true,
+        view: window,
+        clientX: event.clientX,
+        clientY: event.clientY,
+        screenX: event.screenX,
+        screenY: event.screenY,
+      }),
+    )
   }
 }
 
