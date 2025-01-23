@@ -147,6 +147,7 @@ export interface EnWhiteBoardConfig {
     viewport: ViewportTransform
 
     backgroundVariant: 'dots' | 'lines' | 'none'
+    useCustomBackground: boolean
   }
 }
 
@@ -211,6 +212,7 @@ const defaultWhiteBoardConfig: EnWhiteBoardConfig = {
       zoom: 1,
     },
     backgroundVariant: 'none',
+    useCustomBackground: false,
   },
 }
 
@@ -234,12 +236,9 @@ async function createWhiteBoardConfig({
   whiteBoardName: string
   embedNodeId?: string
 }) {
-  const { moduleOptions } = useWhiteBoardModule()
   const newDefaultConfig = cloneDeep(defaultWhiteBoardConfig)
   newDefaultConfig.id = whiteBoardId
   newDefaultConfig.name = whiteBoardName
-  // 继承全局背景设置
-  newDefaultConfig.boardOptions.backgroundVariant = moduleOptions.value.backgroundVariant
 
   if (embedNodeId) {
     newDefaultConfig.embedOptions[embedNodeId] = getDefaultEmbedOptions()

@@ -248,7 +248,14 @@ const {
 })
 
 // 计算背景变体
-const backgroundVariant = computed(() => embedWhiteBoardConfigData.value.boardOptions.backgroundVariant)
+const backgroundVariant = computed(() => {
+  // 如果使用独立背景设置，返回白板自己的设置
+  if (embedWhiteBoardConfigData.value?.boardOptions.useCustomBackground) {
+    return embedWhiteBoardConfigData.value.boardOptions.backgroundVariant
+  }
+  // 否则返回全局设置
+  return moduleWhiteBoardOptions.value.backgroundVariant
+})
 
 const nodes = computed(() => embedWhiteBoardConfigData.value?.boardOptions.nodes)
 const edges = computed(() => embedWhiteBoardConfigData.value?.boardOptions.edges)

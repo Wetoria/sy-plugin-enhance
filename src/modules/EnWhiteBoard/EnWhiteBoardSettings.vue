@@ -12,8 +12,9 @@
       </div>
       <div class="ItemOpt">
         <a-select
-          v-model="embedWhiteBoardConfigData.boardOptions.backgroundVariant"
+          :model-value="embedWhiteBoardConfigData.boardOptions.backgroundVariant"
           placeholder="请选择背景样式"
+          @change="updateBackgroundVariant"
         >
           <a-option value="dots">
             点状
@@ -51,7 +52,13 @@ const { moduleOptions: moduleWhiteBoardOptions } = useWhiteBoardModule()
 const { embedWhiteBoardConfigData } = getWhiteBoardConfigRefById(props.whiteBoardId, props.nodeId)
 
 const resetBackgroundToGlobal = () => {
+  embedWhiteBoardConfigData.value.boardOptions.useCustomBackground = false
   embedWhiteBoardConfigData.value.boardOptions.backgroundVariant = moduleWhiteBoardOptions.value.backgroundVariant
+}
+
+const updateBackgroundVariant = (value: 'dots' | 'lines' | 'none') => {
+  embedWhiteBoardConfigData.value.boardOptions.useCustomBackground = true
+  embedWhiteBoardConfigData.value.boardOptions.backgroundVariant = value
 }
 </script>
 
