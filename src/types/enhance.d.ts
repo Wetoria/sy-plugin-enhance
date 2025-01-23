@@ -186,9 +186,9 @@ interface EnModuleParagraphBlock extends EnModule {
   blockTimeFontSize: number
   defaultBlockType: 'created' | 'updated'
 
-  enableBlockLock: boolean
-  autoLockTimeDiff: number
-  autoCheckTime: number
+  // enableBlockLock: boolean
+  // autoLockTimeDiff: number
+  // autoCheckTime: number
 }
 
 

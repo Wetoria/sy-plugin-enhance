@@ -124,7 +124,7 @@ const expiration = computed(() => {
 
 const server1 = 'https://server.wetoria.vip'
 const server2 = 'https://api.wetoria.vip'
-const server3 = 'http://wetoria.cn:2847'
+const server3 = 'http://wetoria.cn'
 
 const serverList = [
   server3,

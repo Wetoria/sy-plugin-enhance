@@ -24,6 +24,29 @@
         />
       </template>
     </EnSettingsItem>
+    <EnSettingsItem>
+      <div>
+        其他功能说明
+      </div>
+      <template #desc>
+        <div>
+          <a-space>
+            <template v-if="commandAdded">
+              <icon-check-circle style="color: rgb(var(--success-6))" />
+            </template>
+            <template v-else>
+              <icon-close-circle style="color: rgb(var(--danger-6))" />
+            </template>
+            <a-typography-text>
+              前/后一篇日记快捷键
+            </a-typography-text>
+          </a-space>
+          <div>
+            默认：⌥⌘↑/⌥⌘↓，请在思源快捷键设置中进行自定义配置
+          </div>
+        </div>
+      </template>
+    </EnSettingsItem>
   </EnSettingsTeleportModule>
 </template>
 
@@ -57,6 +80,7 @@ import {
   computed,
   onBeforeUnmount,
   onMounted,
+  ref,
 } from 'vue'
 
 const plugin = usePlugin()
@@ -143,15 +167,18 @@ const commands = [
 //   }
 // })
 
+const commandAdded = ref(false)
 onMounted(() => {
   commands.forEach((command) => {
     addCommand(command)
   })
+  commandAdded.value = true
 })
 onBeforeUnmount(() => {
   commands.forEach((command) => {
     removeCommand(command)
   })
+  commandAdded.value = false
 })
 </script>
 
