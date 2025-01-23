@@ -37,46 +37,7 @@
         @moving="calcWidthEnough"
       >
         <div class="SiderContent">
-          <template v-if="pos === 'Right' && showSettingsDrawer">
-            <div class="WhiteBoardSettings">
-              <div class="SettingsTitle">
-                白板设置
-              </div>
-              <div class="SettingsItem">
-                <div class="ItemTitle">
-                  白板背景样式
-                </div>
-                <div class="ItemDesc">
-                  选择白板的背景样式
-                </div>
-                <div class="ItemOpt">
-                  <a-select
-                    v-model="embedWhiteBoardConfigData.boardOptions.backgroundVariant"
-                    placeholder="请选择背景样式"
-                  >
-                    <a-option value="dots">
-                      点状
-                    </a-option>
-                    <a-option value="lines">
-                      网格
-                    </a-option>
-                    <a-option value="none">
-                      无
-                    </a-option>
-                  </a-select>
-                  <div
-                    class="ResetButton"
-                    @click="resetBackgroundToGlobal"
-                  >
-                    重置为全局设置
-                  </div>
-                </div>
-              </div>
-            </div>
-          </template>
-          <template v-else>
-            <slot></slot>
-          </template>
+          <slot></slot>
         </div>
       </a-resize-box>
     </div>

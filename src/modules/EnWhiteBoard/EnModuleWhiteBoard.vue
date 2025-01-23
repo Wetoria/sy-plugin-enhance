@@ -332,11 +332,11 @@ watch(() => moduleOptions.value.enabled, () => {
 })
 
 // 监听全局背景设置变化
-watch(() => moduleOptions.value.backgroundVariant, (newVariant) => {
+watch(() => moduleOptions.value.backgroundVariant, (newVariant, oldVariant) => {
   // 更新所有白板的背景设置
   Object.values(whiteBoardConfigList.value).forEach((config) => {
     // 如果白板的背景设置与之前的全局设置相同，说明它没有被手动修改过，应该跟随全局设置更新
-    if (config.moduleOptions.value.boardOptions.backgroundVariant === moduleOptions.value.backgroundVariant) {
+    if (config.moduleOptions.value.boardOptions.backgroundVariant === oldVariant) {
       config.moduleOptions.value.boardOptions.backgroundVariant = newVariant
     }
   })

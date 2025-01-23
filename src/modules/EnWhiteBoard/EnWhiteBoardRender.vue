@@ -90,10 +90,10 @@
             v-bind="connectionLineProps"
           />
         </template>
-        <template v-if="embedWhiteBoardConfigData.boardOptions.backgroundVariant !== 'none'">
+        <template v-if="backgroundVariant !== 'none'">
           <!-- 网格背景 -->
           <Background
-            v-if="embedWhiteBoardConfigData.boardOptions.backgroundVariant === 'lines'"
+            v-if="backgroundVariant === 'lines'"
             variant="lines"
             pattern-color="var(--b3-border-color)"
             :gap="48"
@@ -102,7 +102,7 @@
           />
           <!-- 点状背景 -->
           <Background
-            v-if="embedWhiteBoardConfigData.boardOptions.backgroundVariant === 'dots'"
+            v-if="backgroundVariant === 'dots'"
             variant="dots"
             pattern-color="var(--b3-border-color)"
             :gap="48"
@@ -143,7 +143,10 @@
         <slot name="SiderRightTopButtonGroupAfter" />
       </template>
 
-      <div>Sider Right</div>
+      <EnWhiteBoardSettings
+        :whiteBoardId="data.whiteBoardId"
+        :nodeId="data.nodeId"
+      />
 
       <template #SiderBottomButtonGroupBefore>
         <slot name="SiderRightBottomButtonGroupBefore" />
@@ -203,6 +206,7 @@ import {
   watchEffect,
 } from 'vue'
 import EnWhiteBoardNodeProtyle from './EnWhiteBoardNodeProtyle.vue'
+import EnWhiteBoardSettings from './EnWhiteBoardSettings.vue'
 import '@vue-flow/minimap/dist/style.css'
 
 const props = defineProps<{
@@ -243,6 +247,8 @@ const {
   connectOnClick: true,
 })
 
+// 计算背景变体
+const backgroundVariant = computed(() => embedWhiteBoardConfigData.value.boardOptions.backgroundVariant)
 
 const nodes = computed(() => embedWhiteBoardConfigData.value?.boardOptions.nodes)
 const edges = computed(() => embedWhiteBoardConfigData.value?.boardOptions.edges)
