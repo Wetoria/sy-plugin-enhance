@@ -6,6 +6,35 @@
   >
     <EnSettingsItem>
       <div>
+        功能说明
+      </div>
+      <template #desc>
+        <div>
+          使用 / 菜单快速插入模板样式。
+        </div>
+        <div>
+          <a-space>
+            <template v-if="moduleOptions.enabled">
+              <icon-check-circle style="color: rgb(var(--success-6))" />
+            </template>
+            <template v-else>
+              <icon-close-circle style="color: rgb(var(--danger-6))" />
+            </template>
+            <a-typography-text>
+              康奈尔模板
+            </a-typography-text>
+          </a-space>
+        </div>
+        <div>可输入下方选项进行过滤。 </div>
+        <div class="flexColumn">
+          <div>- add template cornell</div>
+          <div>- atc</div>
+          <div>- 插入模板 - 康奈尔</div>
+        </div>
+      </template>
+    </EnSettingsItem>
+    <EnSettingsItem>
+      <div>
         康奈尔颜色
       </div>
     </EnSettingsItem>
