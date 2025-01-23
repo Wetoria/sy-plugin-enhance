@@ -138,6 +138,7 @@ interface ILifeLog {
 interface ILifeLogRecord {
   block_id: string
   record: ILifeLog
+  date: string
   type: string
   content: string
   startTime?: dayjs.Dayjs

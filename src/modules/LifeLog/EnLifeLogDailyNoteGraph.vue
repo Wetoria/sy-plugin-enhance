@@ -7,42 +7,48 @@
       class="EnLifeLogDailyNoteGraph"
     >
       <div
-        v-for="record of graphRecords"
-        :key="record.block_id"
-        class="EnLifeLogGraphItem"
-        :data-en_lifelog_diff="record.diff"
-        :data-en_lifelog_diff_format="record.diffFormatted"
-        :style="{
-          height: `${(record.diff / secondsOfADay) * 100}%`,
-        }"
+        v-for="date of dayValueList"
+        :key="date"
+        class="EnLifeLogGraphDateItem"
       >
         <div
-          class="EnLifeLogItemBg"
+          v-for="record of graphRecordsByDate[date]"
+          :key="record.block_id"
+          class="EnLifeLogGraphItem"
+          :data-en_lifelog_diff="record.diff"
+          :data-en_lifelog_diff_format="record.diffFormatted"
           :style="{
-            backgroundColor: `var(--en-lifelog-color-type-${record.type})`,
+            height: `${(record.diff / secondsOfADay) * 100}%`,
           }"
         >
+          <div
+            class="EnLifeLogItemBg"
+            :style="{
+              backgroundColor: `var(--en-lifelog-color-type-${record.type})`,
+            }"
+          >
 
-        </div>
-        <div class="infos">
-          <div
-            v-if="(record.diff / secondsOfADay) > 0.01"
-            class="time info"
-          >
-            {{ record.endTime.format(lifelogKeyMap.HH_mm_ss) }}
           </div>
-          <div class="info">
-            {{
-              [
-                record.type,
-                moduleOptions.enablePrivacyMode ? '' : record.content,
-              ].filter(Boolean).join('：')
-            }}
-          </div>
-          <div
-            class="info"
-          >
-            持续：{{ record.totalDiffFormatted }}
+          <div class="infos">
+            <div
+              v-if="(record.diff / secondsOfADay) > 0.01"
+              class="time info"
+            >
+              {{ record.endTime.format(lifelogKeyMap.HH_mm_ss) }}
+            </div>
+            <div class="info">
+              {{
+                [
+                  record.type,
+                  moduleOptions.enablePrivacyMode ? '' : record.content,
+                ].filter(Boolean).join('：')
+              }}
+            </div>
+            <div
+              class="info"
+            >
+              持续：{{ record.totalDiffFormatted }}
+            </div>
           </div>
         </div>
       </div>
@@ -115,13 +121,23 @@ const dayList = computed(() => {
   return props.enProtyleItem.dailyNoteValues
 })
 const dayValueList = computed(() => {
-  return Object.values(dayList.value).map((item) => `${item}`)
+  const temp = Object.values(dayList.value).map((item) => `${item}`)
+  return temp
 })
 
 const splitedLifelogRecords = injectSplitedLifeLogRecords()
 
 const graphRecords = computed(() => {
   return getTargetLifelogRecordsByDateList(splitedLifelogRecords.value, dayValueList.value)
+})
+
+const graphRecordsByDate = computed(() => {
+  const result = {}
+  dayValueList.value.forEach((date) => {
+    // 去掉非数字，防止未来使用 / 以外的符号作为分隔符时，忘记调整这里。比如使用 - 分割年月日
+    result[date] = graphRecords.value.filter((item) => item.date.replace(/\D/g, '') === date)
+  })
+  return result
 })
 
 onMounted(() => {
@@ -186,10 +202,22 @@ const currentSecondDiff = computed(() => {
   height: calc(100% - 30px - 4px);
   background-color: rgba(109, 109, 109, 0.1);
   display: flex;
-  flex-direction: column;
   z-index: 9;
-
+  overflow: hidden;
   --en-lifelog-graph-font-size: 8px;
+
+
+  .EnLifeLogGraphDateItem {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 5px;
+    flex-shrink: 0;
+  }
+
+  .EnLifeLogGraphDateItem + .EnLifeLogGraphDateItem {
+    border-left: 1px solid rgba(109, 109, 109);
+  }
 
 
   .EnLifeLogGraphItem {
@@ -199,6 +227,7 @@ const currentSecondDiff = computed(() => {
     font-size: var(--en-lifelog-graph-font-size, 8px);
     color: white;
     width: 100%;
+    height: 100%;
     position: relative;
     justify-content: flex-end;
     box-sizing: border-box;
@@ -307,12 +336,15 @@ const currentSecondDiff = computed(() => {
   }
 
   &:hover {
-    width: 100px;
+    width: auto;
     background: var(--b3-theme-surface);
     border-right: 1px solid rgba(109, 109, 109);
 
-    .EnLifeLogGraphItem {
+    .EnLifeLogGraphDateItem {
+      width: 100px;
+    }
 
+    .EnLifeLogGraphItem {
 
       &[data-en_lifelog_show_info="true"] {
         .infos {

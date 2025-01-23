@@ -71,6 +71,7 @@ const splitedLifelogRecords = computed<Array<ILifeLogRecord>>(() => {
     // 分割成两个
     const prevDayItem: ILifeLogRecord = {
       ...item,
+      date: startTime.format(lifelogKeyMap.YYYY_MM_DD),
       startTime,
       endTime: dayjs(startTime.format(lifelogKeyMap.YYYY_MM_DD_23_59_59)),
     }
@@ -250,6 +251,7 @@ const loadDataByDateList = async (dateList: Array<string>) => {
     const result: ILifeLogRecord = {
       block_id: readyItem.block_id,
       record: readyItem.record,
+      date: readyItem.date,
       type: readyItem.record[lifelogKeyMap.type],
       content: readyItem.record[lifelogKeyMap.content],
       startTime,
