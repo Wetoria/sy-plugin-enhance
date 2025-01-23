@@ -135,6 +135,25 @@ interface ILifeLog {
   [lifelogAttrUpdated]: string
 }
 
+interface ILifeLogRecord {
+  block_id: string
+  record: ILifeLog
+  date: string
+  type: string
+  content: string
+  startTime?: dayjs.Dayjs
+  startTimeFormatted?: string
+  // 结束时间（带日期）
+  endTime: dayjs.Dayjs
+  endTimeFormatted?: string
+  // 当天内的持续时间
+  diff?: number
+  diffFormatted?: string
+  // 记录的完整持续时间，截止上一条记录。可能跨天。
+  totalDiff?: number
+  totalDiffFormatted?: string
+}
+
 interface ILifeLogTypeItem {
   baseColor: string
   items: Array<{
@@ -147,6 +166,7 @@ interface LifeLogModule extends EnModule {
   enableMarker: boolean
   showLifeLogFlag: boolean
   showLifeLogTimelineAtProtyleLeft: boolean
+  enablePrivacyMode: boolean
 
   lifelogTypes: {
     fixed: ILifeLogTypeItem

@@ -375,8 +375,16 @@ onBeforeUnmount(() => {
 
     div[data-type="NodeListItem"] {
 
-      .enProtyleAttrContainer {
-        // padding-right: 4px;
+      div[data-type="NodeBlockquote"] {
+
+        div[data-type="NodeParagraph"] {
+          .protyle-attr {
+            right: calc(var(--enAttrContainerWidth) - 0px);
+          }
+          .enProtyleAttrContainer {
+            right: 0px;
+          }
+        }
       }
     }
 

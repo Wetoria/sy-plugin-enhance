@@ -68,6 +68,19 @@
         <a-switch v-model="moduleOptions.showLifeLogTimelineAtProtyleLeft" />
       </template>
     </EnSettingsItem>
+    <EnSettingsItem>
+      <div>
+        隐私模式
+      </div>
+      <template #desc>
+        <div>
+          是否开启隐私保护。开启后，仅展示 LifeLog 的类型，不展示具体内容。
+        </div>
+      </template>
+      <template #opt>
+        <a-switch v-model="moduleOptions.enablePrivacyMode" />
+      </template>
+    </EnSettingsItem>
 
     <EnSettingsItem>
       <div>
@@ -190,8 +203,12 @@
 
   </EnSettingsTeleportModule>
   <template v-if="moduleOptions.enabled">
-    <template v-if="moduleOptions.showLifeLogTimelineAtProtyleLeft">
-      <RenderControl />
+    <template v-if="useLifeLogDataControl">
+      <EnLifeLogDataControl>
+        <template v-if="moduleOptions.showLifeLogTimelineAtProtyleLeft">
+          <RenderControl />
+        </template>
+      </EnLifeLogDataControl>
     </template>
   </template>
 </template>
@@ -205,6 +222,7 @@ import {
   watchConfigChanged,
   watchConfigEnableStatus,
 } from '@/modules/EnModuleControl/ModuleProvide'
+import EnLifeLogDataControl from '@/modules/LifeLog/EnLifeLogDataControl.vue'
 import EnLifeLogSettingTypeItem from '@/modules/LifeLog/EnLifeLogSettingTypeItem.vue'
 import { markLifeLogBlock } from '@/modules/LifeLog/LifeLog'
 import RenderControl from '@/modules/LifeLog/RenderControl.vue'
@@ -247,10 +265,13 @@ const {
     enableMarker: false,
     showLifeLogFlag: false,
     showLifeLogTimelineAtProtyleLeft: false,
+    enablePrivacyMode: false,
 
     lifelogTypes: null,
   },
 })
+
+const useLifeLogDataControl = computed(() => moduleOptions.value.showLifeLogTimelineAtProtyleLeft)
 
 // 重置模块数据后为 null，设置默认的 lifelogTypes
 // 不使用默认值的方式，是为了防止每次修改后，如果没有下面列出的类型，会自动添加。

@@ -109,7 +109,6 @@ onMounted(() => {
   resizeObserver.observe(attrContainerRef.value)
 })
 onBeforeUnmount(() => {
-  console.log('onBeforeUnmount attr container')
   resizeObserver.disconnect()
   attrContainerRef.value = null
 })
