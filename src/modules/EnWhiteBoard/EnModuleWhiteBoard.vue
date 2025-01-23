@@ -132,6 +132,33 @@
         />
       </template>
     </EnSettingsItem>
+    <EnSettingsItem mode="vertical">
+      <div>
+        白板背景样式
+      </div>
+      <template #desc>
+        <div>
+          选择白板的背景样式
+        </div>
+      </template>
+      <template #opt>
+        <a-select
+          v-model="moduleOptions.backgroundVariant"
+          placeholder="请选择背景样式"
+          :disabled="cannotEdit"
+        >
+          <a-option value="dots">
+            点状
+          </a-option>
+          <a-option value="lines">
+            网格
+          </a-option>
+          <a-option value="none">
+            无
+          </a-option>
+        </a-select>
+      </template>
+    </EnSettingsItem>
   </EnSettingsTeleportModule>
 
   <template v-if="hasAuth && moduleOptions.enabled">
@@ -159,6 +186,7 @@ import {
   loadWhiteBoard,
   loadWhiteBoardConfigById,
   unloadWhiteBoard,
+  whiteBoardConfigList,
 } from '@/modules/EnWhiteBoard/EnWhiteBoard'
 import EnWhiteBoardRenderEmbed from '@/modules/EnWhiteBoard/EnWhiteBoardRenderEmbed.vue'
 import {
@@ -218,6 +246,8 @@ const {
 
     cardWidthDefault: 345,
     cardHeightDefault: 185,
+
+    backgroundVariant: 'dots',
   },
 })
 
@@ -299,6 +329,17 @@ watch(() => moduleOptions.value.enabled, () => {
   } else {
     disable()
   }
+})
+
+// 监听全局背景设置变化
+watch(() => moduleOptions.value.backgroundVariant, (newVariant, oldVariant) => {
+  // 更新所有白板的背景设置
+  Object.values(whiteBoardConfigList.value).forEach((config) => {
+    // 如果白板的背景设置与之前的全局设置相同，说明它没有被手动修改过，应该跟随全局设置更新
+    if (config.moduleOptions.value.boardOptions.backgroundVariant === oldVariant) {
+      config.moduleOptions.value.boardOptions.backgroundVariant = newVariant
+    }
+  })
 })
 </script>
 

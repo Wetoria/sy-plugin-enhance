@@ -36,7 +36,7 @@
         }"
         @moving="calcWidthEnough"
       >
-        <div>
+        <div class="SiderContent">
           <slot></slot>
         </div>
       </a-resize-box>
@@ -52,7 +52,13 @@
       <a-button-group
         class="ButtonGroup"
       >
-        <slot name="SiderBottomButtonGroupBefore" />
+        <slot name="SiderBottomButtonGroupBefore">
+          <template v-if="pos === 'Right' && needSider">
+            <a-button @click="showSettingsDrawer = true">
+              <SyIcon name="iconSettings" />
+            </a-button>
+          </template>
+        </slot>
         <a-button
           v-if="needSider"
           @click="changeSiderShown()"
@@ -67,7 +73,11 @@
 
 <script setup lang="ts">
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
-import { EnWhiteBoardConfig } from '@/modules/EnWhiteBoard/EnWhiteBoard'
+import {
+  EnWhiteBoardConfig,
+  useWhiteBoardModule,
+
+} from '@/modules/EnWhiteBoard/EnWhiteBoard'
 import {
   computed,
   onMounted,
@@ -79,6 +89,7 @@ const props = defineProps<{
   needSider: boolean
   pos: 'Left' | 'Right'
   embedBlockOptions: EnWhiteBoardConfig['embedOptions']['id']
+  embedWhiteBoardConfigData: EnWhiteBoardConfig
 }>()
 
 const isLeft = computed(() => props.pos === 'Left')
@@ -156,6 +167,14 @@ const folderIconName = computed(() => {
     props.embedBlockOptions[`Sider${props.pos}Show`] ? 0 : 1
   ]
 })
+
+const showSettingsDrawer = ref(false)
+
+const { moduleOptions: moduleWhiteBoardOptions } = useWhiteBoardModule()
+
+const resetBackgroundToGlobal = () => {
+  props.embedWhiteBoardConfigData.boardOptions.backgroundVariant = moduleWhiteBoardOptions.value.backgroundVariant
+}
 
 </script>
 
@@ -383,6 +402,60 @@ const folderIconName = computed(() => {
 
   .ToolbarArea:not(.showAngle)::after {
     opacity: 0;
+  }
+}
+
+.SiderContent {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.WhiteBoardSettings {
+  padding: var(--en-gap);
+
+  .SettingsTitle {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: var(--en-gap);
+    padding-bottom: var(--en-gap);
+    border-bottom: 1px solid var(--b3-border-color);
+  }
+
+  .SettingsItem {
+    margin-bottom: var(--en-gap);
+
+    .ItemTitle {
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+
+    .ItemDesc {
+      color: var(--b3-theme-on-surface);
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+
+    .ItemOpt {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+
+      .ResetButton {
+        color: var(--b3-theme-error);
+        font-size: 12px;
+        cursor: pointer;
+        padding: 4px;
+        border: 1px solid var(--b3-theme-error);
+        text-align: center;
+        transition: all 0.15s ease-in-out;
+
+        &:hover {
+          color: var(--b3-theme-error);
+          background-color: var(--b3-theme-error-light);
+        }
+      }
+    }
   }
 }
 </style>

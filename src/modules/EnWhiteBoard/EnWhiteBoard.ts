@@ -74,6 +74,8 @@ export interface EnWhiteBoardSetting extends EnModule {
 
   cardWidthDefault: number
   cardHeightDefault: number
+
+  backgroundVariant: 'dots' | 'lines' | 'none'
 }
 export function useWhiteBoardModule() {
   return useModule<EnWhiteBoardSetting>(EN_MODULE_LIST.EN_WHITE_BOARD)
@@ -143,6 +145,9 @@ export interface EnWhiteBoardConfig {
     nodes: Node<EnWhiteBoardNodeData>[]
     edges: Edge<EnWhiteBoardEdgeData>[]
     viewport: ViewportTransform
+
+    backgroundVariant: 'dots' | 'lines' | 'none'
+    useCustomBackground: boolean
   }
 }
 
@@ -206,6 +211,8 @@ const defaultWhiteBoardConfig: EnWhiteBoardConfig = {
       y: 0,
       zoom: 1,
     },
+    backgroundVariant: 'none',
+    useCustomBackground: false,
   },
 }
 
