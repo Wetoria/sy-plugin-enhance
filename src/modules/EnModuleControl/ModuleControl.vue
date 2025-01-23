@@ -24,7 +24,6 @@
       <EnModuleQuickNote />
       <!-- TODO -->
       <EnModuleBottomBacklink />
-      <!-- TODO -->
       <EnModuleLifeLog />
       <EnParagraphBlock />
 
