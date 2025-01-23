@@ -7,12 +7,45 @@
     @moduleEnabled="onModuleEnabled"
     @moduleDisabled="onModuleDisabled"
   >
-    <div>
-      格式刷功能{{ moduleOptions.enabled ? '已开启' : '未开启' }}
-    </div>
-    <div v-if="moduleOptions.enabled">
-      选中文本以后，在工具栏中点击格式刷按钮，即可复制当前选中文本的样式。
-    </div>
+    <EnSettingsItem>
+      <div>
+        功能说明
+      </div>
+      <template #desc>
+        <div>
+          <a-space>
+            <template v-if="moduleOptions.enabled">
+              <icon-check-circle style="color: rgb(var(--success-6))" />
+            </template>
+            <template v-else>
+              <icon-close-circle style="color: rgb(var(--danger-6))" />
+            </template>
+            <a-typography-text>
+              格式刷功能{{ moduleOptions.enabled ? '已开启' : '未开启' }}
+            </a-typography-text>
+          </a-space>
+        </div>
+        <div>
+          选中文本以后，在工具栏中点击格式刷按钮，即可复制当前选中文本的样式。此时选择其他文字即可应用当前选中文本的样式。
+        </div>
+        <div>
+          <a-space>
+            <template v-if="moduleOptions.enabled">
+              <icon-check-circle style="color: rgb(var(--success-6))" />
+            </template>
+            <template v-else>
+              <icon-close-circle style="color: rgb(var(--danger-6))" />
+            </template>
+            <a-typography-text>
+              <span>开/关格式刷快捷键</span>
+            </a-typography-text>
+          </a-space>
+        </div>
+        <div>
+          可用快捷键开启格式刷功能。请在思源快捷键中进行设置。
+        </div>
+      </template>
+    </EnSettingsItem>
   </EnSettingsTeleportModule>
   <template
     v-for="protyleToolbarBrushContainerTarget in toolbarDomList"
@@ -42,6 +75,7 @@ import {
   injectAuthStatus,
   useModule,
 } from '@/modules/EnModuleControl/ModuleProvide'
+import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
 import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue'
 import {
   generateShortUUID,
@@ -51,8 +85,6 @@ import {
   addCommand,
   removeCommand,
 } from '@/utils/Commands'
-
-
 import {
   EN_CONSTANTS,
   EN_MODULE_LIST,
