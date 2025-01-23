@@ -12,6 +12,9 @@
         <div>
           是否显示块的创建时间或编辑时间。（点击时间部分进行切换）
         </div>
+        <div>
+          为避免遮挡段落内容，该选项将会影响到段落之间的间距。
+        </div>
       </template>
       <template #opt>
         <a-switch v-model="moduleOptions.enableBlockTime" />
@@ -45,7 +48,7 @@
       </div>
       <template #desc>
         <div>
-          段落块右上角内容的字体大小。（仅限插件内容，如段落时间、段落锁）
+          段落块右上角内容的字体大小。
         </div>
       </template>
       <template #opt>
@@ -60,7 +63,7 @@
     </EnSettingsItem>
 
   </EnSettingsTeleportModule>
-  <div>
+  <div v-if="moduleOptions.enabled">
     <EnParagraphBlockAttrContainer
       v-for="attrItem of paragraphBlockAttrContainerRefList"
       :key="attrItem.loopKey"
@@ -156,9 +159,9 @@ const {
     blockTimeFontSize: 9,
     defaultBlockType: 'created',
 
-    enableBlockLock: false,
-    autoLockTimeDiff: 5 * 60,
-    autoCheckTime: 10,
+    // enableBlockLock: false,
+    // autoLockTimeDiff: 5 * 60,
+    // autoCheckTime: 10,
   },
 })
 
@@ -312,97 +315,89 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="scss">
-  .enProtyleAttrContainer {
-    display: none;
-  }
-  html[data-en_enabled_module~="EnParagraphBlock"] {
-    --enTimeFontSize: 9px;
+html[data-en_enabled_module~="EnParagraphBlock"] {
+  --enTimeFontSize: 9px;
 
-    .enProtyleAttrContainer {
-      width: max-content;
-      display: flex;
-      gap: 4px;
-      height: calc(var(--enTimeFontSize) + var(--en-gap));
-      line-height: calc(var(--enTimeFontSize) + var(--en-gap));
-      font-size: var(--enTimeFontSize);
-      color: var(--b3-theme-on-surface);
-      box-sizing: border-box;
-      position: absolute;
+  .enProtyleAttrContainer {
+    width: max-content;
+    display: flex;
+    gap: 4px;
+    height: calc(var(--enTimeFontSize) + var(--en-gap));
+    line-height: calc(var(--enTimeFontSize) + var(--en-gap));
+    font-size: var(--enTimeFontSize);
+    color: var(--b3-theme-on-surface);
+    box-sizing: border-box;
+    position: absolute;
+    top: 0;
+    transform: translateY(calc(-100% + 4px));
+    right: 0;
+
+    svg {
+      height: var(--enTimeFontSize) !important;
+      width: var(--enTimeFontSize) !important;
+    }
+  }
+
+  div[data-type="NodeParagraph"] {
+
+    margin-bottom: var(--enTimeFontSize);
+    --enAttrContainerWidth: 64px;
+
+    .protyle-attr {
+      font-size: var(--enTimeFontSize) !important;
+      height: calc(var(--enTimeFontSize) + var(--en-gap)) !important;
+      line-height: calc(var(--enTimeFontSize) + var(--en-gap)) !important;
+      right: var(--enAttrContainerWidth);
       top: 0;
       transform: translateY(calc(-100% + 4px));
-      right: 0;
+
+      & > div {
+        display: flex !important;
+        align-items: center;
+        gap: var(--en-gap);
+      }
 
       svg {
+        margin: unset !important;
         height: var(--enTimeFontSize) !important;
         width: var(--enTimeFontSize) !important;
       }
     }
 
-    div[data-type="NodeParagraph"] {
-
-      margin-bottom: var(--enTimeFontSize);
-      --enAttrContainerWidth: 64px;
-
+    &.en-stickied {
+      .enProtyleAttrContainer,
       .protyle-attr {
-        font-size: var(--enTimeFontSize) !important;
-        height: calc(var(--enTimeFontSize) + var(--en-gap)) !important;
-        line-height: calc(var(--enTimeFontSize) + var(--en-gap)) !important;
-        right: var(--enAttrContainerWidth);
-        top: 0;
-        transform: translateY(calc(-100% + 4px));
-
-        & > div {
-          display: flex !important;
-          align-items: center;
-          gap: var(--en-gap);
-        }
-
-        svg {
-          margin: unset !important;
-          height: var(--enTimeFontSize) !important;
-          width: var(--enTimeFontSize) !important;
-        }
-      }
-
-      &.en-stickied {
-        .enProtyleAttrContainer,
-        .protyle-attr {
-          opacity: 0;
-        }
+        opacity: 0;
       }
     }
+  }
 
 
-    div[data-type="NodeListItem"] {
-
-      div[data-type="NodeBlockquote"] {
-
-        div[data-type="NodeParagraph"] {
-          .protyle-attr {
-            right: calc(var(--enAttrContainerWidth) - 0px);
-          }
-          .enProtyleAttrContainer {
-            right: 0px;
-          }
-        }
-      }
-    }
+  div[data-type="NodeListItem"] {
 
     div[data-type="NodeBlockquote"] {
 
       div[data-type="NodeParagraph"] {
         .protyle-attr {
-          right: calc(var(--enAttrContainerWidth) - 4px);
+          right: calc(var(--enAttrContainerWidth) - 0px);
         }
         .enProtyleAttrContainer {
-          right: -4px;
+          right: 0px;
         }
       }
     }
   }
-  html[data-en-paragraph-block-lock="true"] {
-    .block-focus {
-      border-right: 1px solid var(--sky-blue);
+
+  div[data-type="NodeBlockquote"] {
+
+    div[data-type="NodeParagraph"] {
+      .protyle-attr {
+        right: calc(var(--enAttrContainerWidth) - 4px);
+      }
+      .enProtyleAttrContainer {
+        right: -4px;
+      }
     }
   }
+}
 </style>
