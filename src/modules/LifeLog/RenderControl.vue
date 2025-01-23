@@ -18,7 +18,7 @@ import {
 
 const globalWindowData = injectGlobalWindowData()
 const protyleContentRefList = computed<IProtyleObserverItem[]>(() => {
-  return globalWindowData.value.protyleList.filter((item) => item.isDailyNote)
+  return globalWindowData.value.protyleList.filter((item) => item.isDailyNote && item.isEditorProtyle)
 })
 </script>
 
