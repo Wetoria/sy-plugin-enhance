@@ -122,8 +122,11 @@ const expiration = computed(() => {
   return authModuleData.value.expiration ? dayjs(authModuleData.value.expiration).format('YYYY-MM-DD HH:mm') : '--'
 })
 
+// CF 代理
 const server1 = 'https://server.wetoria.vip'
+// CF 代理阿里云走frp
 const server2 = 'https://api.wetoria.vip'
+// IPV6 直连
 const server3 = 'http://wetoria.cn'
 
 const serverList = [
