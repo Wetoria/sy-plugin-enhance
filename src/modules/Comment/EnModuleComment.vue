@@ -37,7 +37,7 @@
             v-model="moduleOptions.notebookId"
             v-model:targetId="moduleOptions.targetId"
             :notebookList="openedNotebookList"
-            :mode="globalData.commentMode"
+            :mode="commentMode"
           />
         </div>
       </template>
@@ -158,6 +158,15 @@ const openedNotebookList = computed(() => globalData.value.openedNotebookList)
 const {
   isNotFree,
 } = injectAuthStatus()
+
+const { computedLevel } = injectAuthStatus()
+const hasAuth = computedLevel(1, false)
+const commentMode = computed(() => {
+  if (hasAuth.value) {
+    return globalData.value.commentMode
+  }
+  return []
+})
 
 const enableComment = computed(() => {
   return isNotFree.value && globalWindowData.value.isInSiyuanMain
