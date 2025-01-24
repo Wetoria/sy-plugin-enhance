@@ -213,8 +213,11 @@ export function markLifeLogBlock() {
       })
     }
     await batchSetBlockAttrs(newBlockAttrs)
-    await flushTransactions()
     readyToReLoadDate = Array.from(new Set(readyToReLoadDate))
+    if (!readyToReLoadDate.length) {
+      return
+    }
+    await flushTransactions()
     enEventBus.emit(EN_EVENT_BUS_KEYS.LIFELOG_LOAD_RECORDS_BY_DATE_LIST, readyToReLoadDate)
   }, 1000)
 }
