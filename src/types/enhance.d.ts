@@ -199,6 +199,8 @@ interface EnModuleComment extends EnModule {
   targetId: string
   autoSaveConfigByWindow: boolean
 
+  enableCommentStyle: boolean
+
   customStyleBlock: string
   customStyleInline: string
 }

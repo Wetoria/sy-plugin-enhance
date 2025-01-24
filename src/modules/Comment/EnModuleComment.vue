@@ -55,6 +55,21 @@
         <a-switch v-model="moduleOptions.autoSaveConfigByWindow" />
       </template>
     </EnSettingsItem>
+
+    <EnSettingsItem>
+      <div>
+        启用批注样式
+      </div>
+      <template #desc>
+        <div>
+          是否显示批注的样式
+        </div>
+      </template>
+      <template #opt>
+        <a-switch v-model="moduleOptions.enableCommentStyle" />
+      </template>
+    </EnSettingsItem>
+
     <EnSettingsItem>
       <div>
         默认配置
@@ -122,15 +137,21 @@
   <template v-if="enableComment">
     <EnCommentDesktop v-if="!plugin.isMobile" />
     <EnCommentMobile v-else />
+
+    <EnCommentStyle v-if="moduleOptions.enableCommentStyle">
+      <!-- 为历史样式预留 -->
+    </EnCommentStyle>
   </template>
 </template>
 
 <script setup lang="ts">
 import EnBlockAppendModeSelector from '@/components/EnBlockAppendModeSelector.vue'
 import { usePlugin } from '@/main'
+import { provideCommentOptions } from '@/modules/Comment/Comment'
 
 import EnCommentDesktop from '@/modules/Comment/EnCommentDesktop.vue'
 import EnCommentMobile from '@/modules/Comment/EnCommentMobile.vue'
+import EnCommentStyle from '@/modules/Comment/EnCommentStyle.vue'
 import {
   injectAuthStatus,
   injectGlobalData,
@@ -185,6 +206,8 @@ const {
     targetId: '',
     autoSaveConfigByWindow: false,
 
+    enableCommentStyle: true,
+
     customStyleBlock: `& {
   &[data-type="NodeParagraph"],
   &[data-type="NodeHeading"],
@@ -234,6 +257,8 @@ const {
 }`,
   },
 })
+
+provideCommentOptions(moduleOptions)
 
 const cancelSettingMouseMoveEvent = (e: MouseEvent) => {
   e.stopImmediatePropagation()

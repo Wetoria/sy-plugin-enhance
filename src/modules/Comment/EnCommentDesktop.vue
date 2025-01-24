@@ -101,6 +101,7 @@ import {
 } from '@/api'
 import EnNotebookSelector from '@/components/EnNotebookSelector.vue'
 import EnProtyle from '@/components/EnProtyle.vue'
+import { getNodeIdByCommentId } from '@/modules/Comment/Comment'
 import {
   appendBlockIntoDailyNote,
 } from '@/modules/DailyNote/DailyNote'
@@ -121,11 +122,9 @@ import {
   positionModalWithTranslate,
   targetIsInnerOf,
   targetIsOutsideOf,
-  useRegisterStyle,
 } from '@/utils/DOM'
 import {
   useSiyuanDatabaseIndexCommit,
-  useSiyuanEventTransactions,
 } from '@/utils/EventBusHooks'
 import { getColorStringWarn } from '@/utils/Log'
 import { useMousePostion } from '@/utils/Mouse'
@@ -268,14 +267,6 @@ const adjustCommentModal = () => {
 const getCommentIdByNodeId = (nodeId: string) => {
   const shortUUID = generateShortUUID()
   return `en-comment-id-${nodeId}-${shortUUID}`
-}
-
-// 根据 commentId 获取 nodeId
-const getNodeIdByCommentId = (commentId: string) => {
-  const temp = commentId.split('-')
-  temp.pop()
-  const nodeId = [temp.pop(), temp.pop()].reverse().join('-')
-  return nodeId
 }
 
 // 根据 nodeId 和文本创建评论
@@ -755,51 +746,7 @@ onBeforeUnmount(() => {
 // #endregion 插件快捷键相关
 
 
-// #region 监听思源事件，更新评论样式
-const commentIdList = ref([])
 
-const styleDomRef = useRegisterStyle('en-line-comment-style')
-// 监听 commentIdList 的变化，更新样式
-watchEffect(() => {
-  const lineSelectorList = commentIdList.value.map((i) => {
-    const nodeId = getNodeIdByCommentId(i)
-    return `[data-node-id="${nodeId}"] [data-type~="${i}"]`
-  })
-  const blockSelectorList = commentIdList.value.map((i) => {
-    const nodeId = getNodeIdByCommentId(i)
-    return `[data-node-id="${nodeId}"][custom-en-comment-id~="${i}"]`
-  })
-  styleDomRef.value.textContent = `
-    ${lineSelectorList.join(', ')} {
-      ${moduleOptions.value.customStyleInline}
-    }
-    ${blockSelectorList.join(', ')} {
-      ${moduleOptions.value.customStyleBlock}
-    }
-  `
-})
-
-const getAllCommentIds = async () => {
-  const sqlStmt = `select * from attributes where name = 'custom-en-comment-ref-id'  and value like 'en-comment-id-%' limit 9999999`
-  const res = await sql(sqlStmt)
-  commentIdList.value = res.map((i) => i.value)
-}
-
-onMounted(() => {
-  getAllCommentIds()
-})
-
-const offTransactions = useSiyuanEventTransactions(() => {
-  // 防止数据库还没更新完
-  setTimeout(() => {
-    getAllCommentIds()
-  }, 1000)
-})
-onBeforeUnmount(() => {
-  offTransactions()
-})
-
-// #endregion 监听思源事件，更新评论样式
 
 
 // #region 点击评论，显示历史评论列表
