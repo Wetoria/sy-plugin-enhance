@@ -26,8 +26,8 @@ import { cloneDeep } from 'lodash-es'
 import {
   computed,
   reactive,
-  ref,
   Ref,
+  shallowRef,
 } from 'vue'
 
 
@@ -160,7 +160,7 @@ export const whiteBoardRef: {
   configList: Ref<ConfigList>
   indexMap: IGlobalData<EnWhiteBoardIndexMap>
 } = {
-  configList: ref({}),
+  configList: shallowRef({}),
   indexMap: null,
 }
 export const whiteBoardConfigList = computed<ConfigList>(() => whiteBoardRef.configList.value)
