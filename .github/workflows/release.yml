@@ -53,6 +53,7 @@ jobs:
         run: pnpm build
 
       - name: Release
+        id: build_package
         uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
@@ -65,11 +66,37 @@ jobs:
         id: create_release
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.CUSTOM_TOKEN }}
           script: |
+            const maxRetries = 3;
+            const retryDelay = 5000; // 5秒
+
+            async function getReleaseWithRetry(owner, repo, tag, attempt = 1) {
+              try {
+                const release = await github.rest.repos.getReleaseByTag({
+                  owner,
+                  repo,
+                  tag: tag
+                });
+                return release;
+              } catch (error) {
+                if (attempt >= maxRetries) {
+                  throw new Error(`Failed to get release after ${maxRetries} attempts: ${error.message}`);
+                }
+                console.log(`Attempt ${attempt} failed, retrying in ${retryDelay/1000} seconds...`);
+                await new Promise(resolve => setTimeout(resolve, retryDelay));
+                return getReleaseWithRetry(owner, repo, tag, attempt + 1);
+              }
+            }
+
             const owner = 'wetoria';
             const originRepo = 'sy-plugin-enhance-codes';
             const repo = 'sy-plugin-enhance';
+            const tag = context.ref.replace('refs/tags/', '');
+
+            console.log('ready to get releaseInfoInPrivateRepo: ', owner, originRepo, tag);
+            const releaseInfoInPrivateRepo = await getReleaseWithRetry(owner, originRepo, tag);
+            console.log('releaseInfoInPrivateRepo is ', releaseInfoInPrivateRepo);
+
             const {
               data: {
                 tag_name,
@@ -77,11 +104,8 @@ jobs:
                 body: release_body,
                 assets,
               }
-            } = await github.rest.repos.getLatestRelease({
-              owner,
-              repo: originRepo,
-            });
-            console.log('assets is ', assets);
+            } = releaseInfoInPrivateRepo;
+
             const { data: release } = await github.rest.repos.createRelease({
               owner,
               repo,
