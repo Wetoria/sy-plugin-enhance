@@ -3,27 +3,22 @@
 </template>
 
 <script setup lang="ts">
-import { sql } from '@/api'
 import {
   EN_COMMENT_KEYS,
   getNodeIdByCommentId,
+  injectCommentIdList,
   injectCommentOptions,
-  provideCommentIdList,
 } from '@/modules/Comment/Comment'
 import { useRegisterStyle } from '@/utils/DOM'
-import { useSiyuanEventTransactions } from '@/utils/EventBusHooks'
 import {
   onBeforeUnmount,
-  onMounted,
-  ref,
   watchEffect,
 } from 'vue'
 
 const commentOptions = injectCommentOptions()
 
 // #region 监听思源事件，更新评论样式
-const commentIdList = ref([])
-provideCommentIdList(commentIdList)
+const commentIdList = injectCommentIdList()
 
 const styleDomRef = useRegisterStyle('en-line-comment-style')
 onBeforeUnmount(() => {
@@ -49,35 +44,7 @@ watchEffect(() => {
   `
 })
 
-const getAllCommentIds = async () => {
-  const sqlStmt = `
-    select
-      *
-    from
-      attributes
-    where
-      name = '${EN_COMMENT_KEYS.nodeCommentRefKey}'
-      and value like '${EN_COMMENT_KEYS.commentIdPrefix}-%'
-    limit
-      9999999
-  `
-  const res = await sql(sqlStmt)
-  commentIdList.value = res.map((i) => i.value)
-}
 
-onMounted(() => {
-  getAllCommentIds()
-})
-
-const offTransactions = useSiyuanEventTransactions(() => {
-  // 防止数据库还没更新完
-  setTimeout(() => {
-    getAllCommentIds()
-  }, 1000)
-})
-onBeforeUnmount(() => {
-  offTransactions()
-})
 
 // #endregion 监听思源事件，更新评论样式
 </script>

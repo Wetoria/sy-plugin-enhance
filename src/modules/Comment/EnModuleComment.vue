@@ -42,7 +42,8 @@
         </div>
       </template>
     </EnSettingsItem>
-    <EnSettingsItem>
+    <!-- TODO -->
+    <!-- <EnSettingsItem>
       <div>
         同步窗口中的配置
       </div>
@@ -54,7 +55,7 @@
       <template #opt>
         <a-switch v-model="moduleOptions.autoSaveConfigByWindow" />
       </template>
-    </EnSettingsItem>
+    </EnSettingsItem> -->
 
     <EnSettingsItem>
       <div>
@@ -135,21 +136,28 @@
     </EnSettingsItem>
   </EnSettingsTeleportModule>
   <template v-if="enableComment">
-    <EnCommentDesktop v-if="!plugin.isMobile" />
-    <EnCommentMobile v-else />
+    <EnCommentDataProvider>
+      <EnCommentStyle v-if="moduleOptions.enableCommentStyle">
+        <!-- 为历史样式预留 -->
+      </EnCommentStyle>
+      <EnCommentDesktop v-if="!plugin.isMobile" />
+      <EnCommentMobile v-else />
 
-    <EnCommentStyle v-if="moduleOptions.enableCommentStyle">
-      <!-- 为历史样式预留 -->
-    </EnCommentStyle>
+      <EnCommentHistory />
+    </EnCommentDataProvider>
   </template>
 </template>
 
 <script setup lang="ts">
 import EnBlockAppendModeSelector from '@/components/EnBlockAppendModeSelector.vue'
 import { usePlugin } from '@/main'
-import { provideCommentOptions } from '@/modules/Comment/Comment'
+import {
+  provideCommentOptions,
+} from '@/modules/Comment/Comment'
 
+import EnCommentDataProvider from '@/modules/Comment/EnCommentDataProvider.vue'
 import EnCommentDesktop from '@/modules/Comment/EnCommentDesktop.vue'
+import EnCommentHistory from '@/modules/Comment/EnCommentHistory.vue'
 import EnCommentMobile from '@/modules/Comment/EnCommentMobile.vue'
 import EnCommentStyle from '@/modules/Comment/EnCommentStyle.vue'
 import {
@@ -204,7 +212,8 @@ const {
 
     notebookId: '',
     targetId: '',
-    autoSaveConfigByWindow: false,
+    // TODO
+    // autoSaveConfigByWindow: false,
 
     enableCommentStyle: true,
 

@@ -199,7 +199,8 @@ interface EnModuleParagraphBlock extends EnModule {
 interface EnModuleComment extends EnModule {
   notebookId: string
   targetId: string
-  autoSaveConfigByWindow: boolean
+  // TODO
+  // autoSaveConfigByWindow: boolean
 
   enableCommentStyle: boolean
 

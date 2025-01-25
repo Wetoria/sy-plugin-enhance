@@ -101,7 +101,10 @@ import {
 } from '@/api'
 import EnNotebookSelector from '@/components/EnNotebookSelector.vue'
 import EnProtyle from '@/components/EnProtyle.vue'
-import { getNodeIdByCommentId } from '@/modules/Comment/Comment'
+import {
+  getNodeIdByCommentId,
+  injectCommentIdList,
+} from '@/modules/Comment/Comment'
 import {
   appendBlockIntoDailyNote,
 } from '@/modules/DailyNote/DailyNote'
@@ -747,7 +750,7 @@ onBeforeUnmount(() => {
 
 
 
-
+const commentIdList = injectCommentIdList()
 
 // #region 点击评论，显示历史评论列表
 

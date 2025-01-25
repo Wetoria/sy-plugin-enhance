@@ -150,7 +150,10 @@ import {
 import EnDrawer from '@/components/EnDrawer.vue'
 import EnNotebookSelector from '@/components/EnNotebookSelector.vue'
 import EnProtyle from '@/components/EnProtyle.vue'
-import { getNodeIdByCommentId } from '@/modules/Comment/Comment'
+import {
+  getNodeIdByCommentId,
+  injectCommentIdList,
+} from '@/modules/Comment/Comment'
 import {
   appendBlockIntoDailyNote,
 } from '@/modules/DailyNote/DailyNote'
@@ -753,6 +756,7 @@ const isCancelShowCommentListDom = (target: HTMLElement) => {
   return target.classList.contains('enCancelShowCommentListDom')
 }
 
+const commentIdList = injectCommentIdList()
 const getCommentHistoryByDom = async (target: HTMLElement) => {
   const allCommentNodes = []
   while (target) {
