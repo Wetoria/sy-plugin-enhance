@@ -333,7 +333,7 @@ export function onEditorUpdate(
     doOperationList = []
   }, debounceTime)
 
-  const off = useSiyuanEventTransactions(({ detail }) => {
+  const offTransactions = useSiyuanEventTransactions(({ detail }) => {
     detail.data.forEach((item) => {
       const {
         doOperations,
@@ -347,6 +347,10 @@ export function onEditorUpdate(
     })
     run()
   })
+  const off = () => {
+    run.cancel()
+    offTransactions()
+  }
   return off
 }
 

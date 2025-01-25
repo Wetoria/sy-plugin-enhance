@@ -1,6 +1,7 @@
 import {
   onBeforeUnmount,
   onMounted,
+  Ref,
   ref,
 } from 'vue'
 
@@ -42,7 +43,7 @@ export const onCountClick = (fn) => {
   }
 }
 
-export function useRegisterStyle(id) {
+export function useRegisterStyle(id): Ref<HTMLStyleElement> {
   const styleDomRef = ref(null)
   const alreadyExist = document.getElementById(id)
   if (alreadyExist) {

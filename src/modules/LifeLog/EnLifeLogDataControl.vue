@@ -14,10 +14,13 @@ import { EN_EVENT_BUS_KEYS } from '@/utils/Constants'
 
 import { diffFormat } from '@/utils/Date'
 import { enEventBus } from '@/utils/EnEventBus'
+import { useSiyuanEventTransactions } from '@/utils/EventBusHooks'
 import { trimSqlBlank } from '@/utils/sql'
 import dayjs from 'dayjs'
+import { debounce } from 'lodash-es'
 import {
   computed,
+  onBeforeUnmount,
   onMounted,
   ref,
 } from 'vue'
@@ -270,10 +273,29 @@ const loadDataByDateList = async (dateList: Array<string>) => {
   })
 }
 
-onMounted(() => {
-  enEventBus.on(EN_EVENT_BUS_KEYS.LIFELOG_LOAD_RECORDS_BY_DATE_LIST, (dateList: string[]) => {
-    loadDataByDateList(dateList)
+const offDeleteTransactionListener = useSiyuanEventTransactions(({ detail }) => {
+  const { data = [] } = detail
+  data.forEach((transaction) => {
+    const {
+      doOperations = [],
+    } = transaction
+    doOperations.forEach((operation) => {
+      if (operation.action === 'delete') {
+        lifelogRecords.value = lifelogRecords.value.filter((item) => {
+          return item.block_id !== operation.id
+        })
+      }
+    })
   })
+})
+onBeforeUnmount(() => {
+  offDeleteTransactionListener()
+})
+
+onMounted(() => {
+  enEventBus.on(EN_EVENT_BUS_KEYS.LIFELOG_LOAD_RECORDS_BY_DATE_LIST, debounce((dateList: string[]) => {
+    loadDataByDateList(dateList)
+  }, 1500))
 })
 </script>
 

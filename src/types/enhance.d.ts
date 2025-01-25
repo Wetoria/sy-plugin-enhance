@@ -35,6 +35,8 @@ interface IProtyleObserverItem {
 
   isFlashCardProtyle: boolean
   isEditorProtyle: boolean
+  isInDialog: boolean
+  dialogEl: HTMLElement | null
   isDailyNote: boolean
   dailyNoteValues: {
     [key: string]: string
@@ -197,7 +199,10 @@ interface EnModuleParagraphBlock extends EnModule {
 interface EnModuleComment extends EnModule {
   notebookId: string
   targetId: string
-  autoSaveConfigByWindow: boolean
+  // TODO
+  // autoSaveConfigByWindow: boolean
+
+  enableCommentStyle: boolean
 
   customStyleBlock: string
   customStyleInline: string

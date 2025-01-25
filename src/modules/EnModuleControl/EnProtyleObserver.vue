@@ -89,6 +89,8 @@ const recordProtyleContentOnInit = () => {
 
 
     const docId = protyleTitleEl.dataset.nodeId
+    const dialog = protyleContentEl.closest('.block__popover') as HTMLElement
+
     globalWindowData.value.protyleList.push({
       enLoopKey: generateUUIDWithTimestamp(),
       protyleBlockId: docId,
@@ -97,6 +99,8 @@ const recordProtyleContentOnInit = () => {
 
       isFlashCardProtyle: isFlashCardProtyle(protyleContentEl),
       isEditorProtyle: isEditorProtyle(protyleContentEl),
+      isInDialog: !!dialog,
+      dialogEl: dialog,
       isDailyNote,
       dailyNoteValues,
     })
@@ -119,6 +123,8 @@ const recordProtyleContentOnInit = () => {
       dailyNoteValues,
     } = getDailyNoteInfoByProtyleContentEl(protyle.contentElement)
 
+    const dialog = protyle.contentElement.closest('.block__popover') as HTMLElement
+
     globalWindowData.value.protyleList.push({
       enLoopKey: generateUUIDWithTimestamp(),
       protyleBlockId: protyle.block.id,
@@ -127,6 +133,8 @@ const recordProtyleContentOnInit = () => {
 
       isFlashCardProtyle: isFlashCardProtyle(protyle.element),
       isEditorProtyle: isEditorProtyle(protyle.element),
+      isInDialog: !!dialog,
+      dialogEl: dialog,
       isDailyNote,
       dailyNoteValues,
     })
@@ -147,17 +155,24 @@ const offOnLoadedProtyleStatic = useSiyuanEventLoadedProtyleStatic(({ detail }) 
     dailyNoteValues,
   } = getDailyNoteInfoByProtyleContentEl(protyle.contentElement)
 
-  globalWindowData.value.protyleList.push({
-    enLoopKey: generateUUIDWithTimestamp(),
-    protyleBlockId: protyle.block.id,
-    protyleEl,
-    protyleContentEl: protyle.contentElement,
+  const dialog = protyle.contentElement.closest('.block__popover') as HTMLElement
 
-    isFlashCardProtyle: isFlashCardProtyle(protyle.element),
-    isEditorProtyle: isEditorProtyle(protyle.element),
-    isDailyNote,
-    dailyNoteValues,
-  })
+  globalWindowData.value.protyleList = [
+    ...globalWindowData.value.protyleList,
+    {
+      enLoopKey: generateUUIDWithTimestamp(),
+      protyleBlockId: protyle.block.id,
+      protyleEl,
+      protyleContentEl: protyle.contentElement,
+
+      isFlashCardProtyle: isFlashCardProtyle(protyle.element),
+      isEditorProtyle: isEditorProtyle(protyle.element),
+      isInDialog: !!dialog,
+      dialogEl: dialog,
+      isDailyNote,
+      dailyNoteValues,
+    },
+  ]
 })
 
 const offOnProtyleDestroy = useSiyuanEventProtyleDestroy(({ detail }) => {

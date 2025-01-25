@@ -171,3 +171,11 @@ export enum EN_STYLE_KEYS {
   enAttrContainerWidth = '--enAttrContainerWidth',
   enBottomBacklinkTopDistance = '--enBottomBacklinkTopDistance',
 }
+
+/**
+ * 全局管理 provide 的 key，防止在不同的地方编写出现重复的 key
+ */
+export enum EN_PROVIDE_KEYS {
+  EN_COMMENT_OPTIONS = 'EN_COMMENT_OPTIONS',
+  EN_COMMENT_ID_LIST = 'EN_COMMENT_ID_LIST',
+}

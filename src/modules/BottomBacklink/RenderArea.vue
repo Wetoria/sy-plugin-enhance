@@ -196,7 +196,7 @@ onBeforeUnmount(() => {
   flex-direction: column;
 
   padding-top: 16px;
-  padding-bottom: 16px;
+  padding-bottom: 68px;
 
   .EnBottomBacklinkRenderAreaHeader {
     width: 100%;

@@ -109,15 +109,27 @@ export function markLifeLogBlock() {
       dom = dom.firstElementChild as HTMLDivElement
       const editDom = dom.firstElementChild
       const isPureTimeStart = editDom.innerHTML.trim().startsWith(time)
-
-      if (!isPureTimeStart) {
-        enLog('LifeLog is not start with pure time')
-        return
-      }
+      const hasLifeLogAttr = dom.getAttribute(lifelogAttrType)
 
       const contentWithoutTime = content.replace(/^\d{2}:\d{2}(:\d{2})?\s+/, '')
       if (!contentWithoutTime) {
-        enLog('LifeLog only has time')
+        enWarn('LifeLog only has time')
+        return
+      }
+
+      // 撤回的块
+      if (hasLifeLogAttr) {
+        validParagraphList.push({
+          ...opt,
+          content,
+          time,
+          contentWithoutTime,
+        })
+        return
+      }
+
+      if (!isPureTimeStart) {
+        enWarn('LifeLog is not start with pure time')
         return
       }
 
