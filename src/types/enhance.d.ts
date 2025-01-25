@@ -35,6 +35,8 @@ interface IProtyleObserverItem {
 
   isFlashCardProtyle: boolean
   isEditorProtyle: boolean
+  isInDialog: boolean
+  dialogEl: HTMLElement | null
   isDailyNote: boolean
   dailyNoteValues: {
     [key: string]: string
