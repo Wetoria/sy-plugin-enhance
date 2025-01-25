@@ -66,6 +66,7 @@ jobs:
         id: create_release
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.CUSTOM_TOKEN }}
           script: |
             const maxRetries = 3;
             const retryDelay = 5000; // 5秒
@@ -94,16 +95,15 @@ jobs:
             const tag = context.ref.replace('refs/tags/', '');
 
             console.log('ready to get releaseInfoInPrivateRepo: ', owner, originRepo, tag);
-            const releaseInfoInPrivateRepo = await getReleaseWithRetry(owner, originRepo, tag);
+            const releaseInfoInPrivateRepoResult = await getReleaseWithRetry(owner, originRepo, tag);
+            const releaseInfoInPrivateRepo = releaseInfoInPrivateRepoResult.data;
             console.log('releaseInfoInPrivateRepo is ', releaseInfoInPrivateRepo);
 
             const {
-              data: {
-                tag_name,
-                name: release_name,
-                body: release_body,
-                assets,
-              }
+              tag_name,
+              name: release_name,
+              body: release_body,
+              assets,
             } = releaseInfoInPrivateRepo;
 
             const { data: release } = await github.rest.repos.createRelease({
