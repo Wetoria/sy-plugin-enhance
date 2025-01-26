@@ -25,7 +25,7 @@
                   </div>
                   <div class="whiteboard-minimap">
                     <VueFlow
-                      v-if="memo.whiteBoardConfig?.boardOptions"
+                      v-if="memo.whiteBoardConfig?.boardOptions?.nodes"
                       :nodes="memo.whiteBoardConfig.boardOptions.nodes"
                       :edges="memo.whiteBoardConfig.boardOptions.edges"
                       :defaultViewport="memo.whiteBoardConfig.boardOptions.viewport"

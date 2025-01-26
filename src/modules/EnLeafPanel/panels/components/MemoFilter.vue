@@ -197,7 +197,7 @@ async function getWhiteboardNotes() {
       const defaultConfig: EnWhiteBoardConfig = {
         id: item.whiteBoardId,
         name: item.whiteBoardName,
-        loaded: false,
+        loaded: true,
         embedOptions: {
           default: {
             height: 200,
