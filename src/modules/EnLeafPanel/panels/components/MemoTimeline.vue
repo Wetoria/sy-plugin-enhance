@@ -17,39 +17,35 @@
             <div class="memo-card-content">
               <template v-if="memo.type === 'whiteboard'">
                 <div class="whiteboard-preview">
-                  <div class="whiteboard-info">
-                    <div class="whiteboard-title">
-                      <svg class="whiteboard-icon"><use xlink:href="#iconLayout"></use></svg>
-                      <span class="whiteboard-name">{{ memo.docPath }}</span>
-                    </div>
-                  </div>
-                  <div class="whiteboard-minimap">
-                    <VueFlow
-                      v-if="memo.whiteBoardConfig?.boardOptions?.nodes"
-                      :nodes="memo.whiteBoardConfig.boardOptions.nodes"
-                      :edges="memo.whiteBoardConfig.boardOptions.edges"
-                      :defaultViewport="memo.whiteBoardConfig.boardOptions.viewport"
-                      :fitView="true"
-                      :panOnDrag="false"
-                      :zoomOnScroll="false"
-                      :zoomOnPinch="false"
-                      :preventScrolling="true"
-                      :nodesConnectable="false"
-                      :nodesDraggable="false"
-                      :elementsSelectable="false"
-                    >
-                      <template #node-EnWhiteBoardNodeProtyle="node">
-                        <div class="minimap-node" />
-                      </template>
-                      <template #edge-EnWhiteBoardEdgeBase="edge">
-                        <div class="minimap-edge" />
-                      </template>
-                      <MiniMap
-                        :zoomable="false"
-                        :pannable="false"
-                        maskColor="transparent"
-                      />
-                    </VueFlow>
+                  <VueFlow
+                    v-if="memo.whiteBoardConfig?.boardOptions?.nodes"
+                    :nodes="memo.whiteBoardConfig.boardOptions.nodes"
+                    :edges="memo.whiteBoardConfig.boardOptions.edges"
+                    :defaultViewport="memo.whiteBoardConfig.boardOptions.viewport"
+                    :fitView="true"
+                    :panOnDrag="false"
+                    :zoomOnScroll="false"
+                    :zoomOnPinch="false"
+                    :preventScrolling="true"
+                    :nodesConnectable="false"
+                    :nodesDraggable="false"
+                    :elementsSelectable="false"
+                  >
+                    <template #node-EnWhiteBoardNodeProtyle="node">
+                      <div class="minimap-node" />
+                    </template>
+                    <template #edge-EnWhiteBoardEdgeBase="edge">
+                      <div class="minimap-edge" />
+                    </template>
+                    <MiniMap
+                      :zoomable="false"
+                      :pannable="false"
+                      maskColor="transparent"
+                    />
+                  </VueFlow>
+                  <div class="whiteboard-title">
+                    <svg class="whiteboard-icon"><use xlink:href="#iconLayout"></use></svg>
+                    <span class="whiteboard-name">{{ memo.docPath }}</span>
                   </div>
                 </div>
               </template>
@@ -231,6 +227,16 @@ onBeforeUnmount(() => {
     position: relative;
     padding-left: 20px;
 
+    .vue-flow__nodes.vue-flow__container>div>.minimap-node {
+      display: none;
+    }
+
+    .vue-flow__panel {
+      position: relative;
+      z-index: 5;
+      margin: 0px;
+    }
+
     &::before {
       content: '';
       position: absolute;
@@ -348,69 +354,91 @@ onBeforeUnmount(() => {
 }
 
 .whiteboard-preview {
-  padding: 8px;
+  aspect-ratio: 16/9;
+  position: relative;
+  background: var(--b3-theme-surface);
+  border-radius: var(--b3-border-radius);
+  border: 1px solid var(--b3-border-color);
+  overflow: hidden;
 
-  .whiteboard-info {
-    .whiteboard-title {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      margin-bottom: 8px;
-      font-size: 14px;
-      color: var(--b3-theme-on-background);
+  :deep(.vue-flow) {
+    position: absolute;
+    inset: 0;
+    background-color: var(--b3-theme-background);
 
-      .whiteboard-icon {
-        width: 14px;
-        height: 14px;
-        fill: currentColor;
+    .vue-flow__viewport {
+      transform: none !important;
+    }
+
+    .vue-flow__minimap {
+      position: absolute;
+      inset: 0;
+      width: 100% !important;
+      height: 100% !important;
+      transform: none;
+      margin: 0;
+      border-radius: 0;
+      background: none;
+      border: none;
+      box-shadow: none;
+      opacity: 1;
+      pointer-events: none;
+
+      .vue-flow__minimap-node {
+        fill: var(--b3-theme-primary);
+        stroke: var(--b3-theme-on-surface);
+        stroke-width: 1;
+        opacity: 0.6;
       }
+    }
 
-      .whiteboard-name {
-        flex: 1;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
+    // 隐藏所有不必要的元素
+    .vue-flow__controls,
+    .vue-flow__background,
+    .vue-flow__panel {
+      display: none;
     }
   }
 
-  .whiteboard-minimap {
+  .minimap-node {
     width: 100%;
-    height: 200px;
-    background: var(--b3-theme-surface);
+    height: 100%;
+    background-color: var(--b3-theme-primary);
     border-radius: var(--b3-border-radius);
-    overflow: hidden;
-    border: 1px solid var(--b3-border-color);
+    opacity: 0.6;
+  }
 
-    :deep(.vue-flow) {
-      background-color: var(--b3-theme-background);
+  .minimap-edge {
+    stroke: var(--b3-theme-on-surface);
+    stroke-width: 1;
+    opacity: 0.6;
+  }
+
+  .whiteboard-title {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px;
+    background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.1));
+    color: var(--b3-theme-on-background);
+    font-size: 14px;
+
+    .whiteboard-icon {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+      flex-shrink: 0;
     }
 
-    :deep(.vue-flow__minimap-node) {
-      fill: var(--b3-theme-primary);
-      stroke: var(--b3-theme-on-surface);
-      stroke-width: 1;
-      opacity: 0.6;
-    }
-
-    :deep(.vue-flow__edge) {
-      stroke: var(--b3-theme-on-surface);
-      stroke-width: 1;
-      opacity: 0.6;
-    }
-
-    .minimap-node {
-      width: 100%;
-      height: 100%;
-      background-color: var(--b3-theme-primary);
-      border-radius: var(--b3-border-radius);
-      opacity: 0.6;
-    }
-
-    .minimap-edge {
-      stroke: var(--b3-theme-on-surface);
-      stroke-width: 1;
-      opacity: 0.6;
+    .whiteboard-name {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
   }
 }
