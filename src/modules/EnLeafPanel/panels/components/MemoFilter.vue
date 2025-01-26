@@ -32,8 +32,16 @@
 <script setup lang="ts">
 import { request } from '@/api'
 import { useDailyNote } from '@/modules/DailyNote/DailyNote'
-import { whiteBoardRef } from '@/modules/EnWhiteBoard/EnWhiteBoard'
 import {
+  type EnWhiteBoardConfig,
+  getWhiteBoardConfigRefById,
+  loadWhiteBoard,
+  loadWhiteBoardConfigById,
+  useWhiteBoardModule,
+  whiteBoardRef,
+} from '@/modules/EnWhiteBoard/EnWhiteBoard'
+import {
+  onMounted,
   watch,
 } from 'vue'
 
@@ -166,6 +174,13 @@ async function getDailyNotes() {
 
 // 获取白板块
 async function getWhiteboardNotes() {
+  // 确保白板模块已初始化
+  if (!whiteBoardRef.indexMap) {
+    console.log('初始化白板模块...')
+    loadWhiteBoard()
+    await new Promise((resolve) => setTimeout(resolve, 100)) // 等待初始化完成
+  }
+
   if (!whiteBoardRef.indexMap) {
     console.log('白板列表为空')
     return []
@@ -173,7 +188,45 @@ async function getWhiteboardNotes() {
 
   // 获取所有白板
   const whiteboards = Object.values(whiteBoardRef.indexMap.moduleOptions.value)
-  const configList = whiteBoardRef.configList.value
+
+  // 先加载所有白板的配置
+  const configPromises = whiteboards.map(async (item) => {
+    const { embedWhiteBoardConfigData } = getWhiteBoardConfigRefById(item.whiteBoardId, 'default')
+    if (!embedWhiteBoardConfigData.value?.loaded) {
+      console.log('加载白板配置:', item.whiteBoardId)
+      const defaultConfig: EnWhiteBoardConfig = {
+        id: item.whiteBoardId,
+        name: item.whiteBoardName,
+        loaded: false,
+        embedOptions: {
+          default: {
+            height: 200,
+            SiderLeftShow: false,
+            SiderLeftWidth: 0,
+            SiderRightShow: false,
+            SiderRightWidth: 0,
+          },
+        },
+        boardOptions: {
+          keepEmbedOptionsSame: false,
+          nodes: [],
+          edges: [],
+          viewport: {
+            x: 0,
+            y: 0,
+            zoom: 1,
+          },
+          backgroundVariant: 'none',
+          useCustomBackground: false,
+        },
+      }
+      await loadWhiteBoardConfigById(item.whiteBoardId, defaultConfig)
+      // 等待一下确保配置加载完成
+      await new Promise((resolve) => setTimeout(resolve, 50))
+    }
+  })
+
+  await Promise.all(configPromises)
 
   // 详细打印白板信息
   console.group('白板列表')
@@ -181,9 +234,9 @@ async function getWhiteboardNotes() {
     console.log('----------------------------------------')
     console.log('白板ID:', item.whiteBoardId)
     console.log('白板名称:', item.whiteBoardName)
-    const config = configList[item.whiteBoardId]
-    if (config) {
-      console.log('白板配置:', config.moduleOptions.value)
+    const { embedWhiteBoardConfigData } = getWhiteBoardConfigRefById(item.whiteBoardId, 'default')
+    if (embedWhiteBoardConfigData.value) {
+      console.log('白板配置:', embedWhiteBoardConfigData.value)
     }
   })
   console.log('----------------------------------------')
@@ -192,22 +245,35 @@ async function getWhiteboardNotes() {
 
   // 格式化白板数据
   const formattedWhiteboards = whiteboards.map((item) => {
-    const config = configList[item.whiteBoardId]
+    const { embedWhiteBoardConfigData } = getWhiteBoardConfigRefById(item.whiteBoardId, 'default')
     // 从白板ID中提取时间
     const timeStr = item.whiteBoardId.split('-')[3] || ''
     const time = timeStr
       ? `${timeStr.slice(0, 4)}-${timeStr.slice(4, 6)}-${timeStr.slice(6, 8)} ${timeStr.slice(8, 10)}:${timeStr.slice(10, 12)}:${timeStr.slice(12, 14)}`
       : new Date().toLocaleString()
 
+    // 详细打印白板配置
+    console.group('白板配置详情')
+    console.log('白板ID:', item.whiteBoardId)
+    console.log('白板名称:', item.whiteBoardName)
+    if (embedWhiteBoardConfigData.value) {
+      console.log('节点数量:', embedWhiteBoardConfigData.value.boardOptions.nodes.length)
+      console.log('边数量:', embedWhiteBoardConfigData.value.boardOptions.edges.length)
+      console.log('视口信息:', embedWhiteBoardConfigData.value.boardOptions.viewport)
+      console.log('完整配置:', embedWhiteBoardConfigData.value)
+    } else {
+      console.log('配置为空')
+    }
+    console.groupEnd()
+
     const memo = {
       blockId: item.whiteBoardId,
       time,
       type: 'whiteboard',
       docPath: item.whiteBoardName || '未命名白板',
-      whiteBoardConfig: config?.moduleOptions.value,
+      whiteBoardConfig: embedWhiteBoardConfigData.value,
     }
 
-    console.log('格式化后的白板数据:', memo)
     return memo
   })
 
@@ -268,6 +334,14 @@ const toggleFilter = async (type: FilterType) => {
     }
   }
 }
+
+// 确保白板模块在组件挂载时初始化
+onMounted(() => {
+  const { moduleOptions } = useWhiteBoardModule()
+  if (moduleOptions.value.enabled && !whiteBoardRef.indexMap) {
+    loadWhiteBoard()
+  }
+})
 </script>
 
 <style lang="scss">

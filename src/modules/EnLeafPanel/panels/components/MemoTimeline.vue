@@ -44,6 +44,11 @@
                       <template #edge-EnWhiteBoardEdgeBase="edge">
                         <div class="minimap-edge" />
                       </template>
+                      <MiniMap
+                        :zoomable="false"
+                        :pannable="false"
+                        maskColor="transparent"
+                      />
                     </VueFlow>
                   </div>
                 </div>
@@ -88,7 +93,9 @@ import type { Protyle } from 'siyuan'
 import type { PropType } from 'vue'
 import EnProtyle from '@/components/EnProtyle.vue'
 import { VueFlow } from '@vue-flow/core'
+import { MiniMap } from '@vue-flow/minimap'
 import '@vue-flow/core/dist/style.css'
+import '@vue-flow/minimap/dist/style.css'
 import {
   onBeforeUnmount,
   ref,
