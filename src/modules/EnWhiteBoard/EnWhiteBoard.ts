@@ -27,7 +27,7 @@ import {
   computed,
   reactive,
   Ref,
-  shallowRef,
+  ref,
 } from 'vue'
 
 
@@ -160,7 +160,7 @@ export const whiteBoardRef: {
   configList: Ref<ConfigList>
   indexMap: IGlobalData<EnWhiteBoardIndexMap>
 } = {
-  configList: shallowRef({}),
+  configList: ref({}),
   indexMap: null,
 }
 export const whiteBoardConfigList = computed<ConfigList>(() => whiteBoardRef.configList.value)
