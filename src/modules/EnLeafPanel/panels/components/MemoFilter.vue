@@ -9,6 +9,22 @@
         <svg class="action-icon"><use xlink:href="#iconCalendar"></use></svg>
         <span class="btn-text">日记</span>
       </button>
+      <button
+        class="filter-btn"
+        :class="{ active: modelValue === 'whiteboard' }"
+        @click="toggleFilter('whiteboard')"
+      >
+        <svg class="action-icon"><use xlink:href="#iconLayout"></use></svg>
+        <span class="btn-text">白板</span>
+      </button>
+      <button
+        class="filter-btn"
+        :class="{ active: modelValue === 'annotation' }"
+        @click="toggleFilter('annotation')"
+      >
+        <svg class="action-icon"><use xlink:href="#iconMark"></use></svg>
+        <span class="btn-text">批注</span>
+      </button>
     </div>
   </div>
 </template>
@@ -20,7 +36,7 @@ import {
   watch,
 } from 'vue'
 
-export type FilterType = 'daily'
+export type FilterType = 'daily' | 'whiteboard' | 'annotation'
 
 const props = defineProps<{
   modelValue?: FilterType
@@ -147,27 +163,81 @@ async function getDailyNotes() {
   return uniqueResults
 }
 
+// 获取白板块
+async function getWhiteboardNotes() {
+  const data = {
+    stmt: `
+      SELECT
+        B.id as block_id,
+        B.content as block_content,
+        B.root_id as doc_id,
+        B.updated as block_time,
+        B.parent_id,
+        D.hpath as doc_path
+      FROM blocks B
+      JOIN blocks D ON B.root_id = D.id
+      WHERE
+        B.type = 'widget'
+        AND B.content LIKE '%sy-enhance-whiteboard%'
+      ORDER BY B.updated DESC
+    `,
+  }
+  const result = await request('/api/query/sql', data)
+  console.log('Initial whiteboard SQL result:', result)
+  return result
+}
+
+// 获取批注块
+async function getAnnotationNotes() {
+  const data = {
+    stmt: `
+      SELECT
+        B.id as block_id,
+        B.content as block_content,
+        B.root_id as doc_id,
+        B.updated as block_time,
+        B.parent_id,
+        D.hpath as doc_path
+      FROM blocks B
+      JOIN blocks D ON B.root_id = D.id
+      WHERE
+        B.type = 'widget'
+        AND B.content LIKE '%sy-enhance-annotation%'
+      ORDER BY B.updated DESC
+    `,
+  }
+  const result = await request('/api/query/sql', data)
+  console.log('Initial annotation SQL result:', result)
+  return result
+}
+
 const toggleFilter = async (type: FilterType) => {
   if (props.modelValue === type) {
     emit('update:modelValue', undefined)
-    // 清空日记信息
+    // 清空信息
     emit('dailyNoteInfo', { dailyNotes: [] })
   } else {
     emit('update:modelValue', type)
-    if (type === 'daily') {
-      try {
-        // 获取日记块
-        const dailyNotes = await getDailyNotes() || []
-        console.log('Daily notes from SQL:', dailyNotes)
-
-        // 发送日记信息
-        emit('dailyNoteInfo', {
-          dailyNotes,
-        })
-      } catch (err) {
-        console.error('Failed to get daily notes:', err)
-        emit('dailyNoteInfo', { dailyNotes: [] })
+    try {
+      let notes = []
+      if (type === 'daily') {
+        notes = await getDailyNotes() || []
+        console.log('Daily notes from SQL:', notes)
+      } else if (type === 'whiteboard') {
+        notes = await getWhiteboardNotes() || []
+        console.log('Whiteboard notes from SQL:', notes)
+      } else if (type === 'annotation') {
+        notes = await getAnnotationNotes() || []
+        console.log('Annotation notes from SQL:', notes)
       }
+
+      // 发送信息
+      emit('dailyNoteInfo', {
+        dailyNotes: notes,
+      })
+    } catch (err) {
+      console.error(`Failed to get ${type} notes:`, err)
+      emit('dailyNoteInfo', { dailyNotes: [] })
     }
   }
 }
