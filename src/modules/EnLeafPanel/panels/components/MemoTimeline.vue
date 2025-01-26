@@ -13,22 +13,33 @@
           <div class="timeline-dot"></div>
         </div>
         <div class="timeline-content">
-          <div class="memo-content">
-            {{ memo.content }}
-          </div>
-          <div class="card-actions">
-            <span
-              class="action-icon"
-              @click="handleEdit(index)"
-            >
-              <svg><use xlink:href="#iconEdit"></use></svg>
-            </span>
-            <span
-              class="action-icon"
-              @click="handleDelete(index)"
-            >
-              <svg><use xlink:href="#iconTrashcan"></use></svg>
-            </span>
+          <div class="memo-card">
+            <div class="memo-card-content">
+              <EnProtyle
+                :block-id="memo.blockId"
+                :preview="true"
+                disableEnhance
+                @after="(protyle) => afterProtyleLoad(protyle, index)"
+              />
+              <div
+                class="protyle-util-area"
+                :data-memo-index="index"
+              ></div>
+            </div>
+            <div class="card-actions">
+              <span
+                class="action-icon"
+                @click="handleEdit(index)"
+              >
+                <svg><use xlink:href="#iconEdit"></use></svg>
+              </span>
+              <span
+                class="action-icon"
+                @click="handleDelete(index)"
+              >
+                <svg><use xlink:href="#iconTrashcan"></use></svg>
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -37,10 +48,16 @@
 </template>
 
 <script setup lang="ts">
+import type { Protyle } from 'siyuan'
 import type { PropType } from 'vue'
+import EnProtyle from '@/components/EnProtyle.vue'
+import {
+  onBeforeUnmount,
+  ref,
+} from 'vue'
 
 export interface Memo {
-  content: string
+  blockId: string
   time: string
 }
 
@@ -56,6 +73,30 @@ const emit = defineEmits<{
   (e: 'delete', index: number): void
 }>()
 
+const protyleRefs = ref<Map<number, Protyle>>(new Map())
+
+const targetProtyleUtilClassList = [
+  'protyle-gutters',
+  'protyle-select',
+  'protyle-toolbar',
+  'protyle-hint',
+]
+
+const afterProtyleLoad = (protyle: Protyle, index: number) => {
+  protyleRefs.value.set(index, protyle)
+
+  // 移动工具区域到指定位置
+  const utilArea = document.querySelector(`.protyle-util-area[data-memo-index="${index}"]`)
+  if (utilArea) {
+    targetProtyleUtilClassList.forEach((className) => {
+      const target = protyle.protyle.element.querySelector(`.${className}`)
+      if (target) {
+        utilArea.appendChild(target)
+      }
+    })
+  }
+}
+
 const handleEdit = (index: number) => {
   emit('edit', index)
 }
@@ -63,6 +104,16 @@ const handleEdit = (index: number) => {
 const handleDelete = (index: number) => {
   emit('delete', index)
 }
+
+onBeforeUnmount(() => {
+  // 清理 protyle 实例
+  protyleRefs.value.forEach((protyle) => {
+    const instance = protyle.protyle.getInstance()
+    if (instance) {
+      instance.destroy?.()
+    }
+  })
+})
 </script>
 
 <style lang="scss">
@@ -117,52 +168,73 @@ const handleDelete = (index: number) => {
       }
 
       .timeline-content {
-        background: var(--b3-theme-background);
-        border-radius: var(--b3-border-radius);
-        padding: 12px;
-        border: 1px solid var(--b3-border-color);
-        position: relative;
+        .memo-card {
+          background: var(--b3-theme-background);
+          border-radius: var(--b3-border-radius);
+          padding: 12px;
+          border: 1px solid var(--b3-border-color);
+          position: relative;
 
-        .memo-content {
-          font-size: 14px;
-          line-height: 1.5;
-          white-space: pre-wrap;
-        }
+          .memo-card-content {
+            position: relative;
+          }
 
-        .card-actions {
-          position: absolute;
-          top: 8px;
-          right: 8px;
-          display: flex;
-          gap: 4px;
-          opacity: 0;
-          transition: opacity 0.2s ease;
+          .protyle-util-area {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            pointer-events: none;
+            z-index: 1;
 
-          .action-icon {
-            cursor: pointer;
-            padding: 4px;
-
-            svg {
-              height: 14px;
-              width: 14px;
-              fill: currentColor;
-              opacity: 0.68;
+            :deep(*) {
+              pointer-events: auto;
             }
+          }
 
-            &:hover {
-              background-color: var(--b3-theme-background-light);
-              border-radius: var(--b3-border-radius);
+          :deep(.protyle-wysiwyg) {
+            padding: 0;
+
+            [contenteditable="true"] {
+              cursor: default;
+            }
+          }
+
+          .card-actions {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            display: flex;
+            gap: 4px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+
+            .action-icon {
+              cursor: pointer;
+              padding: 4px;
 
               svg {
-                opacity: 1;
+                height: 14px;
+                width: 14px;
+                fill: currentColor;
+                opacity: 0.68;
+              }
+
+              &:hover {
+                background-color: var(--b3-theme-background-light);
+                border-radius: var(--b3-border-radius);
+
+                svg {
+                  opacity: 1;
+                }
               }
             }
           }
-        }
 
-        &:hover {
-          .card-actions {
-            opacity: 1;
+          &:hover {
+            .card-actions {
+              opacity: 1;
+            }
           }
         }
       }
