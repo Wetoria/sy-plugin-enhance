@@ -214,41 +214,65 @@ const handleDailyNoteInfo = (info: { dailyNotes: any[] }) => {
   const dailyNotes = info?.dailyNotes || []
 
   if (!dailyNotes.length) {
-    // 清空备忘录
-    memos.value = memos.value.filter((memo) => memo.type !== 'daily')
+    if (activeFilter.value === 'whiteboard') {
+      // 如果是白板筛选，直接使用数据
+      memos.value = dailyNotes
+    } else {
+      // 其他情况，只清空对应类型的数据
+      memos.value = memos.value.filter((memo) => memo.type !== activeFilter.value)
+    }
     return
   }
 
-  // 将日记块转换为Memo格式
-  const dailyMemos: Memo[] = dailyNotes.map((note) => {
-    try {
-      const time = getTimeFromBlockId(note.block_id)
-      if (!time) return null
+  if (activeFilter.value === 'whiteboard') {
+    // 如果是白板数据，直接替换
+    memos.value = dailyNotes
+  } else if (activeFilter.value === 'daily') {
+    // 将日记块转换为Memo格式
+    const dailyMemos: Memo[] = dailyNotes.map((note) => {
+      try {
+        const time = getTimeFromBlockId(note.block_id)
+        if (!time) return null
 
-      return {
-        blockId: note.block_id,
-        time,
-        type: 'daily',
-        dailyNoteId: note.doc_id,
-        content: note.block_content,
+        return {
+          blockId: note.block_id,
+          time,
+          type: 'daily',
+          dailyNoteId: note.doc_id,
+          content: note.block_content,
+        }
+      } catch (err) {
+        console.error('Error processing note:', err)
+        return null
       }
-    } catch (err) {
-      console.error('Error processing note:', err)
-      return null
-    }
-  }).filter(Boolean) as Memo[] // 过滤掉处理失败的项
+    }).filter(Boolean) as Memo[]
 
-  // 更新备忘录列表，保留非日记类型的备忘录
-  memos.value = [
-    ...memos.value.filter((memo) => memo.type !== 'daily'),
-    ...dailyMemos,
-  ]
+    // 更新备忘录列表，保留非日记类型的备忘录
+    memos.value = [
+      ...memos.value.filter((memo) => memo.type !== 'daily'),
+      ...dailyMemos,
+    ]
 
-  // 更新日历组件的日期标记
-  const datesWithNotes = [...new Set(dailyMemos.map((memo) =>
-    memo.time.split(' ')[0],
-  ))]
-  selectedDates.value = datesWithNotes
+    // 更新日历组件的日期标记
+    const datesWithNotes = [...new Set(dailyMemos.map((memo) =>
+      memo.time.split(' ')[0],
+    ))]
+    selectedDates.value = datesWithNotes
+  } else {
+    // 其他类型的数据处理
+    const newMemos: Memo[] = dailyNotes.map((note) => ({
+      blockId: note.block_id,
+      time: note.block_time,
+      type: activeFilter.value,
+      content: note.block_content,
+    }))
+
+    // 更新备忘录列表，保留其他类型的备忘录
+    memos.value = [
+      ...memos.value.filter((memo) => memo.type !== activeFilter.value),
+      ...newMemos,
+    ]
+  }
 }
 
 // 添加对 memos 的监听

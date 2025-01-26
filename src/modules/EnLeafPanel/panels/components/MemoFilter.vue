@@ -191,7 +191,7 @@ async function getWhiteboardNotes() {
   console.groupEnd()
 
   // 格式化白板数据
-  return whiteboards.map((item) => {
+  const formattedWhiteboards = whiteboards.map((item) => {
     const config = configList[item.whiteBoardId]
     // 从白板ID中提取时间
     const timeStr = item.whiteBoardId.split('-')[3] || ''
@@ -199,15 +199,18 @@ async function getWhiteboardNotes() {
       ? `${timeStr.slice(0, 4)}-${timeStr.slice(4, 6)}-${timeStr.slice(6, 8)} ${timeStr.slice(8, 10)}:${timeStr.slice(10, 12)}:${timeStr.slice(12, 14)}`
       : new Date().toLocaleString()
 
-    return {
+    const memo = {
       blockId: item.whiteBoardId,
       time,
       type: 'whiteboard',
-      content: config ? JSON.stringify(config.moduleOptions.value.boardOptions) : '',
-      docPath: item.whiteBoardName,
-      whiteBoardConfig: config?.moduleOptions.value,
+      docPath: item.whiteBoardName || '未命名白板',
     }
+
+    console.log('格式化后的白板数据:', memo)
+    return memo
   })
+
+  return formattedWhiteboards
 }
 
 // 获取批注块

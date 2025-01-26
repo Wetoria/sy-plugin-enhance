@@ -18,10 +18,11 @@
               <template v-if="memo.type === 'whiteboard'">
                 <div class="whiteboard-preview">
                   <div class="whiteboard-info">
-                    <span class="whiteboard-path">{{ memo.docPath }}</span>
-                  </div>
-                  <div class="whiteboard-minimap">
-                    <!-- 这里将来渲染白板的minimap -->
+                    <div class="whiteboard-title">
+                      <svg class="whiteboard-icon"><use xlink:href="#iconLayout"></use></svg>
+                      <span class="whiteboard-name">{{ memo.docPath }}</span>
+                    </div>
+                    <div class="whiteboard-time">{{ memo.time }}</div>
                   </div>
                 </div>
               </template>
@@ -318,22 +319,33 @@ onBeforeUnmount(() => {
   padding: 8px;
 
   .whiteboard-info {
-    margin-bottom: 8px;
-    font-size: 12px;
-    color: var(--b3-theme-on-surface);
-    opacity: 0.68;
+    .whiteboard-title {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 4px;
+      font-size: 14px;
+      color: var(--b3-theme-on-background);
 
-    .whiteboard-path {
-      word-break: break-all;
+      .whiteboard-icon {
+        width: 14px;
+        height: 14px;
+        fill: currentColor;
+      }
+
+      .whiteboard-name {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
     }
-  }
 
-  .whiteboard-minimap {
-    width: 100%;
-    height: 200px;
-    background: var(--b3-theme-surface);
-    border-radius: var(--b3-border-radius);
-    overflow: hidden;
+    .whiteboard-time {
+      font-size: 12px;
+      color: var(--b3-theme-on-surface);
+      opacity: 0.68;
+    }
   }
 }
 </style>
