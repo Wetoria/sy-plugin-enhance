@@ -10,7 +10,7 @@
       </div>
       <template #desc>
         <div>
-          是否标记 LifeLog 段落。但输入 [时间 类型] 或 [时间 类型：备注] 后，会自动将段落标记为 LifeLog 段落。
+          是否标记 LifeLog 段落。输入 [时间 类型] 或 [时间 类型：备注] 后，会自动将段落标记为 LifeLog 段落。
         </div>
         <div>
           例如：
@@ -31,7 +31,7 @@
         </div>
         <div>
           <a-typography-text type="warning">
-            注：如果开头的时间带有任何样式，则不会被标记。可先进行标记，在设置格式。
+            注：如果开头的时间带有任何样式，则不会被标记。可先进行标记，再设置格式。
           </a-typography-text>
         </div>
       </template>
@@ -48,7 +48,7 @@
           是否显示 LifeLog 的标记，并自动吸顶。
         </div>
         <div>
-          吸顶：在编辑区顶部，最新一条 LifeLog 会在顶部吸附。当 DailyNote 内容较多时，可以方便地知道，上一条记录是什么时候、做了什么事。
+          吸顶：在编辑区顶部，最新一条 LifeLog 会在顶部吸附。当 DailyNote 内容较多时，可以方便地知道上一条记录是什么时候、做了什么事。
         </div>
       </template>
       <template #opt>
