@@ -204,6 +204,7 @@ async function getWhiteboardNotes() {
       time,
       type: 'whiteboard',
       docPath: item.whiteBoardName || '未命名白板',
+      whiteBoardConfig: config?.moduleOptions.value,
     }
 
     console.log('格式化后的白板数据:', memo)

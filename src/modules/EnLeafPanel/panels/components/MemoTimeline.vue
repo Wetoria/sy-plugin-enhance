@@ -22,7 +22,29 @@
                       <svg class="whiteboard-icon"><use xlink:href="#iconLayout"></use></svg>
                       <span class="whiteboard-name">{{ memo.docPath }}</span>
                     </div>
-                    <div class="whiteboard-time">{{ memo.time }}</div>
+                  </div>
+                  <div class="whiteboard-minimap">
+                    <VueFlow
+                      v-if="memo.whiteBoardConfig?.boardOptions"
+                      :nodes="memo.whiteBoardConfig.boardOptions.nodes"
+                      :edges="memo.whiteBoardConfig.boardOptions.edges"
+                      :defaultViewport="memo.whiteBoardConfig.boardOptions.viewport"
+                      :fitView="true"
+                      :panOnDrag="false"
+                      :zoomOnScroll="false"
+                      :zoomOnPinch="false"
+                      :preventScrolling="true"
+                      :nodesConnectable="false"
+                      :nodesDraggable="false"
+                      :elementsSelectable="false"
+                    >
+                      <template #node-EnWhiteBoardNodeProtyle="node">
+                        <div class="minimap-node" />
+                      </template>
+                      <template #edge-EnWhiteBoardEdgeBase="edge">
+                        <div class="minimap-edge" />
+                      </template>
+                    </VueFlow>
                   </div>
                 </div>
               </template>
@@ -65,6 +87,8 @@
 import type { Protyle } from 'siyuan'
 import type { PropType } from 'vue'
 import EnProtyle from '@/components/EnProtyle.vue'
+import { VueFlow } from '@vue-flow/core'
+import '@vue-flow/core/dist/style.css'
 import {
   onBeforeUnmount,
   ref,
@@ -81,6 +105,7 @@ export interface Memo {
   dailyNoteId?: string // 如果是日记块，这里存放日记文档的ID
   content?: string
   docPath?: string // 文档路径
+  whiteBoardConfig?: any // 白板配置
 }
 
 const props = defineProps({
@@ -323,7 +348,7 @@ onBeforeUnmount(() => {
       display: flex;
       align-items: center;
       gap: 4px;
-      margin-bottom: 4px;
+      margin-bottom: 8px;
       font-size: 14px;
       color: var(--b3-theme-on-background);
 
@@ -340,11 +365,45 @@ onBeforeUnmount(() => {
         white-space: nowrap;
       }
     }
+  }
 
-    .whiteboard-time {
-      font-size: 12px;
-      color: var(--b3-theme-on-surface);
-      opacity: 0.68;
+  .whiteboard-minimap {
+    width: 100%;
+    height: 200px;
+    background: var(--b3-theme-surface);
+    border-radius: var(--b3-border-radius);
+    overflow: hidden;
+    border: 1px solid var(--b3-border-color);
+
+    :deep(.vue-flow) {
+      background-color: var(--b3-theme-background);
+    }
+
+    :deep(.vue-flow__minimap-node) {
+      fill: var(--b3-theme-primary);
+      stroke: var(--b3-theme-on-surface);
+      stroke-width: 1;
+      opacity: 0.6;
+    }
+
+    :deep(.vue-flow__edge) {
+      stroke: var(--b3-theme-on-surface);
+      stroke-width: 1;
+      opacity: 0.6;
+    }
+
+    .minimap-node {
+      width: 100%;
+      height: 100%;
+      background-color: var(--b3-theme-primary);
+      border-radius: var(--b3-border-radius);
+      opacity: 0.6;
+    }
+
+    .minimap-edge {
+      stroke: var(--b3-theme-on-surface);
+      stroke-width: 1;
+      opacity: 0.6;
     }
   }
 }
