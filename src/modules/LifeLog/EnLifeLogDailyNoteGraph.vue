@@ -200,7 +200,7 @@ const currentSecondDiff = computed(() => {
   top: 30px;
   width: 5px;
   height: calc(100% - 30px - 4px);
-  background-color: rgba(109, 109, 109, 0.1);
+  background-color: var(--b3-theme-surface);
   display: flex;
   z-index: 9;
   overflow: hidden;
@@ -216,7 +216,7 @@ const currentSecondDiff = computed(() => {
   }
 
   .EnLifeLogGraphDateItem + .EnLifeLogGraphDateItem {
-    border-left: 1px solid rgba(109, 109, 109);
+    border-left: 1px solid var(--b3-border-color);
   }
 
 
@@ -225,7 +225,7 @@ const currentSecondDiff = computed(() => {
     flex-direction: column;
     overflow: hidden;
     font-size: var(--en-lifelog-graph-font-size, 8px);
-    color: white;
+    color: var(--b3-theme-on-background);
     width: 100%;
     height: 100%;
     position: relative;
@@ -273,7 +273,7 @@ const currentSecondDiff = computed(() => {
 
     .divider {
       flex: 1;
-      border-top: 1px solid rgba(109, 109, 109, 0.1);
+      border-top: 1px solid var(--b3-border-color);
       height: 0;
     }
 
@@ -304,7 +304,7 @@ const currentSecondDiff = computed(() => {
       position: relative;
 
       .divider {
-        border-top: 1px solid rgba(109, 109, 109);
+        border-top: 1px solid var(--b3-border-color);
       }
 
       &[data-en_lifelog_show_info="false"] {
@@ -337,8 +337,8 @@ const currentSecondDiff = computed(() => {
 
   &:hover {
     width: auto;
-    background: var(--b3-theme-surface);
-    border-right: 1px solid rgba(109, 109, 109);
+    background-color: var(--b3-theme-surface);
+    border-right: 1px solid var(--b3-border-color);
 
     .EnLifeLogGraphDateItem {
       width: 100px;
