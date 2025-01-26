@@ -4,16 +4,22 @@
       <MemoCalendar
         v-model="selectedDates"
         :memos="memos"
+        :is-simple-mode="isInputActive"
         @date-select="handleDateSelect"
       />
     </div>
-    <div class="memo-input-area">
+    <div
+      class="memo-input-area"
+      :class="{ active: isInputActive }"
+    >
       <MemoInput
         :is-editing="isEditing"
         :editing-block-id="editingBlockId"
         :editing-memo="editingMemo"
         @submit="addMemo"
         @cancel="cancelEdit"
+        @focus="handleInputFocus"
+        @blur="handleInputBlur"
       />
     </div>
     <div class="memo-timeline-area">
@@ -59,6 +65,7 @@ const isEditing = ref(false)
 const editingIndex = ref(-1)
 const selectedDates = ref<string[]>([])
 const activeFilter = ref<FilterType>()
+const isInputActive = ref(false)
 
 const editingBlockId = computed(() => {
   if (isEditing.value && editingIndex.value !== -1) {
@@ -285,6 +292,17 @@ watch(() => filteredMemos.value, (newFilteredMemos) => {
   console.log('Filtered memos changed:', newFilteredMemos)
 }, { deep: true })
 
+const handleInputFocus = () => {
+  isInputActive.value = true
+}
+
+const handleInputBlur = () => {
+  // 如果不在编辑状态，则关闭激活状态
+  if (!isEditing.value) {
+    isInputActive.value = false
+  }
+}
+
 onMounted(() => {
   registerCommands()
   offTransactionEvent = useSiyuanEventTransactions(() => {
@@ -309,11 +327,25 @@ onBeforeUnmount(() => {
 
   .memo-calendar-area {
     flex-shrink: 0;
+    transition: all 0.3s ease;
+    margin-bottom: 8px;
+
+    &.simple-mode {
+      margin-bottom: -4px; // 当日历处于简约模式时，减少底部间距
+    }
   }
 
   .memo-input-area {
     flex-shrink: 0;
     width: 100%;
+    transition: all 0.3s ease;
+    margin: 8px 0;
+
+    &.active {
+      .memo-input-card {
+        height: 200px; // 增加输入框的高度
+      }
+    }
   }
 
   .memo-timeline-area {

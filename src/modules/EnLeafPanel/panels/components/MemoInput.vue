@@ -79,6 +79,8 @@ const props = defineProps({
 const emit = defineEmits<{
   (e: 'submit', memo: Memo): void
   (e: 'cancel'): void
+  (e: 'focus'): void
+  (e: 'blur'): void
 }>()
 
 const blockId = ref('')
@@ -102,6 +104,15 @@ const afterProtyleLoad = (protyle: Protyle) => {
     if (target) {
       protyleUtilAreaRef.value?.appendChild(target)
     }
+  })
+
+  // 添加焦点事件监听
+  protyle.protyle.wysiwyg.element.addEventListener('focus', () => {
+    emit('focus')
+  })
+
+  protyle.protyle.wysiwyg.element.addEventListener('blur', () => {
+    emit('blur')
   })
 }
 
@@ -207,9 +218,43 @@ onBeforeUnmount(() => {
   padding: 8px;
   width: calc(100% - 16px);
   margin-right: 8px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 
   .memo-editor {
     position: relative;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+
+    :deep(.EnProtyleContainer) {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+
+      .protyle {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+
+        .protyle-content {
+          flex: 1;
+          min-height: 0;
+          display: flex;
+          flex-direction: column;
+
+          .protyle-wysiwyg {
+            flex: 1;
+            min-height: 0;
+            padding: 8px !important;
+          }
+        }
+      }
+    }
   }
 
   .protyle-util-area {
@@ -225,28 +270,11 @@ onBeforeUnmount(() => {
     }
   }
 
-  :deep(.protyle-wysiwyg) {
-    padding: 0;
-  }
-
-  .memo-attributes {
-    margin-top: 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-
-    .attribute-group {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-  }
-
   .divider {
     height: 1px;
     background-color: var(--b3-border-color);
     opacity: 0.3;
-    margin-bottom: 8px;
+    margin: 8px 0;
   }
 
   .memo-toolbar {
