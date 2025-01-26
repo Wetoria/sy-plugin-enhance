@@ -17,6 +17,44 @@
         <svg class="rotating"><use xlink:href="#iconRefresh"></use></svg>
       </div>
     </div>
+    <div class="memo-attributes">
+      <div class="attribute-group">
+        <a-select
+          v-model="memoType"
+          placeholder="选择类型"
+          allow-clear
+        >
+          <a-option value="annotation">
+            批注
+          </a-option>
+          <a-option value="lifelog">
+            生活记录
+          </a-option>
+          <a-option value="whiteboard">
+            白板
+          </a-option>
+          <a-option value="diary">
+            日记
+          </a-option>
+        </a-select>
+        <a-switch
+          v-model="hasTimestamp"
+          type="line"
+        >
+          <template #checked>
+            时间戳
+          </template>
+          <template #unchecked>
+            时间戳
+          </template>
+        </a-switch>
+      </div>
+      <a-input-tag
+        v-model="tags"
+        placeholder="添加标签"
+        allow-clear
+      />
+    </div>
     <div class="divider"></div>
     <div class="memo-toolbar">
       <button
@@ -38,6 +76,8 @@
 
 <script setup lang="ts">
 import type { Protyle } from 'siyuan'
+import type { PropType } from 'vue'
+import type { Memo } from './MemoTimeline.vue'
 import EnProtyle from '@/components/EnProtyle.vue'
 import { getNewDailyNoteBlockId } from '@/modules/DailyNote/DailyNote'
 import { debounce } from '@/utils'
@@ -56,6 +96,7 @@ import {
 interface Props {
   isEditing: boolean
   editingBlockId?: string
+  editingMemo?: Memo
 }
 
 const props = defineProps({
@@ -67,10 +108,14 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  editingMemo: {
+    type: Object as PropType<Memo>,
+    default: undefined,
+  },
 })
 
 const emit = defineEmits<{
-  (e: 'submit', blockId: string): void
+  (e: 'submit', memo: Memo): void
   (e: 'cancel'): void
 }>()
 
@@ -78,6 +123,11 @@ const blockId = ref('')
 const protyleRef = ref<Protyle | null>(null)
 const protyleUtilAreaRef = ref<HTMLDivElement | null>(null)
 const isMergingToSuperBlock = ref(false)
+
+// 新增的状态
+const memoType = ref<'annotation' | 'lifelog' | 'whiteboard' | 'diary' | null>(null)
+const hasTimestamp = ref(false)
+const tags = ref<string[]>([])
 
 const targetProtyleUtilClassList = [
   'protyle-gutters',
@@ -110,8 +160,16 @@ const handleSubmit = () => {
         protyleIns.turnIntoOneTransaction(children, 'BlocksMergeSuperBlock', 'row')
         const off = useSiyuanDatabaseIndexCommit(debounce(async () => {
           off()
-          isMergingToSuperBlock.value = false
-          emit('submit', blockId.value)
+
+          const memo: Memo = {
+            blockId: blockId.value,
+            time: new Date().toLocaleString() + (props.isEditing ? ' (已编辑)' : ''),
+            type: memoType.value || undefined,
+            hasTimestamp: hasTimestamp.value,
+            tags: tags.value.length > 0 ? tags.value : undefined,
+          }
+          emit('submit', memo)
+
           // 创建新的块ID
           if (!props.isEditing) {
             getNewDailyNoteBlockId().then((id) => {
@@ -120,7 +178,15 @@ const handleSubmit = () => {
           }
         }, 20))
       } else {
-        emit('submit', blockId.value)
+        const memo: Memo = {
+          blockId: blockId.value,
+          time: new Date().toLocaleString() + (props.isEditing ? ' (已编辑)' : ''),
+          type: memoType.value || undefined,
+          hasTimestamp: hasTimestamp.value,
+          tags: tags.value.length > 0 ? tags.value : undefined,
+        }
+        emit('submit', memo)
+
         // 创建新的块ID
         if (!props.isEditing) {
           getNewDailyNoteBlockId().then((id) => {
@@ -140,9 +206,25 @@ const handleCancel = () => {
       blockId.value = id
     })
   }
+  // 重置状态
+  memoType.value = null
+  hasTimestamp.value = false
+  tags.value = []
 }
 
 // 监听编辑状态变化
+watch(() => props.editingMemo, (newMemo) => {
+  if (newMemo) {
+    memoType.value = newMemo.type || null
+    hasTimestamp.value = newMemo.hasTimestamp || false
+    tags.value = newMemo.tags || []
+  } else {
+    memoType.value = null
+    hasTimestamp.value = false
+    tags.value = []
+  }
+}, { immediate: true })
+
 watch(() => props.editingBlockId, (newBlockId) => {
   if (newBlockId) {
     blockId.value = newBlockId
@@ -202,6 +284,19 @@ onBeforeUnmount(() => {
 
   :deep(.protyle-wysiwyg) {
     padding: 0;
+  }
+
+  .memo-attributes {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .attribute-group {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
   }
 
   .divider {

@@ -1,21 +1,40 @@
 <template>
   <div class="en-user-memo">
+    <div class="memo-calendar-area">
+      <MemoCalendar
+        v-model="selectedDates"
+        :memos="memos"
+        @date-select="handleDateSelect"
+      />
+    </div>
     <div class="memo-input-area">
       <MemoInput
         :is-editing="isEditing"
         :editing-block-id="editingBlockId"
+        :editing-memo="editingMemo"
         @submit="addMemo"
         @cancel="cancelEdit"
       />
     </div>
     <div class="memo-toolbar">
-      <div class="left">
-        <a-button-group>
-          <a-button>全部</a-button>
-          <a-button>今天</a-button>
-          <a-button>本周</a-button>
-          <a-button>本月</a-button>
-        </a-button-group>
+      <div class="filter-group">
+        <a-checkbox-group v-model="selectedFilters">
+          <a-checkbox value="annotation">
+            批注
+          </a-checkbox>
+          <a-checkbox value="lifelog">
+            生活记录
+          </a-checkbox>
+          <a-checkbox value="whiteboard">
+            白板
+          </a-checkbox>
+          <a-checkbox value="diary">
+            日记
+          </a-checkbox>
+          <a-checkbox value="timestamp">
+            时间戳
+          </a-checkbox>
+        </a-checkbox-group>
       </div>
       <div class="right">
         <a-button-group>
@@ -34,7 +53,7 @@
     </div>
     <div class="memo-timeline-area">
       <MemoTimeline
-        :memos="memos"
+        :memos="filteredMemos"
         @edit="editMemo"
         @delete="deleteMemo"
       />
@@ -58,6 +77,7 @@ import {
   onMounted,
   ref,
 } from 'vue'
+import MemoCalendar from './components/MemoCalendar.vue'
 import MemoInput from './components/MemoInput.vue'
 import MemoTimeline from './components/MemoTimeline.vue'
 
@@ -65,6 +85,8 @@ import MemoTimeline from './components/MemoTimeline.vue'
 const memos = ref<Memo[]>([])
 const isEditing = ref(false)
 const editingIndex = ref(-1)
+const selectedFilters = ref<string[]>([])
+const selectedDates = ref<string[]>([])
 
 const editingBlockId = computed(() => {
   if (isEditing.value && editingIndex.value !== -1) {
@@ -73,22 +95,60 @@ const editingBlockId = computed(() => {
   return ''
 })
 
+const editingMemo = computed(() => {
+  if (isEditing.value && editingIndex.value !== -1) {
+    return memos.value[editingIndex.value]
+  }
+  return undefined
+})
+
+// 根据选中的筛选条件和日期过滤备忘录
+const filteredMemos = computed(() => {
+  let filtered = memos.value
+
+  // 按日期筛选
+  if (selectedDates.value.length > 0) {
+    filtered = filtered.filter((memo) => {
+      const memoDate = new Date(memo.time).toISOString().split('T')[0]
+      return selectedDates.value.includes(memoDate)
+    })
+  }
+
+  // 按类型筛选
+  if (selectedFilters.value.length > 0) {
+    filtered = filtered.filter((memo) => {
+      return selectedFilters.value.some((filter) => {
+        switch (filter) {
+          case 'annotation':
+            return memo.type === 'annotation'
+          case 'lifelog':
+            return memo.type === 'lifelog'
+          case 'whiteboard':
+            return memo.type === 'whiteboard'
+          case 'diary':
+            return memo.type === 'diary'
+          case 'timestamp':
+            return memo.hasTimestamp
+          default:
+            return false
+        }
+      })
+    })
+  }
+
+  return filtered
+})
+
 // 方法
-const addMemo = (blockId: string) => {
+const addMemo = (memo: Memo) => {
   if (isEditing.value && editingIndex.value !== -1) {
     // 更新现有备忘录
-    memos.value[editingIndex.value] = {
-      blockId,
-      time: `${new Date().toLocaleString()} (已编辑)`,
-    }
+    memos.value[editingIndex.value] = memo
     isEditing.value = false
     editingIndex.value = -1
   } else {
     // 添加新备忘录
-    memos.value.unshift({
-      blockId,
-      time: new Date().toLocaleString(),
-    })
+    memos.value.unshift(memo)
   }
   // 按时间从新到旧排序
   memos.value.sort((a, b) => {
@@ -108,6 +168,10 @@ const deleteMemo = (index: number) => {
 const cancelEdit = () => {
   isEditing.value = false
   editingIndex.value = -1
+}
+
+const handleDateSelect = (dates: string[]) => {
+  selectedDates.value = dates
 }
 
 // 注册命令
@@ -147,6 +211,10 @@ onBeforeUnmount(() => {
   gap: 8px;
   padding: 8px;
 
+  .memo-calendar-area {
+    flex-shrink: 0;
+  }
+
   .memo-input-area {
     flex-shrink: 0;
     width: 100%;
@@ -157,6 +225,12 @@ onBeforeUnmount(() => {
     justify-content: space-between;
     align-items: center;
     padding: 4px 0;
+
+    .filter-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
   }
 
   .memo-timeline-area {
