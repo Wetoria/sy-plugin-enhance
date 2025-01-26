@@ -76,7 +76,27 @@ const editingMemo = computed(() => {
 
 // 从块 ID 中获取时间
 function getTimeFromBlockId(blockId: string): string {
+  if (!blockId) return ''
+
   try {
+    // 如果是白板ID（以en-whiteboard-id开头）
+    if (blockId.startsWith('en-whiteboard-id')) {
+      // 白板ID格式：en-whiteboard-id-20250121230346-5c2311bf
+      const parts = blockId.split('-')
+      if (parts.length >= 4) {
+        const timeStr = parts[3] // 获取时间部分
+        const year = timeStr.slice(0, 4)
+        const month = timeStr.slice(4, 6)
+        const day = timeStr.slice(6, 8)
+        const hour = timeStr.slice(8, 10)
+        const minute = timeStr.slice(10, 12)
+        const second = timeStr.slice(12, 14)
+        return `${year}-${month}-${day} ${hour}:${minute}:${second}`
+      }
+      return ''
+    }
+
+    // 普通块ID的处理
     const timeStr = blockId.split('-')[0]
     const year = timeStr.slice(0, 4)
     const month = timeStr.slice(4, 6)

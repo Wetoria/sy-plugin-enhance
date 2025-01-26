@@ -32,6 +32,7 @@
 <script setup lang="ts">
 import { request } from '@/api'
 import { useDailyNote } from '@/modules/DailyNote/DailyNote'
+import { whiteBoardRef } from '@/modules/EnWhiteBoard/EnWhiteBoard'
 import {
   watch,
 } from 'vue'
@@ -165,26 +166,48 @@ async function getDailyNotes() {
 
 // 获取白板块
 async function getWhiteboardNotes() {
-  const data = {
-    stmt: `
-      SELECT
-        B.id as block_id,
-        B.content as block_content,
-        B.root_id as doc_id,
-        B.updated as block_time,
-        B.parent_id,
-        D.hpath as doc_path
-      FROM blocks B
-      JOIN blocks D ON B.root_id = D.id
-      WHERE
-        B.type = 'widget'
-        AND B.content LIKE '%sy-enhance-whiteboard%'
-      ORDER BY B.updated DESC
-    `,
+  if (!whiteBoardRef.indexMap) {
+    console.log('白板列表为空')
+    return []
   }
-  const result = await request('/api/query/sql', data)
-  console.log('Initial whiteboard SQL result:', result)
-  return result
+
+  // 获取所有白板
+  const whiteboards = Object.values(whiteBoardRef.indexMap.moduleOptions.value)
+  const configList = whiteBoardRef.configList.value
+
+  // 详细打印白板信息
+  console.group('白板列表')
+  whiteboards.forEach((item) => {
+    console.log('----------------------------------------')
+    console.log('白板ID:', item.whiteBoardId)
+    console.log('白板名称:', item.whiteBoardName)
+    const config = configList[item.whiteBoardId]
+    if (config) {
+      console.log('白板配置:', config.moduleOptions.value)
+    }
+  })
+  console.log('----------------------------------------')
+  console.log(`共找到 ${whiteboards.length} 个白板`)
+  console.groupEnd()
+
+  // 格式化白板数据
+  return whiteboards.map((item) => {
+    const config = configList[item.whiteBoardId]
+    // 从白板ID中提取时间
+    const timeStr = item.whiteBoardId.split('-')[3] || ''
+    const time = timeStr
+      ? `${timeStr.slice(0, 4)}-${timeStr.slice(4, 6)}-${timeStr.slice(6, 8)} ${timeStr.slice(8, 10)}:${timeStr.slice(10, 12)}:${timeStr.slice(12, 14)}`
+      : new Date().toLocaleString()
+
+    return {
+      blockId: item.whiteBoardId,
+      time,
+      type: 'whiteboard',
+      content: config ? JSON.stringify(config.moduleOptions.value.boardOptions) : '',
+      docPath: item.whiteBoardName,
+      whiteBoardConfig: config?.moduleOptions.value,
+    }
+  })
 }
 
 // 获取批注块
@@ -222,13 +245,13 @@ const toggleFilter = async (type: FilterType) => {
       let notes = []
       if (type === 'daily') {
         notes = await getDailyNotes() || []
-        console.log('Daily notes from SQL:', notes)
+        console.log('Daily notes from database:', notes)
       } else if (type === 'whiteboard') {
         notes = await getWhiteboardNotes() || []
-        console.log('Whiteboard notes from SQL:', notes)
+        console.log('Whiteboard notes from plugin:', notes)
       } else if (type === 'annotation') {
         notes = await getAnnotationNotes() || []
-        console.log('Annotation notes from SQL:', notes)
+        console.log('Annotation notes from database:', notes)
       }
 
       // 发送信息

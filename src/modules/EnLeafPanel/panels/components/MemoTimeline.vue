@@ -15,16 +15,28 @@
         <div class="timeline-content">
           <div class="memo-card">
             <div class="memo-card-content">
-              <EnProtyle
-                :block-id="memo.blockId"
-                :preview="true"
-                disableEnhance
-                @after="(protyle) => afterProtyleLoad(protyle, index)"
-              />
-              <div
-                class="protyle-util-area"
-                :data-memo-index="index"
-              ></div>
+              <template v-if="memo.type === 'whiteboard'">
+                <div class="whiteboard-preview">
+                  <div class="whiteboard-info">
+                    <span class="whiteboard-path">{{ memo.docPath }}</span>
+                  </div>
+                  <div class="whiteboard-minimap">
+                    <!-- 这里将来渲染白板的minimap -->
+                  </div>
+                </div>
+              </template>
+              <template v-else>
+                <EnProtyle
+                  :block-id="memo.blockId"
+                  :preview="true"
+                  disableEnhance
+                  @after="(protyle) => afterProtyleLoad(protyle, index)"
+                />
+                <div
+                  class="protyle-util-area"
+                  :data-memo-index="index"
+                ></div>
+              </template>
             </div>
             <div class="card-actions">
               <span
@@ -34,6 +46,7 @@
                 <svg><use xlink:href="#iconEdit"></use></svg>
               </span>
               <span
+                v-if="memo.type !== 'daily' && memo.type !== 'whiteboard'"
                 class="action-icon"
                 @click="handleDelete(index)"
               >
@@ -55,15 +68,18 @@ import {
   onBeforeUnmount,
   ref,
   watch,
+  computed,
 } from 'vue'
 import { openDocById } from '@/utils/Note'
+import { request } from '@/api'
 
 export interface Memo {
   blockId: string
   time: string
-  type?: 'memo' | 'daily'
+  type?: 'memo' | 'daily' | 'whiteboard' | 'annotation'
   dailyNoteId?: string // 如果是日记块，这里存放日记文档的ID
   content?: string
+  docPath?: string // 文档路径
 }
 
 const props = defineProps({
@@ -108,12 +124,45 @@ const afterProtyleLoad = (protyle: Protyle, index: number) => {
   }
 }
 
+// 渲染白板minimap
+const renderWhiteboardMinimap = async (blockId: string) => {
+  const data = {
+    stmt: `
+      SELECT
+        content
+      FROM blocks
+      WHERE id = '${blockId}'
+    `
+  }
+  try {
+    const result = await request('/api/query/sql', data)
+    if (result && result.length > 0) {
+      const content = result[0].content
+      // 从content中提取白板数据
+      const match = content.match(/data-options="([^"]*)"/)
+      if (match) {
+        const options = JSON.parse(decodeURIComponent(match[1]))
+        return options
+      }
+    }
+  } catch (err) {
+    console.error('Failed to get whiteboard content:', err)
+  }
+  return null
+}
+
 const handleEdit = (index: number) => {
-  if (props.memos[index].type === 'daily') {
-    // 如果是日记块，点击编辑时跳转到对应的日记
-    const memo = props.memos[index]
-    if (memo.dailyNoteId) {
-      openDocById(memo.dailyNoteId)
+  const memo = props.memos[index]
+  if (memo.type === 'daily' && memo.dailyNoteId) {
+    openDocById(memo.dailyNoteId)
+    return
+  } else if (memo.type === 'whiteboard') {
+    // 如果是白板，打开对应的文档
+    if (memo.docPath) {
+      const docId = memo.docPath.split('/').pop()
+      if (docId) {
+        openDocById(docId)
+      }
     }
     return
   }
@@ -121,8 +170,9 @@ const handleEdit = (index: number) => {
 }
 
 const handleDelete = (index: number) => {
-  if (props.memos[index].type === 'daily') {
-    return // 日记块不允许删除
+  const memo = props.memos[index]
+  if (memo.type === 'daily' || memo.type === 'whiteboard') {
+    return // 日记和白板不允许删除
   }
   emit('delete', index)
 }
@@ -261,6 +311,29 @@ onBeforeUnmount(() => {
         }
       }
     }
+  }
+}
+
+.whiteboard-preview {
+  padding: 8px;
+
+  .whiteboard-info {
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.68;
+
+    .whiteboard-path {
+      word-break: break-all;
+    }
+  }
+
+  .whiteboard-minimap {
+    width: 100%;
+    height: 200px;
+    background: var(--b3-theme-surface);
+    border-radius: var(--b3-border-radius);
+    overflow: hidden;
   }
 }
 </style>
