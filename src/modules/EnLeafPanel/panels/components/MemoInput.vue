@@ -17,44 +17,6 @@
         <svg class="rotating"><use xlink:href="#iconRefresh"></use></svg>
       </div>
     </div>
-    <div class="memo-attributes">
-      <div class="attribute-group">
-        <a-select
-          v-model="memoType"
-          placeholder="选择类型"
-          allow-clear
-        >
-          <a-option value="annotation">
-            批注
-          </a-option>
-          <a-option value="lifelog">
-            生活记录
-          </a-option>
-          <a-option value="whiteboard">
-            白板
-          </a-option>
-          <a-option value="diary">
-            日记
-          </a-option>
-        </a-select>
-        <a-switch
-          v-model="hasTimestamp"
-          type="line"
-        >
-          <template #checked>
-            时间戳
-          </template>
-          <template #unchecked>
-            时间戳
-          </template>
-        </a-switch>
-      </div>
-      <a-input-tag
-        v-model="tags"
-        placeholder="添加标签"
-        allow-clear
-      />
-    </div>
     <div class="divider"></div>
     <div class="memo-toolbar">
       <button
@@ -124,11 +86,6 @@ const protyleRef = ref<Protyle | null>(null)
 const protyleUtilAreaRef = ref<HTMLDivElement | null>(null)
 const isMergingToSuperBlock = ref(false)
 
-// 新增的状态
-const memoType = ref<'annotation' | 'lifelog' | 'whiteboard' | 'diary' | null>(null)
-const hasTimestamp = ref(false)
-const tags = ref<string[]>([])
-
 const targetProtyleUtilClassList = [
   'protyle-gutters',
   'protyle-select',
@@ -164,9 +121,7 @@ const handleSubmit = () => {
           const memo: Memo = {
             blockId: blockId.value,
             time: new Date().toLocaleString() + (props.isEditing ? ' (已编辑)' : ''),
-            type: memoType.value || undefined,
-            hasTimestamp: hasTimestamp.value,
-            tags: tags.value.length > 0 ? tags.value : undefined,
+            hasTimestamp: false,
           }
           emit('submit', memo)
 
@@ -181,9 +136,7 @@ const handleSubmit = () => {
         const memo: Memo = {
           blockId: blockId.value,
           time: new Date().toLocaleString() + (props.isEditing ? ' (已编辑)' : ''),
-          type: memoType.value || undefined,
-          hasTimestamp: hasTimestamp.value,
-          tags: tags.value.length > 0 ? tags.value : undefined,
+          hasTimestamp: false,
         }
         emit('submit', memo)
 
@@ -206,22 +159,11 @@ const handleCancel = () => {
       blockId.value = id
     })
   }
-  // 重置状态
-  memoType.value = null
-  hasTimestamp.value = false
-  tags.value = []
 }
 
-// 监听编辑状态变化
 watch(() => props.editingMemo, (newMemo) => {
   if (newMemo) {
-    memoType.value = newMemo.type || null
-    hasTimestamp.value = newMemo.hasTimestamp || false
-    tags.value = newMemo.tags || []
-  } else {
-    memoType.value = null
-    hasTimestamp.value = false
-    tags.value = []
+    // 不需要监听 hasTimestamp 的变化
   }
 }, { immediate: true })
 
@@ -263,7 +205,8 @@ onBeforeUnmount(() => {
   background: var(--b3-theme-background);
   border-radius: var(--b3-border-radius);
   padding: 8px;
-  width: 100%;
+  width: calc(100% - 16px);
+  margin-right: 8px;
 
   .memo-editor {
     position: relative;
@@ -303,7 +246,7 @@ onBeforeUnmount(() => {
     height: 1px;
     background-color: var(--b3-border-color);
     opacity: 0.3;
-    margin: 8px -8px;
+    margin-bottom: 8px;
   }
 
   .memo-toolbar {
