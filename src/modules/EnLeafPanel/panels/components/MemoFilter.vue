@@ -39,6 +39,41 @@ watch(() => props.modelValue, (newValue) => {
   }
 })
 
+// 递归获取父块ID
+async function getParentBlockIds(blockId: string, parentId: string | null): Promise<string[]> {
+  if (!parentId || parentId === blockId) {
+    return [blockId]
+  }
+
+  const data = {
+    stmt: `
+      SELECT
+        id,
+        parent_id,
+        root_id
+      FROM blocks
+      WHERE id = '${parentId}'
+    `,
+  }
+
+  try {
+    const result = await request('/api/query/sql', data)
+    if (result && result.length > 0) {
+      const block = result[0]
+      // 如果parent_id等于root_id或为空，说明已经到达顶层
+      if (!block.parent_id || block.parent_id === block.root_id) {
+        return [blockId, block.id]
+      }
+      // 否则继续递归查找
+      const parentIds = await getParentBlockIds(block.id, block.parent_id)
+      return [blockId, ...parentIds]
+    }
+  } catch (err) {
+    console.error('Failed to get parent block:', err)
+  }
+  return [blockId]
+}
+
 // 获取日记块
 async function getDailyNotes() {
   const { moduleOptions } = useDailyNote()
@@ -67,7 +102,8 @@ async function getDailyNotes() {
         C.content as block_content,
         C.root_id as doc_id,
         C.updated as block_time,
-        D.date_value
+        D.date_value,
+        C.parent_id
       FROM blocks C
       JOIN daily_docs D ON C.root_id = D.doc_id
       WHERE
@@ -77,8 +113,36 @@ async function getDailyNotes() {
     `,
   }
   const result = await request('/api/query/sql', data)
-  console.log('SQL result:', result)
-  return result
+  console.log('Initial SQL result:', result)
+
+  // 处理每个块，获取其所有父块ID
+  const processedResults = await Promise.all(
+    result.map(async (item: any) => {
+      const allParentIds = await getParentBlockIds(item.block_id, item.parent_id)
+      console.log('Block ID:', item.block_id, 'All parent IDs:', allParentIds)
+      // 使用最后一个ID（最顶层的父块ID）或原始ID
+      const finalBlockId = allParentIds[allParentIds.length - 1] || item.block_id
+      return {
+        ...item,
+        block_id: finalBlockId,
+        original_block_id: item.block_id,
+        all_parent_ids: allParentIds,
+      }
+    }),
+  )
+
+  // 对结果进行去重，确保每个最终的block_id只出现一次
+  const uniqueResults = processedResults.reduce((acc: any[], current: any) => {
+    const existingIndex = acc.findIndex((item) => item.block_id === current.block_id)
+    if (existingIndex === -1) {
+      // 如果这个block_id还没有出现过，添加到结果中
+      acc.push(current)
+    }
+    return acc
+  }, [])
+
+  console.log('Final processed results:', uniqueResults)
+  return uniqueResults
 }
 
 const toggleFilter = async (type: FilterType) => {
