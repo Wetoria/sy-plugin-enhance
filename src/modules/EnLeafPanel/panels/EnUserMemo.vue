@@ -13,7 +13,6 @@
           class="b3-button b3-button--outline"
           @click="addMemo"
         >
-          <svg class="action-icon"><use xlink:href="#iconAdd"></use></svg>
           {{ isEditing ? '更新' : '添加' }}
         </button>
         <button
@@ -67,7 +66,7 @@
             <div class="memo-content">
               {{ memo.content }}
             </div>
-            <div class="memo-actions">
+            <div class="card-actions">
               <span
                 class="action-icon"
                 @click="editMemo(index)"
@@ -183,13 +182,6 @@ const cancelEdit = () => {
       display: flex;
       justify-content: flex-end;
       gap: 8px;
-
-      .action-icon {
-        height: 14px;
-        width: 14px;
-        margin-right: 4px;
-        fill: currentColor;
-      }
     }
   }
 
@@ -269,20 +261,22 @@ const cancelEdit = () => {
           border-radius: var(--b3-border-radius);
           padding: 12px;
           border: 1px solid var(--b3-border-color);
+          position: relative;
 
           .memo-content {
             font-size: 14px;
             line-height: 1.5;
             white-space: pre-wrap;
-            margin-bottom: 8px;
           }
 
-          .memo-actions {
+          .card-actions {
+            position: absolute;
+            top: 8px;
+            right: 8px;
             display: flex;
-            gap: 8px;
-            justify-content: flex-end;
-            border-bottom: none;
-            padding: 0;
+            gap: 4px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
 
             .action-icon {
               cursor: pointer;
@@ -303,6 +297,12 @@ const cancelEdit = () => {
                   opacity: 1;
                 }
               }
+            }
+          }
+
+          &:hover {
+            .card-actions {
+              opacity: 1;
             }
           }
         }
