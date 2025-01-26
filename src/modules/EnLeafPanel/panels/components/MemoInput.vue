@@ -194,11 +194,11 @@ onBeforeUnmount(() => {
 
 <style lang="scss">
 .en-user-memo .EnProtyleContainer .protyle .protyle-wysiwyg {
-  padding: 16px !important;
+  padding: 0px !important;
 }
 
 .en-user-memo  .EnProtyleContainer .protyle .protyle-content {
-  padding: 0 !important;
+  padding: unset !important;
 }
 
 .en-user-memo .memo-input-card {

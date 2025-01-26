@@ -19,7 +19,8 @@
     <div class="memo-timeline-area">
       <div class="timeline-header">
         <MemoFilter
-          v-model:active-filter="activeFilter"
+          v-model="activeFilter"
+          @dailyNoteInfo="handleDailyNoteInfo"
         />
       </div>
       <div class="timeline-content">
@@ -73,6 +74,23 @@ const editingMemo = computed(() => {
   return undefined
 })
 
+// 从块 ID 中获取时间
+function getTimeFromBlockId(blockId: string): string {
+  try {
+    const timeStr = blockId.split('-')[0]
+    const year = timeStr.slice(0, 4)
+    const month = timeStr.slice(4, 6)
+    const day = timeStr.slice(6, 8)
+    const hour = timeStr.slice(8, 10)
+    const minute = timeStr.slice(10, 12)
+    const second = timeStr.slice(12, 14)
+    return `${year}-${month}-${day} ${hour}:${minute}:${second}`
+  } catch (err) {
+    console.error('Error parsing block ID:', err)
+    return ''
+  }
+}
+
 // 根据选中的日期过滤备忘录
 const filteredMemos = computed(() => {
   let filtered = memos.value
@@ -80,14 +98,24 @@ const filteredMemos = computed(() => {
   // 按日期筛选
   if (selectedDates.value.length > 0) {
     filtered = filtered.filter((memo) => {
-      const memoDate = new Date(memo.time).toISOString().split('T')[0]
-      return selectedDates.value.includes(memoDate)
+      try {
+        const memoDate = memo.time.split(' ')[0] // 只取日期部分
+        return selectedDates.value.includes(memoDate)
+      } catch (err) {
+        console.error('Error parsing date:', err)
+        return false
+      }
     })
   }
 
-  // 默认按时间倒序排序
+  // 按时间倒序排序
   filtered = [...filtered].sort((a, b) => {
-    return new Date(b.time).getTime() - new Date(a.time).getTime()
+    try {
+      return new Date(b.time).getTime() - new Date(a.time).getTime()
+    } catch (err) {
+      console.error('Error sorting dates:', err)
+      return 0
+    }
   })
 
   return filtered
@@ -156,10 +184,62 @@ let offTransactionEvent: (() => void) | null = null
 // 监听筛选器变化
 watch(activeFilter, (filter) => {
   if (filter === 'daily') {
-    // TODO: 显示日记筛选界面
-    console.log('Show daily notes interface')
+    // 日记筛选的状态已经在 handleDailyNoteInfo 中处理
+    console.log('Daily note filter activated')
   }
 })
+
+// 处理日记信息
+const handleDailyNoteInfo = (info: { dailyNotes: any[] }) => {
+  const dailyNotes = info?.dailyNotes || []
+
+  if (!dailyNotes.length) {
+    // 清空备忘录
+    memos.value = memos.value.filter((memo) => memo.type !== 'daily')
+    return
+  }
+
+  // 将日记块转换为Memo格式
+  const dailyMemos: Memo[] = dailyNotes.map((note) => {
+    try {
+      const time = getTimeFromBlockId(note.block_id)
+      if (!time) return null
+
+      return {
+        blockId: note.block_id,
+        time,
+        type: 'daily',
+        dailyNoteId: note.doc_id,
+        content: note.block_content,
+      }
+    } catch (err) {
+      console.error('Error processing note:', err)
+      return null
+    }
+  }).filter(Boolean) as Memo[] // 过滤掉处理失败的项
+
+  // 更新备忘录列表，保留非日记类型的备忘录
+  memos.value = [
+    ...memos.value.filter((memo) => memo.type !== 'daily'),
+    ...dailyMemos,
+  ]
+
+  // 更新日历组件的日期标记
+  const datesWithNotes = [...new Set(dailyMemos.map((memo) =>
+    memo.time.split(' ')[0],
+  ))]
+  selectedDates.value = datesWithNotes
+}
+
+// 添加对 memos 的监听
+watch(memos, (newMemos) => {
+  console.log('Memos changed:', newMemos)
+}, { deep: true })
+
+// 添加对 filteredMemos 的监听
+watch(() => filteredMemos.value, (newFilteredMemos) => {
+  console.log('Filtered memos changed:', newFilteredMemos)
+}, { deep: true })
 
 onMounted(() => {
   registerCommands()

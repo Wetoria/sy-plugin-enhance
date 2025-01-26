@@ -54,11 +54,16 @@ import EnProtyle from '@/components/EnProtyle.vue'
 import {
   onBeforeUnmount,
   ref,
+  watch,
 } from 'vue'
+import { openDocById } from '@/utils/Note'
 
 export interface Memo {
   blockId: string
   time: string
+  type?: 'memo' | 'daily'
+  dailyNoteId?: string // 如果是日记块，这里存放日记文档的ID
+  content?: string
 }
 
 const props = defineProps({
@@ -67,6 +72,11 @@ const props = defineProps({
     required: true,
   },
 })
+
+// 添加对 props.memos 的监听
+watch(() => props.memos, (newMemos) => {
+  console.log('Timeline received memos:', newMemos)
+}, { deep: true })
 
 const emit = defineEmits<{
   (e: 'edit', index: number): void
@@ -83,6 +93,7 @@ const targetProtyleUtilClassList = [
 ]
 
 const afterProtyleLoad = (protyle: Protyle, index: number) => {
+  console.log('Protyle loaded for memo:', props.memos[index])
   protyleRefs.value.set(index, protyle)
 
   // 移动工具区域到指定位置
@@ -98,10 +109,21 @@ const afterProtyleLoad = (protyle: Protyle, index: number) => {
 }
 
 const handleEdit = (index: number) => {
+  if (props.memos[index].type === 'daily') {
+    // 如果是日记块，点击编辑时跳转到对应的日记
+    const memo = props.memos[index]
+    if (memo.dailyNoteId) {
+      openDocById(memo.dailyNoteId)
+    }
+    return
+  }
   emit('edit', index)
 }
 
 const handleDelete = (index: number) => {
+  if (props.memos[index].type === 'daily') {
+    return // 日记块不允许删除
+  }
   emit('delete', index)
 }
 
