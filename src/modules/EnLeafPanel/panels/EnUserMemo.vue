@@ -16,68 +16,39 @@
         @cancel="cancelEdit"
       />
     </div>
-    <div class="memo-toolbar">
-      <div class="filter-group">
-        <a-checkbox-group v-model="selectedFilters">
-          <a-checkbox value="annotation">
-            批注
-          </a-checkbox>
-          <a-checkbox value="lifelog">
-            生活记录
-          </a-checkbox>
-          <a-checkbox value="whiteboard">
-            白板
-          </a-checkbox>
-          <a-checkbox value="diary">
-            日记
-          </a-checkbox>
-          <a-checkbox value="timestamp">
-            时间戳
-          </a-checkbox>
-        </a-checkbox-group>
-      </div>
-      <div class="right">
-        <a-button-group>
-          <a-button>
-            <template #icon>
-              <IconSortAscending />
-            </template>
-          </a-button>
-          <a-button>
-            <template #icon>
-              <IconSortDescending />
-            </template>
-          </a-button>
-        </a-button-group>
-      </div>
-    </div>
     <div class="memo-timeline-area">
-      <MemoTimeline
-        :memos="filteredMemos"
-        @edit="editMemo"
-        @delete="deleteMemo"
-      />
+      <div class="timeline-header">
+        <MemoFilter
+          v-model:active-filter="activeFilter"
+        />
+      </div>
+      <div class="timeline-content">
+        <MemoTimeline
+          :memos="filteredMemos"
+          @edit="editMemo"
+          @delete="deleteMemo"
+        />
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import type { FilterType } from './components/MemoFilter.vue'
 import type { Memo } from './components/MemoTimeline.vue'
 import { addCommand } from '@/utils/Commands'
 import { EN_EVENT_BUS_KEYS } from '@/utils/Constants'
 import { enEventBus } from '@/utils/EnEventBus'
 import { useSiyuanEventTransactions } from '@/utils/EventBusHooks'
 import {
-  IconSortAscending,
-  IconSortDescending,
-} from '@arco-design/web-vue/es/icon'
-import {
   computed,
   onBeforeUnmount,
   onMounted,
   ref,
+  watch,
 } from 'vue'
 import MemoCalendar from './components/MemoCalendar.vue'
+import MemoFilter from './components/MemoFilter.vue'
 import MemoInput from './components/MemoInput.vue'
 import MemoTimeline from './components/MemoTimeline.vue'
 
@@ -85,8 +56,8 @@ import MemoTimeline from './components/MemoTimeline.vue'
 const memos = ref<Memo[]>([])
 const isEditing = ref(false)
 const editingIndex = ref(-1)
-const selectedFilters = ref<string[]>([])
 const selectedDates = ref<string[]>([])
+const activeFilter = ref<FilterType>()
 
 const editingBlockId = computed(() => {
   if (isEditing.value && editingIndex.value !== -1) {
@@ -102,7 +73,7 @@ const editingMemo = computed(() => {
   return undefined
 })
 
-// 根据选中的筛选条件和日期过滤备忘录
+// 根据选中的日期过滤备忘录
 const filteredMemos = computed(() => {
   let filtered = memos.value
 
@@ -114,27 +85,10 @@ const filteredMemos = computed(() => {
     })
   }
 
-  // 按类型筛选
-  if (selectedFilters.value.length > 0) {
-    filtered = filtered.filter((memo) => {
-      return selectedFilters.value.some((filter) => {
-        switch (filter) {
-          case 'annotation':
-            return memo.type === 'annotation'
-          case 'lifelog':
-            return memo.type === 'lifelog'
-          case 'whiteboard':
-            return memo.type === 'whiteboard'
-          case 'diary':
-            return memo.type === 'diary'
-          case 'timestamp':
-            return memo.hasTimestamp
-          default:
-            return false
-        }
-      })
-    })
-  }
+  // 默认按时间倒序排序
+  filtered = [...filtered].sort((a, b) => {
+    return new Date(b.time).getTime() - new Date(a.time).getTime()
+  })
 
   return filtered
 })
@@ -174,6 +128,16 @@ const handleDateSelect = (dates: string[]) => {
   selectedDates.value = dates
 }
 
+const handleSearch = () => {
+  // TODO: 显示搜索界面
+  console.log('Show search interface')
+}
+
+const handleDailyNote = () => {
+  // TODO: 跳转到今日日记
+  console.log('Navigate to daily note')
+}
+
 // 注册命令
 const registerCommands = () => {
   addCommand({
@@ -188,6 +152,14 @@ const registerCommands = () => {
 
 // 监听事务变化
 let offTransactionEvent: (() => void) | null = null
+
+// 监听筛选器变化
+watch(activeFilter, (filter) => {
+  if (filter === 'daily') {
+    // TODO: 显示日记筛选界面
+    console.log('Show daily notes interface')
+  }
+})
 
 onMounted(() => {
   registerCommands()
@@ -220,22 +192,22 @@ onBeforeUnmount(() => {
     width: 100%;
   }
 
-  .memo-toolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 4px 0;
-
-    .filter-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-  }
-
   .memo-timeline-area {
     flex: 1;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+
+    .timeline-header {
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--b3-border-color);
+    }
+
+    .timeline-content {
+      flex: 1;
+      overflow: auto;
+      min-height: 0;
+    }
   }
 }
 </style>

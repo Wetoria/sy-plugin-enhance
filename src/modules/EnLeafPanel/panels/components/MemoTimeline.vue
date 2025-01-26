@@ -59,9 +59,6 @@ import {
 export interface Memo {
   blockId: string
   time: string
-  type?: 'annotation' | 'lifelog' | 'whiteboard' | 'diary'
-  hasTimestamp?: boolean
-  tags?: string[]
 }
 
 const props = defineProps({
