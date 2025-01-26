@@ -50,7 +50,8 @@ async function getParentBlockIds(blockId: string, parentId: string | null): Prom
       SELECT
         id,
         parent_id,
-        root_id
+        root_id,
+        type
       FROM blocks
       WHERE id = '${parentId}'
     `,
@@ -60,9 +61,9 @@ async function getParentBlockIds(blockId: string, parentId: string | null): Prom
     const result = await request('/api/query/sql', data)
     if (result && result.length > 0) {
       const block = result[0]
-      // 如果parent_id等于root_id或为空，说明已经到达顶层
-      if (!block.parent_id || block.parent_id === block.root_id) {
-        return [blockId, block.id]
+      // 如果是文档块或parent_id等于root_id或为空，说明已经到达顶层
+      if (block.type === 'd' || !block.parent_id || block.parent_id === block.root_id) {
+        return [blockId]
       }
       // 否则继续递归查找
       const parentIds = await getParentBlockIds(block.id, block.parent_id)
@@ -107,8 +108,9 @@ async function getDailyNotes() {
       FROM blocks C
       JOIN daily_docs D ON C.root_id = D.doc_id
       WHERE
-        C.type = 'p'
+        C.type != 'd'
         AND C.content != ''
+        AND C.id != C.root_id
       ORDER BY D.date_value DESC, C.updated DESC
     `,
   }
