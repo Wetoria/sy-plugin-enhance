@@ -34,6 +34,8 @@ import {
 
 const props = defineProps<EdgeProps | ConnectionLineProps>()
 
+const markerEnd = 'url(#arrow)'
+
 const edgePathParams = computed(() => {
   let sourceX = props.sourceX
   let sourceY = props.sourceY
@@ -74,5 +76,8 @@ const edgePathParams = computed(() => {
 </script>
 
 <style lang="scss" scoped>
-
+.EnWhiteBoardEdgeBase {
+  stroke: var(--b3-theme-on-surface);
+  stroke-width: 2;
+}
 </style>
