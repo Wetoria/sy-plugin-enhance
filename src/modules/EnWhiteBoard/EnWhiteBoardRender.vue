@@ -135,6 +135,30 @@
           maskColor="transparent"
           @nodeClick="onNodeMinimapClick"
         />
+        <Controls class="EnWhiteBoardControls" />
+
+        <Panel
+          class="EnWhiteBoardToolbar"
+          position="top-center"
+        >
+          <a-button-group>
+            <a-tooltip content="适应视图">
+              <a-button @click="fitView()">
+                <SyIcon name="iconFullscreen" />
+              </a-button>
+            </a-tooltip>
+            <a-tooltip content="居中视图">
+              <a-button @click="centerView()">
+                <SyIcon name="iconFocus" />
+              </a-button>
+            </a-tooltip>
+            <a-tooltip content="切换网格">
+              <a-button @click="toggleGrid()">
+                <SyIcon name="iconGrid" />
+              </a-button>
+            </a-tooltip>
+          </a-button-group>
+        </Panel>
       </VueFlow>
       <div
         ref="EnWhiteBoardProtyleUtilAreaRef"
@@ -202,6 +226,7 @@ import {
   SyDomNodeTypes,
 } from '@/utils/Siyuan'
 import { Background } from '@vue-flow/background'
+import { Controls } from '@vue-flow/controls'
 import {
   Edge,
   EdgeAddChange,
@@ -210,10 +235,12 @@ import {
   NodeAddChange,
   NodeChange,
   NodeMouseEvent,
+  Panel,
   pointToRendererPoint,
   useVueFlow,
   VueFlow,
 } from '@vue-flow/core'
+
 import { MiniMap } from '@vue-flow/minimap'
 import { cloneDeep } from 'lodash-es'
 import {
@@ -227,6 +254,7 @@ import {
 import EnWhiteBoardNodeProtyle from './EnWhiteBoardNodeProtyle.vue'
 import EnWhiteBoardSettings from './EnWhiteBoardSettings.vue'
 import '@vue-flow/minimap/dist/style.css'
+import '@vue-flow/controls/dist/style.css'
 
 const props = defineProps<{
   data: EnWhiteBoardBlockDomTarget
@@ -263,6 +291,7 @@ const {
   viewport,
   onViewportChange,
   setCenter,
+  fitView: rawFitView,
 } = useVueFlow({
   connectOnClick: true,
 })
@@ -605,6 +634,19 @@ const onEdgeDoubleClick = (event) => {
     setEdges(newEdges)
   }
 }
+
+const fitView = () => {
+  rawFitView({ duration: 800 })
+}
+
+const centerView = () => {
+  setCenter(0, 0, { duration: 800 })
+}
+
+const showGrid = ref(true)
+const toggleGrid = () => {
+  showGrid.value = !showGrid.value
+}
 </script>
 
 <style lang="scss" scoped>
@@ -743,6 +785,38 @@ const onEdgeDoubleClick = (event) => {
 
     &:hover {
       background-color: var(--b3-theme-surface);
+    }
+  }
+
+  :deep(.EnWhiteBoardControls) {
+    background: var(--b3-theme-surface);
+    border: 1px solid var(--b3-border-color);
+    border-radius: var(--b3-border-radius);
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+    padding: 4px;
+
+    button {
+      background: var(--b3-theme-surface);
+      border: 1px solid var(--b3-border-color);
+      color: var(--b3-theme-on-surface);
+      width: 24px;
+      height: 24px;
+
+      &:hover {
+        background: var(--b3-theme-surface-light);
+      }
+    }
+  }
+
+  :deep(.EnWhiteBoardToolbar) {
+    margin-top: var(--en-gap);
+
+    .arco-btn-group {
+      background: var(--b3-theme-surface);
+      border: 1px solid var(--b3-border-color);
+      border-radius: var(--b3-border-radius);
+      padding: 4px;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
     }
   }
 }
