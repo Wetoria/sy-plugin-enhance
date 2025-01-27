@@ -664,10 +664,6 @@ const onResize = (event: OnResize) => {
   &.selected {
     .EnWhiteBoardNodeProtyleContainer {
       border-color: var(--b3-theme-primary-light);
-
-      .Handle {
-        opacity: 1;
-      }
     }
   }
 }
