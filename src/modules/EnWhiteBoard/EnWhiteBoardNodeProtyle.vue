@@ -1,4 +1,29 @@
 <template>
+  <NodeToolbar
+    :position="Position.Top"
+    :is-visible="isSelected"
+    :node-id="flowNode.id"
+    class="EnWhiteBoardNodeToolbar"
+  >
+    <div class="ToolbarContent">
+      <a-button-group>
+        <a-tooltip content="删除节点">
+          <a-button @click="onRemoveNode">
+            <template #icon>
+              <icon-delete />
+            </template>
+          </a-button>
+        </a-tooltip>
+        <a-tooltip content="复制节点">
+          <a-button @click="onDuplicateNode">
+            <template #icon>
+              <icon-copy />
+            </template>
+          </a-button>
+        </a-tooltip>
+      </a-button-group>
+    </div>
+  </NodeToolbar>
   <div
     ref="containerRef"
     class="EnWhiteBoardNodeProtyleContainer"
@@ -108,11 +133,12 @@
 
 <script setup lang="ts">
 import EnProtyle from '@/components/EnProtyle.vue'
+import { getNewDailyNoteBlockId } from '@/modules/DailyNote/DailyNote'
 import {
+  generateWhiteBoardNodeId,
   useWhiteBoardModule,
 } from '@/modules/EnWhiteBoard/EnWhiteBoard'
 import { debounce } from '@/utils'
-
 
 import {
   useSiyuanDatabaseIndexCommit,
@@ -123,11 +149,13 @@ import {
   Position,
   useKeyPress,
   useNode,
+  useVueFlow,
 } from '@vue-flow/core'
 import {
   NodeResizer,
   OnResize,
 } from '@vue-flow/node-resizer'
+import { NodeToolbar } from '@vue-flow/node-toolbar'
 import { Protyle } from 'siyuan'
 import {
   computed,
@@ -135,7 +163,6 @@ import {
   onMounted,
   ref,
 } from 'vue'
-
 
 const props = defineProps<{
   enWhiteBoardProtyleUtilAreaRef: HTMLElement
@@ -153,11 +180,16 @@ const {
   node: flowNode,
 } = useNode()
 
+const {
+  getNodes,
+  addNodes,
+  removeNodes,
+  getSelectedNodes,
+} = useVueFlow()
+
 const nodeData = computed(() => flowNode.data)
 
 const containerRef = ref<HTMLDivElement | null>(null)
-
-
 
 const spaceKeyPressing = useKeyPress('Space')
 const captureWheel = (event: WheelEvent) => {
@@ -259,7 +291,6 @@ const captureClick = (event: MouseEvent) => {
 
 const mainRef = ref<HTMLDivElement | null>(null)
 
-
 let offTransactionEvent = null
 const bindNodeIdToEnNode = () => {
   if (!cardProtyleRef.value) {
@@ -351,10 +382,44 @@ onBeforeUnmount(() => {
   }
 })
 
-
 const onResize = (event: OnResize) => {
   console.log('onResize', event)
 }
+
+const onRemoveNode = () => {
+  removeNodes([flowNode])
+}
+
+const onDuplicateNode = () => {
+  const nodes = getNodes.value
+  const sourceNode = nodes.find((node) => node.id === flowNode.id)
+  if (!sourceNode) return
+
+  // 创建新节点，位置稍微偏移
+  const newNode = {
+    ...sourceNode,
+    id: generateWhiteBoardNodeId(),
+    position: {
+      x: sourceNode.position.x + 50,
+      y: sourceNode.position.y + 50,
+    },
+    data: {
+      ...sourceNode.data,
+      blockId: '', // 新节点需要新的 blockId
+    },
+  }
+
+  // 获取新的 blockId
+  getNewDailyNoteBlockId().then((blockId) => {
+    newNode.data.blockId = blockId
+    addNodes([newNode])
+  })
+}
+
+const isSelected = computed(() => {
+  const selectedNodes = getSelectedNodes.value
+  return selectedNodes.some((node) => node.id === flowNode.id)
+})
 </script>
 
 <style lang="scss" scoped>
@@ -637,6 +702,35 @@ const onResize = (event: OnResize) => {
   }
   .Handle.Right {
     right: -16px;
+  }
+}
+
+.EnWhiteBoardNodeToolbar {
+  :deep(.vue-flow__node-toolbar) {
+    transform: translateY(-16px);
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 8px;
+    border-radius: 8px;
+  }
+
+  .ToolbarContent {
+    background: var(--b3-theme-surface);
+    border: 1px solid var(--b3-border-color);
+    border-radius: var(--b3-border-radius);
+    padding: 4px;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+
+    .arco-btn {
+      color: var(--b3-theme-on-surface);
+      border-color: var(--b3-border-color);
+      background: var(--b3-theme-surface);
+
+      &:hover {
+        background: var(--b3-theme-surface-light);
+      }
+    }
   }
 }
 </style>
