@@ -10,6 +10,9 @@ export interface EventBusType {
   [EN_EVENT_BUS_KEYS.AUTH_OPEN_MODAL]: void
   [EN_EVENT_BUS_KEYS.CREATE_TODAY_DAILY_NOTE_MOBILE]: void
   [EN_EVENT_BUS_KEYS.LIFELOG_LOAD_RECORDS_BY_DATE_LIST]: string[]
+  [EN_EVENT_BUS_KEYS.LIFELOG_OPEN_GRAPH_MODAL]: {
+    dateList: string[]
+  }
 }
 
 // 导出类型化的 eventBus

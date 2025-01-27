@@ -4,6 +4,7 @@
 
 <script setup lang="ts">
 import { sql } from '@/api'
+import { injectGlobalWindowData } from '@/modules/EnModuleControl/ModuleProvide'
 import {
   lifelogKeyMap,
   provideLifeLogRecords,
@@ -117,6 +118,8 @@ function getDate(record: ILifeLog) {
 }
 
 
+const globalWindowData = injectGlobalWindowData()
+
 const loadDataByDateList = async (dateList: Array<string>) => {
   if (!dateList.length) return
 
@@ -157,7 +160,9 @@ const loadDataByDateList = async (dateList: Array<string>) => {
     limit 9999999
   `
 
+  globalWindowData.value.loadingLifeLogData = true
   const res = await sql(trimSqlBlank(sqlStmt))
+  globalWindowData.value.loadingLifeLogData = false
 
   const groupedRes = {}
   res.forEach((item) => {

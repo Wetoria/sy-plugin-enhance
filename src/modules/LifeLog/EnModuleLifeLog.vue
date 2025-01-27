@@ -10,7 +10,7 @@
       </div>
       <template #desc>
         <div>
-          是否标记 LifeLog 段落。但输入 [时间 类型] 或 [时间 类型：备注] 后，会自动将段落标记为 LifeLog 段落。
+          是否标记 LifeLog 段落。输入 [时间 类型] 或 [时间 类型：备注] 后，会自动将段落标记为 LifeLog 段落。
         </div>
         <div>
           例如：
@@ -31,7 +31,7 @@
         </div>
         <div>
           <a-typography-text type="warning">
-            注：如果开头的时间带有任何样式，则不会被标记。可先进行标记，在设置格式。
+            注：如果开头的时间带有任何样式，则不会被标记。可先进行标记，再设置格式。
           </a-typography-text>
         </div>
       </template>
@@ -48,7 +48,7 @@
           是否显示 LifeLog 的标记，并自动吸顶。
         </div>
         <div>
-          吸顶：在编辑区顶部，最新一条 LifeLog 会在顶部吸附。当 DailyNote 内容较多时，可以方便地知道，上一条记录是什么时候、做了什么事。
+          吸顶：在编辑区顶部，最新一条 LifeLog 会在顶部吸附。当 DailyNote 内容较多时，可以方便地知道上一条记录是什么时候、做了什么事。
         </div>
       </template>
       <template #opt>
@@ -62,6 +62,19 @@
       <template #desc>
         <div>
           是否在笔记区的日记文档左侧展示时间轴
+        </div>
+        <div>
+          <a-space>
+            <a-typography-text type="warning">
+              点击侧边时间轴，可展开查看 LifeLog 记录。也可
+            </a-typography-text>
+            <a-button
+              type="text"
+              @click="openLifeLogTimeline"
+            >
+              点击查看
+            </a-button>
+          </a-space>
         </div>
       </template>
       <template #opt>
@@ -207,6 +220,7 @@
       <EnLifeLogDataControl>
         <template v-if="moduleOptions.showLifeLogTimelineAtProtyleLeft">
           <RenderControl />
+          <EnLifeLogWeekGraphModal />
         </template>
       </EnLifeLogDataControl>
     </template>
@@ -224,17 +238,20 @@ import {
 } from '@/modules/EnModuleControl/ModuleProvide'
 import EnLifeLogDataControl from '@/modules/LifeLog/EnLifeLogDataControl.vue'
 import EnLifeLogSettingTypeItem from '@/modules/LifeLog/EnLifeLogSettingTypeItem.vue'
+import EnLifeLogWeekGraphModal from '@/modules/LifeLog/EnLifeLogWeekGraphModal.vue'
 import { markLifeLogBlock } from '@/modules/LifeLog/LifeLog'
 import RenderControl from '@/modules/LifeLog/RenderControl.vue'
 import { moduleEnableStatusSwitcher } from '@/utils'
 import {
   EN_CONSTANTS,
+  EN_EVENT_BUS_KEYS,
   EN_MODULE_LIST,
 } from '@/utils/Constants'
 import {
   queryAllByDom,
   useRegisterStyle,
 } from '@/utils/DOM'
+import { enEventBus } from '@/utils/EnEventBus'
 import dayjs from 'dayjs'
 import { Protyle } from 'siyuan'
 import {
@@ -501,6 +518,10 @@ onBeforeUnmount(() => {
   plugin.protyleSlash = plugin.protyleSlash.filter((i) => i.id !== insertCurrentTimeSlas.id)
 })
 
+
+const openLifeLogTimeline = () => {
+  enEventBus.emit(EN_EVENT_BUS_KEYS.LIFELOG_OPEN_GRAPH_MODAL)
+}
 </script>
 
 <style>
