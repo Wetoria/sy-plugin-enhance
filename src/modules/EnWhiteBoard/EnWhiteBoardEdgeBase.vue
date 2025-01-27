@@ -6,30 +6,33 @@
   />
   <EdgeLabelRenderer>
     <div
-      v-if="label"
+      v-if="label || isEditing"
       class="nodrag nopan EnWhiteBoardEdgeLabel"
       :style="{
         pointerEvents: 'all',
         position: 'absolute',
         transform: `translate(-50%, -50%) translate(${edgePathParams[1]}px,${edgePathParams[2]}px)`,
       }"
-      @click="onLabelClick"
       @dblclick="onLabelDblClick"
     >
-      <template v-if="isEditing">
-        <input
-          ref="inputRef"
-          v-model="editingLabel"
-          class="EdgeLabelInput"
-          type="text"
-          @blur="finishEdit"
-          @keydown.enter="finishEdit"
-          @keydown.esc="cancelEdit"
-        >
-      </template>
-      <template v-else>
-        {{ label }}
-      </template>
+      <span
+        ref="measureRef"
+        class="EdgeLabelMeasure"
+      >{{ editingLabel || '新标签' }}</span>
+      <input
+        ref="inputRef"
+        v-model="editingLabel"
+        class="EdgeLabelInput"
+        :readonly="!isEditing"
+        :style="{
+          cursor: isEditing ? 'text' : 'default',
+          width: `${inputWidth}px`,
+        }"
+        @blur="finishEdit"
+        @keydown.enter="finishEdit"
+        @keydown.esc="cancelEdit"
+        @input="updateInputWidth"
+      >
     </div>
   </EdgeLabelRenderer>
 </template>
@@ -48,6 +51,7 @@ import {
   computed,
   nextTick,
   ref,
+  watch,
 } from 'vue'
 
 interface EdgeData {
@@ -113,17 +117,32 @@ const {
 const isEditing = ref(false)
 const editingLabel = ref('')
 const inputRef = ref<HTMLInputElement | null>(null)
+const measureRef = ref<HTMLSpanElement | null>(null)
+const inputWidth = ref(0)
 
-const onLabelClick = (event: MouseEvent) => {
-  event.stopPropagation()
+const updateInputWidth = () => {
+  if (measureRef.value) {
+    inputWidth.value = measureRef.value.offsetWidth
+  }
 }
+
+watch(label, (newLabel) => {
+  if (!isEditing.value) {
+    editingLabel.value = newLabel
+    nextTick(updateInputWidth)
+  }
+}, { immediate: true })
+
+watch(editingLabel, () => {
+  nextTick(updateInputWidth)
+})
 
 const onLabelDblClick = async (event: MouseEvent) => {
   event.stopPropagation()
   isEditing.value = true
-  editingLabel.value = label.value
   await nextTick()
   inputRef.value?.focus()
+  inputRef.value?.select()
 }
 
 const finishEdit = () => {
@@ -145,6 +164,7 @@ const finishEdit = () => {
 }
 
 const cancelEdit = () => {
+  editingLabel.value = label.value
   isEditing.value = false
 }
 </script>
@@ -157,29 +177,37 @@ const cancelEdit = () => {
 
 .EnWhiteBoardEdgeLabel {
   font-family: var(--b3-font-family);
-  color: var(--b3-theme-on-surface);
-  cursor: pointer;
-  user-select: none;
   background: var(--b3-theme-surface);
-  padding: 4px 8px;
+  padding: 2px 4px;
   border-radius: var(--b3-border-radius);
-  font-size: 12px;
   border: 1px solid var(--b3-border-color);
   z-index: 1;
+  display: inline-block;
+  white-space: nowrap;
+  position: relative;
+}
 
-  &:hover {
-    background: var(--b3-theme-surface-light);
-  }
+.EdgeLabelMeasure {
+  visibility: hidden;
+  position: absolute;
+  font-family: var(--b3-font-family);
+  color: var(--b3-theme-on-surface);
+  font-size: 12px;
+  white-space: pre;
 }
 
 .EdgeLabelInput {
+  font-family: var(--b3-font-family);
+  color: var(--b3-theme-on-surface);
+  font-size: 12px;
   background: transparent;
   border: none;
   outline: none;
-  color: var(--b3-theme-on-surface);
-  font-size: 12px;
-  width: 100%;
-  min-width: 50px;
-  font-family: var(--b3-font-family);
+  text-align: center;
+  padding: 0;
+
+  &:not([readonly]):focus {
+    background: var(--b3-theme-surface-light);
+  }
 }
 </style>
