@@ -135,30 +135,35 @@
           maskColor="transparent"
           @nodeClick="onNodeMinimapClick"
         />
-        <Controls class="EnWhiteBoardControls" />
-
-        <Panel
-          class="EnWhiteBoardToolbar"
-          position="top-center"
+        <Controls
+          class="EnWhiteBoardControls"
+          position="left-center"
+          :showFitView="false"
         >
-          <a-button-group>
-            <a-tooltip content="适应视图">
-              <a-button @click="fitView()">
-                <SyIcon name="iconFullscreen" />
-              </a-button>
-            </a-tooltip>
-            <a-tooltip content="居中视图">
-              <a-button @click="centerView()">
-                <SyIcon name="iconFocus" />
-              </a-button>
-            </a-tooltip>
-            <a-tooltip content="切换网格">
-              <a-button @click="toggleGrid()">
-                <SyIcon name="iconGrid" />
-              </a-button>
-            </a-tooltip>
-          </a-button-group>
-        </Panel>
+          <template #default>
+            <button
+              class="vue-flow__controls-button"
+              title="适应视图"
+              @click="fitView()"
+            >
+              <SyIcon name="iconFullscreen" />
+            </button>
+            <button
+              class="vue-flow__controls-button"
+              title="居中视图"
+              @click="centerView()"
+            >
+              <SyIcon name="iconFocus" />
+            </button>
+            <button
+              class="vue-flow__controls-button"
+              title="切换网格"
+              @click="toggleGrid()"
+            >
+              <SyIcon name="iconGrid" />
+            </button>
+          </template>
+        </Controls>
       </VueFlow>
       <div
         ref="EnWhiteBoardProtyleUtilAreaRef"
@@ -235,7 +240,6 @@ import {
   NodeAddChange,
   NodeChange,
   NodeMouseEvent,
-  Panel,
   pointToRendererPoint,
   useVueFlow,
   VueFlow,
@@ -794,22 +798,40 @@ const toggleGrid = () => {
     border-radius: var(--b3-border-radius);
     box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
     padding: 4px;
+    margin-left: var(--en-gap);
+    position: absolute;
+    left: var(--en-gap);
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 
-    button {
+    .vue-flow__controls-button {
       background: var(--b3-theme-surface);
       border: 1px solid var(--b3-border-color);
       color: var(--b3-theme-on-surface);
       width: 24px;
       height: 24px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
 
       &:hover {
         background: var(--b3-theme-surface-light);
+      }
+
+      svg {
+        width: 14px;
+        height: 14px;
       }
     }
   }
 
   :deep(.EnWhiteBoardToolbar) {
-    margin-top: var(--en-gap);
+    margin-bottom: var(--en-gap);
 
     .arco-btn-group {
       background: var(--b3-theme-surface);
