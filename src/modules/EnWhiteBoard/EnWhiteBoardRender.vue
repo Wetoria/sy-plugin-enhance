@@ -73,6 +73,7 @@
         @connect="onConnect"
         @connectStart="onConnectStart"
         @connectEnd="onConnectEnd"
+        @edgeDoubleClick="onEdgeDoubleClick"
       >
         <template #node-EnWhiteBoardNodeProtyle="node">
           <EnWhiteBoardNodeProtyle
@@ -257,6 +258,7 @@ const {
 
   onEdgesChange,
   onEdgeUpdate,
+  setEdges,
 
   viewport,
   onViewportChange,
@@ -582,6 +584,26 @@ const onNodeMinimapClick = (event: NodeMouseEvent) => {
   const y = Number(targetNode.position.y) + (Number(targetNode.height) || 0) / 2
 
   setCenter(x, y, { duration: 800 })
+}
+
+const onEdgeDoubleClick = (event) => {
+  const edge = event.edge
+  if (!edge.data) {
+    edge.data = {}
+  }
+  if (!edge.data.label) {
+    edge.data.label = '新标签'
+    const newEdges = edges.value.map((e) => {
+      if (e.id === edge.id) {
+        return {
+          ...e,
+          data: edge.data,
+        }
+      }
+      return e
+    })
+    setEdges(newEdges)
+  }
 }
 </script>
 

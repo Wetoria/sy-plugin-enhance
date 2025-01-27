@@ -3,19 +3,34 @@
     class="EnWhiteBoardEdgeBase"
     :path="edgePathParams[0]"
     :marker-end="markerEnd"
-  >
-  </BaseEdge>
+  />
   <EdgeLabelRenderer>
-    <!-- <div
-      class="nodrag nopan EnWhiteBoardEdgeBaseTest"
+    <div
+      v-if="label"
+      class="nodrag nopan EnWhiteBoardEdgeLabel"
       :style="{
         pointerEvents: 'all',
         position: 'absolute',
         transform: `translate(-50%, -50%) translate(${edgePathParams[1]}px,${edgePathParams[2]}px)`,
       }"
+      @click="onLabelClick"
+      @dblclick="onLabelDblClick"
     >
-      Test 123
-    </div> -->
+      <template v-if="isEditing">
+        <input
+          ref="inputRef"
+          v-model="editingLabel"
+          class="EdgeLabelInput"
+          type="text"
+          @blur="finishEdit"
+          @keydown.enter="finishEdit"
+          @keydown.esc="cancelEdit"
+        >
+      </template>
+      <template v-else>
+        {{ label }}
+      </template>
+    </div>
   </EdgeLabelRenderer>
 </template>
 
@@ -27,12 +42,21 @@ import {
   EdgeProps,
   getSmoothStepPath,
   Position,
+  useVueFlow,
 } from '@vue-flow/core'
 import {
   computed,
+  nextTick,
+  ref,
 } from 'vue'
 
-const props = defineProps<EdgeProps | ConnectionLineProps>()
+interface EdgeData {
+  label?: string
+}
+
+type Props = EdgeProps<EdgeData> | ConnectionLineProps
+
+const props = defineProps<Props>()
 
 const markerEnd = 'url(#arrow)'
 
@@ -73,11 +97,89 @@ const edgePathParams = computed(() => {
 
   return path
 })
+
+const label = computed(() => {
+  if ('data' in props) {
+    return props.data?.label || ''
+  }
+  return ''
+})
+
+const {
+  edges,
+  setEdges,
+} = useVueFlow()
+
+const isEditing = ref(false)
+const editingLabel = ref('')
+const inputRef = ref<HTMLInputElement | null>(null)
+
+const onLabelClick = (event: MouseEvent) => {
+  event.stopPropagation()
+}
+
+const onLabelDblClick = async (event: MouseEvent) => {
+  event.stopPropagation()
+  isEditing.value = true
+  editingLabel.value = label.value
+  await nextTick()
+  inputRef.value?.focus()
+}
+
+const finishEdit = () => {
+  if (!isEditing.value) return
+  if (!('id' in props)) return
+
+  const newEdges = edges.value.map((edge) => {
+    if (edge.id === props.id) {
+      edge.data = {
+        ...edge.data,
+        label: editingLabel.value,
+      }
+    }
+    return edge
+  })
+
+  setEdges(newEdges)
+  isEditing.value = false
+}
+
+const cancelEdit = () => {
+  isEditing.value = false
+}
 </script>
 
 <style lang="scss" scoped>
 .EnWhiteBoardEdgeBase {
   stroke: var(--b3-theme-on-surface);
   stroke-width: 2;
+}
+
+.EnWhiteBoardEdgeLabel {
+  font-family: var(--b3-font-family);
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+  user-select: none;
+  background: var(--b3-theme-surface);
+  padding: 4px 8px;
+  border-radius: var(--b3-border-radius);
+  font-size: 12px;
+  border: 1px solid var(--b3-border-color);
+  z-index: 1;
+
+  &:hover {
+    background: var(--b3-theme-surface-light);
+  }
+}
+
+.EdgeLabelInput {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--b3-theme-on-surface);
+  font-size: 12px;
+  width: 100%;
+  min-width: 50px;
+  font-family: var(--b3-font-family);
 }
 </style>
