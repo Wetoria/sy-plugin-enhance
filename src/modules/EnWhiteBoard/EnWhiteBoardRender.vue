@@ -324,21 +324,19 @@ onUnmounted(() => {
 })
 
 const onMoveStart = (event) => {
-  if (event.target.classList.contains('nodrag')) {
-    return
+  if (!event?.target?.classList?.contains('nodrag')) {
+    dragging.value = true
   }
-  dragging.value = true
 }
 const onMove = (event) => {
-  if (event.target.classList.contains('nodrag')) {
-
+  if (event?.target?.classList?.contains('nodrag')) {
+    // 暂时为空
   }
 }
 const onMoveEnd = (event) => {
-  if (event.target.classList.contains('nodrag')) {
-    return
+  if (!event?.target?.classList?.contains('nodrag')) {
+    dragging.value = false
   }
-  dragging.value = false
 }
 
 const lastEditProtyleCardElementRef = ref<HTMLElement | null>(null)
