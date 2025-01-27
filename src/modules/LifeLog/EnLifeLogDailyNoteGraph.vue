@@ -5,89 +5,79 @@
     <div
       ref="EnLifeLogDailyNoteGraphRef"
       class="EnLifeLogDailyNoteGraph"
+      @click="openLifeLogGraphModal"
     >
-      <div
-        v-for="date of dayValueList"
-        :key="date"
-        class="EnLifeLogGraphDateItem"
+      <EnLifeLogSideGraph
+        :dateList="dayValueList"
       >
-        <div
-          v-for="record of graphRecordsByDate[date]"
-          :key="record.block_id"
-          class="EnLifeLogGraphItem"
-          :data-en_lifelog_diff="record.diff"
-          :data-en_lifelog_diff_format="record.diffFormatted"
-          :style="{
-            height: `${(record.diff / secondsOfADay) * 100}%`,
-          }"
+        <template #placeholder>
+          <a-tooltip
+            content="隐私模式"
+          >
+            <div class="EnPrivacyModePos">
+              <a-switch
+                v-model="moduleOptions.enablePrivacyMode"
+              />
+            </div>
+          </a-tooltip>
+        </template>
+        <template
+          v-for="(date, index) of dayValueList"
+          :key="`${date}-${index}`"
+          #[date]="{ secondsOfADay }"
         >
           <div
-            class="EnLifeLogItemBg"
+            v-for="record of graphRecordsByDate[date]"
+            :key="record.block_id"
+            class="EnLifeLogGraphItem"
+            :data-en_lifelog_date="date"
+            :data-en_lifelog_type="record.type"
+            :data-en_lifelog_content="record.content"
+            :data-en_lifelog_diff="record.diff"
+            :data-en_lifelog_diff_format="record.diffFormatted"
             :style="{
-              backgroundColor: `var(--en-lifelog-color-type-${record.type})`,
+              height: `${(record.diff / secondsOfADay) * 100}%`,
             }"
           >
-
-          </div>
-          <div class="infos">
             <div
-              v-if="(record.diff / secondsOfADay) > 0.01"
-              class="time info"
+              class="EnLifeLogItemBg"
+              :style="{
+                backgroundColor: `var(--en-lifelog-color-type-${record.type})`,
+              }"
             >
-              {{ record.endTime.format(lifelogKeyMap.HH_mm_ss) }}
+
             </div>
-            <div class="info">
-              {{
-                [
-                  record.type,
-                  moduleOptions.enablePrivacyMode ? '' : record.content,
-                ].filter(Boolean).join('：')
-              }}
-            </div>
-            <div
-              class="info"
-            >
-              持续：{{ record.totalDiffFormatted }}
+            <div class="infos">
+              <div class="info">
+                {{
+                  [
+                    record.type,
+                    moduleOptions.enablePrivacyMode ? '' : record.content,
+                  ].filter(Boolean).join('：')
+                }}
+              </div>
+              <div
+                class="info"
+              >
+                持续：{{ record.totalDiffFormatted }}
+              </div>
+              <div
+                v-if="(record.diff / secondsOfADay) > 0.01"
+                class="time info"
+              >
+                {{ record.endTime.format(lifelogKeyMap.HH_mm_ss) }}
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      <div class="PromptArea">
-        <div
-          v-for="index of 24"
-          :key="index"
-          class="PromptItem"
-        >
-          <div class="PromptTimeItem">
-            <div class="divider"></div>
-            <span class="time">
-              {{ index }}:00
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <div
-        class="PromptCurrent"
-        :style="{
-          top: `${((currentSecondDiff / secondsOfADay) * 100)}%`,
-        }"
-        :data-test="currentSecondDiff"
-      >
-        <div class="PromptTimeItem">
-          <div class="divider"></div>
-          <span class="time">
-            {{ current.format('HH:mm') }}
-          </span>
-        </div>
-      </div>
+        </template>
+      </EnLifeLogSideGraph>
     </div>
   </Teleport>
 </template>
 
 <script setup lang="ts">
 import { useModule } from '@/modules/EnModuleControl/ModuleProvide'
+import EnLifeLogSideGraph from '@/modules/LifeLog/EnLifeLogSideGraph.vue'
 import {
   getTargetLifelogRecordsByDateList,
   injectSplitedLifeLogRecords,
@@ -98,13 +88,14 @@ import {
 } from '@/utils/Constants'
 import { queryAllByDom } from '@/utils/DOM'
 import { enEventBus } from '@/utils/EnEventBus'
-import dayjs from 'dayjs'
 import {
   computed,
+  nextTick,
   onBeforeUnmount,
   onMounted,
   onUpdated,
   ref,
+  watch,
 } from 'vue'
 import { lifelogKeyMap } from './LifeLog'
 
@@ -122,13 +113,14 @@ const dayList = computed(() => {
 })
 const dayValueList = computed(() => {
   const temp = Object.values(dayList.value).map((item) => `${item}`)
+  temp.sort((a, b) => b.localeCompare(a))
   return temp
 })
 
 const splitedLifelogRecords = injectSplitedLifeLogRecords()
 
 const graphRecords = computed(() => {
-  return getTargetLifelogRecordsByDateList(splitedLifelogRecords.value, dayValueList.value)
+  return getTargetLifelogRecordsByDateList(splitedLifelogRecords.value, [...dayValueList.value])
 })
 
 const graphRecordsByDate = computed(() => {
@@ -141,26 +133,17 @@ const graphRecordsByDate = computed(() => {
 })
 
 onMounted(() => {
-  enEventBus.emit(EN_EVENT_BUS_KEYS.LIFELOG_LOAD_RECORDS_BY_DATE_LIST, dayValueList.value)
+  enEventBus.emit(EN_EVENT_BUS_KEYS.LIFELOG_LOAD_RECORDS_BY_DATE_LIST, [...dayValueList.value])
 })
 
 
-const secondsOfADay = 60 * 60 * 24
 const EnLifeLogDailyNoteGraphRef = ref()
 function checkHeight() {
   const itemList = queryAllByDom(EnLifeLogDailyNoteGraphRef.value, '.EnLifeLogGraphItem')
 
   itemList.forEach((item: HTMLDivElement) => {
-    if (item.offsetHeight > 20) {
-      item.dataset.en_lifelog_show_info = 'true'
-    } else {
-      item.dataset.en_lifelog_show_info = 'false'
-    }
-  })
-
-  const promptItemList = queryAllByDom(EnLifeLogDailyNoteGraphRef.value, '.PromptItem')
-  promptItemList.forEach((item: HTMLDivElement) => {
-    if (item.offsetHeight > 20) {
+    const infosEl = item.querySelector('.infos')
+    if (item.clientHeight > infosEl?.clientHeight + 8) {
       item.dataset.en_lifelog_show_info = 'true'
     } else {
       item.dataset.en_lifelog_show_info = 'false'
@@ -169,6 +152,7 @@ function checkHeight() {
 }
 
 onMounted(() => {
+  checkHeight()
   window.addEventListener('resize', checkHeight)
 })
 onBeforeUnmount(() => {
@@ -177,20 +161,18 @@ onBeforeUnmount(() => {
 onUpdated(() => {
   checkHeight()
 })
-
-const current = ref(dayjs())
-onMounted(() => {
-  setInterval(() => {
-    current.value = dayjs()
-  }, 1000)
-})
-const currentSecondDiff = computed(() => {
-  const startOfToday = current.value.startOf('day')
-  const secondsUntilMidnight = current.value.diff(startOfToday, 'second')
-  return secondsUntilMidnight
+watch(graphRecordsByDate, () => {
+  nextTick(() => {
+    checkHeight()
+  })
 })
 
-
+const openLifeLogGraphModal = () => {
+  console.log('openLifeLogGraphModal')
+  enEventBus.emit(EN_EVENT_BUS_KEYS.LIFELOG_OPEN_GRAPH_MODAL, {
+    dateList: dayValueList.value,
+  })
+}
 </script>
 
 <style lang="scss" scoped>
@@ -199,26 +181,43 @@ const currentSecondDiff = computed(() => {
   left: 0;
   top: 30px;
   width: 5px;
-  height: calc(100% - 30px - 4px);
+  max-width: 90%;
+  height: calc(100% - 30px);
   background-color: var(--b3-theme-surface);
   display: flex;
   z-index: 9;
   overflow: hidden;
+  cursor: pointer;
+
   --en-lifelog-graph-font-size: 8px;
 
-
-  .EnLifeLogGraphDateItem {
-    display: flex;
-    flex-direction: column;
+  .EnPrivacyModePos {
+    width: 100%;
     height: 100%;
-    width: 5px;
-    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-sizing: border-box;
   }
 
-  .EnLifeLogGraphDateItem + .EnLifeLogGraphDateItem {
-    border-left: 1px solid var(--b3-border-color);
+  .EnLifeLogSideGraph {
+    height: calc(100% + var(--en-lifelog-graph-date-title-area-height));
+    transform: translate(
+      calc(var(--en-lifelog-graph-prompt-area-width) * -1),
+      calc(var(--en-lifelog-graph-date-title-area-height) * -1),
+    );
   }
 
+  &:hover {
+    width: auto;
+    background-color: var(--b3-theme-surface);
+    border-right: 1px solid var(--b3-border-color);
+
+    .EnLifeLogSideGraph {
+      transform: unset;
+      height: 100%;
+    }
+  }
 
   .EnLifeLogGraphItem {
     display: flex;
@@ -227,7 +226,6 @@ const currentSecondDiff = computed(() => {
     font-size: var(--en-lifelog-graph-font-size, 8px);
     color: var(--b3-theme-on-background);
     width: 100%;
-    height: 100%;
     position: relative;
     justify-content: flex-end;
     box-sizing: border-box;
@@ -243,7 +241,8 @@ const currentSecondDiff = computed(() => {
     }
 
     .infos {
-      display: none;
+      display: inline-block;
+      opacity: 0;
       width: 100%;
       padding: 4px;
       box-sizing: border-box;
@@ -258,115 +257,13 @@ const currentSecondDiff = computed(() => {
 
   }
 
-  .PromptTimeItem {
-    width: 100%;
-
-    position: absolute;
-    // bottom: calc(var(--en-lifelog-graph-font-size, 8px));
-    bottom: 0;
-
-    display: flex;
-    justify-content: flex-end;
-    align-items: flex-end;
-
-    box-sizing: border-box;
-
-    .divider {
-      flex: 1;
-      border-top: 1px solid var(--b3-border-color);
-      height: 0;
-    }
-
-    .time {
-      transform: translateY(4px);
-    }
-  }
-
-  .PromptArea {
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    z-index: 1;
-    top: 0;
-    left: 0;
-    font-size: var(--en-lifelog-graph-font-size, 8px);
-    display: none;
-
-
-
-    .PromptItem {
-      height: calc(100% / 24);
-
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-
-      position: relative;
-
-      .divider {
-        border-top: 1px solid var(--b3-border-color);
-      }
-
-      &[data-en_lifelog_show_info="false"] {
-        .time {
-          display: none;
-        }
-      }
-    }
-
-  }
-
-  .PromptCurrent {
-    position: absolute;
-    right: 0px;
-    color: red;
-
-    width: 100%;
-
-    font-size: var(--en-lifelog-graph-font-size, 8px);
-    font-weight: bold;
-
-    .divider {
-      border-top: 1px solid red;
-    }
-
-    .time {
-      display: none;
-    }
-  }
-
   &:hover {
-    width: auto;
-    background-color: var(--b3-theme-surface);
-    border-right: 1px solid var(--b3-border-color);
-
-    .EnLifeLogGraphDateItem {
-      width: 100px;
-    }
-
     .EnLifeLogGraphItem {
 
       &[data-en_lifelog_show_info="true"] {
         .infos {
-          display: inline-block;
+          opacity: 1;
         }
-      }
-    }
-
-    .PromptArea {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .PromptTimeItem {
-      gap: 4px;
-      padding-right: 2px;
-    }
-
-    .PromptCurrent {
-      z-index: 1;
-      .time {
-        display: inline-block;
       }
     }
   }
