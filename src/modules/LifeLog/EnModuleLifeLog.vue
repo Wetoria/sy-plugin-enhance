@@ -64,9 +64,17 @@
           是否在笔记区的日记文档左侧展示时间轴
         </div>
         <div>
-          <a-typography-text type="warning">
-            点击侧边时间轴，可展开查看 LifeLog 记录。
-          </a-typography-text>
+          <a-space>
+            <a-typography-text type="warning">
+              点击侧边时间轴，可展开查看 LifeLog 记录。也可
+            </a-typography-text>
+            <a-button
+              type="text"
+              @click="openLifeLogTimeline"
+            >
+              点击查看
+            </a-button>
+          </a-space>
         </div>
       </template>
       <template #opt>
@@ -236,12 +244,14 @@ import RenderControl from '@/modules/LifeLog/RenderControl.vue'
 import { moduleEnableStatusSwitcher } from '@/utils'
 import {
   EN_CONSTANTS,
+  EN_EVENT_BUS_KEYS,
   EN_MODULE_LIST,
 } from '@/utils/Constants'
 import {
   queryAllByDom,
   useRegisterStyle,
 } from '@/utils/DOM'
+import { enEventBus } from '@/utils/EnEventBus'
 import dayjs from 'dayjs'
 import { Protyle } from 'siyuan'
 import {
@@ -508,6 +518,10 @@ onBeforeUnmount(() => {
   plugin.protyleSlash = plugin.protyleSlash.filter((i) => i.id !== insertCurrentTimeSlas.id)
 })
 
+
+const openLifeLogTimeline = () => {
+  enEventBus.emit(EN_EVENT_BUS_KEYS.LIFELOG_OPEN_GRAPH_MODAL)
+}
 </script>
 
 <style>

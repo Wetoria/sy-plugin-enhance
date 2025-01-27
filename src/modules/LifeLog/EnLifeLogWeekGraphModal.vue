@@ -116,6 +116,7 @@ import EnWeekGraph from '@/modules/LifeLog/EnWeekGraph.vue'
 import {
   getTargetLifelogRecordsByDateList,
   injectSplitedLifeLogRecords,
+  lifelogKeyMap,
 } from '@/modules/LifeLog/LifeLog'
 import {
   EN_EVENT_BUS_KEYS,
@@ -208,11 +209,26 @@ const graphRecordsByDate = computed(() => {
 onMounted(() => {
   enEventBus.on(EN_EVENT_BUS_KEYS.LIFELOG_OPEN_GRAPH_MODAL, (data) => {
     const {
-      dateList,
-    } = data
-    const temp = [
-      ...dateList,
-    ]
+      dateList: dateListParams,
+    } = data || {}
+    let temp = []
+    if (!dateListParams) {
+      temp = [
+        dayjs().subtract(7, 'days').format(lifelogKeyMap.YYYY_MM_DD),
+        dayjs().format(lifelogKeyMap.YYYY_MM_DD),
+      ]
+    } else {
+      if (dateListParams.length === 1) {
+        temp = [
+          ...dateListParams,
+          dayjs(dateListParams[0]).subtract(7, 'day').format(lifelogKeyMap.YYYY_MM_DD),
+        ]
+      } else {
+        temp = [
+          ...dateListParams,
+        ]
+      }
+    }
     temp.sort((a, b) => {
       return dayjs(a).diff(dayjs(b))
     })
