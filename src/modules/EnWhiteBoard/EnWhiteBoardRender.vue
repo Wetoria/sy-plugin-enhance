@@ -157,10 +157,10 @@
             </button>
             <button
               class="vue-flow__controls-button"
-              title="切换网格"
-              @click="toggleGrid()"
+              title="切换白板背景"
+              @click="toggleBackground()"
             >
-              <SyIcon name="iconGrid" />
+              <SyIcon name="iconTheme" />
             </button>
           </template>
         </Controls>
@@ -647,9 +647,16 @@ const centerView = () => {
   setCenter(0, 0, { duration: 800 })
 }
 
-const showGrid = ref(true)
-const toggleGrid = () => {
-  showGrid.value = !showGrid.value
+const toggleBackground = () => {
+  if (!embedWhiteBoardConfigData.value.boardOptions.useCustomBackground) {
+    embedWhiteBoardConfigData.value.boardOptions.useCustomBackground = true
+  }
+
+  // 在 none、lines、dots 之间循环切换
+  const variants = ['none', 'lines', 'dots'] as const
+  const currentIndex = variants.indexOf(embedWhiteBoardConfigData.value.boardOptions.backgroundVariant || 'none')
+  const nextIndex = (currentIndex + 1) % variants.length
+  embedWhiteBoardConfigData.value.boardOptions.backgroundVariant = variants[nextIndex]
 }
 </script>
 
