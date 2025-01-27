@@ -12,8 +12,8 @@
       :style="{
         pointerEvents: 'all',
         position: 'absolute',
-        transform: `translate(-50%, -100%) translate(${edgePathParams[1]}px,${edgePathParams[2] - 24 / (viewport?.zoom || 1)}px) scale(${1 / (viewport?.zoom || 1)})`,
-        transformOrigin: 'bottom center',
+        transformOrigin: 'center bottom',
+        transform: `translate(-50%, -100%) translate(${edgePathParams[1]}px,${edgePathParams[2]}px) translateY(-24px) scale(${1 / (viewport?.zoom || 1)})`,
       }"
     >
       <div class="ToolbarContent">
