@@ -82,17 +82,25 @@
 
 
       <div
-        class="PromptCurrent"
-        :style="{
-          top: `calc(${((currentSecondDiff / secondsOfADay) * 100)}%)`,
-        }"
+        class="PromptCurrentArea"
+        style="
+          height: var(--en-week-graph-timeline-area-height);
+          width: 100%;
+        "
       >
-        <div class="timeContainer">
-          <span class="time">
-            {{ current.format('HH:mm') }}
-          </span>
+        <div
+          class="PromptCurrent"
+          :style="{
+            top: `calc(${((currentSecondDiff / secondsOfADay) * 100)}%)`,
+          }"
+        >
+          <div class="timeContainer">
+            <span class="time">
+              {{ current.format('HH:mm') }}
+            </span>
+          </div>
+          <div class="divider"></div>
         </div>
-        <div class="divider"></div>
       </div>
     </div>
   </div>
@@ -352,48 +360,57 @@ onMounted(() => {
   // #endregion 👆 处理时间提示
 
 
-  .PromptCurrent {
+  .PromptCurrentArea {
     position: absolute;
+    top: 0;
     left: 0;
     z-index: 2;
-
     width: 100%;
 
-    font-size: calc(var(--en-week-graph-font-size) * 0.8);
-    font-weight: bold;
-    display: flex;
+    .PromptCurrent {
+      position: absolute;
+      left: 0;
 
+      width: 100%;
 
-    .timeContainer {
-      width: var(--en-week-graph-prompt-column-width);
-      box-sizing: border-box;
+      font-size: calc(var(--en-week-graph-font-size) * 0.8);
+      font-weight: bold;
       display: flex;
-      justify-content: center;
-      align-items: center;
-      font-variant-numeric: tabular-nums;
-      background-color: red;
-      padding: 1px calc(var(--en-gap) - 1px);
-      color: white;
-      border-radius: 100vw;
-      transform: translateY(-50%);
-      position: sticky;
-      left: 0px;
-      z-index: 1;
-    }
 
-    .divider {
-      display: flex;
-      width: calc(100% - (var(--en-week-graph-prompt-column-width) - 6px) - 3px);
-      border-top: 1px solid red;
-      opacity: 0.4;
-      position: sticky;
-      left: calc(var(--en-week-graph-prompt-column-width) - 6px + 3px);
+
+      .timeContainer {
+        width: var(--en-week-graph-prompt-column-width);
+        box-sizing: border-box;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-variant-numeric: tabular-nums;
+        background-color: red;
+        padding: 1px calc(var(--en-gap) - 1px);
+        color: white;
+        border-radius: 100vw;
+        transform: translateY(-50%);
+        position: sticky;
+        left: 0px;
+        z-index: 1;
+      }
+
+      .divider {
+        display: flex;
+        width: calc(100% - (var(--en-week-graph-prompt-column-width) - 6px) - 3px);
+        border-top: 1px solid red;
+        opacity: 0.4;
+        position: sticky;
+        left: calc(var(--en-week-graph-prompt-column-width) - 6px + 3px);
+      }
     }
   }
+
 
   .TimelineArea {
     min-height: calc(100% - var(--en-week-graph-daterow-height) - var(--en-week-graph-dailyrow-height));
 
+    .PromptCurrentArea,
     .Column {
       min-height: 100%;
     }
