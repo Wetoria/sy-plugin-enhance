@@ -63,6 +63,11 @@
         <div>
           是否在笔记区的日记文档左侧展示时间轴
         </div>
+        <div>
+          <a-typography-text type="warning">
+            点击侧边时间轴，可展开查看 LifeLog 记录。
+          </a-typography-text>
+        </div>
       </template>
       <template #opt>
         <a-switch v-model="moduleOptions.showLifeLogTimelineAtProtyleLeft" />
@@ -207,6 +212,7 @@
       <EnLifeLogDataControl>
         <template v-if="moduleOptions.showLifeLogTimelineAtProtyleLeft">
           <RenderControl />
+          <EnLifeLogWeekGraphModal />
         </template>
       </EnLifeLogDataControl>
     </template>
@@ -224,6 +230,7 @@ import {
 } from '@/modules/EnModuleControl/ModuleProvide'
 import EnLifeLogDataControl from '@/modules/LifeLog/EnLifeLogDataControl.vue'
 import EnLifeLogSettingTypeItem from '@/modules/LifeLog/EnLifeLogSettingTypeItem.vue'
+import EnLifeLogWeekGraphModal from '@/modules/LifeLog/EnLifeLogWeekGraphModal.vue'
 import { markLifeLogBlock } from '@/modules/LifeLog/LifeLog'
 import RenderControl from '@/modules/LifeLog/RenderControl.vue'
 import { moduleEnableStatusSwitcher } from '@/utils'

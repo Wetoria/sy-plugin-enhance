@@ -61,6 +61,8 @@ interface GlobalWindowData {
   isInSiyuanWindowHtml: boolean
   isInEnWindow: boolean
 
+  loadingLifeLogData: boolean
+
   protyleList: IProtyleObserverItem[]
 }
 
