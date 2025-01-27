@@ -176,15 +176,27 @@ const cancelEdit = () => {
 }
 
 .EnWhiteBoardEdgeLabel {
-  font-family: var(--b3-font-family);
+  position: absolute;
+  display: inline-block;
+  white-space: nowrap;
   background: var(--b3-theme-surface);
   padding: 2px 4px;
   border-radius: var(--b3-border-radius);
+  font-size: 12px;
+  color: var(--b3-theme-on-surface);
+  user-select: none;
   border: 1px solid var(--b3-border-color);
-  z-index: 1;
-  display: inline-block;
-  white-space: nowrap;
-  position: relative;
+  cursor: pointer;
+  z-index: 0;
+
+  &:hover {
+    background: var(--b3-theme-surface-light);
+  }
+
+  &.editing {
+    z-index: 5;
+    background: var(--b3-theme-background);
+  }
 }
 
 .EdgeLabelMeasure {
