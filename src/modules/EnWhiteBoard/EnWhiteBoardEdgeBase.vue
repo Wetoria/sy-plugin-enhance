@@ -41,23 +41,23 @@ const edgePathParams = computed(() => {
   let targetY = props.targetY
 
   // 根据节点位置计算实际的连接点
-  if (props.sourcePosition === Position.Left) {
+  if (props.sourceNode && props.sourcePosition === Position.Left) {
     sourceX = props.sourceNode.position.x
-  } else if (props.sourcePosition === Position.Right) {
+  } else if (props.sourceNode && props.sourcePosition === Position.Right) {
     sourceX = props.sourceNode.position.x + Number(props.sourceNode.width)
-  } else if (props.sourcePosition === Position.Top) {
+  } else if (props.sourceNode && props.sourcePosition === Position.Top) {
     sourceY = props.sourceNode.position.y
-  } else if (props.sourcePosition === Position.Bottom) {
+  } else if (props.sourceNode && props.sourcePosition === Position.Bottom) {
     sourceY = props.sourceNode.position.y + Number(props.sourceNode.height)
   }
 
-  if (props.targetPosition === Position.Left) {
+  if (props.targetNode && props.targetPosition === Position.Left) {
     targetX = props.targetNode.position.x
-  } else if (props.targetPosition === Position.Right) {
+  } else if (props.targetNode && props.targetPosition === Position.Right) {
     targetX = props.targetNode.position.x + Number(props.targetNode.width)
-  } else if (props.targetPosition === Position.Top) {
+  } else if (props.targetNode && props.targetPosition === Position.Top) {
     targetY = props.targetNode.position.y
-  } else if (props.targetPosition === Position.Bottom) {
+  } else if (props.targetNode && props.targetPosition === Position.Bottom) {
     targetY = props.targetNode.position.y + Number(props.targetNode.height)
   }
 
