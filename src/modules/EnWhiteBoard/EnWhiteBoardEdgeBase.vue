@@ -7,6 +7,30 @@
   />
   <EdgeLabelRenderer>
     <div
+      v-if="isSelected"
+      class="nodrag nopan EnWhiteBoardEdgeToolbar"
+      :style="{
+        pointerEvents: 'all',
+        position: 'absolute',
+        transform: `translate(-50%, -100%) translate(${edgePathParams[1]}px,${edgePathParams[2] - 24 / (viewport?.zoom || 1)}px) scale(${1 / (viewport?.zoom || 1)})`,
+        transformOrigin: 'bottom center',
+      }"
+    >
+      <div class="ToolbarContent">
+        <a-button-group>
+          <a-tooltip content="删除连线">
+            <a-button @click="onRemoveEdge">
+              <template #icon>
+                <icon-delete />
+              </template>
+            </a-button>
+          </a-tooltip>
+        </a-button-group>
+      </div>
+    </div>
+  </EdgeLabelRenderer>
+  <EdgeLabelRenderer>
+    <div
       v-if="label || isEditing"
       class="nodrag nopan EnWhiteBoardEdgeLabel"
       :style="{
@@ -34,29 +58,6 @@
         @keydown.esc="cancelEdit"
         @input="updateInputWidth"
       >
-    </div>
-  </EdgeLabelRenderer>
-  <EdgeLabelRenderer>
-    <div
-      v-if="isSelected"
-      class="nodrag nopan EnWhiteBoardEdgeToolbar"
-      :style="{
-        pointerEvents: 'all',
-        position: 'absolute',
-        transform: `translate(-50%, -100%) translate(${edgePathParams[1]}px,${edgePathParams[2] - 24}px) scale(${1 / (viewport?.zoom || 1)})`,
-      }"
-    >
-      <div class="ToolbarContent">
-        <a-button-group>
-          <a-tooltip content="删除连线">
-            <a-button @click="onRemoveEdge">
-              <template #icon>
-                <icon-delete />
-              </template>
-            </a-button>
-          </a-tooltip>
-        </a-button-group>
-      </div>
     </div>
   </EdgeLabelRenderer>
 </template>
@@ -283,7 +284,7 @@ const onEdgeClick = () => {
     .arco-btn {
       color: var(--b3-theme-on-surface);
       border: none;
-      background: var(--b3-theme-background);
+      background: transparent;
       padding: 4px;
 
       &:hover {
