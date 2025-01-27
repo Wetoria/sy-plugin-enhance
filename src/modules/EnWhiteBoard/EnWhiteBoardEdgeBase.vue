@@ -43,7 +43,7 @@
       :style="{
         pointerEvents: 'all',
         position: 'absolute',
-        transform: `translate(-50%, -100%) translate(${edgePathParams[1]}px,${edgePathParams[2] - 24}px)`,
+        transform: `translate(-50%, -100%) translate(${edgePathParams[1]}px,${edgePathParams[2] - 24}px) scale(${1 / (viewport?.zoom || 1)})`,
       }"
     >
       <div class="ToolbarContent">
@@ -137,6 +137,7 @@ const {
   edges,
   setEdges,
   getSelectedEdges,
+  viewport,
 } = useVueFlow()
 
 const isEditing = ref(false)
