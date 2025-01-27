@@ -32,44 +32,33 @@ import {
   computed,
 } from 'vue'
 
-
-
 const props = defineProps<EdgeProps | ConnectionLineProps>()
 
 const edgePathParams = computed(() => {
-  const isSourceRight = props.sourcePosition === Position.Right
-  const isSourceLeft = props.sourcePosition === Position.Left
-  const isSourceTop = props.sourcePosition === Position.Top
-  const isSourceBottom = props.sourcePosition === Position.Bottom
-
-  const isTargetRight = props.targetPosition === Position.Right
-  const isTargetLeft = props.targetPosition === Position.Left
-  const isTargetTop = props.targetPosition === Position.Top
-  const isTargetBottom = props.targetPosition === Position.Bottom
-
   let sourceX = props.sourceX
   let sourceY = props.sourceY
   let targetX = props.targetX
   let targetY = props.targetY
 
-  if (isSourceRight) {
-    sourceX -= 25
-  } else if (isSourceLeft) {
-    sourceX += 25
-  } else if (isSourceTop) {
-    sourceY += 25
-  } else if (isSourceBottom) {
-    sourceY -= 25
+  // 根据节点位置计算实际的连接点
+  if (props.sourcePosition === Position.Left) {
+    sourceX = props.sourceNode.position.x
+  } else if (props.sourcePosition === Position.Right) {
+    sourceX = props.sourceNode.position.x + Number(props.sourceNode.width)
+  } else if (props.sourcePosition === Position.Top) {
+    sourceY = props.sourceNode.position.y
+  } else if (props.sourcePosition === Position.Bottom) {
+    sourceY = props.sourceNode.position.y + Number(props.sourceNode.height)
   }
 
-  if (isTargetRight) {
-    targetX -= 25
-  } else if (isTargetLeft) {
-    targetX += 25
-  } else if (isTargetTop) {
-    targetY += 25
-  } else if (isTargetBottom) {
-    targetY -= 25
+  if (props.targetPosition === Position.Left) {
+    targetX = props.targetNode.position.x
+  } else if (props.targetPosition === Position.Right) {
+    targetX = props.targetNode.position.x + Number(props.targetNode.width)
+  } else if (props.targetPosition === Position.Top) {
+    targetY = props.targetNode.position.y
+  } else if (props.targetPosition === Position.Bottom) {
+    targetY = props.targetNode.position.y + Number(props.targetNode.height)
   }
 
   const path = getSmoothStepPath({
