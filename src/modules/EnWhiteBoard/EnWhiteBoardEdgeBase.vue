@@ -3,6 +3,7 @@
     class="EnWhiteBoardEdgeBase"
     :path="edgePathParams[0]"
     :marker-end="markerEnd"
+    @click="onEdgeClick"
   />
   <EdgeLabelRenderer>
     <div
@@ -33,6 +34,29 @@
         @keydown.esc="cancelEdit"
         @input="updateInputWidth"
       >
+    </div>
+  </EdgeLabelRenderer>
+  <EdgeLabelRenderer>
+    <div
+      v-if="isSelected"
+      class="nodrag nopan EnWhiteBoardEdgeToolbar"
+      :style="{
+        pointerEvents: 'all',
+        position: 'absolute',
+        transform: `translate(-50%, -100%) translate(${edgePathParams[1]}px,${edgePathParams[2] - 24}px)`,
+      }"
+    >
+      <div class="ToolbarContent">
+        <a-button-group>
+          <a-tooltip content="删除连线">
+            <a-button @click="onRemoveEdge">
+              <template #icon>
+                <icon-delete />
+              </template>
+            </a-button>
+          </a-tooltip>
+        </a-button-group>
+      </div>
     </div>
   </EdgeLabelRenderer>
 </template>
@@ -112,6 +136,7 @@ const label = computed(() => {
 const {
   edges,
   setEdges,
+  getSelectedEdges,
 } = useVueFlow()
 
 const isEditing = ref(false)
@@ -119,6 +144,12 @@ const editingLabel = ref('')
 const inputRef = ref<HTMLInputElement | null>(null)
 const measureRef = ref<HTMLSpanElement | null>(null)
 const inputWidth = ref(0)
+
+const isSelected = computed(() => {
+  if (!('id' in props)) return false
+  const selectedEdges = getSelectedEdges.value
+  return selectedEdges.some((edge) => edge.id === props.id)
+})
 
 const updateInputWidth = () => {
   if (measureRef.value) {
@@ -166,6 +197,17 @@ const finishEdit = () => {
 const cancelEdit = () => {
   editingLabel.value = label.value
   isEditing.value = false
+}
+
+const onRemoveEdge = () => {
+  if (!('id' in props)) return
+  const newEdges = edges.value.filter((edge) => edge.id !== props.id)
+  setEdges(newEdges)
+}
+
+const onEdgeClick = () => {
+  if (!('id' in props)) return
+  // 这里不需要实现，因为 VueFlow 会自动处理边的选中状态
 }
 </script>
 
@@ -220,6 +262,41 @@ const cancelEdit = () => {
 
   &:not([readonly]):focus {
     background: var(--b3-theme-surface-light);
+  }
+}
+
+.EnWhiteBoardEdgeToolbar {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 4px;
+  border-radius: var(--b3-border-radius);
+  pointer-events: all;
+
+  .ToolbarContent {
+    background: var(--b3-theme-surface);
+    border-radius: var(--b3-border-radius);
+    padding: 4px;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+
+    .arco-btn {
+      color: var(--b3-theme-on-surface);
+      border: none;
+      background: var(--b3-theme-background);
+      padding: 4px;
+
+      &:hover {
+        background: var(--b3-theme-surface-light);
+      }
+    }
+  }
+}
+
+.EnWhiteBoardEdgeLabel {
+  &:hover {
+    .EnWhiteBoardEdgeToolbar {
+      opacity: 1;
+    }
   }
 }
 </style>
