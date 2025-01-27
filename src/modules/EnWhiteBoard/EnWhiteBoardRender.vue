@@ -815,8 +815,8 @@ const toggleBackground = () => {
     gap: 4px;
 
     .vue-flow__controls-button {
-      background: var(--b3-theme-surface);
-      border: 1px solid var(--b3-border-color);
+      background: var(--b3-theme-background);
+      border: none;
       color: var(--b3-theme-on-surface);
       width: 24px;
       height: 24px;

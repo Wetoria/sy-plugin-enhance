@@ -717,15 +717,15 @@ const isSelected = computed(() => {
 
   .ToolbarContent {
     background: var(--b3-theme-surface);
-    border: 1px solid var(--b3-border-color);
     border-radius: var(--b3-border-radius);
     padding: 4px;
     box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
 
     .arco-btn {
       color: var(--b3-theme-on-surface);
-      border-color: var(--b3-border-color);
-      background: var(--b3-theme-surface);
+      border: none;
+      background: transparent;
+      padding: 4px;
 
       &:hover {
         background: var(--b3-theme-surface-light);
