@@ -119,6 +119,12 @@ import {
   lifelogKeyMap,
 } from '@/modules/LifeLog/LifeLog'
 import {
+  addCommand,
+  removeCommand,
+} from '@/utils/Commands'
+import {
+  EN_COMMAND_KEYS,
+  EN_CONSTANTS,
   EN_EVENT_BUS_KEYS,
   EN_MODULE_LIST,
 } from '@/utils/Constants'
@@ -126,6 +132,7 @@ import { enEventBus } from '@/utils/EnEventBus'
 import dayjs from 'dayjs'
 import {
   computed,
+  onBeforeUnmount,
   onMounted,
   ref,
   watch,
@@ -206,38 +213,40 @@ const graphRecordsByDate = computed(() => {
   return result
 })
 
-onMounted(() => {
-  enEventBus.on(EN_EVENT_BUS_KEYS.LIFELOG_OPEN_GRAPH_MODAL, (data) => {
-    const {
-      dateList: dateListParams,
-    } = data || {}
-    let temp = []
-    if (!dateListParams) {
+const openModalByDateList = (data) => {
+  const {
+    dateList: dateListParams,
+  } = data || {}
+  let temp = []
+  if (!dateListParams) {
+    temp = [
+      dayjs().subtract(7, 'days').format(lifelogKeyMap.YYYY_MM_DD),
+      dayjs().format(lifelogKeyMap.YYYY_MM_DD),
+    ]
+  } else {
+    if (dateListParams.length === 1) {
       temp = [
-        dayjs().subtract(7, 'days').format(lifelogKeyMap.YYYY_MM_DD),
-        dayjs().format(lifelogKeyMap.YYYY_MM_DD),
+        ...dateListParams,
+        dayjs(dateListParams[0]).subtract(7, 'day').format(lifelogKeyMap.YYYY_MM_DD),
       ]
     } else {
-      if (dateListParams.length === 1) {
-        temp = [
-          ...dateListParams,
-          dayjs(dateListParams[0]).subtract(7, 'day').format(lifelogKeyMap.YYYY_MM_DD),
-        ]
-      } else {
-        temp = [
-          ...dateListParams,
-        ]
-      }
+      temp = [
+        ...dateListParams,
+      ]
     }
-    temp.sort((a, b) => {
-      return dayjs(a).diff(dayjs(b))
-    })
-    dateRange.value = [
-      temp[0],
-      temp[temp.length - 1],
-    ]
-    openLifeLogWeekGraphModal()
+  }
+  temp.sort((a, b) => {
+    return dayjs(a).diff(dayjs(b))
   })
+  dateRange.value = [
+    temp[0],
+    temp[temp.length - 1],
+  ]
+  openLifeLogWeekGraphModal()
+}
+
+onMounted(() => {
+  enEventBus.on(EN_EVENT_BUS_KEYS.LIFELOG_OPEN_GRAPH_MODAL, openModalByDateList)
 })
 watch(dateRange, () => {
   if (dateRange.value[0] && dateRange.value[1]) {
@@ -248,6 +257,22 @@ watch(dateRange, () => {
 
 const columnWidth = ref(130)
 const timelineHeight = ref(2000)
+
+
+const openLifeLogModalCommand = {
+  langKey: EN_COMMAND_KEYS.EN_LIFELOG_OPEN_GRAPH_MODAL,
+  langText: EN_CONSTANTS.LIFELOG_OPEN_GRAPH_MODAL_DISPLAY,
+  hotkey: "",
+  callback: () => {
+    openLifeLogWeekGraphModal()
+  },
+}
+onMounted(() => {
+  addCommand(openLifeLogModalCommand)
+})
+onBeforeUnmount(() => {
+  removeCommand(openLifeLogModalCommand)
+})
 </script>
 
 <style lang="scss" scoped>
