@@ -28,12 +28,19 @@
 
     <div class="EnWhiteBoardContentContainer">
       <!-- {{ data.whiteBoardId }} - {{ data.nodeId }} -->
-      <div class="EnWhiteBoardControlArea EnWhiteBoardControlArea__Top">
-        <a-button-group
-          class="FullScreenButtonGroup"
+      <div class="EnWhiteBoardControlArea EnWhiteBoardControlArea__Left">
+        <EnWhiteBoardToolBar
+          class="MainToolBar"
+          :show-basic-controls="true"
+          :show-extra-controls="true"
+          @toggle-background="toggleBackground"
+          @fit-view="() => rawFitView({ duration: 800 })"
+          @center-view="() => setCenter(0, 0, { duration: 800 })"
         >
-          <slot name="topButtonGroup" />
-        </a-button-group>
+          <template #after>
+            <slot name="topButtonGroup" />
+          </template>
+        </EnWhiteBoardToolBar>
       </div>
       <div class="EnWhiteBoardControlArea EnWhiteBoardControlArea__Bottom">
         <div>
@@ -45,8 +52,6 @@
         <div>
 
         </div>
-      </div>
-      <div class="EnWhiteBoardControlArea EnWhiteBoardControlArea__Left">
       </div>
       <div class="EnWhiteBoardControlArea EnWhiteBoardControlArea__Right">
       </div>
@@ -135,35 +140,6 @@
           maskColor="transparent"
           @nodeClick="onNodeMinimapClick"
         />
-        <Controls
-          class="EnWhiteBoardControls"
-          position="left-center"
-          :showFitView="false"
-        >
-          <template #default>
-            <button
-              class="vue-flow__controls-button"
-              title="适应视图"
-              @click="fitView()"
-            >
-              <SyIcon name="iconFullscreen" />
-            </button>
-            <button
-              class="vue-flow__controls-button"
-              title="居中视图"
-              @click="centerView()"
-            >
-              <SyIcon name="iconFocus" />
-            </button>
-            <button
-              class="vue-flow__controls-button"
-              title="切换白板背景"
-              @click="toggleBackground()"
-            >
-              <SyIcon name="iconTheme" />
-            </button>
-          </template>
-        </Controls>
       </VueFlow>
       <div
         ref="EnWhiteBoardProtyleUtilAreaRef"
@@ -231,7 +207,6 @@ import {
   SyDomNodeTypes,
 } from '@/utils/Siyuan'
 import { Background } from '@vue-flow/background'
-import { Controls } from '@vue-flow/controls'
 import {
   Edge,
   EdgeAddChange,
@@ -257,6 +232,7 @@ import {
 } from 'vue'
 import EnWhiteBoardNodeProtyle from './EnWhiteBoardNodeProtyle.vue'
 import EnWhiteBoardSettings from './EnWhiteBoardSettings.vue'
+import EnWhiteBoardToolBar from './EnWhiteBoardToolBar.vue'
 import '@vue-flow/minimap/dist/style.css'
 import '@vue-flow/controls/dist/style.css'
 
@@ -639,14 +615,6 @@ const onEdgeDoubleClick = (event) => {
   }
 }
 
-const fitView = () => {
-  rawFitView({ duration: 800 })
-}
-
-const centerView = () => {
-  setCenter(0, 0, { duration: 800 })
-}
-
 const toggleBackground = () => {
   if (!embedWhiteBoardConfigData.value.boardOptions.useCustomBackground) {
     embedWhiteBoardConfigData.value.boardOptions.useCustomBackground = true
@@ -657,6 +625,14 @@ const toggleBackground = () => {
   const currentIndex = variants.indexOf(embedWhiteBoardConfigData.value.boardOptions.backgroundVariant || 'none')
   const nextIndex = (currentIndex + 1) % variants.length
   embedWhiteBoardConfigData.value.boardOptions.backgroundVariant = variants[nextIndex]
+}
+
+const onFitView = () => {
+  rawFitView({ duration: 800 })
+}
+
+const onCenterView = () => {
+  setCenter(0, 0, { duration: 800 })
 }
 </script>
 
@@ -726,15 +702,7 @@ const toggleBackground = () => {
 
   .EnWhiteBoardContentContainer {
     flex: 1;
-
     position: relative;
-
-    .FullScreenButtonGroup {
-      opacity: 0;
-    }
-    &:hover .FullScreenButtonGroup {
-      opacity: 1;
-    }
   }
 
   .EnWhiteBoardControlArea {
@@ -743,23 +711,30 @@ const toggleBackground = () => {
     --en-white-board-control-vertical-height: 30px;
     --en-white-board-control-horizontal-width: 30px;
     box-sizing: border-box;
-
     display: flex;
-
     padding: var(--b3-border-radius);
     pointer-events: none;
   }
 
-  .EnWhiteBoardControlArea__Top {
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: var(--en-white-board-control-vertical-height);
+  .EnWhiteBoardControlArea__Left {
+    left: var(--en-gap);
+    top: 50%;
+    transform: translateY(-50%);
+    width: auto;
+    height: auto;
+    flex-direction: column;
+    gap: var(--en-gap);
 
-    justify-content: flex-end;
-    align-items: center;
+    .MainToolBar {
+      opacity: 0.85;
+      transition: opacity 0.15s ease;
 
+      &:hover {
+        opacity: 1;
+      }
+    }
   }
+
   .EnWhiteBoardControlArea__Bottom {
     bottom: 0;
     left: 0;
@@ -767,14 +742,6 @@ const toggleBackground = () => {
     height: var(--en-white-board-control-vertical-height);
 
     justify-content: space-between;
-  }
-  .EnWhiteBoardControlArea__Left {
-    left: 0;
-    top: var(--en-white-board-control-vertical-height);
-    width: var(--en-white-board-control-horizontal-width);
-    height: calc(100% - var(--en-white-board-control-vertical-height) * 2);
-
-    flex-direction: column;
   }
   .EnWhiteBoardControlArea__Right {
     right: 0;

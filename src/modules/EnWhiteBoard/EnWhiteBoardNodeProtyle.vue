@@ -5,24 +5,12 @@
     :node-id="flowNode.id"
     class="EnWhiteBoardNodeToolbar"
   >
-    <div class="ToolbarContent">
-      <a-button-group>
-        <a-tooltip content="删除节点">
-          <a-button @click="onRemoveNode">
-            <template #icon>
-              <icon-delete />
-            </template>
-          </a-button>
-        </a-tooltip>
-        <a-tooltip content="复制节点">
-          <a-button @click="onDuplicateNode">
-            <template #icon>
-              <icon-copy />
-            </template>
-          </a-button>
-        </a-tooltip>
-      </a-button-group>
-    </div>
+    <EnWhiteBoardToolBar
+      :is-node-toolbar="true"
+      :node-id="flowNode.id"
+      @remove-node="onRemoveNode"
+      @duplicate-node="onDuplicateNode"
+    />
   </NodeToolbar>
   <div
     ref="containerRef"
@@ -163,6 +151,7 @@ import {
   onMounted,
   ref,
 } from 'vue'
+import EnWhiteBoardToolBar from './EnWhiteBoardToolBar.vue'
 
 const props = defineProps<{
   enWhiteBoardProtyleUtilAreaRef: HTMLElement
@@ -423,7 +412,6 @@ const isSelected = computed(() => {
 </script>
 
 <style lang="scss" scoped>
-
 .EnWhiteBoardNodeProtyleContainer {
   display: flex;
   flex-direction: column;
@@ -713,24 +701,6 @@ const isSelected = computed(() => {
     align-items: center;
     padding: 8px;
     border-radius: 8px;
-  }
-
-  .ToolbarContent {
-    background: var(--b3-theme-surface);
-    border-radius: var(--b3-border-radius);
-    padding: 4px;
-    box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
-
-    .arco-btn {
-      color: var(--b3-theme-on-surface);
-      border: none;
-      background: transparent;
-      padding: 4px;
-
-      &:hover {
-        background: var(--b3-theme-surface-light);
-      }
-    }
   }
 }
 </style>

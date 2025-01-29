@@ -7,7 +7,7 @@
   />
   <EdgeLabelRenderer>
     <div
-      v-if="isSelected"
+      v-if="isSelected && edgeId"
       class="nodrag nopan EnWhiteBoardEdgeToolbar"
       :style="{
         pointerEvents: 'all',
@@ -16,17 +16,11 @@
         transform: `translate(-50%, -100%) translate(${edgePathParams[1]}px,${edgePathParams[2]}px) translateY(-24px) scale(${1 / (viewport?.zoom || 1)})`,
       }"
     >
-      <div class="ToolbarContent">
-        <a-button-group>
-          <a-tooltip content="删除连线">
-            <a-button @click="onRemoveEdge">
-              <template #icon>
-                <icon-delete />
-              </template>
-            </a-button>
-          </a-tooltip>
-        </a-button-group>
-      </div>
+      <EnWhiteBoardToolBar
+        :is-edge-toolbar="true"
+        :edge-id="edgeId"
+        @remove-edge="onRemoveEdge"
+      />
     </div>
   </EdgeLabelRenderer>
   <EdgeLabelRenderer>
@@ -78,6 +72,7 @@ import {
   ref,
   watch,
 } from 'vue'
+import EnWhiteBoardToolBar from './EnWhiteBoardToolBar.vue'
 
 interface EdgeData {
   label?: string
@@ -151,6 +146,13 @@ const isSelected = computed(() => {
   if (!('id' in props)) return false
   const selectedEdges = getSelectedEdges.value
   return selectedEdges.some((edge) => edge.id === props.id)
+})
+
+const edgeId = computed(() => {
+  if ('id' in props) {
+    return props.id
+  }
+  return null
 })
 
 const updateInputWidth = () => {
@@ -274,24 +276,6 @@ const onEdgeClick = () => {
   padding: 4px;
   border-radius: var(--b3-border-radius);
   pointer-events: all;
-
-  .ToolbarContent {
-    background: var(--b3-theme-surface);
-    border-radius: var(--b3-border-radius);
-    padding: 4px;
-    box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
-
-    .arco-btn {
-      color: var(--b3-theme-on-surface);
-      border: none;
-      background: transparent;
-      padding: 4px;
-
-      &:hover {
-        background: var(--b3-theme-surface-light);
-      }
-    }
-  }
 }
 
 .EnWhiteBoardEdgeLabel {
