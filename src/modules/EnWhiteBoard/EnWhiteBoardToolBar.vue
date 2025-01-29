@@ -127,17 +127,17 @@
                   </template>
                 </a-button>
                 <template #content>
-                  <a-doption value="default">
-                    默认
-                  </a-doption>
-                  <a-doption value="straight">
-                    直线
+                  <a-doption value="smoothstep">
+                    平滑阶梯
                   </a-doption>
                   <a-doption value="step">
                     阶梯
                   </a-doption>
-                  <a-doption value="smoothstep">
-                    平滑阶梯
+                  <a-doption value="straight">
+                    直线
+                  </a-doption>
+                  <a-doption value="bezier">
+                    贝塞尔曲线
                   </a-doption>
                 </template>
               </a-dropdown>
@@ -332,6 +332,9 @@ const saveLabelEdit = () => {
       return edge
     })
     setEdges(newEdges)
+    if (props.whiteBoardConfigData) {
+      props.whiteBoardConfigData.boardOptions.edges = newEdges
+    }
   }
   isEditingLabel.value = false
 }
@@ -347,12 +350,19 @@ const onEdgeTypeSelect = (type: string) => {
     if (edge.id === props.edgeId) {
       return {
         ...edge,
-        type: `EnWhiteBoardEdge${type.charAt(0).toUpperCase() + type.slice(1)}`,
+        type,
+        data: {
+          ...edge.data,
+          edgeType: type,
+        },
       }
     }
     return edge
   })
   setEdges(newEdges)
+  if (props.whiteBoardConfigData) {
+    props.whiteBoardConfigData.boardOptions.edges = newEdges
+  }
 }
 
 const onEdgeWidthSelect = (width: string) => {
@@ -361,15 +371,18 @@ const onEdgeWidthSelect = (width: string) => {
     if (edge.id === props.edgeId) {
       return {
         ...edge,
-        style: {
-          ...edge.style,
-          strokeWidth: Number.parseInt(width),
+        data: {
+          ...edge.data,
+          width: Number.parseInt(width),
         },
       }
     }
     return edge
   })
   setEdges(newEdges)
+  if (props.whiteBoardConfigData) {
+    props.whiteBoardConfigData.boardOptions.edges = newEdges
+  }
 }
 
 const onEdgeStyleSelect = (style: string) => {
@@ -378,15 +391,18 @@ const onEdgeStyleSelect = (style: string) => {
     if (edge.id === props.edgeId) {
       return {
         ...edge,
-        style: {
-          ...edge.style,
-          strokeDasharray: style === 'dashed' ? '5,5' : style === 'dotted' ? '1,5' : undefined,
+        data: {
+          ...edge.data,
+          style,
         },
       }
     }
     return edge
   })
   setEdges(newEdges)
+  if (props.whiteBoardConfigData) {
+    props.whiteBoardConfigData.boardOptions.edges = newEdges
+  }
 }
 
 const onEdgeAnimationSelect = (animation: string) => {
@@ -395,16 +411,18 @@ const onEdgeAnimationSelect = (animation: string) => {
     if (edge.id === props.edgeId) {
       return {
         ...edge,
-        animated: animation !== 'none',
         data: {
           ...edge.data,
-          animationType: animation,
+          animation,
         },
       }
     }
     return edge
   })
   setEdges(newEdges)
+  if (props.whiteBoardConfigData) {
+    props.whiteBoardConfigData.boardOptions.edges = newEdges
+  }
 }
 
 const onEdgeColorChange = (color: string) => {
@@ -413,15 +431,18 @@ const onEdgeColorChange = (color: string) => {
     if (edge.id === props.edgeId) {
       return {
         ...edge,
-        style: {
-          ...edge.style,
-          stroke: color,
+        data: {
+          ...edge.data,
+          color,
         },
       }
     }
     return edge
   })
   setEdges(newEdges)
+  if (props.whiteBoardConfigData) {
+    props.whiteBoardConfigData.boardOptions.edges = newEdges
+  }
 }
 
 watch(currentEdge, (edge) => {

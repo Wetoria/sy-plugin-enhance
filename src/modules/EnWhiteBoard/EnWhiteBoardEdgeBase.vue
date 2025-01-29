@@ -1,10 +1,23 @@
 <template>
   <BaseEdge
-    class="EnWhiteBoardEdgeBase"
-    :path="edgePathParams[0]"
-    :marker-end="markerEnd"
+    :path="path"
+    :label="label"
+    :style="edgeStyle"
+    :animated="isAnimated"
     @click="onEdgeClick"
-  />
+  >
+    <template
+      v-if="showToolbar"
+      #toolbar
+    >
+      <EnWhiteBoardToolBar
+        :is-edge-toolbar="true"
+        :edge-id="edgeId"
+        :whiteBoardConfigData="whiteBoardConfigData"
+        @remove-edge="onRemoveEdge"
+      />
+    </template>
+  </BaseEdge>
   <EdgeLabelRenderer>
     <div
       v-if="isSelected && edgeId"
@@ -77,6 +90,14 @@ import EnWhiteBoardToolBar from './EnWhiteBoardToolBar.vue'
 
 interface EdgeData {
   label?: string
+  edgeType?: string
+  width?: number
+  style?: string
+  animation?: string
+  color?: string
+  showToolbar?: boolean
+  whiteBoardConfigData?: any
+  path?: string
 }
 
 // 基础 props 类型
@@ -225,6 +246,42 @@ const onRemoveEdge = () => {
 const onEdgeClick = () => {
   // 这里不需要实现，因为 VueFlow 会自动处理边的选中状态
 }
+
+const getData = () => {
+  if ('data' in props) {
+    return props.data || {}
+  }
+  return {}
+}
+
+const edgeStyle = computed(() => {
+  const data = getData()
+  return {
+    strokeWidth: data.width || 1,
+    stroke: data.color || 'var(--b3-theme-on-surface)',
+    strokeDasharray: data.style === 'dashed' ? '5,5' : data.style === 'dotted' ? '1,5' : undefined,
+  }
+})
+
+const isAnimated = computed(() => {
+  const data = getData()
+  return data.animation !== 'none'
+})
+
+const showToolbar = computed(() => {
+  const data = getData()
+  return data.showToolbar === true
+})
+
+const whiteBoardConfigData = computed(() => {
+  const data = getData()
+  return data.whiteBoardConfigData || {}
+})
+
+const path = computed(() => {
+  const data = getData()
+  return data.path || edgePathParams.value[0]
+})
 </script>
 
 <style lang="scss" scoped>
@@ -245,7 +302,7 @@ const onEdgeClick = () => {
   user-select: none;
   border: 1px solid var(--b3-border-color);
   cursor: pointer;
-  z-index: 0;
+  z-index: 5;
 
   &:hover {
     background: var(--b3-theme-surface-light);
@@ -288,6 +345,7 @@ const onEdgeClick = () => {
   padding: 4px;
   border-radius: var(--b3-border-radius);
   pointer-events: all;
+  z-index: 10;
 }
 
 .EnWhiteBoardEdgeLabel {

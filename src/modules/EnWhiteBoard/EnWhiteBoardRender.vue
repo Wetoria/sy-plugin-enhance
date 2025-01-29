@@ -553,6 +553,15 @@ const onConnect = (event) => {
       width: 20,
       height: 20,
     },
+    // 所有样式相关的属性都存储在 data 中
+    data: {
+      label: '',
+      edgeType: 'smoothstep', // 连线类型
+      width: 1, // 线条粗细
+      style: 'solid', // 线条样式
+      animation: 'none', // 动画类型
+      color: 'var(--b3-theme-on-surface)', // 线条颜色
+    },
   }
   // 使用 setEdges 更新边的状态
   const newEdges = [...edges.value, newEdge]
