@@ -13,7 +13,7 @@
         pointerEvents: 'all',
         position: 'absolute',
         transformOrigin: 'center bottom',
-        transform: `translate(-50%, -100%) translate(${edgePathParams[1]}px,${edgePathParams[2]}px) translateY(-24px) scale(${1 / (viewport?.zoom || 1)})`,
+        transform: `translate(-50%, -100%) translate(${edgePathParams[1]}px,${edgePathParams[2]}px) translateY(${toolbarOffsetY}px) scale(${1 / (viewport?.zoom || 1)})`,
       }"
     >
       <EnWhiteBoardToolBar
@@ -155,6 +155,14 @@ const edgeId = computed(() => {
   return null
 })
 
+const toolbarOffsetY = computed(() => {
+  // 如果有标签，需要额外向上偏移标签高度的一半
+  if (label.value) {
+    return -24 // -8px(基础偏移) - 16px(标签高度的一半)
+  }
+  return -8 // 基础偏移
+})
+
 const updateInputWidth = () => {
   if (measureRef.value) {
     inputWidth.value = measureRef.value.offsetWidth
@@ -204,13 +212,10 @@ const cancelEdit = () => {
 }
 
 const onRemoveEdge = () => {
-  if (!('id' in props)) return
-  const newEdges = edges.value.filter((edge) => edge.id !== props.id)
-  setEdges(newEdges)
+  // 移除此处的删除逻辑，完全交由工具栏组件处理
 }
 
 const onEdgeClick = () => {
-  if (!('id' in props)) return
   // 这里不需要实现，因为 VueFlow 会自动处理边的选中状态
 }
 </script>

@@ -4,12 +4,16 @@
     :is-visible="isSelected"
     :node-id="flowNode.id"
     class="EnWhiteBoardNodeToolbar"
+    :style="{
+      transform: 'translateY(-8px)',
+    }"
   >
     <EnWhiteBoardToolBar
       :is-node-toolbar="true"
       :node-id="flowNode.id"
-      @remove-node="onRemoveNode"
-      @duplicate-node="onDuplicateNode"
+      :style="{ transform: 'translateY(-8px)' }"
+      @remove-node="handleRemoveNode"
+      @duplicate-node="handleDuplicateNode"
     />
   </NodeToolbar>
   <div
@@ -375,11 +379,11 @@ const onResize = (event: OnResize) => {
   console.log('onResize', event)
 }
 
-const onRemoveNode = () => {
+const handleRemoveNode = () => {
   removeNodes([flowNode])
 }
 
-const onDuplicateNode = () => {
+const handleDuplicateNode = () => {
   const nodes = getNodes.value
   const sourceNode = nodes.find((node) => node.id === flowNode.id)
   if (!sourceNode) return
@@ -695,7 +699,6 @@ const isSelected = computed(() => {
 
 .EnWhiteBoardNodeToolbar {
   :deep(.vue-flow__node-toolbar) {
-    transform: translateY(-16px);
     display: flex;
     gap: 0.5rem;
     align-items: center;

@@ -536,7 +536,6 @@ onEdgesChange((changes) => {
 
 
 const onConnect = (event) => {
-  // TODO 需要去重一下
   const newEdge: Edge = {
     id: generateWhiteBoardEdgeId(),
     type: EN_CONSTANTS.EN_WHITE_BOARD_EDGE_TYPE_BASE,
@@ -554,8 +553,10 @@ const onConnect = (event) => {
       height: 20,
     },
   }
-  console.log('newEdge', newEdge)
-  edges.value.push(newEdge)
+  // 使用 setEdges 而不是直接修改 edges.value
+  setEdges([...edges.value, newEdge])
+  // 同步更新配置数据
+  embedWhiteBoardConfigData.value.boardOptions.edges = [...edges.value]
 }
 
 onEdgeUpdate(({
