@@ -553,10 +553,11 @@ const onConnect = (event) => {
       height: 20,
     },
   }
-  // 使用 setEdges 而不是直接修改 edges.value
-  setEdges([...edges.value, newEdge])
+  // 使用 setEdges 更新边的状态
+  const newEdges = [...edges.value, newEdge]
+  setEdges(newEdges)
   // 同步更新配置数据
-  embedWhiteBoardConfigData.value.boardOptions.edges = [...edges.value]
+  embedWhiteBoardConfigData.value.boardOptions.edges = newEdges
 }
 
 onEdgeUpdate(({
