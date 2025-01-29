@@ -250,6 +250,7 @@ const props = defineProps<{
   isEdgeToolbar?: boolean
   nodeId?: string
   edgeId?: string
+  whiteBoardConfigData?: any
 }>()
 
 const emit = defineEmits<{
@@ -266,6 +267,7 @@ const {
   zoomOut,
   edges,
   setEdges,
+  removeEdges,
 } = useVueFlow()
 
 const isEditingLabel = ref(false)
@@ -312,7 +314,6 @@ const onRemoveEdge = () => {
   if (props.edgeId) {
     const newEdges = edges.value.filter((edge) => edge.id !== props.edgeId)
     setEdges(newEdges)
-    emit('removeEdge', props.edgeId)
   }
 }
 

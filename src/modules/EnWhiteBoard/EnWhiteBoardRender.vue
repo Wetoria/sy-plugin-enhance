@@ -89,6 +89,7 @@
         <template #edge-EnWhiteBoardEdgeBase="edge">
           <EnWhiteBoardEdgeBase
             v-bind="edge"
+            :whiteBoardConfigData="embedWhiteBoardConfigData"
           />
         </template>
         <template #connection-line="connectionLineProps">

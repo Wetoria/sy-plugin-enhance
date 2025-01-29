@@ -19,6 +19,7 @@
       <EnWhiteBoardToolBar
         :is-edge-toolbar="true"
         :edge-id="edgeId"
+        :whiteBoardConfigData="props.whiteBoardConfigData"
         @remove-edge="onRemoveEdge"
       />
     </div>
@@ -78,7 +79,13 @@ interface EdgeData {
   label?: string
 }
 
-type Props = EdgeProps<EdgeData> | ConnectionLineProps
+// 基础 props 类型
+interface BaseProps {
+  whiteBoardConfigData?: any
+}
+
+// 合并类型
+type Props = (EdgeProps<EdgeData> | ConnectionLineProps) & BaseProps
 
 const props = defineProps<Props>()
 
