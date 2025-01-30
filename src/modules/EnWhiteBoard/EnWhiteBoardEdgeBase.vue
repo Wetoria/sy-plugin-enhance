@@ -76,7 +76,9 @@ import {
   ConnectionLineProps,
   EdgeLabelRenderer,
   EdgeProps,
+  getBezierPath,
   getSmoothStepPath,
+  getStraightPath,
   Position,
   useVueFlow,
 } from '@vue-flow/core'
@@ -139,13 +141,34 @@ const edgePathParams = computed(() => {
     targetY = props.targetNode.position.y + Number(props.targetNode.height)
   }
 
-  const path = getSmoothStepPath({
+  const pathParams = {
     ...props,
     sourceX,
     sourceY,
     targetX,
     targetY,
-  })
+  }
+
+  let path
+  const edgeType = getData()?.edgeType || 'smoothstep'
+
+  switch (edgeType) {
+    case 'bezier':
+      path = getBezierPath(pathParams)
+      break
+    case 'step':
+      path = getSmoothStepPath({
+        ...pathParams,
+        borderRadius: 0, // 使用0圆角实现step效果
+      })
+      break
+    case 'straight':
+      path = getStraightPath(pathParams)
+      break
+    case 'smoothstep':
+    default:
+      path = getSmoothStepPath(pathParams)
+  }
 
   return path
 })

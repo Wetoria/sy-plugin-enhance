@@ -350,7 +350,6 @@ const onEdgeTypeSelect = (type: string) => {
     if (edge.id === props.edgeId) {
       return {
         ...edge,
-        type,
         data: {
           ...edge.data,
           edgeType: type,
