@@ -188,6 +188,64 @@
                 </template>
               </a-dropdown>
             </a-tooltip>
+            <a-tooltip content="起点箭头">
+              <a-dropdown
+                trigger="click"
+                @select="onEdgeMarkerStartSelect"
+              >
+                <a-button>
+                  <template #icon>
+                    <icon-double-left />
+                  </template>
+                </a-button>
+                <template #content>
+                  <a-doption value="">
+                    无
+                  </a-doption>
+                  <a-doption value="circle-solid">
+                    实心圆点
+                  </a-doption>
+                  <a-doption value="line">
+                    横线
+                  </a-doption>
+                  <a-doption value="circle-hollow">
+                    空心圆点
+                  </a-doption>
+                  <a-doption value="arrow-start">
+                    箭头
+                  </a-doption>
+                </template>
+              </a-dropdown>
+            </a-tooltip>
+            <a-tooltip content="终点箭头">
+              <a-dropdown
+                trigger="click"
+                @select="onEdgeMarkerEndSelect"
+              >
+                <a-button>
+                  <template #icon>
+                    <icon-double-right />
+                  </template>
+                </a-button>
+                <template #content>
+                  <a-doption value="">
+                    无
+                  </a-doption>
+                  <a-doption value="circle-solid">
+                    实心圆点
+                  </a-doption>
+                  <a-doption value="line">
+                    横线
+                  </a-doption>
+                  <a-doption value="circle-hollow">
+                    空心圆点
+                  </a-doption>
+                  <a-doption value="arrow">
+                    箭头
+                  </a-doption>
+                </template>
+              </a-dropdown>
+            </a-tooltip>
             <a-tooltip content="边动画">
               <a-dropdown
                 trigger="click"
@@ -433,6 +491,46 @@ const onEdgeColorChange = (color: string) => {
         data: {
           ...edge.data,
           color,
+        },
+      }
+    }
+    return edge
+  })
+  setEdges(newEdges)
+  if (props.whiteBoardConfigData) {
+    props.whiteBoardConfigData.boardOptions.edges = newEdges
+  }
+}
+
+const onEdgeMarkerStartSelect = (marker: string) => {
+  if (!props.edgeId) return
+  const newEdges = edges.value.map((edge): Edge => {
+    if (edge.id === props.edgeId) {
+      return {
+        ...edge,
+        data: {
+          ...edge.data,
+          markerStart: marker,
+        },
+      }
+    }
+    return edge
+  })
+  setEdges(newEdges)
+  if (props.whiteBoardConfigData) {
+    props.whiteBoardConfigData.boardOptions.edges = newEdges
+  }
+}
+
+const onEdgeMarkerEndSelect = (marker: string) => {
+  if (!props.edgeId) return
+  const newEdges = edges.value.map((edge): Edge => {
+    if (edge.id === props.edgeId) {
+      return {
+        ...edge,
+        data: {
+          ...edge.data,
+          markerEnd: marker,
         },
       }
     }

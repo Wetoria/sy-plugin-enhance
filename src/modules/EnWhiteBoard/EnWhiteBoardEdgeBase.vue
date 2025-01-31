@@ -100,6 +100,8 @@ interface EdgeData {
   showToolbar?: boolean
   whiteBoardConfigData?: any
   path?: string
+  markerEnd?: string
+  markerStart?: string
 }
 
 // 基础 props 类型
@@ -283,7 +285,8 @@ const edgeStyle = computed(() => {
     strokeWidth: data.width || 1,
     stroke: data.color || 'var(--b3-theme-on-surface)',
     strokeDasharray: data.style === 'dashed' ? '5,5' : data.style === 'dotted' ? '1,5' : undefined,
-    markerEnd: 'url(#arrow)',
+    markerEnd: `url(#${data.markerEnd || 'arrow'})`,
+    markerStart: data.markerStart ? `url(#${data.markerStart})` : undefined,
   }
 })
 

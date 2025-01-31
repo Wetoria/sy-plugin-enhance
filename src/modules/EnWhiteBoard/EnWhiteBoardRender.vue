@@ -113,6 +113,76 @@
                 fill="var(--b3-theme-on-surface)"
               />
             </marker>
+            <!-- 实心圆点 -->
+            <marker
+              id="circle-solid"
+              viewBox="0 0 10 10"
+              refX="5"
+              refY="5"
+              markerWidth="6"
+              markerHeight="6"
+              orient="auto"
+            >
+              <circle
+                cx="5"
+                cy="5"
+                r="4"
+                fill="var(--b3-theme-on-surface)"
+              />
+            </marker>
+            <!-- 横线 -->
+            <marker
+              id="line"
+              viewBox="0 0 10 10"
+              refX="5"
+              refY="5"
+              markerWidth="6"
+              markerHeight="6"
+              orient="auto"
+            >
+              <line
+                x1="0"
+                y1="5"
+                x2="10"
+                y2="5"
+                stroke="var(--b3-theme-on-surface)"
+                stroke-width="2"
+              />
+            </marker>
+            <!-- 空心圆点 -->
+            <marker
+              id="circle-hollow"
+              viewBox="0 0 10 10"
+              refX="5"
+              refY="5"
+              markerWidth="6"
+              markerHeight="6"
+              orient="auto"
+            >
+              <circle
+                cx="5"
+                cy="5"
+                r="4"
+                fill="none"
+                stroke="var(--b3-theme-on-surface)"
+                stroke-width="1"
+              />
+            </marker>
+            <!-- 起点箭头 -->
+            <marker
+              id="arrow-start"
+              viewBox="0 0 10 10"
+              refX="2"
+              refY="5"
+              markerWidth="6"
+              markerHeight="6"
+              orient="auto"
+            >
+              <path
+                d="M 10 0 L 0 5 L 10 10 z"
+                fill="var(--b3-theme-on-surface)"
+              />
+            </marker>
           </defs>
         </svg>
         <template v-if="backgroundVariant !== 'none'">
@@ -554,6 +624,8 @@ const onConnect = (event) => {
       style: 'solid', // 线条样式
       animation: 'none', // 动画类型
       color: 'var(--b3-theme-on-surface)', // 线条颜色
+      markerEnd: 'arrow', // 默认终点箭头
+      markerStart: '', // 默认无起点箭头
     },
   }
   // 使用 setEdges 更新边的状态
