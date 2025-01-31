@@ -102,7 +102,7 @@
             <marker
               id="arrow"
               viewBox="0 0 10 10"
-              refX="8"
+              refX="10"
               refY="5"
               markerWidth="6"
               markerHeight="6"
@@ -141,10 +141,10 @@
               orient="auto"
             >
               <line
-                x1="0"
-                y1="5"
-                x2="10"
-                y2="5"
+                x1="5"
+                y1="0"
+                x2="5"
+                y2="10"
                 stroke="var(--b3-theme-on-surface)"
                 stroke-width="2"
               />
@@ -163,7 +163,7 @@
                 cx="5"
                 cy="5"
                 r="4"
-                fill="none"
+                fill="var(--b3-theme-background)"
                 stroke="var(--b3-theme-on-surface)"
                 stroke-width="1"
               />
@@ -172,7 +172,7 @@
             <marker
               id="arrow-start"
               viewBox="0 0 10 10"
-              refX="2"
+              refX="0"
               refY="5"
               markerWidth="6"
               markerHeight="6"
