@@ -212,7 +212,6 @@ import {
   Edge,
   EdgeAddChange,
   EdgeChange,
-  MarkerType,
   NodeAddChange,
   NodeChange,
   NodeMouseEvent,
@@ -548,12 +547,6 @@ const onConnect = (event) => {
     deletable: true,
     focusable: true,
     selectable: true,
-    markerEnd: {
-      type: MarkerType.ArrowClosed,
-      width: 20,
-      height: 20,
-    },
-    // 所有样式相关的属性都存储在 data 中
     data: {
       label: '',
       edgeType: 'smoothstep', // 连线类型
