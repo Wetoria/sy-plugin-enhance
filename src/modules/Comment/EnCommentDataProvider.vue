@@ -8,6 +8,7 @@ import {
   EN_COMMENT_KEYS,
   provideCommentIdList,
 } from '@/modules/Comment/Comment'
+import { debounce } from '@/utils'
 import { useSiyuanEventTransactions } from '@/utils/EventBusHooks'
 import {
   onBeforeUnmount,
@@ -35,15 +36,14 @@ const getAllCommentIds = async () => {
   commentIdList.value = res.map((i) => i.value)
 }
 
+const debouncedGetAllCommentIds = debounce(getAllCommentIds, 1000)
+
 onMounted(() => {
   getAllCommentIds()
 })
 
 const offTransactions = useSiyuanEventTransactions(() => {
-  // 防止数据库还没更新完
-  setTimeout(() => {
-    getAllCommentIds()
-  }, 1000)
+  debouncedGetAllCommentIds()
 })
 onBeforeUnmount(() => {
   offTransactions()
