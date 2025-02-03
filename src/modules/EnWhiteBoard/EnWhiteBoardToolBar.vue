@@ -263,19 +263,129 @@
                 </a-button>
                 <template #content>
                   <a-doption value="">
-                    无
+                    <div class="EdgeTypeOption">
+                      <svg
+                        viewBox="0 0 40 20"
+                        width="40"
+                        height="20"
+                      >
+                        <line
+                          x1="5"
+                          y1="10"
+                          x2="35"
+                          y2="10"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        />
+                      </svg>
+                      <span>无</span>
+                    </div>
                   </a-doption>
                   <a-doption value="circle-solid">
-                    实心圆点
+                    <div class="EdgeTypeOption">
+                      <svg
+                        viewBox="0 0 40 20"
+                        width="40"
+                        height="20"
+                      >
+                        <circle
+                          cx="10"
+                          cy="10"
+                          r="3"
+                          fill="currentColor"
+                        />
+                        <line
+                          x1="10"
+                          y1="10"
+                          x2="35"
+                          y2="10"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        />
+                      </svg>
+                      <span>实心圆点</span>
+                    </div>
                   </a-doption>
                   <a-doption value="line">
-                    横线
+                    <div class="EdgeTypeOption">
+                      <svg
+                        viewBox="0 0 40 20"
+                        width="40"
+                        height="20"
+                      >
+                        <line
+                          x1="7"
+                          y1="5"
+                          x2="7"
+                          y2="15"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        />
+                        <line
+                          x1="7"
+                          y1="10"
+                          x2="35"
+                          y2="10"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        />
+                      </svg>
+                      <span>横线</span>
+                    </div>
                   </a-doption>
                   <a-doption value="circle-hollow">
-                    空心圆点
+                    <div class="EdgeTypeOption">
+                      <svg
+                        viewBox="0 0 40 20"
+                        width="40"
+                        height="20"
+                      >
+                        <line
+                          x1="10"
+                          y1="10"
+                          x2="35"
+                          y2="10"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        />
+                        <circle
+                          cx="10"
+                          cy="10"
+                          r="3"
+                          fill="currentColor"
+                        />
+                        <circle
+                          cx="10"
+                          cy="10"
+                          r="2"
+                          fill="var(--b3-theme-surface)"
+                        />
+                      </svg>
+                      <span>空心圆点</span>
+                    </div>
                   </a-doption>
                   <a-doption value="arrow-start">
-                    箭头
+                    <div class="EdgeTypeOption">
+                      <svg
+                        viewBox="0 0 40 20"
+                        width="40"
+                        height="20"
+                      >
+                        <path
+                          d="M7,10 L13,14 L13,6 Z"
+                          fill="currentColor"
+                        />
+                        <line
+                          x1="13"
+                          y1="10"
+                          x2="35"
+                          y2="10"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        />
+                      </svg>
+                      <span>箭头</span>
+                    </div>
                   </a-doption>
                 </template>
               </a-dropdown>
@@ -292,19 +402,129 @@
                 </a-button>
                 <template #content>
                   <a-doption value="">
-                    无
+                    <div class="EdgeTypeOption">
+                      <svg
+                        viewBox="0 0 40 20"
+                        width="40"
+                        height="20"
+                      >
+                        <line
+                          x1="5"
+                          y1="10"
+                          x2="35"
+                          y2="10"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        />
+                      </svg>
+                      <span>无</span>
+                    </div>
                   </a-doption>
                   <a-doption value="circle-solid">
-                    实心圆点
+                    <div class="EdgeTypeOption">
+                      <svg
+                        viewBox="0 0 40 20"
+                        width="40"
+                        height="20"
+                      >
+                        <line
+                          x1="5"
+                          y1="10"
+                          x2="30"
+                          y2="10"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        />
+                        <circle
+                          cx="30"
+                          cy="10"
+                          r="3"
+                          fill="currentColor"
+                        />
+                      </svg>
+                      <span>实心圆点</span>
+                    </div>
                   </a-doption>
                   <a-doption value="line">
-                    横线
+                    <div class="EdgeTypeOption">
+                      <svg
+                        viewBox="0 0 40 20"
+                        width="40"
+                        height="20"
+                      >
+                        <line
+                          x1="5"
+                          y1="10"
+                          x2="33"
+                          y2="10"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        />
+                        <line
+                          x1="33"
+                          y1="5"
+                          x2="33"
+                          y2="15"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        />
+                      </svg>
+                      <span>横线</span>
+                    </div>
                   </a-doption>
                   <a-doption value="circle-hollow">
-                    空心圆点
+                    <div class="EdgeTypeOption">
+                      <svg
+                        viewBox="0 0 40 20"
+                        width="40"
+                        height="20"
+                      >
+                        <line
+                          x1="5"
+                          y1="10"
+                          x2="30"
+                          y2="10"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        />
+                        <circle
+                          cx="30"
+                          cy="10"
+                          r="3"
+                          fill="currentColor"
+                        />
+                        <circle
+                          cx="30"
+                          cy="10"
+                          r="2"
+                          fill="var(--b3-theme-surface)"
+                        />
+                      </svg>
+                      <span>空心圆点</span>
+                    </div>
                   </a-doption>
                   <a-doption value="arrow">
-                    箭头
+                    <div class="EdgeTypeOption">
+                      <svg
+                        viewBox="0 0 40 20"
+                        width="40"
+                        height="20"
+                      >
+                        <line
+                          x1="5"
+                          y1="10"
+                          x2="27"
+                          y2="10"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        />
+                        <path
+                          d="M27,10 L33,14 L33,6 Z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                      <span>箭头</span>
+                    </div>
                   </a-doption>
                 </template>
               </a-dropdown>
