@@ -125,7 +125,6 @@
 
 <script setup lang="ts">
 import EnProtyle from '@/components/EnProtyle.vue'
-import { getNewDailyNoteBlockId } from '@/modules/DailyNote/DailyNote'
 import {
   generateWhiteBoardNodeId,
   useWhiteBoardModule,
@@ -178,6 +177,7 @@ const {
   addNodes,
   removeNodes,
   getSelectedNodes,
+  setNodes,
 } = useVueFlow()
 
 const nodeData = computed(() => flowNode.data)
@@ -388,7 +388,7 @@ const handleDuplicateNode = () => {
   const sourceNode = nodes.find((node) => node.id === flowNode.id)
   if (!sourceNode) return
 
-  // 创建新节点，位置稍微偏移
+  // 创建新节点，保持相同的 blockId
   const newNode = {
     ...sourceNode,
     id: generateWhiteBoardNodeId(),
@@ -398,15 +398,22 @@ const handleDuplicateNode = () => {
     },
     data: {
       ...sourceNode.data,
-      blockId: '', // 新节点需要新的 blockId
     },
+    // 重置节点的连线相关属性
+    selected: true, // 将新节点设置为选中状态
+    dragging: false,
+    resizing: false,
   }
 
-  // 获取新的 blockId
-  getNewDailyNoteBlockId().then((blockId) => {
-    newNode.data.blockId = blockId
-    addNodes([newNode])
-  })
+  // 取消选中原始节点
+  const updatedNodes = nodes.map((node) => ({
+    ...node,
+    selected: node.id === sourceNode.id ? false : node.selected,
+  }))
+  setNodes(updatedNodes)
+
+  // 添加新节点
+  addNodes([newNode])
 }
 
 const isSelected = computed(() => {

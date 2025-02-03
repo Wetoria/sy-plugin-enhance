@@ -123,24 +123,52 @@ const edgePathParams = computed(() => {
   let targetY = props.targetY
 
   // 根据节点位置计算实际的连接点
-  if (props.sourceNode && props.sourcePosition === Position.Left) {
-    sourceX = props.sourceNode.position.x
-  } else if (props.sourceNode && props.sourcePosition === Position.Right) {
-    sourceX = props.sourceNode.position.x + Number(props.sourceNode.width)
-  } else if (props.sourceNode && props.sourcePosition === Position.Top) {
-    sourceY = props.sourceNode.position.y
-  } else if (props.sourceNode && props.sourcePosition === Position.Bottom) {
-    sourceY = props.sourceNode.position.y + Number(props.sourceNode.height)
+  if (props.sourceNode) {
+    const sourceWidth = Number(props.sourceNode.width) || 0
+    const sourceHeight = Number(props.sourceNode.height) || 0
+
+    switch (props.sourcePosition) {
+      case Position.Left:
+        sourceX = props.sourceNode.position.x
+        sourceY = props.sourceNode.position.y + sourceHeight / 2
+        break
+      case Position.Right:
+        sourceX = props.sourceNode.position.x + sourceWidth
+        sourceY = props.sourceNode.position.y + sourceHeight / 2
+        break
+      case Position.Top:
+        sourceX = props.sourceNode.position.x + sourceWidth / 2
+        sourceY = props.sourceNode.position.y
+        break
+      case Position.Bottom:
+        sourceX = props.sourceNode.position.x + sourceWidth / 2
+        sourceY = props.sourceNode.position.y + sourceHeight
+        break
+    }
   }
 
-  if (props.targetNode && props.targetPosition === Position.Left) {
-    targetX = props.targetNode.position.x
-  } else if (props.targetNode && props.targetPosition === Position.Right) {
-    targetX = props.targetNode.position.x + Number(props.targetNode.width)
-  } else if (props.targetNode && props.targetPosition === Position.Top) {
-    targetY = props.targetNode.position.y
-  } else if (props.targetNode && props.targetPosition === Position.Bottom) {
-    targetY = props.targetNode.position.y + Number(props.targetNode.height)
+  if (props.targetNode) {
+    const targetWidth = Number(props.targetNode.width) || 0
+    const targetHeight = Number(props.targetNode.height) || 0
+
+    switch (props.targetPosition) {
+      case Position.Left:
+        targetX = props.targetNode.position.x
+        targetY = props.targetNode.position.y + targetHeight / 2
+        break
+      case Position.Right:
+        targetX = props.targetNode.position.x + targetWidth
+        targetY = props.targetNode.position.y + targetHeight / 2
+        break
+      case Position.Top:
+        targetX = props.targetNode.position.x + targetWidth / 2
+        targetY = props.targetNode.position.y
+        break
+      case Position.Bottom:
+        targetX = props.targetNode.position.x + targetWidth / 2
+        targetY = props.targetNode.position.y + targetHeight
+        break
+    }
   }
 
   const pathParams = {
@@ -161,7 +189,7 @@ const edgePathParams = computed(() => {
     case 'step':
       path = getSmoothStepPath({
         ...pathParams,
-        borderRadius: 0, // 使用0圆角实现step效果
+        borderRadius: 0,
       })
       break
     case 'straight':
