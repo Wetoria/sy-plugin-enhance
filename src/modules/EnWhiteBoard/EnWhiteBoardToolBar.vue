@@ -217,13 +217,61 @@
                 </a-button>
                 <template #content>
                   <a-doption value="1">
-                    细
+                    <div class="EdgeTypeOption">
+                      <svg
+                        viewBox="0 0 40 20"
+                        width="40"
+                        height="20"
+                      >
+                        <line
+                          x1="5"
+                          y1="10"
+                          x2="35"
+                          y2="10"
+                          stroke="currentColor"
+                          stroke-width="1"
+                        />
+                      </svg>
+                      <span>细</span>
+                    </div>
                   </a-doption>
                   <a-doption value="2">
-                    中
+                    <div class="EdgeTypeOption">
+                      <svg
+                        viewBox="0 0 40 20"
+                        width="40"
+                        height="20"
+                      >
+                        <line
+                          x1="5"
+                          y1="10"
+                          x2="35"
+                          y2="10"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        />
+                      </svg>
+                      <span>中</span>
+                    </div>
                   </a-doption>
                   <a-doption value="3">
-                    粗
+                    <div class="EdgeTypeOption">
+                      <svg
+                        viewBox="0 0 40 20"
+                        width="40"
+                        height="20"
+                      >
+                        <line
+                          x1="5"
+                          y1="10"
+                          x2="35"
+                          y2="10"
+                          stroke="currentColor"
+                          stroke-width="3"
+                        />
+                      </svg>
+                      <span>粗</span>
+                    </div>
                   </a-doption>
                 </template>
               </a-dropdown>
