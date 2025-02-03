@@ -1,4 +1,21 @@
 <template>
+  <NodeToolbar
+    :position="Position.Top"
+    :is-visible="isSelected"
+    :node-id="flowNode.id"
+    class="EnWhiteBoardNodeToolbar"
+    :style="{
+      transform: 'translateY(-8px)',
+    }"
+  >
+    <EnWhiteBoardToolBar
+      :is-node-toolbar="true"
+      :node-id="flowNode.id"
+      :style="{ transform: 'translateY(-8px)' }"
+      @remove-node="handleRemoveNode"
+      @duplicate-node="handleDuplicateNode"
+    />
+  </NodeToolbar>
   <div
     ref="containerRef"
     class="EnWhiteBoardNodeProtyleContainer"
@@ -109,10 +126,10 @@
 <script setup lang="ts">
 import EnProtyle from '@/components/EnProtyle.vue'
 import {
+  generateWhiteBoardNodeId,
   useWhiteBoardModule,
 } from '@/modules/EnWhiteBoard/EnWhiteBoard'
 import { debounce } from '@/utils'
-
 
 import {
   useSiyuanDatabaseIndexCommit,
@@ -123,11 +140,13 @@ import {
   Position,
   useKeyPress,
   useNode,
+  useVueFlow,
 } from '@vue-flow/core'
 import {
   NodeResizer,
   OnResize,
 } from '@vue-flow/node-resizer'
+import { NodeToolbar } from '@vue-flow/node-toolbar'
 import { Protyle } from 'siyuan'
 import {
   computed,
@@ -135,7 +154,7 @@ import {
   onMounted,
   ref,
 } from 'vue'
-
+import EnWhiteBoardToolBar from './EnWhiteBoardToolBar.vue'
 
 const props = defineProps<{
   enWhiteBoardProtyleUtilAreaRef: HTMLElement
@@ -153,11 +172,17 @@ const {
   node: flowNode,
 } = useNode()
 
+const {
+  getNodes,
+  addNodes,
+  removeNodes,
+  getSelectedNodes,
+  setNodes,
+} = useVueFlow()
+
 const nodeData = computed(() => flowNode.data)
 
 const containerRef = ref<HTMLDivElement | null>(null)
-
-
 
 const spaceKeyPressing = useKeyPress('Space')
 const captureWheel = (event: WheelEvent) => {
@@ -259,7 +284,6 @@ const captureClick = (event: MouseEvent) => {
 
 const mainRef = ref<HTMLDivElement | null>(null)
 
-
 let offTransactionEvent = null
 const bindNodeIdToEnNode = () => {
   if (!cardProtyleRef.value) {
@@ -351,14 +375,54 @@ onBeforeUnmount(() => {
   }
 })
 
-
 const onResize = (event: OnResize) => {
   console.log('onResize', event)
 }
+
+const handleRemoveNode = () => {
+  removeNodes([flowNode])
+}
+
+const handleDuplicateNode = () => {
+  const nodes = getNodes.value
+  const sourceNode = nodes.find((node) => node.id === flowNode.id)
+  if (!sourceNode) return
+
+  // 创建新节点，保持相同的 blockId
+  const newNode = {
+    ...sourceNode,
+    id: generateWhiteBoardNodeId(),
+    position: {
+      x: sourceNode.position.x + 50,
+      y: sourceNode.position.y + 50,
+    },
+    data: {
+      ...sourceNode.data,
+    },
+    // 重置节点的连线相关属性
+    selected: true, // 将新节点设置为选中状态
+    dragging: false,
+    resizing: false,
+  }
+
+  // 取消选中原始节点
+  const updatedNodes = nodes.map((node) => ({
+    ...node,
+    selected: node.id === sourceNode.id ? false : node.selected,
+  }))
+  setNodes(updatedNodes)
+
+  // 添加新节点
+  addNodes([newNode])
+}
+
+const isSelected = computed(() => {
+  const selectedNodes = getSelectedNodes.value
+  return selectedNodes.some((node) => node.id === flowNode.id)
+})
 </script>
 
 <style lang="scss" scoped>
-
 .EnWhiteBoardNodeProtyleContainer {
   display: flex;
   flex-direction: column;
@@ -639,6 +703,16 @@ const onResize = (event: OnResize) => {
     right: -16px;
   }
 }
+
+.EnWhiteBoardNodeToolbar {
+  :deep(.vue-flow__node-toolbar) {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 8px;
+    border-radius: 8px;
+  }
+}
 </style>
 
 <style lang="scss">
@@ -664,10 +738,6 @@ const onResize = (event: OnResize) => {
   &.selected {
     .EnWhiteBoardNodeProtyleContainer {
       border-color: var(--b3-theme-primary-light);
-
-      .Handle {
-        opacity: 1;
-      }
     }
   }
 }

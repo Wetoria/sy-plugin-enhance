@@ -28,12 +28,19 @@
 
     <div class="EnWhiteBoardContentContainer">
       <!-- {{ data.whiteBoardId }} - {{ data.nodeId }} -->
-      <div class="EnWhiteBoardControlArea EnWhiteBoardControlArea__Top">
-        <a-button-group
-          class="FullScreenButtonGroup"
+      <div class="EnWhiteBoardControlArea EnWhiteBoardControlArea__Left">
+        <EnWhiteBoardToolBar
+          class="MainToolBar"
+          :show-basic-controls="true"
+          :show-extra-controls="true"
+          @toggle-background="toggleBackground"
+          @fit-view="() => rawFitView({ duration: 800 })"
+          @center-view="() => setCenter(0, 0, { duration: 800 })"
         >
-          <slot name="topButtonGroup" />
-        </a-button-group>
+          <template #after>
+            <slot name="topButtonGroup" />
+          </template>
+        </EnWhiteBoardToolBar>
       </div>
       <div class="EnWhiteBoardControlArea EnWhiteBoardControlArea__Bottom">
         <div>
@@ -45,8 +52,6 @@
         <div>
 
         </div>
-      </div>
-      <div class="EnWhiteBoardControlArea EnWhiteBoardControlArea__Left">
       </div>
       <div class="EnWhiteBoardControlArea EnWhiteBoardControlArea__Right">
       </div>
@@ -73,6 +78,7 @@
         @connect="onConnect"
         @connectStart="onConnectStart"
         @connectEnd="onConnectEnd"
+        @edgeDoubleClick="onEdgeDoubleClick"
       >
         <template #node-EnWhiteBoardNodeProtyle="node">
           <EnWhiteBoardNodeProtyle
@@ -83,6 +89,7 @@
         <template #edge-EnWhiteBoardEdgeBase="edge">
           <EnWhiteBoardEdgeBase
             v-bind="edge"
+            :whiteBoardConfigData="embedWhiteBoardConfigData"
           />
         </template>
         <template #connection-line="connectionLineProps">
@@ -90,6 +97,94 @@
             v-bind="connectionLineProps"
           />
         </template>
+        <svg>
+          <defs>
+            <marker
+              id="arrow"
+              viewBox="0 0 10 10"
+              refX="10"
+              refY="5"
+              markerWidth="6"
+              markerHeight="6"
+              orient="auto-start-reverse"
+            >
+              <path
+                d="M 0 0 L 10 5 L 0 10 z"
+                fill="var(--b3-theme-on-surface)"
+              />
+            </marker>
+            <!-- 实心圆点 -->
+            <marker
+              id="circle-solid"
+              viewBox="0 0 10 10"
+              refX="5"
+              refY="5"
+              markerWidth="6"
+              markerHeight="6"
+              orient="auto"
+            >
+              <circle
+                cx="5"
+                cy="5"
+                r="4"
+                fill="var(--b3-theme-on-surface)"
+              />
+            </marker>
+            <!-- 横线 -->
+            <marker
+              id="line"
+              viewBox="0 0 10 10"
+              refX="5"
+              refY="5"
+              markerWidth="6"
+              markerHeight="6"
+              orient="auto"
+            >
+              <line
+                x1="5"
+                y1="0"
+                x2="5"
+                y2="10"
+                stroke="var(--b3-theme-on-surface)"
+                stroke-width="2"
+              />
+            </marker>
+            <!-- 空心圆点 -->
+            <marker
+              id="circle-hollow"
+              viewBox="0 0 10 10"
+              refX="5"
+              refY="5"
+              markerWidth="6"
+              markerHeight="6"
+              orient="auto"
+            >
+              <circle
+                cx="5"
+                cy="5"
+                r="4"
+                fill="var(--b3-theme-background)"
+                stroke="var(--b3-theme-on-surface)"
+                stroke-width="1"
+              />
+            </marker>
+            <!-- 起点箭头 -->
+            <marker
+              id="arrow-start"
+              viewBox="0 0 10 10"
+              refX="0"
+              refY="5"
+              markerWidth="6"
+              markerHeight="6"
+              orient="auto"
+            >
+              <path
+                d="M 10 0 L 0 5 L 10 10 z"
+                fill="var(--b3-theme-on-surface)"
+              />
+            </marker>
+          </defs>
+        </svg>
         <template v-if="backgroundVariant !== 'none'">
           <!-- 网格背景 -->
           <Background
@@ -187,7 +282,6 @@ import {
   Edge,
   EdgeAddChange,
   EdgeChange,
-  MarkerType,
   NodeAddChange,
   NodeChange,
   NodeMouseEvent,
@@ -195,6 +289,7 @@ import {
   useVueFlow,
   VueFlow,
 } from '@vue-flow/core'
+
 import { MiniMap } from '@vue-flow/minimap'
 import { cloneDeep } from 'lodash-es'
 import {
@@ -207,7 +302,9 @@ import {
 } from 'vue'
 import EnWhiteBoardNodeProtyle from './EnWhiteBoardNodeProtyle.vue'
 import EnWhiteBoardSettings from './EnWhiteBoardSettings.vue'
+import EnWhiteBoardToolBar from './EnWhiteBoardToolBar.vue'
 import '@vue-flow/minimap/dist/style.css'
+import '@vue-flow/controls/dist/style.css'
 
 const props = defineProps<{
   data: EnWhiteBoardBlockDomTarget
@@ -239,10 +336,12 @@ const {
 
   onEdgesChange,
   onEdgeUpdate,
+  setEdges,
 
   viewport,
   onViewportChange,
   setCenter,
+  fitView: rawFitView,
 } = useVueFlow({
   connectOnClick: true,
 })
@@ -324,21 +423,19 @@ onUnmounted(() => {
 })
 
 const onMoveStart = (event) => {
-  if (event.target.classList.contains('nodrag')) {
-    return
+  if (!event?.target?.classList?.contains('nodrag')) {
+    dragging.value = true
   }
-  dragging.value = true
 }
 const onMove = (event) => {
-  if (event.target.classList.contains('nodrag')) {
-
+  if (event?.target?.classList?.contains('nodrag')) {
+    // 暂时为空
   }
 }
 const onMoveEnd = (event) => {
-  if (event.target.classList.contains('nodrag')) {
-    return
+  if (!event?.target?.classList?.contains('nodrag')) {
+    dragging.value = false
   }
-  dragging.value = false
 }
 
 const lastEditProtyleCardElementRef = ref<HTMLElement | null>(null)
@@ -509,7 +606,6 @@ onEdgesChange((changes) => {
 
 
 const onConnect = (event) => {
-  // TODO 需要去重一下
   const newEdge: Edge = {
     id: generateWhiteBoardEdgeId(),
     type: EN_CONSTANTS.EN_WHITE_BOARD_EDGE_TYPE_BASE,
@@ -521,14 +617,22 @@ const onConnect = (event) => {
     deletable: true,
     focusable: true,
     selectable: true,
-    markerEnd: {
-      type: MarkerType.ArrowClosed,
-      width: 20,
-      height: 20,
+    data: {
+      label: '',
+      edgeType: 'smoothstep', // 连线类型
+      width: 1, // 线条粗细
+      style: 'solid', // 线条样式
+      animation: 'none', // 动画类型
+      color: 'var(--b3-theme-on-surface)', // 线条颜色
+      markerEnd: 'arrow', // 默认终点箭头
+      markerStart: '', // 默认无起点箭头
     },
   }
-  console.log('newEdge', newEdge)
-  edges.value.push(newEdge)
+  // 使用 setEdges 更新边的状态
+  const newEdges = [...edges.value, newEdge]
+  setEdges(newEdges)
+  // 同步更新配置数据
+  embedWhiteBoardConfigData.value.boardOptions.edges = newEdges
 }
 
 onEdgeUpdate(({
@@ -566,6 +670,46 @@ const onNodeMinimapClick = (event: NodeMouseEvent) => {
   const y = Number(targetNode.position.y) + (Number(targetNode.height) || 0) / 2
 
   setCenter(x, y, { duration: 800 })
+}
+
+const onEdgeDoubleClick = (event) => {
+  const edge = event.edge
+  if (!edge.data) {
+    edge.data = {}
+  }
+  if (!edge.data.label) {
+    edge.data.label = '新标签'
+    const newEdges = edges.value.map((e) => {
+      if (e.id === edge.id) {
+        return {
+          ...e,
+          data: edge.data,
+        }
+      }
+      return e
+    })
+    setEdges(newEdges)
+  }
+}
+
+const toggleBackground = () => {
+  if (!embedWhiteBoardConfigData.value.boardOptions.useCustomBackground) {
+    embedWhiteBoardConfigData.value.boardOptions.useCustomBackground = true
+  }
+
+  // 在 none、lines、dots 之间循环切换
+  const variants = ['none', 'lines', 'dots'] as const
+  const currentIndex = variants.indexOf(embedWhiteBoardConfigData.value.boardOptions.backgroundVariant || 'none')
+  const nextIndex = (currentIndex + 1) % variants.length
+  embedWhiteBoardConfigData.value.boardOptions.backgroundVariant = variants[nextIndex]
+}
+
+const onFitView = () => {
+  rawFitView({ duration: 800 })
+}
+
+const onCenterView = () => {
+  setCenter(0, 0, { duration: 800 })
 }
 </script>
 
@@ -635,15 +779,7 @@ const onNodeMinimapClick = (event: NodeMouseEvent) => {
 
   .EnWhiteBoardContentContainer {
     flex: 1;
-
     position: relative;
-
-    .FullScreenButtonGroup {
-      opacity: 0;
-    }
-    &:hover .FullScreenButtonGroup {
-      opacity: 1;
-    }
   }
 
   .EnWhiteBoardControlArea {
@@ -652,23 +788,30 @@ const onNodeMinimapClick = (event: NodeMouseEvent) => {
     --en-white-board-control-vertical-height: 30px;
     --en-white-board-control-horizontal-width: 30px;
     box-sizing: border-box;
-
     display: flex;
-
     padding: var(--b3-border-radius);
     pointer-events: none;
   }
 
-  .EnWhiteBoardControlArea__Top {
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: var(--en-white-board-control-vertical-height);
+  .EnWhiteBoardControlArea__Left {
+    left: var(--en-gap);
+    top: 50%;
+    transform: translateY(-50%);
+    width: auto;
+    height: auto;
+    flex-direction: column;
+    gap: var(--en-gap);
 
-    justify-content: flex-end;
-    align-items: center;
+    .MainToolBar {
+      opacity: 0.85;
+      transition: opacity 0.15s ease;
 
+      &:hover {
+        opacity: 1;
+      }
+    }
   }
+
   .EnWhiteBoardControlArea__Bottom {
     bottom: 0;
     left: 0;
@@ -676,14 +819,6 @@ const onNodeMinimapClick = (event: NodeMouseEvent) => {
     height: var(--en-white-board-control-vertical-height);
 
     justify-content: space-between;
-  }
-  .EnWhiteBoardControlArea__Left {
-    left: 0;
-    top: var(--en-white-board-control-vertical-height);
-    width: var(--en-white-board-control-horizontal-width);
-    height: calc(100% - var(--en-white-board-control-vertical-height) * 2);
-
-    flex-direction: column;
   }
   .EnWhiteBoardControlArea__Right {
     right: 0;
@@ -705,6 +840,56 @@ const onNodeMinimapClick = (event: NodeMouseEvent) => {
 
     &:hover {
       background-color: var(--b3-theme-surface);
+    }
+  }
+
+  :deep(.EnWhiteBoardControls) {
+    background: var(--b3-theme-surface);
+    border: 1px solid var(--b3-border-color);
+    border-radius: var(--b3-border-radius);
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+    padding: 4px;
+    margin-left: var(--en-gap);
+    position: absolute;
+    left: var(--en-gap);
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    .vue-flow__controls-button {
+      background: var(--b3-theme-background);
+      border: none;
+      color: var(--b3-theme-on-surface);
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+
+      &:hover {
+        background: var(--b3-theme-surface-light);
+      }
+
+      svg {
+        width: 14px;
+        height: 14px;
+      }
+    }
+  }
+
+  :deep(.EnWhiteBoardToolbar) {
+    margin-bottom: var(--en-gap);
+
+    .arco-btn-group {
+      background: var(--b3-theme-surface);
+      border: 1px solid var(--b3-border-color);
+      border-radius: var(--b3-border-radius);
+      padding: 4px;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
     }
   }
 }
