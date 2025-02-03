@@ -635,7 +635,49 @@
                   </template>
                 </a-button>
                 <template #content>
-                  <a-color-picker @change="onEdgeColorChange" />
+                  <div class="EdgeColorPicker">
+                    <div class="ColorRow">
+                      <div
+                        v-for="color in [
+                          'default',
+                          'var(--b3-font-background1)',
+                          'var(--b3-font-background2)',
+                          'var(--b3-font-background3)',
+                          'var(--b3-font-background4)',
+                          'var(--b3-font-background5)',
+                          'var(--b3-font-background6)',
+                        ]"
+                        :key="color"
+                        class="ColorItem"
+                        :class="{ 'is-default': color === 'default' }"
+                        :style="{
+                          backgroundColor: color === 'default' ? 'var(--b3-theme-surface)' : color,
+                          border: '1px solid var(--b3-border-color)',
+                        }"
+                        @click="onEdgeColorChange(color === 'default' ? 'var(--b3-theme-on-surface)' : color)"
+                      />
+                    </div>
+                    <div class="ColorRow">
+                      <div
+                        v-for="color in [
+                          'var(--b3-font-background7)',
+                          'var(--b3-font-background8)',
+                          'var(--b3-font-background9)',
+                          'var(--b3-font-background10)',
+                          'var(--b3-font-background11)',
+                          'var(--b3-font-background12)',
+                          'var(--b3-font-background13)',
+                        ]"
+                        :key="color"
+                        class="ColorItem"
+                        :style="{
+                          backgroundColor: color,
+                          border: '1px solid var(--b3-border-color)',
+                        }"
+                        @click="onEdgeColorChange(color)"
+                      />
+                    </div>
+                  </div>
                 </template>
               </a-dropdown>
             </a-tooltip>
@@ -1070,6 +1112,35 @@ const onEdgeMarkerEndSelect = (marker: string) => {
 
   span {
     flex: 1;
+  }
+}
+
+.EdgeColorPicker {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  .ColorRow {
+    display: flex;
+    gap: 8px;
+
+    .ColorItem {
+      width: 24px;
+      height: 24px;
+      border-radius: var(--b3-border-radius);
+      cursor: pointer;
+      border: 1px solid var(--b3-border-color);
+      transition: transform 0.15s ease-in-out;
+
+      &:hover {
+        transform: scale(1.1);
+      }
+
+      &.is-default {
+        background: var(--b3-theme-surface);
+      }
+    }
   }
 }
 </style>
