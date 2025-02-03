@@ -240,13 +240,63 @@
                 </a-button>
                 <template #content>
                   <a-doption value="solid">
-                    实线
+                    <div class="EdgeTypeOption">
+                      <svg
+                        viewBox="0 0 40 20"
+                        width="40"
+                        height="20"
+                      >
+                        <line
+                          x1="5"
+                          y1="10"
+                          x2="35"
+                          y2="10"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        />
+                      </svg>
+                      <span>实线</span>
+                    </div>
                   </a-doption>
                   <a-doption value="dashed">
-                    虚线
+                    <div class="EdgeTypeOption">
+                      <svg
+                        viewBox="0 0 40 20"
+                        width="40"
+                        height="20"
+                      >
+                        <line
+                          x1="5"
+                          y1="10"
+                          x2="35"
+                          y2="10"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-dasharray="6,3"
+                        />
+                      </svg>
+                      <span>虚线</span>
+                    </div>
                   </a-doption>
                   <a-doption value="dotted">
-                    点线
+                    <div class="EdgeTypeOption">
+                      <svg
+                        viewBox="0 0 40 20"
+                        width="40"
+                        height="20"
+                      >
+                        <line
+                          x1="5"
+                          y1="10"
+                          x2="35"
+                          y2="10"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-dasharray="2,2"
+                        />
+                      </svg>
+                      <span>点线</span>
+                    </div>
                   </a-doption>
                 </template>
               </a-dropdown>
