@@ -69,11 +69,25 @@
               点击侧边时间轴，可展开查看 LifeLog 记录。也可
             </a-typography-text>
             <a-button
+              v-if="moduleOptions.showLifeLogTimelineAtProtyleLeft"
               type="text"
               @click="openLifeLogTimeline"
             >
               点击查看
             </a-button>
+          </a-space>
+        </div>
+        <div>
+          <a-space>
+            <template v-if="moduleOptions.showLifeLogTimelineAtProtyleLeft">
+              <icon-check-circle style="color: rgb(var(--success-6))" />
+            </template>
+            <template v-else>
+              <icon-close-circle style="color: rgb(var(--danger-6))" />
+            </template>
+            <a-typography-text>
+              打开 LifeLog 记录的快捷键
+            </a-typography-text>
           </a-space>
         </div>
       </template>
