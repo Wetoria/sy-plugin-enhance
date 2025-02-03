@@ -133,16 +133,74 @@
                 </a-button>
                 <template #content>
                   <a-doption value="smoothstep">
-                    平滑阶梯
+                    <div class="EdgeTypeOption">
+                      <svg
+                        viewBox="0 0 100 30"
+                        width="100"
+                        height="30"
+                      >
+                        <path
+                          d="M10,20 L15,20 C18,20 20,20 20,17 L20,13 C20,10 22,10 25,10 L90,10"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        />
+                      </svg>
+                      <span>平滑阶梯</span>
+                    </div>
                   </a-doption>
                   <a-doption value="step">
-                    阶梯
+                    <div class="EdgeTypeOption">
+                      <svg
+                        viewBox="0 0 100 30"
+                        width="100"
+                        height="30"
+                      >
+                        <path
+                          d="M10,20 L20,20 L20,10 L90,10"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        />
+                      </svg>
+                      <span>阶梯</span>
+                    </div>
                   </a-doption>
                   <a-doption value="straight">
-                    直线
+                    <div class="EdgeTypeOption">
+                      <svg
+                        viewBox="0 0 100 30"
+                        width="100"
+                        height="30"
+                      >
+                        <line
+                          x1="10"
+                          y1="15"
+                          x2="90"
+                          y2="15"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        />
+                      </svg>
+                      <span>直线</span>
+                    </div>
                   </a-doption>
                   <a-doption value="bezier">
-                    贝塞尔曲线
+                    <div class="EdgeTypeOption">
+                      <svg
+                        viewBox="0 0 100 30"
+                        width="100"
+                        height="30"
+                      >
+                        <path
+                          d="M10,15 C35,5 65,25 90,15"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        />
+                      </svg>
+                      <span>贝塞尔曲线</span>
+                    </div>
                   </a-doption>
                 </template>
               </a-dropdown>
@@ -677,6 +735,23 @@ const onEdgeMarkerEndSelect = (marker: string) => {
       border-top-right-radius: var(--b3-border-radius);
       border-bottom-right-radius: var(--b3-border-radius);
     }
+  }
+}
+
+.EdgeTypeOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+
+  svg {
+    background: var(--b3-theme-surface-light);
+    border-radius: var(--b3-border-radius);
+    padding: 4px;
+  }
+
+  span {
+    flex: 1;
   }
 }
 </style>
