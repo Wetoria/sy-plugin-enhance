@@ -3,7 +3,6 @@
     :path="path"
     :label="label"
     :style="edgeStyle"
-    :animated="isAnimated"
     @click="onEdgeClick"
   >
     <template
@@ -95,7 +94,6 @@ interface EdgeData {
   edgeType?: string
   width?: number
   style?: string
-  animation?: string
   color?: string
   showToolbar?: boolean
   whiteBoardConfigData?: any
@@ -288,11 +286,6 @@ const edgeStyle = computed(() => {
     markerEnd: `url(#${data.markerEnd || 'arrow'})`,
     markerStart: data.markerStart ? `url(#${data.markerStart})` : undefined,
   }
-})
-
-const isAnimated = computed(() => {
-  const data = getData()
-  return data.animation !== 'none'
 })
 
 const showToolbar = computed(() => {

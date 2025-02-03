@@ -246,29 +246,6 @@
                 </template>
               </a-dropdown>
             </a-tooltip>
-            <a-tooltip content="边动画">
-              <a-dropdown
-                trigger="click"
-                @select="onEdgeAnimationSelect"
-              >
-                <a-button>
-                  <template #icon>
-                    <icon-play-circle />
-                  </template>
-                </a-button>
-                <template #content>
-                  <a-doption value="none">
-                    无
-                  </a-doption>
-                  <a-doption value="flow">
-                    流动
-                  </a-doption>
-                  <a-doption value="pulse">
-                    脉冲
-                  </a-doption>
-                </template>
-              </a-dropdown>
-            </a-tooltip>
             <a-tooltip content="边颜色">
               <a-dropdown trigger="click">
                 <a-button>
@@ -451,26 +428,6 @@ const onEdgeStyleSelect = (style: string) => {
         data: {
           ...edge.data,
           style,
-        },
-      }
-    }
-    return edge
-  })
-  setEdges(newEdges)
-  if (props.whiteBoardConfigData) {
-    props.whiteBoardConfigData.boardOptions.edges = newEdges
-  }
-}
-
-const onEdgeAnimationSelect = (animation: string) => {
-  if (!props.edgeId) return
-  const newEdges = edges.value.map((edge): Edge => {
-    if (edge.id === props.edgeId) {
-      return {
-        ...edge,
-        data: {
-          ...edge.data,
-          animation,
         },
       }
     }
