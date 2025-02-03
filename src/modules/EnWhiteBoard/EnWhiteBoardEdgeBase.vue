@@ -1,9 +1,9 @@
 <template>
   <BaseEdge
     :path="path"
-    :label="label"
     :style="edgeStyle"
     @click="onEdgeClick"
+    @dblclick="onLabelDblClick"
   >
     <template
       v-if="showToolbar"
@@ -38,23 +38,25 @@
   </EdgeLabelRenderer>
   <EdgeLabelRenderer>
     <div
-      v-if="label || isEditing"
+      v-if="isEditing || (label && !isEditing)"
       class="nodrag nopan EnWhiteBoardEdgeLabel"
+      :class="{ editing: isEditing }"
       :style="{
         pointerEvents: 'all',
         position: 'absolute',
         transform: `translate(-50%, -50%) translate(${edgePathParams[1]}px,${edgePathParams[2]}px)`,
       }"
-      @dblclick="onLabelDblClick"
+      @dblclick.stop="onLabelDblClick"
     >
       <span
         ref="measureRef"
         class="EdgeLabelMeasure"
-      >{{ editingLabel || '新标签' }}</span>
+      >{{ editingLabel || label || '' }}</span>
       <input
         ref="inputRef"
         v-model="editingLabel"
         class="EdgeLabelInput"
+        :placeholder="isEditing ? '输入标签' : ''"
         :readonly="!isEditing"
         :style="{
           cursor: isEditing ? 'text' : 'default',
@@ -216,13 +218,13 @@ const toolbarOffsetY = computed(() => {
 
 const updateInputWidth = () => {
   if (measureRef.value) {
-    inputWidth.value = measureRef.value.offsetWidth
+    inputWidth.value = Math.max(measureRef.value.offsetWidth + 4, 60) // 最小宽度60px
   }
 }
 
 watch(label, (newLabel) => {
   if (!isEditing.value) {
-    editingLabel.value = newLabel
+    editingLabel.value = newLabel || ''
     nextTick(updateInputWidth)
   }
 }, { immediate: true })
@@ -234,9 +236,9 @@ watch(editingLabel, () => {
 const onLabelDblClick = async (event: MouseEvent) => {
   event.stopPropagation()
   isEditing.value = true
+  editingLabel.value = label.value || ''
   await nextTick()
   inputRef.value?.focus()
-  inputRef.value?.select()
 }
 
 const finishEdit = () => {
@@ -245,21 +247,33 @@ const finishEdit = () => {
 
   const newEdges = edges.value.map((edge) => {
     if (edge.id === props.id) {
-      edge.data = {
-        ...edge.data,
-        label: editingLabel.value,
+      const trimmedLabel = editingLabel.value.trim()
+      if (!trimmedLabel) {
+        const {
+          label,
+          ...restData
+        } = edge.data
+        edge.data = restData
+      } else {
+        edge.data = {
+          ...edge.data,
+          label: trimmedLabel,
+        }
       }
     }
     return edge
   })
 
   setEdges(newEdges)
+  if (props.whiteBoardConfigData) {
+    props.whiteBoardConfigData.boardOptions.edges = newEdges
+  }
   isEditing.value = false
 }
 
 const cancelEdit = () => {
-  editingLabel.value = label.value
   isEditing.value = false
+  editingLabel.value = label.value || ''
 }
 
 const onRemoveEdge = () => {

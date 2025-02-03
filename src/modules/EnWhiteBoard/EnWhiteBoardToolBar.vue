@@ -79,7 +79,7 @@
               v-model="editingLabelText"
               placeholder="输入标签"
               @keyup.enter="saveLabelEdit"
-              @keyup.esc="cancelLabelEdit"
+              @keyup.esc="cancelEdit"
             >
               <template #append>
                 <a-button-group>
@@ -88,7 +88,7 @@
                       <icon-check />
                     </template>
                   </a-button>
-                  <a-button @click="cancelLabelEdit">
+                  <a-button @click="cancelEdit">
                     <template #icon>
                       <icon-close />
                     </template>
@@ -110,7 +110,12 @@
               </a-button>
             </a-tooltip>
             <a-tooltip content="编辑标签">
-              <a-button @click="isEditingLabel = true">
+              <a-button
+                @click="() => {
+                  editingLabelText = currentEdge?.data?.label || ''
+                  isEditingLabel = true
+                }"
+              >
                 <template #icon>
                   <icon-edit />
                 </template>
@@ -352,16 +357,26 @@ const onRemoveEdge = () => {
   }
 }
 
+watch(currentEdge, (edge) => {
+  editingLabelText.value = edge?.data?.label || ''
+})
+
 const saveLabelEdit = () => {
-  if (props.edgeId && editingLabelText.value) {
+  if (props.edgeId) {
     const newEdges = edges.value.map((edge): Edge => {
       if (edge.id === props.edgeId) {
-        return {
-          ...edge,
-          data: {
+        const trimmedLabel = editingLabelText.value.trim()
+        if (!trimmedLabel) {
+          const {
+            label,
+            ...restData
+          } = edge.data
+          edge.data = restData
+        } else {
+          edge.data = {
             ...edge.data,
-            label: editingLabelText.value,
-          },
+            label: trimmedLabel,
+          }
         }
       }
       return edge
@@ -374,9 +389,9 @@ const saveLabelEdit = () => {
   isEditingLabel.value = false
 }
 
-const cancelLabelEdit = () => {
+const cancelEdit = () => {
   isEditingLabel.value = false
-  editingLabelText.value = ''
+  editingLabelText.value = currentEdge.value?.data?.label || ''
 }
 
 const onEdgeTypeSelect = (type: string) => {
@@ -498,12 +513,6 @@ const onEdgeMarkerEndSelect = (marker: string) => {
     props.whiteBoardConfigData.boardOptions.edges = newEdges
   }
 }
-
-watch(currentEdge, (edge) => {
-  if (edge?.data?.label) {
-    editingLabelText.value = edge.data.label
-  }
-})
 </script>
 
 <style lang="scss" scoped>
