@@ -19,10 +19,16 @@
   <div
     ref="containerRef"
     class="EnWhiteBoardNodeProtyleContainer"
+    :class="{
+      'variant-default': !nodeData.style?.variant || nodeData.style.variant === 'default',
+      'variant-card': nodeData.style?.variant === 'card',
+      'variant-note': nodeData.style?.variant === 'note',
+    }"
     :data-en-flow-node-id="flowNode.id"
     :style="{
       '--en-card-width': `${flowNode.dimensions.width}px`,
       '--en-card-height': `${flowNode.dimensions.height}px`,
+      'backgroundColor': nodeData.style?.backgroundColor,
     }"
   >
 
@@ -701,6 +707,36 @@ const isSelected = computed(() => {
   }
   .Handle.Right {
     right: -16px;
+  }
+
+  &.variant-default {
+    border: var(--en-whiteboard-node-protyle-border-width) solid var(--b3-border-color);
+    border-radius: var(--en-whiteboard-card-radius);
+  }
+
+  &.variant-card {
+    border: none;
+    border-radius: var(--en-whiteboard-card-radius);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  &.variant-note {
+    border: none;
+    border-radius: 0;
+    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+    background-color: #fefabc;
+    transform: rotate(2deg);
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 20px;
+      width: 20px;
+      height: 30px;
+      background-color: rgba(0,0,0,0.1);
+      border-radius: 0 0 20px 20px;
+    }
   }
 }
 

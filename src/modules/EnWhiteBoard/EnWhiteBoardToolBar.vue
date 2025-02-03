@@ -64,6 +64,119 @@
               </template>
             </a-button>
           </a-tooltip>
+          <a-tooltip content="节点外观">
+            <a-dropdown
+              trigger="click"
+              @select="onNodeStyleSelect"
+            >
+              <a-button>
+                <template #icon>
+                  <icon-layout />
+                </template>
+              </a-button>
+              <template #content>
+                <a-doption value="default">
+                  <div class="NodeStyleOption">
+                    <span>默认</span>
+                  </div>
+                </a-doption>
+                <a-doption value="card">
+                  <div class="NodeStyleOption">
+                    <span>卡片</span>
+                  </div>
+                </a-doption>
+                <a-doption value="note">
+                  <div class="NodeStyleOption">
+                    <span>便签</span>
+                  </div>
+                </a-doption>
+              </template>
+            </a-dropdown>
+          </a-tooltip>
+          <a-tooltip content="应用模板">
+            <a-dropdown
+              trigger="click"
+              @select="onNodeTemplateSelect"
+            >
+              <a-button>
+                <template #icon>
+                  <icon-file />
+                </template>
+              </a-button>
+              <template #content>
+                <a-doption value="cornell">
+                  <div class="NodeTemplateOption">
+                    <span>康奈尔笔记</span>
+                  </div>
+                </a-doption>
+                <a-doption value="blank">
+                  <div class="NodeTemplateOption">
+                    <span>空白</span>
+                  </div>
+                </a-doption>
+              </template>
+            </a-dropdown>
+          </a-tooltip>
+          <a-tooltip content="节点颜色">
+            <a-dropdown trigger="click">
+              <a-button>
+                <template #icon>
+                  <icon-palette />
+                </template>
+              </a-button>
+              <template #content>
+                <div class="EdgeColorPicker">
+                  <div class="ColorRow">
+                    <div
+                      class="ColorItem is-default"
+                      :style="{
+                        backgroundColor: 'var(--b3-theme-surface)',
+                        border: '1px solid var(--b3-border-color)',
+                      }"
+                      @click="onNodeColorChange('var(--b3-theme-on-surface)')"
+                    />
+                    <div
+                      v-for="color in [
+                        'var(--b3-font-background1)',
+                        'var(--b3-font-background2)',
+                        'var(--b3-font-background3)',
+                        'var(--b3-font-background4)',
+                        'var(--b3-font-background5)',
+                        'var(--b3-font-background6)',
+                      ]"
+                      :key="color"
+                      class="ColorItem"
+                      :style="{
+                        backgroundColor: color,
+                        border: '1px solid var(--b3-border-color)',
+                      }"
+                      @click="onNodeColorChange(color)"
+                    />
+                  </div>
+                  <div class="ColorRow">
+                    <div
+                      v-for="color in [
+                        'var(--b3-font-background7)',
+                        'var(--b3-font-background8)',
+                        'var(--b3-font-background9)',
+                        'var(--b3-font-background10)',
+                        'var(--b3-font-background11)',
+                        'var(--b3-font-background12)',
+                        'var(--b3-font-background13)',
+                      ]"
+                      :key="color"
+                      class="ColorItem"
+                      :style="{
+                        backgroundColor: color,
+                        border: '1px solid var(--b3-border-color)',
+                      }"
+                      @click="onNodeColorChange(color)"
+                    />
+                  </div>
+                </div>
+              </template>
+            </a-dropdown>
+          </a-tooltip>
           <slot name="nodeToolbarExtra" />
         </a-button-group>
       </div>
@@ -690,6 +803,7 @@
 </template>
 
 <script setup lang="ts">
+import { updateBlock } from '@/api'
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import {
   Edge,
@@ -726,6 +840,8 @@ const {
   edges,
   setEdges,
   removeEdges,
+  getNodes,
+  setNodes,
 } = useVueFlow()
 
 const isEditingLabel = ref(false)
@@ -931,6 +1047,91 @@ const onEdgeMarkerEndSelect = (marker: string) => {
     props.whiteBoardConfigData.boardOptions.edges = newEdges
   }
 }
+
+const onNodeStyleSelect = (style: string) => {
+  if (!props.nodeId) return
+
+  const nodes = getNodes.value
+  const newNodes = nodes.map((node) => {
+    if (node.id === props.nodeId) {
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          style: {
+            ...node.data?.style,
+            variant: style,
+          },
+        },
+      }
+    }
+    return node
+  })
+
+  setNodes(newNodes)
+  if (props.whiteBoardConfigData) {
+    props.whiteBoardConfigData.boardOptions.nodes = newNodes
+  }
+}
+
+const onNodeTemplateSelect = async (template: string) => {
+  if (!props.nodeId) return
+
+  const nodes = getNodes.value
+  const targetNode = nodes.find((node) => node.id === props.nodeId)
+  if (!targetNode) return
+
+  const blockId = targetNode.data.blockId
+  if (!blockId) return
+
+  let content = ''
+  if (template === 'cornell') {
+    content = `{{{row
+{{{col
+笔记
+}}}
+
+{{{col
+关键词/问题
+}}}
+
+{{{col
+总结
+}}}
+}}}
+`
+  } else if (template === 'blank') {
+    content = ''
+  }
+
+  await updateBlock('markdown', content, blockId)
+}
+
+const onNodeColorChange = (color: string) => {
+  if (!props.nodeId) return
+
+  const nodes = getNodes.value
+  const newNodes = nodes.map((node) => {
+    if (node.id === props.nodeId) {
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          style: {
+            ...node.data?.style,
+            backgroundColor: color === 'default' ? undefined : color,
+          },
+        },
+      }
+    }
+    return node
+  })
+
+  setNodes(newNodes)
+  if (props.whiteBoardConfigData) {
+    props.whiteBoardConfigData.boardOptions.nodes = newNodes
+  }
+}
 </script>
 
 <style lang="scss" scoped>
@@ -1116,6 +1317,47 @@ const onEdgeMarkerEndSelect = (marker: string) => {
 }
 
 .EdgeColorPicker {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  .ColorRow {
+    display: flex;
+    gap: 8px;
+
+    .ColorItem {
+      width: 24px;
+      height: 24px;
+      border-radius: var(--b3-border-radius);
+      cursor: pointer;
+      border: 1px solid var(--b3-border-color);
+      transition: transform 0.15s ease-in-out;
+
+      &:hover {
+        transform: scale(1.1);
+      }
+
+      &.is-default {
+        background: var(--b3-theme-surface);
+      }
+    }
+  }
+}
+
+.NodeStyleOption,
+.NodeTemplateOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+
+  span {
+    flex: 1;
+  }
+}
+
+.NodeColorPicker {
   padding: 8px;
   display: flex;
   flex-direction: column;
