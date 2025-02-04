@@ -473,7 +473,7 @@ const isSelected = computed(() => {
     width: 100%;
     height: 30px;
     flex-shrink: 0;
-    background-color: var(--b3-theme-surface);
+    background-color: color-mix(in srgb, var(--b3-theme-surface) 65%, transparent);
 
     display: flex;
     align-items: center;
