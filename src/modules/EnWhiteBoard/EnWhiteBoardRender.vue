@@ -70,6 +70,10 @@
         :connectionRadius="100"
         :fitView="false"
         :panOnDrag="true"
+        :selectionKeyCode="['Shift']"
+        :multiSelectionKeyCode="['Control']"
+        :deleteKeyCode="['Delete', 'Backspace']"
+        :selectionOnDrag="true"
         @nodeDragStart="onMoveStart"
         @nodeDrag="onMove"
         @nodeDragStop="onMoveEnd"
@@ -79,6 +83,11 @@
         @connectStart="onConnectStart"
         @connectEnd="onConnectEnd"
         @edgeDoubleClick="onEdgeDoubleClick"
+        @selectionDragStart="onSelectionDragStart"
+        @selectionDrag="onSelectionDrag"
+        @selectionDragStop="onSelectionDragStop"
+        @selectionStart="onSelectionStart"
+        @selectionEnd="onSelectionEnd"
       >
         <template #node-EnWhiteBoardNodeProtyle="node">
           <EnWhiteBoardNodeProtyle
@@ -711,6 +720,26 @@ const onFitView = () => {
 const onCenterView = () => {
   setCenter(0, 0, { duration: 800 })
 }
+
+const onSelectionDragStart = (event) => {
+  console.log('onSelectionDragStart', event)
+}
+
+const onSelectionDrag = (event) => {
+  console.log('onSelectionDrag', event)
+}
+
+const onSelectionDragStop = (event) => {
+  console.log('onSelectionDragStop', event)
+}
+
+const onSelectionStart = (event) => {
+  console.log('onSelectionStart', event)
+}
+
+const onSelectionEnd = (event) => {
+  console.log('onSelectionEnd', event)
+}
 </script>
 
 <style lang="scss" scoped>
@@ -890,6 +919,19 @@ const onCenterView = () => {
       border-radius: var(--b3-border-radius);
       padding: 4px;
       box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  :deep(.vue-flow__selection) {
+    background: rgba(var(--primary-6), 0.08);
+    border: 2px solid rgb(var(--primary-6));
+    border-radius: var(--b3-border-radius);
+  }
+
+  :deep(.vue-flow__node.selected) {
+    .EnWhiteBoardNodeProtyleContainer {
+      border-color: rgb(var(--primary-6));
+      box-shadow: 0 0 0 2px rgba(var(--primary-6), 0.1);
     }
   }
 }
