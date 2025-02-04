@@ -1,7 +1,7 @@
 <template>
   <NodeToolbar
     :position="Position.Top"
-    :is-visible="isSelected"
+    :is-visible="isSelected && !isMultipleSelected"
     :node-id="flowNode.id"
     class="EnWhiteBoardNodeToolbar"
     :style="{
@@ -421,6 +421,10 @@ const handleDuplicateNode = () => {
   // 添加新节点
   addNodes([newNode])
 }
+
+const isMultipleSelected = computed(() => {
+  return getSelectedNodes.value.length > 1
+})
 
 const isSelected = computed(() => {
   const selectedNodes = getSelectedNodes.value

@@ -106,6 +106,77 @@
             v-bind="connectionLineProps"
           />
         </template>
+        <template #panel>
+          <div
+            v-if="selectedNodes.length > 1"
+            class="EnWhiteBoardMultipleSelectionToolbar"
+            :style="{
+              position: 'absolute',
+              top: `${multipleSelectionToolbarPosition.y}px`,
+              left: `${multipleSelectionToolbarPosition.x}px`,
+              transform: `translate(-50%, -100%) scale(${1 / (viewport?.zoom || 1)})`,
+              transformOrigin: 'center bottom',
+              zIndex: 10,
+            }"
+          >
+            <a-button-group>
+              <a-button
+                size="mini"
+                @click="handleMultipleNodesDelete"
+              >
+                <template #icon>
+                  <icon-delete />
+                </template>
+                删除
+              </a-button>
+              <a-button
+                size="mini"
+                @click="handleMultipleNodesDuplicate"
+              >
+                <template #icon>
+                  <icon-copy />
+                </template>
+                复制
+              </a-button>
+              <a-button
+                size="mini"
+                @click="handleMultipleNodesAlignLeft"
+              >
+                <template #icon>
+                  <icon-align-left />
+                </template>
+                左对齐
+              </a-button>
+              <a-button
+                size="mini"
+                @click="handleMultipleNodesAlignRight"
+              >
+                <template #icon>
+                  <icon-align-right />
+                </template>
+                右对齐
+              </a-button>
+              <a-button
+                size="mini"
+                @click="handleMultipleNodesAlignTop"
+              >
+                <template #icon>
+                  <icon-align-top />
+                </template>
+                上对齐
+              </a-button>
+              <a-button
+                size="mini"
+                @click="handleMultipleNodesAlignBottom"
+              >
+                <template #icon>
+                  <icon-align-bottom />
+                </template>
+                下对齐
+              </a-button>
+            </a-button-group>
+          </div>
+        </template>
         <svg>
           <defs>
             <marker
@@ -342,11 +413,12 @@ const {
   findNode,
   addSelectedNodes,
   removeSelectedNodes,
-
+  getSelectedNodes,
   onEdgesChange,
   onEdgeUpdate,
   setEdges,
-
+  addNodes,
+  removeNodes,
   viewport,
   onViewportChange,
   setCenter,
@@ -740,6 +812,99 @@ const onSelectionStart = (event) => {
 const onSelectionEnd = (event) => {
   console.log('onSelectionEnd', event)
 }
+
+const selectedNodes = computed(() => getSelectedNodes.value)
+
+// 计算多选工具栏的位置
+const multipleSelectionToolbarPosition = computed(() => {
+  if (selectedNodes.value.length <= 1) {
+    return {
+      x: 0,
+      y: 0,
+    }
+  }
+
+  // 计算选中节点的边界
+  const bounds = selectedNodes.value.reduce((acc, node) => {
+    // 需要考虑视口变换
+    const x = node.position.x * (viewport.value?.zoom || 1) + (viewport.value?.x || 0)
+    const y = node.position.y * (viewport.value?.zoom || 1) + (viewport.value?.y || 0)
+    const width = (node.dimensions?.width || 0) * (viewport.value?.zoom || 1)
+    const height = (node.dimensions?.height || 0) * (viewport.value?.zoom || 1)
+
+    return {
+      minX: Math.min(acc.minX, x),
+      minY: Math.min(acc.minY, y),
+      maxX: Math.max(acc.maxX, x + width),
+      maxY: Math.max(acc.maxY, y + height),
+    }
+  }, {
+    minX: Infinity,
+    minY: Infinity,
+    maxX: -Infinity,
+    maxY: -Infinity,
+  })
+
+  // 工具栏位置在选区的顶部中间
+  return {
+    x: bounds.minX + (bounds.maxX - bounds.minX) / 2,
+    y: bounds.minY - 16, // 向上偏移一些距离
+  }
+})
+
+// 多选操作处理函数
+const handleMultipleNodesDelete = () => {
+  removeNodes(selectedNodes.value)
+}
+
+const handleMultipleNodesDuplicate = () => {
+  const newNodes = selectedNodes.value.map((node) => ({
+    ...node,
+    id: generateWhiteBoardNodeId(),
+    position: {
+      x: node.position.x + 50,
+      y: node.position.y + 50,
+    },
+    selected: true,
+  }))
+  addNodes(newNodes)
+}
+
+const handleMultipleNodesAlignLeft = () => {
+  if (selectedNodes.value.length <= 1) return
+  const minX = Math.min(...selectedNodes.value.map((node) => node.position.x))
+  selectedNodes.value.forEach((node) => {
+    node.position.x = minX
+  })
+}
+
+const handleMultipleNodesAlignRight = () => {
+  if (selectedNodes.value.length <= 1) return
+  const maxX = Math.max(...selectedNodes.value.map((node) =>
+    node.position.x + (node.dimensions?.width || 0),
+  ))
+  selectedNodes.value.forEach((node) => {
+    node.position.x = maxX - (node.dimensions?.width || 0)
+  })
+}
+
+const handleMultipleNodesAlignTop = () => {
+  if (selectedNodes.value.length <= 1) return
+  const minY = Math.min(...selectedNodes.value.map((node) => node.position.y))
+  selectedNodes.value.forEach((node) => {
+    node.position.y = minY
+  })
+}
+
+const handleMultipleNodesAlignBottom = () => {
+  if (selectedNodes.value.length <= 1) return
+  const maxY = Math.max(...selectedNodes.value.map((node) =>
+    node.position.y + (node.dimensions?.height || 0),
+  ))
+  selectedNodes.value.forEach((node) => {
+    node.position.y = maxY - (node.dimensions?.height || 0)
+  })
+}
 </script>
 
 <style lang="scss" scoped>
@@ -932,6 +1097,37 @@ const onSelectionEnd = (event) => {
     .EnWhiteBoardNodeProtyleContainer {
       border-color: rgb(var(--primary-6));
       box-shadow: 0 0 0 2px rgba(var(--primary-6), 0.1);
+    }
+  }
+}
+
+.EnWhiteBoardMultipleSelectionToolbar {
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: var(--b3-border-radius);
+  padding: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  pointer-events: all;
+  white-space: nowrap;
+
+  .arco-btn-group {
+    display: flex;
+    gap: 4px;
+  }
+
+  .arco-btn {
+    padding: 0 8px;
+    height: 24px;
+    line-height: 24px;
+    font-size: 12px;
+    background-color: var(--b3-theme-background);
+
+    &:hover {
+      background-color: var(--b3-theme-surface-light);
+    }
+
+    .arco-icon {
+      font-size: 14px;
     }
   }
 }
