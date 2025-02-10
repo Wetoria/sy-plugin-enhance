@@ -88,6 +88,8 @@
         @selectionDragStop="onSelectionDragStop"
         @selectionStart="onSelectionStart"
         @selectionEnd="onSelectionEnd"
+        @drop="onDrop"
+        @dragover="onDragover"
       >
         <template #node-EnWhiteBoardNodeProtyle="node">
           <EnWhiteBoardNodeProtyle
@@ -334,8 +336,8 @@
 </template>
 
 <script setup lang="ts">
+import { request } from '@/api'
 import { getNewDailyNoteBlockId } from '@/modules/DailyNote/DailyNote'
-
 
 import {
   EnWhiteBoardBlockDomTarget,
@@ -594,7 +596,6 @@ watchEffect(() => {
 })
 
 const onPaneClick = onCountClick((count, event) => {
-  console.log('onPaneClick', count, event)
   hideAllHelper()
   if (count === 1) {
     disableLastProtyleEditable()
@@ -605,20 +606,20 @@ const onPaneClick = onCountClick((count, event) => {
     }, viewport.value)
     getNewDailyNoteBlockId().then((blockId) => {
       const newEnFlowNodeId = generateWhiteBoardNodeId()
-      nodes.value.push({
+      const newNode = {
         id: newEnFlowNodeId,
         type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_PROTYLE,
         data: {
           blockId,
         },
-        connectable: true,
-        position: {
-          x: rendererPoint.x,
-          y: rendererPoint.y,
-        },
+        position: rendererPoint,
         width: moduleWhiteBoardOptions.value.cardWidthDefault,
         height: moduleWhiteBoardOptions.value.cardHeightDefault,
-      })
+        connectable: true,
+        draggable: true,
+        selectable: true,
+      }
+      addNodes([newNode])
       handleWith(
         () => {
           const targetNode = getWhiteBoardCardMainByWhiteBoardNodeId(EnWhiteBoardRenderContainerRef.value, newEnFlowNodeId)
@@ -626,7 +627,6 @@ const onPaneClick = onCountClick((count, event) => {
         },
         () => {
           const targetMainElement = getWhiteBoardCardMainByWhiteBoardNodeId(EnWhiteBoardRenderContainerRef.value, newEnFlowNodeId)
-
           const targetNode = findNode(newEnFlowNodeId)
           addSelectedNodes([targetNode])
           if (targetMainElement) {
@@ -634,8 +634,7 @@ const onPaneClick = onCountClick((count, event) => {
           }
         },
       )
-    },
-    )
+    })
   }
 })
 
@@ -904,6 +903,119 @@ const handleMultipleNodesAlignBottom = () => {
   selectedNodes.value.forEach((node) => {
     node.position.y = maxY - (node.dimensions?.height || 0)
   })
+}
+
+// 添加拖拽事件处理
+const onDragover = (event: DragEvent) => {
+  event.preventDefault()
+}
+
+const onDrop = async (event: DragEvent) => {
+  event.preventDefault()
+
+  // 获取拖拽的位置并考虑视口变换
+  const rendererPoint = pointToRendererPoint({
+    x: event.offsetX,
+    y: event.offsetY,
+  }, viewport.value)
+
+  // 1. 从文档树拖拽
+  const fileData = event.dataTransfer?.getData('application/siyuan-file')
+  if (fileData) {
+    const fileIds = fileData.split(',').filter(Boolean)
+    for (const id of fileIds) {
+      try {
+        const response = await request('/api/block/getRefText', { id })
+        if (response) {
+          const newNode = {
+            id: generateWhiteBoardNodeId(),
+            type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_PROTYLE,
+            position: {
+              x: rendererPoint.x,
+              y: rendererPoint.y + (fileIds.indexOf(id) * 10), // 堆叠效果
+            },
+            data: {
+              blockId: id,
+            },
+            width: moduleWhiteBoardOptions.value.cardWidthDefault,
+            height: moduleWhiteBoardOptions.value.cardHeightDefault,
+            // 确保新节点可以被连线
+            connectable: true,
+            // 设置可拖拽和选择
+            draggable: true,
+            selectable: true,
+          }
+          // 使用 addNodes 而不是直接修改 nodes.value
+          addNodes([newNode])
+        }
+      } catch (err) {
+        console.error('处理文件ID时出错:', err)
+      }
+    }
+    return
+  }
+
+  // 2. 从编辑器拖拽块 - 通过 gutter
+  const gutterData = event.dataTransfer?.getData('application/siyuan-gutter')
+  if (gutterData) {
+    const [type, subtype, blockId] = gutterData.split('\u200B')
+    if (blockId) {
+      try {
+        const response = await request('/api/block/getRefText', { id: blockId })
+        if (response) {
+          const newNode = {
+            id: generateWhiteBoardNodeId(),
+            type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_PROTYLE,
+            position: rendererPoint,
+            data: {
+              blockId,
+            },
+            width: moduleWhiteBoardOptions.value.cardWidthDefault,
+            height: moduleWhiteBoardOptions.value.cardHeightDefault,
+            connectable: true,
+            draggable: true,
+            selectable: true,
+          }
+          addNodes([newNode])
+        }
+      } catch (err) {
+        console.error('处理gutter块ID时出错:', err)
+      }
+    }
+    return
+  }
+
+  // 3. 从编辑器内容区域拖拽块
+  const gutterNodeType = event.dataTransfer?.types.find((type) =>
+    type.startsWith('application/siyuan-gutternode'),
+  )
+  if (gutterNodeType) {
+    const blockIdMatch = gutterNodeType.match(/gutternode.*?(\d{14}-\w{7})/)
+    const blockId = blockIdMatch?.[1]
+    if (blockId) {
+      try {
+        const response = await request('/api/block/getRefText', { id: blockId })
+        if (response) {
+          const newNode = {
+            id: generateWhiteBoardNodeId(),
+            type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_PROTYLE,
+            position: rendererPoint,
+            data: {
+              blockId,
+            },
+            width: moduleWhiteBoardOptions.value.cardWidthDefault,
+            height: moduleWhiteBoardOptions.value.cardHeightDefault,
+            connectable: true,
+            draggable: true,
+            selectable: true,
+          }
+          addNodes([newNode])
+        }
+      } catch (err) {
+        console.error('处理编辑器内容区域块ID时出错:', err)
+      }
+    }
+  }
 }
 </script>
 
