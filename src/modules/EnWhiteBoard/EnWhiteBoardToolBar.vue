@@ -77,41 +77,12 @@
               <template #content>
                 <a-doption value="default">
                   <div class="NodeStyleOption">
-                    <span>默认</span>
+                    <span>默认样式</span>
                   </div>
                 </a-doption>
-                <a-doption value="card">
+                <a-doption value="inherit">
                   <div class="NodeStyleOption">
-                    <span>卡片</span>
-                  </div>
-                </a-doption>
-                <a-doption value="note">
-                  <div class="NodeStyleOption">
-                    <span>便签</span>
-                  </div>
-                </a-doption>
-              </template>
-            </a-dropdown>
-          </a-tooltip>
-          <a-tooltip content="应用模板">
-            <a-dropdown
-              trigger="click"
-              @select="onNodeTemplateSelect"
-            >
-              <a-button>
-                <template #icon>
-                  <icon-file />
-                </template>
-              </a-button>
-              <template #content>
-                <a-doption value="cornell">
-                  <div class="NodeTemplateOption">
-                    <span>康奈尔笔记</span>
-                  </div>
-                </a-doption>
-                <a-doption value="blank">
-                  <div class="NodeTemplateOption">
-                    <span>空白</span>
+                    <span>继承原样式</span>
                   </div>
                 </a-doption>
               </template>
@@ -803,7 +774,6 @@
 </template>
 
 <script setup lang="ts">
-import { updateBlock } from '@/api'
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import {
   Edge,
@@ -1072,39 +1042,6 @@ const onNodeStyleSelect = (style: string) => {
   if (props.whiteBoardConfigData) {
     props.whiteBoardConfigData.boardOptions.nodes = newNodes
   }
-}
-
-const onNodeTemplateSelect = async (template: string) => {
-  if (!props.nodeId) return
-
-  const nodes = getNodes.value
-  const targetNode = nodes.find((node) => node.id === props.nodeId)
-  if (!targetNode) return
-
-  const blockId = targetNode.data.blockId
-  if (!blockId) return
-
-  let content = ''
-  if (template === 'cornell') {
-    content = `{{{row
-{{{col
-笔记
-}}}
-
-{{{col
-关键词/问题
-}}}
-
-{{{col
-总结
-}}}
-}}}
-`
-  } else if (template === 'blank') {
-    content = ''
-  }
-
-  await updateBlock('markdown', content, blockId)
 }
 
 const onNodeColorChange = (color: string) => {
