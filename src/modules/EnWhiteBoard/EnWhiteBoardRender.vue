@@ -90,6 +90,7 @@
         @selectionEnd="onSelectionEnd"
         @drop="onDrop"
         @dragover="onDragover"
+        @touchstart="onTouchStart"
       >
         <template #node-EnWhiteBoardNodeProtyle="node">
           <EnWhiteBoardNodeProtyle
@@ -595,46 +596,78 @@ watchEffect(() => {
   viewport.value = embedWhiteBoardConfigData.value.boardOptions.viewport
 })
 
+// 添加触摸相关变量
+const lastTouchTime = ref(0)
+const lastTouchX = ref(0)
+const lastTouchY = ref(0)
+
+// 创建新节点的函数
+const createNewNode = (x: number, y: number) => {
+  const rendererPoint = pointToRendererPoint({
+    x,
+    y,
+  }, viewport.value)
+  getNewDailyNoteBlockId().then((blockId) => {
+    const newEnFlowNodeId = generateWhiteBoardNodeId()
+    const newNode = {
+      id: newEnFlowNodeId,
+      type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_PROTYLE,
+      data: {
+        blockId,
+      },
+      position: rendererPoint,
+      width: moduleWhiteBoardOptions.value.cardWidthDefault,
+      height: moduleWhiteBoardOptions.value.cardHeightDefault,
+      connectable: true,
+      draggable: true,
+      selectable: true,
+    }
+    addNodes([newNode])
+    handleWith(
+      () => {
+        const targetNode = getWhiteBoardCardMainByWhiteBoardNodeId(EnWhiteBoardRenderContainerRef.value, newEnFlowNodeId)
+        return !!targetNode
+      },
+      () => {
+        const targetMainElement = getWhiteBoardCardMainByWhiteBoardNodeId(EnWhiteBoardRenderContainerRef.value, newEnFlowNodeId)
+        const targetNode = findNode(newEnFlowNodeId)
+        addSelectedNodes([targetNode])
+        if (targetMainElement) {
+          editNewProtyleCard(targetMainElement)
+        }
+      },
+    )
+  })
+}
+
+// 添加触摸事件处理函数
+const onTouchStart = (event: TouchEvent) => {
+  const touch = event.touches[0]
+  const now = Date.now()
+  const x = touch.clientX
+  const y = touch.clientY
+
+  // 检查是否是双击（两次点击间隔小于300ms且位置相近）
+  if (now - lastTouchTime.value < 300
+    && Math.abs(x - lastTouchX.value) < 30
+    && Math.abs(y - lastTouchY.value) < 30) {
+    // 是双击，创建新节点
+    createNewNode(x, y)
+  }
+
+  // 更新最后一次触摸的时间和位置
+  lastTouchTime.value = now
+  lastTouchX.value = x
+  lastTouchY.value = y
+}
+
+// 修改原有的 onPaneClick 函数
 const onPaneClick = onCountClick((count, event) => {
   hideAllHelper()
   if (count === 1) {
     disableLastProtyleEditable()
   } else if (count === 2) {
-    const rendererPoint = pointToRendererPoint({
-      x: event.offsetX,
-      y: event.offsetY,
-    }, viewport.value)
-    getNewDailyNoteBlockId().then((blockId) => {
-      const newEnFlowNodeId = generateWhiteBoardNodeId()
-      const newNode = {
-        id: newEnFlowNodeId,
-        type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_PROTYLE,
-        data: {
-          blockId,
-        },
-        position: rendererPoint,
-        width: moduleWhiteBoardOptions.value.cardWidthDefault,
-        height: moduleWhiteBoardOptions.value.cardHeightDefault,
-        connectable: true,
-        draggable: true,
-        selectable: true,
-      }
-      addNodes([newNode])
-      handleWith(
-        () => {
-          const targetNode = getWhiteBoardCardMainByWhiteBoardNodeId(EnWhiteBoardRenderContainerRef.value, newEnFlowNodeId)
-          return !!targetNode
-        },
-        () => {
-          const targetMainElement = getWhiteBoardCardMainByWhiteBoardNodeId(EnWhiteBoardRenderContainerRef.value, newEnFlowNodeId)
-          const targetNode = findNode(newEnFlowNodeId)
-          addSelectedNodes([targetNode])
-          if (targetMainElement) {
-            editNewProtyleCard(targetMainElement)
-          }
-        },
-      )
-    })
+    createNewNode(event.offsetX, event.offsetY)
   }
 })
 
