@@ -70,6 +70,10 @@
         :connectionRadius="100"
         :fitView="false"
         :panOnDrag="true"
+        :selectionKeyCode="['Shift']"
+        :multiSelectionKeyCode="['Control']"
+        :deleteKeyCode="['Delete', 'Backspace']"
+        :selectionOnDrag="true"
         @nodeDragStart="onMoveStart"
         @nodeDrag="onMove"
         @nodeDragStop="onMoveEnd"
@@ -79,6 +83,14 @@
         @connectStart="onConnectStart"
         @connectEnd="onConnectEnd"
         @edgeDoubleClick="onEdgeDoubleClick"
+        @selectionDragStart="onSelectionDragStart"
+        @selectionDrag="onSelectionDrag"
+        @selectionDragStop="onSelectionDragStop"
+        @selectionStart="onSelectionStart"
+        @selectionEnd="onSelectionEnd"
+        @drop="onDrop"
+        @dragover="onDragover"
+        @touchstart="onTouchStart"
       >
         <template #node-EnWhiteBoardNodeProtyle="node">
           <EnWhiteBoardNodeProtyle
@@ -96,6 +108,77 @@
           <EnWhiteBoardEdgeBase
             v-bind="connectionLineProps"
           />
+        </template>
+        <template #panel>
+          <div
+            v-if="selectedNodes.length > 1"
+            class="EnWhiteBoardMultipleSelectionToolbar"
+            :style="{
+              position: 'absolute',
+              top: `${multipleSelectionToolbarPosition.y}px`,
+              left: `${multipleSelectionToolbarPosition.x}px`,
+              transform: `translate(-50%, -100%) scale(${1 / (viewport?.zoom || 1)})`,
+              transformOrigin: 'center bottom',
+              zIndex: 10,
+            }"
+          >
+            <a-button-group>
+              <a-button
+                size="mini"
+                @click="handleMultipleNodesDelete"
+              >
+                <template #icon>
+                  <icon-delete />
+                </template>
+                删除
+              </a-button>
+              <a-button
+                size="mini"
+                @click="handleMultipleNodesDuplicate"
+              >
+                <template #icon>
+                  <icon-copy />
+                </template>
+                复制
+              </a-button>
+              <a-button
+                size="mini"
+                @click="handleMultipleNodesAlignLeft"
+              >
+                <template #icon>
+                  <icon-align-left />
+                </template>
+                左对齐
+              </a-button>
+              <a-button
+                size="mini"
+                @click="handleMultipleNodesAlignRight"
+              >
+                <template #icon>
+                  <icon-align-right />
+                </template>
+                右对齐
+              </a-button>
+              <a-button
+                size="mini"
+                @click="handleMultipleNodesAlignTop"
+              >
+                <template #icon>
+                  <icon-align-top />
+                </template>
+                上对齐
+              </a-button>
+              <a-button
+                size="mini"
+                @click="handleMultipleNodesAlignBottom"
+              >
+                <template #icon>
+                  <icon-align-bottom />
+                </template>
+                下对齐
+              </a-button>
+            </a-button-group>
+          </div>
         </template>
         <svg>
           <defs>
@@ -254,8 +337,8 @@
 </template>
 
 <script setup lang="ts">
+import { request } from '@/api'
 import { getNewDailyNoteBlockId } from '@/modules/DailyNote/DailyNote'
-
 
 import {
   EnWhiteBoardBlockDomTarget,
@@ -333,11 +416,12 @@ const {
   findNode,
   addSelectedNodes,
   removeSelectedNodes,
-
+  getSelectedNodes,
   onEdgesChange,
   onEdgeUpdate,
   setEdges,
-
+  addNodes,
+  removeNodes,
   viewport,
   onViewportChange,
   setCenter,
@@ -512,49 +596,78 @@ watchEffect(() => {
   viewport.value = embedWhiteBoardConfigData.value.boardOptions.viewport
 })
 
+// 添加触摸相关变量
+const lastTouchTime = ref(0)
+const lastTouchX = ref(0)
+const lastTouchY = ref(0)
+
+// 创建新节点的函数
+const createNewNode = (x: number, y: number) => {
+  const rendererPoint = pointToRendererPoint({
+    x,
+    y,
+  }, viewport.value)
+  getNewDailyNoteBlockId().then((blockId) => {
+    const newEnFlowNodeId = generateWhiteBoardNodeId()
+    const newNode = {
+      id: newEnFlowNodeId,
+      type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_PROTYLE,
+      data: {
+        blockId,
+      },
+      position: rendererPoint,
+      width: moduleWhiteBoardOptions.value.cardWidthDefault,
+      height: moduleWhiteBoardOptions.value.cardHeightDefault,
+      connectable: true,
+      draggable: true,
+      selectable: true,
+    }
+    addNodes([newNode])
+    handleWith(
+      () => {
+        const targetNode = getWhiteBoardCardMainByWhiteBoardNodeId(EnWhiteBoardRenderContainerRef.value, newEnFlowNodeId)
+        return !!targetNode
+      },
+      () => {
+        const targetMainElement = getWhiteBoardCardMainByWhiteBoardNodeId(EnWhiteBoardRenderContainerRef.value, newEnFlowNodeId)
+        const targetNode = findNode(newEnFlowNodeId)
+        addSelectedNodes([targetNode])
+        if (targetMainElement) {
+          editNewProtyleCard(targetMainElement)
+        }
+      },
+    )
+  })
+}
+
+// 添加触摸事件处理函数
+const onTouchStart = (event: TouchEvent) => {
+  const touch = event.touches[0]
+  const now = Date.now()
+  const x = touch.clientX
+  const y = touch.clientY
+
+  // 检查是否是双击（两次点击间隔小于300ms且位置相近）
+  if (now - lastTouchTime.value < 300
+    && Math.abs(x - lastTouchX.value) < 30
+    && Math.abs(y - lastTouchY.value) < 30) {
+    // 是双击，创建新节点
+    createNewNode(x, y)
+  }
+
+  // 更新最后一次触摸的时间和位置
+  lastTouchTime.value = now
+  lastTouchX.value = x
+  lastTouchY.value = y
+}
+
+// 修改原有的 onPaneClick 函数
 const onPaneClick = onCountClick((count, event) => {
-  console.log('onPaneClick', count, event)
   hideAllHelper()
   if (count === 1) {
     disableLastProtyleEditable()
   } else if (count === 2) {
-    const rendererPoint = pointToRendererPoint({
-      x: event.offsetX,
-      y: event.offsetY,
-    }, viewport.value)
-    getNewDailyNoteBlockId().then((blockId) => {
-      const newEnFlowNodeId = generateWhiteBoardNodeId()
-      nodes.value.push({
-        id: newEnFlowNodeId,
-        type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_PROTYLE,
-        data: {
-          blockId,
-        },
-        connectable: true,
-        position: {
-          x: rendererPoint.x,
-          y: rendererPoint.y,
-        },
-        width: moduleWhiteBoardOptions.value.cardWidthDefault,
-        height: moduleWhiteBoardOptions.value.cardHeightDefault,
-      })
-      handleWith(
-        () => {
-          const targetNode = getWhiteBoardCardMainByWhiteBoardNodeId(EnWhiteBoardRenderContainerRef.value, newEnFlowNodeId)
-          return !!targetNode
-        },
-        () => {
-          const targetMainElement = getWhiteBoardCardMainByWhiteBoardNodeId(EnWhiteBoardRenderContainerRef.value, newEnFlowNodeId)
-
-          const targetNode = findNode(newEnFlowNodeId)
-          addSelectedNodes([targetNode])
-          if (targetMainElement) {
-            editNewProtyleCard(targetMainElement)
-          }
-        },
-      )
-    },
-    )
+    createNewNode(event.offsetX, event.offsetY)
   }
 })
 
@@ -710,6 +823,232 @@ const onFitView = () => {
 
 const onCenterView = () => {
   setCenter(0, 0, { duration: 800 })
+}
+
+const onSelectionDragStart = (event) => {
+  console.log('onSelectionDragStart', event)
+}
+
+const onSelectionDrag = (event) => {
+  console.log('onSelectionDrag', event)
+}
+
+const onSelectionDragStop = (event) => {
+  console.log('onSelectionDragStop', event)
+}
+
+const onSelectionStart = (event) => {
+  console.log('onSelectionStart', event)
+}
+
+const onSelectionEnd = (event) => {
+  console.log('onSelectionEnd', event)
+}
+
+const selectedNodes = computed(() => getSelectedNodes.value)
+
+// 计算多选工具栏的位置
+const multipleSelectionToolbarPosition = computed(() => {
+  if (selectedNodes.value.length <= 1) {
+    return {
+      x: 0,
+      y: 0,
+    }
+  }
+
+  // 计算选中节点的边界
+  const bounds = selectedNodes.value.reduce((acc, node) => {
+    // 需要考虑视口变换
+    const x = node.position.x * (viewport.value?.zoom || 1) + (viewport.value?.x || 0)
+    const y = node.position.y * (viewport.value?.zoom || 1) + (viewport.value?.y || 0)
+    const width = (node.dimensions?.width || 0) * (viewport.value?.zoom || 1)
+    const height = (node.dimensions?.height || 0) * (viewport.value?.zoom || 1)
+
+    return {
+      minX: Math.min(acc.minX, x),
+      minY: Math.min(acc.minY, y),
+      maxX: Math.max(acc.maxX, x + width),
+      maxY: Math.max(acc.maxY, y + height),
+    }
+  }, {
+    minX: Infinity,
+    minY: Infinity,
+    maxX: -Infinity,
+    maxY: -Infinity,
+  })
+
+  // 工具栏位置在选区的顶部中间
+  return {
+    x: bounds.minX + (bounds.maxX - bounds.minX) / 2,
+    y: bounds.minY - 16, // 向上偏移一些距离
+  }
+})
+
+// 多选操作处理函数
+const handleMultipleNodesDelete = () => {
+  removeNodes(selectedNodes.value)
+}
+
+const handleMultipleNodesDuplicate = () => {
+  const newNodes = selectedNodes.value.map((node) => ({
+    ...node,
+    id: generateWhiteBoardNodeId(),
+    position: {
+      x: node.position.x + 50,
+      y: node.position.y + 50,
+    },
+    selected: true,
+  }))
+  addNodes(newNodes)
+}
+
+const handleMultipleNodesAlignLeft = () => {
+  if (selectedNodes.value.length <= 1) return
+  const minX = Math.min(...selectedNodes.value.map((node) => node.position.x))
+  selectedNodes.value.forEach((node) => {
+    node.position.x = minX
+  })
+}
+
+const handleMultipleNodesAlignRight = () => {
+  if (selectedNodes.value.length <= 1) return
+  const maxX = Math.max(...selectedNodes.value.map((node) =>
+    node.position.x + (node.dimensions?.width || 0),
+  ))
+  selectedNodes.value.forEach((node) => {
+    node.position.x = maxX - (node.dimensions?.width || 0)
+  })
+}
+
+const handleMultipleNodesAlignTop = () => {
+  if (selectedNodes.value.length <= 1) return
+  const minY = Math.min(...selectedNodes.value.map((node) => node.position.y))
+  selectedNodes.value.forEach((node) => {
+    node.position.y = minY
+  })
+}
+
+const handleMultipleNodesAlignBottom = () => {
+  if (selectedNodes.value.length <= 1) return
+  const maxY = Math.max(...selectedNodes.value.map((node) =>
+    node.position.y + (node.dimensions?.height || 0),
+  ))
+  selectedNodes.value.forEach((node) => {
+    node.position.y = maxY - (node.dimensions?.height || 0)
+  })
+}
+
+// 添加拖拽事件处理
+const onDragover = (event: DragEvent) => {
+  event.preventDefault()
+}
+
+const onDrop = async (event: DragEvent) => {
+  event.preventDefault()
+
+  // 获取拖拽的位置并考虑视口变换
+  const rendererPoint = pointToRendererPoint({
+    x: event.offsetX,
+    y: event.offsetY,
+  }, viewport.value)
+
+  // 1. 从文档树拖拽
+  const fileData = event.dataTransfer?.getData('application/siyuan-file')
+  if (fileData) {
+    const fileIds = fileData.split(',').filter(Boolean)
+    for (const id of fileIds) {
+      try {
+        const response = await request('/api/block/getRefText', { id })
+        if (response) {
+          const newNode = {
+            id: generateWhiteBoardNodeId(),
+            type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_PROTYLE,
+            position: {
+              x: rendererPoint.x,
+              y: rendererPoint.y + (fileIds.indexOf(id) * 10), // 堆叠效果
+            },
+            data: {
+              blockId: id,
+            },
+            width: moduleWhiteBoardOptions.value.cardWidthDefault,
+            height: moduleWhiteBoardOptions.value.cardHeightDefault,
+            // 确保新节点可以被连线
+            connectable: true,
+            // 设置可拖拽和选择
+            draggable: true,
+            selectable: true,
+          }
+          // 使用 addNodes 而不是直接修改 nodes.value
+          addNodes([newNode])
+        }
+      } catch (err) {
+        console.error('处理文件ID时出错:', err)
+      }
+    }
+    return
+  }
+
+  // 2. 从编辑器拖拽块 - 通过 gutter
+  const gutterData = event.dataTransfer?.getData('application/siyuan-gutter')
+  if (gutterData) {
+    const [type, subtype, blockId] = gutterData.split('\u200B')
+    if (blockId) {
+      try {
+        const response = await request('/api/block/getRefText', { id: blockId })
+        if (response) {
+          const newNode = {
+            id: generateWhiteBoardNodeId(),
+            type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_PROTYLE,
+            position: rendererPoint,
+            data: {
+              blockId,
+            },
+            width: moduleWhiteBoardOptions.value.cardWidthDefault,
+            height: moduleWhiteBoardOptions.value.cardHeightDefault,
+            connectable: true,
+            draggable: true,
+            selectable: true,
+          }
+          addNodes([newNode])
+        }
+      } catch (err) {
+        console.error('处理gutter块ID时出错:', err)
+      }
+    }
+    return
+  }
+
+  // 3. 从编辑器内容区域拖拽块
+  const gutterNodeType = event.dataTransfer?.types.find((type) =>
+    type.startsWith('application/siyuan-gutternode'),
+  )
+  if (gutterNodeType) {
+    const blockIdMatch = gutterNodeType.match(/gutternode.*?(\d{14}-\w{7})/)
+    const blockId = blockIdMatch?.[1]
+    if (blockId) {
+      try {
+        const response = await request('/api/block/getRefText', { id: blockId })
+        if (response) {
+          const newNode = {
+            id: generateWhiteBoardNodeId(),
+            type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_PROTYLE,
+            position: rendererPoint,
+            data: {
+              blockId,
+            },
+            width: moduleWhiteBoardOptions.value.cardWidthDefault,
+            height: moduleWhiteBoardOptions.value.cardHeightDefault,
+            connectable: true,
+            draggable: true,
+            selectable: true,
+          }
+          addNodes([newNode])
+        }
+      } catch (err) {
+        console.error('处理编辑器内容区域块ID时出错:', err)
+      }
+    }
+  }
 }
 </script>
 
@@ -890,6 +1229,50 @@ const onCenterView = () => {
       border-radius: var(--b3-border-radius);
       padding: 4px;
       box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  :deep(.vue-flow__selection) {
+    background: rgba(var(--primary-6), 0.08);
+    border: 2px solid rgb(var(--primary-6));
+    border-radius: var(--b3-border-radius);
+  }
+
+  :deep(.vue-flow__node.selected) {
+    .EnWhiteBoardNodeProtyleContainer {
+      border-color: rgb(var(--primary-6));
+      box-shadow: 0 0 0 2px rgba(var(--primary-6), 0.1);
+    }
+  }
+}
+
+.EnWhiteBoardMultipleSelectionToolbar {
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: var(--b3-border-radius);
+  padding: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  pointer-events: all;
+  white-space: nowrap;
+
+  .arco-btn-group {
+    display: flex;
+    gap: 4px;
+  }
+
+  .arco-btn {
+    padding: 0 8px;
+    height: 24px;
+    line-height: 24px;
+    font-size: 12px;
+    background-color: var(--b3-theme-background);
+
+    &:hover {
+      background-color: var(--b3-theme-surface-light);
+    }
+
+    .arco-icon {
+      font-size: 14px;
     }
   }
 }
