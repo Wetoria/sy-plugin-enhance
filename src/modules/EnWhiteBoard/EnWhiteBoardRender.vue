@@ -96,6 +96,7 @@
           <EnWhiteBoardNodeProtyle
             :nodeProps="node"
             :enWhiteBoardProtyleUtilAreaRef="EnWhiteBoardProtyleUtilAreaRef"
+            @open-in-sidebar="handleOpenInSidebar"
           />
         </template>
         <template #edge-EnWhiteBoardEdgeBase="edge">
@@ -323,13 +324,35 @@
         <slot name="SiderRightTopButtonGroupAfter" />
       </template>
 
-      <EnWhiteBoardSettings
-        :whiteBoardId="data.whiteBoardId"
-        :nodeId="data.nodeId"
-      />
+      <template v-if="embedWhiteBoardConfigData.boardOptions.selectedNodeId">
+        <EnProtyle
+          :block-id="embedWhiteBoardConfigData.boardOptions.selectedBlockId"
+          disableEnhance
+        />
+      </template>
+      <template v-else>
+        <EnWhiteBoardSettings
+          :whiteBoardId="data.whiteBoardId"
+          :nodeId="data.nodeId"
+        />
+      </template>
 
       <template #SiderBottomButtonGroupBefore>
         <slot name="SiderRightBottomButtonGroupBefore" />
+        <a-tooltip content="设置">
+          <a-button @click="() => embedWhiteBoardConfigData.boardOptions.selectedNodeId = undefined">
+            <template #icon>
+              <icon-settings />
+            </template>
+          </a-button>
+        </a-tooltip>
+        <a-tooltip content="节点内容">
+          <a-button @click="handleShowSelectedNode">
+            <template #icon>
+              <icon-edit />
+            </template>
+          </a-button>
+        </a-tooltip>
       </template>
       <template #SiderBottomButtonGroupAfter>
         <slot name="SiderRightBottomButtonGroupAfter" />
@@ -1075,6 +1098,42 @@ const onDrop = async (event: DragEvent) => {
         console.error('处理编辑器内容区域块ID时出错:', err)
       }
     }
+  }
+}
+
+const handleOpenInSidebar = (nodeId: string, blockId: string) => {
+  // 打开右侧栏
+  embedBlockOptions.value.SiderRightShow = true
+  embedBlockOptions.value.SiderRightWidth = moduleWhiteBoardOptions.value.siderRightWidthDefault
+
+  // 存储当前选中的节点信息
+  embedWhiteBoardConfigData.value.boardOptions.selectedNodeId = nodeId
+  embedWhiteBoardConfigData.value.boardOptions.selectedBlockId = blockId
+}
+
+// 添加切换侧边栏内容的处理函数
+const handleToggleSidebarContent = () => {
+  if (embedWhiteBoardConfigData.value.boardOptions.selectedNodeId) {
+    // 如果当前显示的是节点内容,切换到设置面板
+    embedWhiteBoardConfigData.value.boardOptions.selectedNodeId = undefined
+    embedWhiteBoardConfigData.value.boardOptions.selectedBlockId = undefined
+  } else {
+    // 如果当前显示的是设置面板,尝试恢复上一次查看的节点
+    const selectedNodes = getSelectedNodes.value
+    if (selectedNodes.length === 1) {
+      const lastSelectedNode = selectedNodes[0]
+      embedWhiteBoardConfigData.value.boardOptions.selectedNodeId = lastSelectedNode.id
+      embedWhiteBoardConfigData.value.boardOptions.selectedBlockId = lastSelectedNode.data.blockId
+    }
+  }
+}
+
+const handleShowSelectedNode = () => {
+  const selectedNodes = getSelectedNodes.value
+  if (selectedNodes.length === 1) {
+    const lastSelectedNode = selectedNodes[0]
+    embedWhiteBoardConfigData.value.boardOptions.selectedNodeId = lastSelectedNode.id
+    embedWhiteBoardConfigData.value.boardOptions.selectedBlockId = lastSelectedNode.data.blockId
   }
 }
 </script>

@@ -88,6 +88,13 @@
               </template>
             </a-dropdown>
           </a-tooltip>
+          <a-tooltip content="在侧边栏中打开">
+            <a-button @click="onOpenInSidebar">
+              <template #icon>
+                <icon-right />
+              </template>
+            </a-button>
+          </a-tooltip>
           <a-tooltip content="节点颜色">
             <a-dropdown trigger="click">
               <a-button>
@@ -804,6 +811,7 @@ const emit = defineEmits<{
   removeNode: [nodeId: string]
   duplicateNode: [nodeId: string]
   removeEdge: [edgeId: string]
+  openInSidebar: [nodeId: string]
 }>()
 
 const {
@@ -1076,6 +1084,12 @@ const onNodeColorChange = (color: string) => {
   setNodes(newNodes)
   if (props.whiteBoardConfigData) {
     props.whiteBoardConfigData.boardOptions.nodes = newNodes
+  }
+}
+
+const onOpenInSidebar = () => {
+  if (props.nodeId) {
+    emit('openInSidebar', props.nodeId)
   }
 }
 </script>

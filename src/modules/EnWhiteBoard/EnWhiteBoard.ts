@@ -155,6 +155,11 @@ export interface EnWhiteBoardConfig {
 
     backgroundVariant: 'dots' | 'lines' | 'none'
     useCustomBackground: boolean
+
+    // 当前在侧边栏中选中的节点ID
+    selectedNodeId?: string
+    // 当前在侧边栏中选中的块ID
+    selectedBlockId?: string
   }
 }
 
