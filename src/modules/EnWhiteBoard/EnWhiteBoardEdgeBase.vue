@@ -6,7 +6,7 @@
     @dblclick="onLabelDblClick"
   >
     <template
-      v-if="showToolbar"
+      v-if="showToolbar && !isMultipleNodesSelected"
       #toolbar
     >
       <EnWhiteBoardToolBar
@@ -19,7 +19,7 @@
   </BaseEdge>
   <EdgeLabelRenderer>
     <div
-      v-if="isSelected && edgeId"
+      v-if="isSelected && edgeId && !isMultipleNodesSelected"
       class="nodrag nopan EnWhiteBoardEdgeToolbar"
       :style="{
         pointerEvents: 'all',
@@ -214,6 +214,7 @@ const {
   edges,
   setEdges,
   getSelectedEdges,
+  getSelectedNodes,
   viewport,
 } = useVueFlow()
 
@@ -343,6 +344,10 @@ const whiteBoardConfigData = computed(() => {
 const path = computed(() => {
   const data = getData()
   return data.path || edgePathParams.value[0]
+})
+
+const isMultipleNodesSelected = computed(() => {
+  return getSelectedNodes.value.length > 1
 })
 </script>
 
