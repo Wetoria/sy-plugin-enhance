@@ -99,13 +99,15 @@
                 <div class="EdgeColorPicker">
                   <div class="ColorRow">
                     <div
-                      class="ColorItem is-default"
+                      class="ColorItem is-clear"
                       :style="{
                         backgroundColor: 'var(--b3-theme-surface)',
                         border: '1px solid var(--b3-border-color)',
                       }"
-                      @click="onNodeColorChange('var(--b3-theme-on-surface)')"
-                    />
+                      @click="onNodeColorChange('clear')"
+                    >
+                      <icon-close />
+                    </div>
                     <div
                       v-for="color in [
                         'var(--b3-font-background1)',
@@ -1050,15 +1052,22 @@ const onNodeColorChange = (color: string) => {
   const nodes = getNodes.value
   const newNodes = nodes.map((node) => {
     if (node.id === props.nodeId) {
+      const newData = {
+        ...node.data,
+        style: {
+          ...node.data?.style,
+        },
+      }
+
+      if (color === 'clear') {
+        delete newData.style.backgroundColor
+      } else {
+        newData.style.backgroundColor = color
+      }
+
       return {
         ...node,
-        data: {
-          ...node.data,
-          style: {
-            ...node.data?.style,
-            backgroundColor: color === 'default' ? undefined : color,
-          },
-        },
+        data: newData,
       }
     }
     return node
@@ -1270,13 +1279,17 @@ const onNodeColorChange = (color: string) => {
       cursor: pointer;
       border: 1px solid var(--b3-border-color);
       transition: transform 0.15s ease-in-out;
+      display: flex;
+      align-items: center;
+      justify-content: center;
 
       &:hover {
         transform: scale(1.1);
       }
 
-      &.is-default {
+      &.is-clear {
         background: var(--b3-theme-surface);
+        color: var(--b3-theme-on-surface);
       }
     }
   }
@@ -1311,13 +1324,17 @@ const onNodeColorChange = (color: string) => {
       cursor: pointer;
       border: 1px solid var(--b3-border-color);
       transition: transform 0.15s ease-in-out;
+      display: flex;
+      align-items: center;
+      justify-content: center;
 
       &:hover {
         transform: scale(1.1);
       }
 
-      &.is-default {
+      &.is-clear {
         background: var(--b3-theme-surface);
+        color: var(--b3-theme-on-surface);
       }
     }
   }
