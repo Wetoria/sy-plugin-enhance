@@ -102,6 +102,13 @@ export function getWhiteBoardConfigPathById(whiteBoardId: string) {
 export interface EnWhiteBoardNodeData {
   // 思源块 id
   blockId: string
+  // 节点样式配置
+  style?: {
+    // 节点变体类型: default | card | note
+    variant?: 'default' | 'card' | 'note'
+    // 节点背景色
+    backgroundColor?: string
+  }
 }
 
 export interface EnWhiteBoardEdgeData {

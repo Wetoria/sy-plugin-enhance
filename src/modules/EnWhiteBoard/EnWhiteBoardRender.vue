@@ -686,7 +686,6 @@ onNodesChange((changes) => {
   hideAllHelper()
 
   changes.forEach((change) => {
-
     if (change.type !== 'add') {
       const targetNode = nodes.value.find((node) => node.id === (change as Exclude<NodeChange, NodeAddChange>).id)
       if (!targetNode) {
@@ -709,6 +708,11 @@ onNodesChange((changes) => {
       }
     }
   })
+
+  // 同步更新配置数据
+  if (embedWhiteBoardConfigData.value) {
+    embedWhiteBoardConfigData.value.boardOptions.nodes = getNodes.value
+  }
 })
 
 onEdgesChange((changes) => {
