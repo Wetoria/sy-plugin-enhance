@@ -292,8 +292,8 @@
           :zoomable="true"
           :pannable="true"
           maskColor="transparent"
-          :nodeColor="(node) => node.data?.style?.backgroundColor || 'var(--b3-theme-primary)'"
-          :nodeStrokeColor="(node) => node.data?.style?.backgroundColor ? 'transparent' : 'var(--b3-theme-on-surface)'"
+          :nodeColor="(node) => node.data?.style?.backgroundColor || 'var(--color-neutral-4)'"
+          :nodeStrokeColor="(node) => node.data?.style?.backgroundColor ? 'transparent' : 'var(--b3-border-color)'"
           @nodeClick="onNodeMinimapClick"
         />
       </VueFlow>
