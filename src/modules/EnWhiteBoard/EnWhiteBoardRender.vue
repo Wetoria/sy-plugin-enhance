@@ -292,6 +292,8 @@
           :zoomable="true"
           :pannable="true"
           maskColor="transparent"
+          :nodeColor="(node) => node.data?.style?.backgroundColor || 'var(--b3-theme-primary)'"
+          :nodeStrokeColor="(node) => node.data?.style?.backgroundColor ? 'transparent' : 'var(--b3-theme-on-surface)'"
           @nodeClick="onNodeMinimapClick"
         />
       </VueFlow>
@@ -1110,11 +1112,11 @@ const onDrop = async (event: DragEvent) => {
     }
 
     .vue-flow__minimap-node {
-      fill: var(--b3-theme-primary);
-      stroke: var(--b3-theme-on-surface);
+      /*fill: currentColor;*/
+      stroke: currentColor;
       stroke-width: 1;
       cursor: pointer;
-      opacity: 0.6;
+      opacity: 0.3;
 
       &:hover {
         opacity: 1;
