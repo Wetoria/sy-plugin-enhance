@@ -426,6 +426,7 @@ const {
   onViewportChange,
   setCenter,
   fitView: rawFitView,
+  getNodes,
 } = useVueFlow({
   connectOnClick: true,
 })
@@ -627,6 +628,10 @@ const createNewNode = (x: number, y: number) => {
       selectable: true,
     }
     addNodes([newNode])
+    // 同步更新配置数据
+    if (embedWhiteBoardConfigData.value) {
+      embedWhiteBoardConfigData.value.boardOptions.nodes = getNodes.value
+    }
     handleWith(
       () => {
         const targetNode = getWhiteBoardCardMainByWhiteBoardNodeId(EnWhiteBoardRenderContainerRef.value, newEnFlowNodeId)
@@ -984,6 +989,10 @@ const onDrop = async (event: DragEvent) => {
           }
           // 使用 addNodes 而不是直接修改 nodes.value
           addNodes([newNode])
+          // 同步更新配置数据
+          if (embedWhiteBoardConfigData.value) {
+            embedWhiteBoardConfigData.value.boardOptions.nodes = getNodes.value
+          }
         }
       } catch (err) {
         console.error('处理文件ID时出错:', err)
@@ -1014,6 +1023,10 @@ const onDrop = async (event: DragEvent) => {
             selectable: true,
           }
           addNodes([newNode])
+          // 同步更新配置数据
+          if (embedWhiteBoardConfigData.value) {
+            embedWhiteBoardConfigData.value.boardOptions.nodes = getNodes.value
+          }
         }
       } catch (err) {
         console.error('处理gutter块ID时出错:', err)
@@ -1047,6 +1060,10 @@ const onDrop = async (event: DragEvent) => {
             selectable: true,
           }
           addNodes([newNode])
+          // 同步更新配置数据
+          if (embedWhiteBoardConfigData.value) {
+            embedWhiteBoardConfigData.value.boardOptions.nodes = getNodes.value
+          }
         }
       } catch (err) {
         console.error('处理编辑器内容区域块ID时出错:', err)
