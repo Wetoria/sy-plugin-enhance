@@ -615,7 +615,11 @@ const createNewNode = (x: number, y: number) => {
       data: {
         blockId,
       },
-      position: rendererPoint,
+      // 使用转换后的坐标
+      position: {
+        x: rendererPoint.x,
+        y: rendererPoint.y,
+      },
       width: moduleWhiteBoardOptions.value.cardWidthDefault,
       height: moduleWhiteBoardOptions.value.cardHeightDefault,
       connectable: true,
