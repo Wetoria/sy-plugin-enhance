@@ -14,6 +14,7 @@
       :style="{ transform: 'translateY(-8px)' }"
       @remove-node="handleRemoveNode"
       @duplicate-node="handleDuplicateNode"
+      @open-in-sidebar="handleOpenInSidebar"
     />
   </NodeToolbar>
   <div
@@ -168,6 +169,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   clickCard: [element: HTMLElement]
+  openInSidebar: [nodeId: string, blockId: string]
 }>()
 
 const {
@@ -430,6 +432,12 @@ const isSelected = computed(() => {
   const selectedNodes = getSelectedNodes.value
   return selectedNodes.some((node) => node.id === flowNode.id)
 })
+
+const handleOpenInSidebar = () => {
+  if (flowNode.id && nodeData.value.blockId) {
+    emit('openInSidebar', flowNode.id, nodeData.value.blockId)
+  }
+}
 </script>
 
 <style lang="scss" scoped>

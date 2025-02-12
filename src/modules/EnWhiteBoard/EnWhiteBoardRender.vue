@@ -96,6 +96,7 @@
           <EnWhiteBoardNodeProtyle
             :nodeProps="node"
             :enWhiteBoardProtyleUtilAreaRef="EnWhiteBoardProtyleUtilAreaRef"
+            @open-in-sidebar="handleOpenInSidebar"
           />
         </template>
         <template #edge-EnWhiteBoardEdgeBase="edge">
@@ -292,6 +293,8 @@
           :zoomable="true"
           :pannable="true"
           maskColor="transparent"
+          :nodeColor="(node) => node.data?.style?.backgroundColor || 'var(--color-neutral-4)'"
+          :nodeStrokeColor="(node) => node.data?.style?.backgroundColor ? 'transparent' : 'var(--b3-border-color)'"
           @nodeClick="onNodeMinimapClick"
         />
       </VueFlow>
@@ -321,13 +324,35 @@
         <slot name="SiderRightTopButtonGroupAfter" />
       </template>
 
-      <EnWhiteBoardSettings
-        :whiteBoardId="data.whiteBoardId"
-        :nodeId="data.nodeId"
-      />
+      <template v-if="embedWhiteBoardConfigData.boardOptions.selectedNodeId">
+        <EnProtyle
+          :block-id="embedWhiteBoardConfigData.boardOptions.selectedBlockId"
+          disableEnhance
+        />
+      </template>
+      <template v-else>
+        <EnWhiteBoardSettings
+          :whiteBoardId="data.whiteBoardId"
+          :nodeId="data.nodeId"
+        />
+      </template>
 
       <template #SiderBottomButtonGroupBefore>
         <slot name="SiderRightBottomButtonGroupBefore" />
+        <a-tooltip content="设置">
+          <a-button @click="() => embedWhiteBoardConfigData.boardOptions.selectedNodeId = undefined">
+            <template #icon>
+              <icon-settings />
+            </template>
+          </a-button>
+        </a-tooltip>
+        <a-tooltip content="节点内容">
+          <a-button @click="handleShowSelectedNode">
+            <template #icon>
+              <icon-edit />
+            </template>
+          </a-button>
+        </a-tooltip>
       </template>
       <template #SiderBottomButtonGroupAfter>
         <slot name="SiderRightBottomButtonGroupAfter" />
@@ -426,6 +451,7 @@ const {
   onViewportChange,
   setCenter,
   fitView: rawFitView,
+  getNodes,
 } = useVueFlow({
   connectOnClick: true,
 })
@@ -615,7 +641,11 @@ const createNewNode = (x: number, y: number) => {
       data: {
         blockId,
       },
-      position: rendererPoint,
+      // 使用转换后的坐标
+      position: {
+        x: rendererPoint.x,
+        y: rendererPoint.y,
+      },
       width: moduleWhiteBoardOptions.value.cardWidthDefault,
       height: moduleWhiteBoardOptions.value.cardHeightDefault,
       connectable: true,
@@ -623,6 +653,10 @@ const createNewNode = (x: number, y: number) => {
       selectable: true,
     }
     addNodes([newNode])
+    // 同步更新配置数据
+    if (embedWhiteBoardConfigData.value) {
+      embedWhiteBoardConfigData.value.boardOptions.nodes = getNodes.value
+    }
     handleWith(
       () => {
         const targetNode = getWhiteBoardCardMainByWhiteBoardNodeId(EnWhiteBoardRenderContainerRef.value, newEnFlowNodeId)
@@ -677,7 +711,6 @@ onNodesChange((changes) => {
   hideAllHelper()
 
   changes.forEach((change) => {
-
     if (change.type !== 'add') {
       const targetNode = nodes.value.find((node) => node.id === (change as Exclude<NodeChange, NodeAddChange>).id)
       if (!targetNode) {
@@ -700,6 +733,11 @@ onNodesChange((changes) => {
       }
     }
   })
+
+  // 同步更新配置数据
+  if (embedWhiteBoardConfigData.value) {
+    embedWhiteBoardConfigData.value.boardOptions.nodes = getNodes.value
+  }
 })
 
 onEdgesChange((changes) => {
@@ -980,6 +1018,10 @@ const onDrop = async (event: DragEvent) => {
           }
           // 使用 addNodes 而不是直接修改 nodes.value
           addNodes([newNode])
+          // 同步更新配置数据
+          if (embedWhiteBoardConfigData.value) {
+            embedWhiteBoardConfigData.value.boardOptions.nodes = getNodes.value
+          }
         }
       } catch (err) {
         console.error('处理文件ID时出错:', err)
@@ -1010,6 +1052,10 @@ const onDrop = async (event: DragEvent) => {
             selectable: true,
           }
           addNodes([newNode])
+          // 同步更新配置数据
+          if (embedWhiteBoardConfigData.value) {
+            embedWhiteBoardConfigData.value.boardOptions.nodes = getNodes.value
+          }
         }
       } catch (err) {
         console.error('处理gutter块ID时出错:', err)
@@ -1043,11 +1089,51 @@ const onDrop = async (event: DragEvent) => {
             selectable: true,
           }
           addNodes([newNode])
+          // 同步更新配置数据
+          if (embedWhiteBoardConfigData.value) {
+            embedWhiteBoardConfigData.value.boardOptions.nodes = getNodes.value
+          }
         }
       } catch (err) {
         console.error('处理编辑器内容区域块ID时出错:', err)
       }
     }
+  }
+}
+
+const handleOpenInSidebar = (nodeId: string, blockId: string) => {
+  // 打开右侧栏
+  embedBlockOptions.value.SiderRightShow = true
+  embedBlockOptions.value.SiderRightWidth = moduleWhiteBoardOptions.value.siderRightWidthDefault
+
+  // 存储当前选中的节点信息
+  embedWhiteBoardConfigData.value.boardOptions.selectedNodeId = nodeId
+  embedWhiteBoardConfigData.value.boardOptions.selectedBlockId = blockId
+}
+
+// 添加切换侧边栏内容的处理函数
+const handleToggleSidebarContent = () => {
+  if (embedWhiteBoardConfigData.value.boardOptions.selectedNodeId) {
+    // 如果当前显示的是节点内容,切换到设置面板
+    embedWhiteBoardConfigData.value.boardOptions.selectedNodeId = undefined
+    embedWhiteBoardConfigData.value.boardOptions.selectedBlockId = undefined
+  } else {
+    // 如果当前显示的是设置面板,尝试恢复上一次查看的节点
+    const selectedNodes = getSelectedNodes.value
+    if (selectedNodes.length === 1) {
+      const lastSelectedNode = selectedNodes[0]
+      embedWhiteBoardConfigData.value.boardOptions.selectedNodeId = lastSelectedNode.id
+      embedWhiteBoardConfigData.value.boardOptions.selectedBlockId = lastSelectedNode.data.blockId
+    }
+  }
+}
+
+const handleShowSelectedNode = () => {
+  const selectedNodes = getSelectedNodes.value
+  if (selectedNodes.length === 1) {
+    const lastSelectedNode = selectedNodes[0]
+    embedWhiteBoardConfigData.value.boardOptions.selectedNodeId = lastSelectedNode.id
+    embedWhiteBoardConfigData.value.boardOptions.selectedBlockId = lastSelectedNode.data.blockId
   }
 }
 </script>
@@ -1085,11 +1171,11 @@ const onDrop = async (event: DragEvent) => {
     }
 
     .vue-flow__minimap-node {
-      fill: var(--b3-theme-primary);
-      stroke: var(--b3-theme-on-surface);
+      /*fill: currentColor;*/
+      stroke: currentColor;
       stroke-width: 1;
       cursor: pointer;
-      opacity: 0.6;
+      opacity: 0.3;
 
       &:hover {
         opacity: 1;
