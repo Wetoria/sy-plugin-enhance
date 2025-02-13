@@ -375,7 +375,7 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 4px 8px;
+  padding: 4px 8px 4px 0;
 
   .action-group {
     display: flex;

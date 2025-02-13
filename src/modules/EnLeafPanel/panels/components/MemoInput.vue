@@ -205,8 +205,6 @@ onBeforeUnmount(() => {
   background: var(--b3-theme-background);
   border-radius: var(--b3-border-radius);
   padding: 0px;
-  width: calc(100% - 16px);
-  margin-right: 8px;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -217,6 +215,7 @@ onBeforeUnmount(() => {
     min-height: 0;
     display: flex;
     flex-direction: column;
+    padding: 12px;
 
     :deep(.EnProtyleContainer) {
       flex: 1;

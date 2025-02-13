@@ -398,11 +398,17 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="scss">
+.fn__flex-1.sy__sy-plugin-enhancesy_plugin_enhance_dock,
+.fn__flex-1.sy__sy-plugin-enhancesy_plugin_enhance_dock > div,
+.fn__flex-1.sy__sy-plugin-enhancesy_plugin_enhance_dock > div > .fn__flex-1.fn__flex-column {
+    max-height: 100% !important;
+    overflow: hidden ;
+};
+
 .en-user-memo {
   display: flex;
   flex-direction: column;
   height: 100%;
-  gap: 8px;
   padding: 0px;
   max-height: 100%;
 
@@ -431,6 +437,7 @@ onBeforeUnmount(() => {
       .memo-input-area {
         width: 50%;
         flex-shrink: 0;
+        padding: 0 8px;
       }
     }
 
@@ -454,7 +461,7 @@ onBeforeUnmount(() => {
         &.active {
           width: 24px;
           opacity: 0.3;
-          background: var(--b3-theme-primary);
+          background: var(--b3-theme-on-surface);
         }
       }
     }
@@ -470,7 +477,7 @@ onBeforeUnmount(() => {
 
     .timeline-header {
       flex-shrink: 0;
-      padding-bottom: 24px;
+      padding-bottom: 8px;
     }
 
     .timeline-content {
