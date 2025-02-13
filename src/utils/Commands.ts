@@ -20,6 +20,8 @@ const commandOrder = [
 
   'En_VideoAndAudio_Pin',
 
+  EN_COMMAND_KEYS.EN_LIFELOG_OPEN_GRAPH_MODAL,
+
   'En_FontStyle',
 ]
 

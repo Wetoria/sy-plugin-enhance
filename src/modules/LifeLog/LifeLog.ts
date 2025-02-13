@@ -248,7 +248,7 @@ export function injectSplitedLifeLogRecords(): ComputedRef<Array<ILifeLogRecord>
 
 
 export function getTargetLifelogRecordsByDateList(lifelogRecords: Array<ILifeLogRecord>, dateList: Array<string>): Array<ILifeLogRecord> {
-  if (!dateList.length) return
+  if (!dateList.length) return []
 
   const isMultiDate = dateList.length > 1
   if (isMultiDate) {

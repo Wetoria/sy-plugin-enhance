@@ -104,6 +104,8 @@ const globalWindowDataModule = useGlobalData<GlobalWindowData>(EN_CONSTANTS.GLOB
     isInSiyuanWindowHtml: isInWindowHtml,
     isInEnWindow: isInEnWindow(),
 
+    loadingLifeLogData: false,
+
     protyleList: [],
   },
   needSave: false,
