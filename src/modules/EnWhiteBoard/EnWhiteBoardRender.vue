@@ -38,6 +38,13 @@
           @center-view="() => setCenter(0, 0, { duration: 800 })"
         >
           <template #after>
+            <a-tooltip content="添加分组">
+              <a-button @click="() => createFrameNode(0, 0)">
+                <template #icon>
+                  <icon-apps />
+                </template>
+              </a-button>
+            </a-tooltip>
             <slot name="topButtonGroup" />
           </template>
         </EnWhiteBoardToolBar>
@@ -97,6 +104,11 @@
             :nodeProps="node"
             :enWhiteBoardProtyleUtilAreaRef="EnWhiteBoardProtyleUtilAreaRef"
             @open-in-sidebar="handleOpenInSidebar"
+          />
+        </template>
+        <template #node-EnWhiteBoardNodeFrame="node">
+          <EnWhiteBoardNodeFrame
+            :nodeProps="node"
           />
         </template>
         <template #edge-EnWhiteBoardEdgeBase="edge">
@@ -424,6 +436,7 @@ import {
   watch,
   watchEffect,
 } from 'vue'
+import EnWhiteBoardNodeFrame from './EnWhiteBoardNodeFrame.vue'
 import EnWhiteBoardNodeProtyle from './EnWhiteBoardNodeProtyle.vue'
 import EnWhiteBoardSettings from './EnWhiteBoardSettings.vue'
 import EnWhiteBoardToolBar from './EnWhiteBoardToolBar.vue'
@@ -1197,6 +1210,33 @@ const targetProtyleUtilClassList = [
   'protyle-toolbar',
   'protyle-hint',
 ]
+
+// 添加创建 Frame 节点的函数
+const createFrameNode = (x: number, y: number) => {
+  const rendererPoint = pointToRendererPoint({
+    x,
+    y,
+  }, viewport.value)
+
+  const newNode = {
+    id: generateWhiteBoardNodeId(),
+    type: 'EnWhiteBoardNodeFrame',
+    data: {
+      label: '新建分组',
+    },
+    position: rendererPoint,
+    width: 400,
+    height: 300,
+    connectable: true,
+    draggable: true,
+    selectable: true,
+  }
+
+  addNodes([newNode])
+  if (embedWhiteBoardConfigData.value) {
+    embedWhiteBoardConfigData.value.boardOptions.nodes = getNodes.value
+  }
+}
 </script>
 
 <style lang="scss" scoped>
