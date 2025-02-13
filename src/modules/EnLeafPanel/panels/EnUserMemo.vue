@@ -82,7 +82,7 @@ const memos = ref<Memo[]>([])
 const isEditing = ref(false)
 const editingIndex = ref(-1)
 const selectedDates = ref<string[]>([])
-const activeFilter = ref<FilterType>()
+const activeFilter = ref<FilterType>('daily')
 const activeTab = ref<'calendar' | 'input'>('calendar')
 
 const editingBlockId = computed(() => {
@@ -384,6 +384,8 @@ onMounted(() => {
   initContainerWidth()
   // 监听窗口大小变化
   window.addEventListener('resize', initContainerWidth)
+  // 默认触发日记标签
+  activeFilter.value = 'daily'
 })
 
 onBeforeUnmount(() => {

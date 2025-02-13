@@ -57,12 +57,32 @@ const emit = defineEmits<{
 }>()
 
 // 监听 props 变化
-watch(() => props.modelValue, (newValue) => {
+watch(() => props.modelValue, async (newValue) => {
   if (!newValue) {
     // 如果状态被清空，也清空日记信息
     emit('dailyNoteInfo', { dailyNotes: [] })
+    return
   }
-})
+
+  // 加载对应类型的数据
+  try {
+    let notes = []
+    if (newValue === 'daily') {
+      notes = await getDailyNotes() || []
+      console.log('Daily notes loaded:', notes)
+    } else if (newValue === 'whiteboard') {
+      notes = await getWhiteboardNotes() || []
+      console.log('Whiteboard notes loaded:', notes)
+    } else if (newValue === 'annotation') {
+      notes = await getAnnotationNotes() || []
+      console.log('Annotation notes loaded:', notes)
+    }
+    emit('dailyNoteInfo', { dailyNotes: notes })
+  } catch (err) {
+    console.error(`Failed to get ${newValue} notes:`, err)
+    emit('dailyNoteInfo', { dailyNotes: [] })
+  }
+}, { immediate: true })
 
 // 递归获取父块ID
 async function getParentBlockIds(blockId: string, parentId: string | null): Promise<string[]> {
@@ -340,6 +360,12 @@ onMounted(() => {
   const { moduleOptions } = useWhiteBoardModule()
   if (moduleOptions.value.enabled && !whiteBoardRef.indexMap) {
     loadWhiteBoard()
+  }
+  // 自动加载日记数据
+  if (props.modelValue === 'daily') {
+    getDailyNotes().then((notes) => {
+      emit('dailyNoteInfo', { dailyNotes: notes })
+    })
   }
 })
 </script>
