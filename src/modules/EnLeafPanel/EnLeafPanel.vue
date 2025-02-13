@@ -2,7 +2,7 @@
   <div class="fn__flex-1 fn__flex-column">
     <div class="block__icons">
       <div class="block__logo">
-        <svg><use xlink:href="#iconEnLeaf"></use></svg>
+        <EnIconLeaf2 />
         叶归
       </div>
       <span class="fn__flex-1"></span>
@@ -30,6 +30,7 @@
 </template>
 
 <script setup lang="ts">
+import EnIconLeaf2 from '@/components/EnIconLeaf2.vue'
 import { usePlugin } from '@/main'
 import EnUserMemo from './panels/EnUserMemo.vue'
 
