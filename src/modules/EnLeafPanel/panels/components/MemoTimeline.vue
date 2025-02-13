@@ -54,6 +54,13 @@
                   :block-id="memo.blockId"
                   :preview="true"
                   disableEnhance
+                  :options="{
+                    render: {
+                      gutter: false,
+                      breadcrumb: false,
+                      scroll: false,
+                    },
+                  }"
                   @after="(protyle) => afterProtyleLoad(protyle, index)"
                 />
                 <div
@@ -139,6 +146,12 @@ const targetProtyleUtilClassList = [
 const afterProtyleLoad = (protyle: Protyle, index: number) => {
   console.log('Protyle loaded for memo:', props.memos[index])
   protyleRefs.value.set(index, protyle)
+
+  // 设置为只读
+  const wysiwygEl = protyle.protyle.wysiwyg.element
+  if (wysiwygEl) {
+    wysiwygEl.setAttribute('contenteditable', 'false')
+  }
 
   // 移动工具区域到指定位置
   const utilArea = document.querySelector(`.protyle-util-area[data-memo-index="${index}"]`)
