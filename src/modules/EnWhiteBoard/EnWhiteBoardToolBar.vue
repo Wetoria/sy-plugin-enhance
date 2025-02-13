@@ -95,6 +95,14 @@
               </template>
             </a-button>
           </a-tooltip>
+          <a-tooltip :content="nodeData?.isCollapsed ? '展开节点' : '折叠节点'">
+            <a-button @click="onCollapse">
+              <template #icon>
+                <icon-caret-down v-if="!nodeData?.isCollapsed" />
+                <icon-caret-right v-else />
+              </template>
+            </a-button>
+          </a-tooltip>
           <a-tooltip content="节点颜色">
             <a-dropdown trigger="click">
               <a-button>
@@ -812,6 +820,7 @@ const emit = defineEmits<{
   duplicateNode: [nodeId: string]
   removeEdge: [edgeId: string]
   openInSidebar: [nodeId: string]
+  collapse: []
 }>()
 
 const {
@@ -826,10 +835,17 @@ const {
 
 const isEditingLabel = ref(false)
 const editingLabelText = ref('')
+const isCollapsed = ref(false)
 
 const currentEdge = computed(() => {
   if (!props.edgeId) return null
   return edges.value.find((edge) => edge.id === props.edgeId)
+})
+
+const nodeData = computed(() => {
+  if (!props.nodeId) return null
+  const node = getNodes.value.find((node) => node.id === props.nodeId)
+  return node?.data
 })
 
 const onFitView = () => {
@@ -1092,6 +1108,10 @@ const onOpenInSidebar = () => {
     emit('openInSidebar', props.nodeId)
   }
 }
+
+const onCollapse = () => {
+  emit('collapse')
+}
 </script>
 
 <style lang="scss" scoped>
@@ -1351,6 +1371,13 @@ const onOpenInSidebar = () => {
         color: var(--b3-theme-on-surface);
       }
     }
+  }
+}
+
+.main {
+  &.collapsed {
+    height: 0;
+    overflow: hidden;
   }
 }
 </style>

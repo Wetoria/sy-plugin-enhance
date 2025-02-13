@@ -15,6 +15,7 @@
       @remove-node="handleRemoveNode"
       @duplicate-node="handleDuplicateNode"
       @open-in-sidebar="handleOpenInSidebar"
+      @collapse="handleCollapse"
     />
   </NodeToolbar>
   <div
@@ -24,18 +25,22 @@
       'variant-default': !nodeData.style?.variant || nodeData.style.variant === 'default',
       'variant-card': nodeData.style?.variant === 'card',
       'variant-note': nodeData.style?.variant === 'note',
+      'is-collapsed': isCollapsed,
     }"
     :data-en-flow-node-id="flowNode.id"
     :style="{
       '--en-card-width': `${flowNode.dimensions.width}px`,
-      '--en-card-height': `${flowNode.dimensions.height}px`,
+      '--en-card-height': isCollapsed ? '30px' : `${flowNode.dimensions.height}px`,
       'backgroundColor': nodeData.style?.backgroundColor,
     }"
   >
 
     <div class="ProtyleToolbarArea">
       <div class="infos">
-
+        <span
+          class="block-title"
+          :title="displayText"
+        >{{ displayText }}</span>
       </div>
 
       <div class="operations">
@@ -131,13 +136,14 @@
 </script>
 
 <script setup lang="ts">
+import { request } from '@/api'
 import EnProtyle from '@/components/EnProtyle.vue'
 import {
   generateWhiteBoardNodeId,
   useWhiteBoardModule,
 } from '@/modules/EnWhiteBoard/EnWhiteBoard'
-import { debounce } from '@/utils'
 
+import { debounce } from '@/utils'
 import {
   useSiyuanDatabaseIndexCommit,
   useSiyuanEventTransactions,
@@ -160,6 +166,7 @@ import {
   onBeforeUnmount,
   onMounted,
   ref,
+  watch,
 } from 'vue'
 import EnWhiteBoardToolBar from './EnWhiteBoardToolBar.vue'
 
@@ -178,6 +185,7 @@ const {
 
 const {
   node: flowNode,
+  updateNodeData,
 } = useNode()
 
 const {
@@ -376,6 +384,7 @@ onMounted(() => {
     removeNodeCreatedByOther(event)
     mergeTopLevelBlocksIntoSuperBlock()
   })
+  isCollapsed.value = flowNode.data?.isCollapsed || false
 })
 onBeforeUnmount(() => {
   if (offTransactionEvent) {
@@ -438,6 +447,93 @@ const handleOpenInSidebar = () => {
     emit('openInSidebar', flowNode.id, nodeData.value.blockId)
   }
 }
+
+const isCollapsed = ref(false)
+
+const handleCollapse = () => {
+  isCollapsed.value = !isCollapsed.value
+
+  // 更新节点数据
+  const nodes = getNodes.value
+  const newNodes = nodes.map((node) => {
+    if (node.id === flowNode.id) {
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          isCollapsed: isCollapsed.value,
+        },
+      }
+    }
+    return node
+  })
+  setNodes(newNodes)
+}
+
+// 修改块信息状态
+const blockInfo = ref({
+  title: '', // 文档标题
+  name: '', // 块命名
+  alias: '', // 块别名
+  type: '', // 块类型
+  content: '', // 块内容
+  docName: '', // 所属文档标题
+})
+
+// 获取块信息的函数
+const getBlockInfo = async (blockId: string) => {
+  try {
+    // 获取块信息
+    const blockResponse = await request('/api/block/getBlockInfo', { id: blockId })
+    if (blockResponse) {
+      // 获取块所属文档信息
+      const docResponse = await request('/api/block/getDocInfo', { id: blockId })
+
+      // 如果没有标题等信息，获取第一个子块的内容
+      let firstChildContent = ''
+      if (!blockResponse.name && !blockResponse.alias && blockResponse.type !== 'd') {
+        const childResponse = await request('/api/block/getChildBlocks', { id: blockId })
+        if (childResponse?.data?.length > 0) {
+          const firstChild = childResponse.data[0]
+          firstChildContent = firstChild.content?.substring(0, 7) || ''
+        }
+      }
+
+      blockInfo.value = {
+        title: blockResponse.type === 'd' ? blockResponse.name : '',
+        name: blockResponse.name || '',
+        alias: blockResponse.alias || '',
+        type: blockResponse.type || '',
+        content: firstChildContent,
+        docName: docResponse?.name || '',
+      }
+    }
+  } catch (error) {
+    console.error('获取块信息失败:', error)
+  }
+}
+
+// 计算显示的文本
+const displayText = computed(() => {
+  // 如果是文档块，直接显示文档标题
+  if (blockInfo.value.type === 'd') {
+    return blockInfo.value.title || '无标题文档'
+  }
+
+  // 按优先级显示：块命名 > 块别名 > 所属文档标题 > 第一个子块内容 > 默认文本
+  return blockInfo.value.name
+    || blockInfo.value.alias
+    || blockInfo.value.docName
+    || blockInfo.value.content
+    || '未命名块'
+})
+
+// 监听 blockId 变化
+watch(() => nodeData.value?.blockId, async (newBlockId) => {
+  if (newBlockId) {
+    await getBlockInfo(newBlockId)
+  }
+}, { immediate: true })
 </script>
 
 <style lang="scss" scoped>
@@ -493,6 +589,25 @@ const handleOpenInSidebar = () => {
 
     box-sizing: border-box;
     padding: var(--en-gap);
+
+    .infos {
+      flex: 1;
+      overflow: hidden;
+      margin-right: var(--en-gap);
+
+      .block-title {
+        font-size: 12px;
+        color: var(--b3-theme-on-surface);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: block;
+      }
+    }
+
+    .operations {
+      flex-shrink: 0;
+    }
   }
 
   :deep(.vue-flow__resize-control) {
@@ -748,6 +863,42 @@ const handleOpenInSidebar = () => {
       height: 30px;
       background-color: rgba(0,0,0,0.1);
       border-radius: 0 0 20px 20px;
+    }
+  }
+
+  &.is-collapsed {
+    height: 30px !important;
+    min-height: 30px !important;
+    transition: height 0.3s ease-in-out;
+
+    .main {
+      display: none;
+    }
+
+    .ProtyleToolbarArea {
+      border-bottom: none;
+      border-radius: var(--b3-border-radius);
+      background-color: var(--b3-theme-surface);
+      height: 100%;
+    }
+
+    .Handle,
+    :deep(.vue-flow__resize-control) {
+      display: none;
+    }
+
+    &.variant-default {
+      border: 1px solid var(--b3-border-color);
+    }
+
+    &.variant-card {
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    &.variant-note {
+      &::before {
+        display: none;
+      }
     }
   }
 }
