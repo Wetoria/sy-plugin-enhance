@@ -441,22 +441,18 @@ onBeforeUnmount(() => {
       gap: 8px;
 
       .dot {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
+        width: 8px;
+        height: 8px;
+        border-radius: 4px;
         background: var(--b3-theme-on-surface);
-        opacity: 0.2;
+        opacity: 0.15;
         cursor: pointer;
-        transition: all 0.2s;
-
-        &:hover {
-          opacity: 0.3;
-        }
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
         &.active {
-          opacity: 0.5;
+          width: 24px;
+          opacity: 0.3;
           background: var(--b3-theme-primary);
-          transform: scale(1.2);
         }
       }
     }
