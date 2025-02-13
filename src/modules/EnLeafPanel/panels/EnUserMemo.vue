@@ -4,7 +4,7 @@
       <div
         ref="contentWrapperRef"
         class="memo-content-wrapper"
-        :style="{ transform: `translateX(${translateX}px)` }"
+        :style="{ transform: `translateX(${translateX}%)` }"
         @mousedown="startDrag"
         @mousemove="onDrag"
         @mouseup="endDrag"
@@ -121,7 +121,8 @@ const switchTab = (tab: 'calendar' | 'input') => {
   if (!containerWidth.value) {
     initContainerWidth()
   }
-  translateX.value = tab === 'calendar' ? 0 : -containerWidth.value
+  // 使用50%作为偏移单位，因为每个面板宽度是50%
+  translateX.value = tab === 'calendar' ? 0 : -50
 }
 
 // 开始拖动
@@ -138,10 +139,12 @@ const onDrag = (e: MouseEvent) => {
   if (!isDragging.value) return
 
   const deltaX = e.clientX - startX.value
-  let newTranslateX = startTranslateX.value + deltaX
+  // 将像素差转换为百分比
+  const percentageDelta = (deltaX / containerWidth.value) * 50
+  let newTranslateX = startTranslateX.value + percentageDelta
 
   // 限制拖动范围
-  newTranslateX = Math.max(-containerWidth.value, Math.min(0, newTranslateX))
+  newTranslateX = Math.max(-50, Math.min(0, newTranslateX))
   translateX.value = newTranslateX
 }
 
@@ -151,18 +154,12 @@ const endDrag = () => {
   isDragging.value = false
 
   // 根据拖动距离决定切换到哪个标签页
-  const threshold = containerWidth.value / 2
-  if (Math.abs(translateX.value) > threshold) {
+  if (Math.abs(translateX.value) > 25) {
     switchTab('input')
   } else {
     switchTab('calendar')
   }
 }
-
-// 监听标签页变化
-watch(activeTab, (tab) => {
-  switchTab(tab)
-})
 
 // 从块 ID 中获取时间
 function getTimeFromBlockId(blockId: string): string {
@@ -251,6 +248,10 @@ const addMemo = (memo: Memo) => {
 const editMemo = (index: number) => {
   isEditing.value = true
   editingIndex.value = index
+  // 使用导航点的切换功能
+  switchTab('input')
+  // 聚焦到输入框
+  enEventBus.emit(EN_EVENT_BUS_KEYS.MEMO_FOCUS_INPUT)
 }
 
 const deleteMemo = (index: number) => {
@@ -422,6 +423,7 @@ onBeforeUnmount(() => {
     .memo-content-wrapper {
       display: flex;
       width: 200%;
+      transform-origin: left;
       transition: transform 0.3s ease;
       user-select: none; // 防止拖动时选中文本
 

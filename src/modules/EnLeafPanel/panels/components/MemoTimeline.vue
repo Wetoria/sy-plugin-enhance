@@ -96,7 +96,6 @@ import type { Protyle } from 'siyuan'
 import type { PropType } from 'vue'
 import { request } from '@/api'
 import EnProtyle from '@/components/EnProtyle.vue'
-import { openDocById } from '@/utils/Note'
 import { VueFlow } from '@vue-flow/core'
 import { MiniMap } from '@vue-flow/minimap'
 import {
@@ -193,20 +192,6 @@ const renderWhiteboardMinimap = async (blockId: string) => {
 }
 
 const handleEdit = (index: number) => {
-  const memo = props.memos[index]
-  if (memo.type === 'daily' && memo.dailyNoteId) {
-    openDocById(memo.dailyNoteId)
-    return
-  } else if (memo.type === 'whiteboard') {
-    // 如果是白板，打开对应的文档
-    if (memo.docPath) {
-      const docId = memo.docPath.split('/').pop()
-      if (docId) {
-        openDocById(docId)
-      }
-    }
-    return
-  }
   emit('edit', index)
 }
 
