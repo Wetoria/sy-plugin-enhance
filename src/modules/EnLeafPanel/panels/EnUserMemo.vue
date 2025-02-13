@@ -1,26 +1,44 @@
 <template>
   <div class="en-user-memo">
-    <div class="memo-calendar-area">
-      <MemoCalendar
-        v-model="selectedDates"
-        :memos="memos"
-        :is-simple-mode="isInputActive"
-        @date-select="handleDateSelect"
-      />
-    </div>
-    <div
-      class="memo-input-area"
-      :class="{ active: isInputActive }"
-    >
-      <MemoInput
-        :is-editing="isEditing"
-        :editing-block-id="editingBlockId"
-        :editing-memo="editingMemo"
-        @submit="addMemo"
-        @cancel="cancelEdit"
-        @focus="handleInputFocus"
-        @blur="handleInputBlur"
-      />
+    <div class="memo-top-area">
+      <div
+        ref="contentWrapperRef"
+        class="memo-content-wrapper"
+        :style="{ transform: `translateX(${translateX}px)` }"
+        @mousedown="startDrag"
+        @mousemove="onDrag"
+        @mouseup="endDrag"
+        @mouseleave="endDrag"
+      >
+        <div class="memo-calendar-area">
+          <MemoCalendar
+            v-model="selectedDates"
+            :memos="memos"
+            @date-select="handleDateSelect"
+          />
+        </div>
+        <div class="memo-input-area">
+          <MemoInput
+            :is-editing="isEditing"
+            :editing-block-id="editingBlockId"
+            :editing-memo="editingMemo"
+            @submit="addMemo"
+            @cancel="cancelEdit"
+          />
+        </div>
+      </div>
+      <div class="memo-dots">
+        <div
+          class="dot"
+          :class="{ active: activeTab === 'calendar' }"
+          @click="switchTab('calendar')"
+        ></div>
+        <div
+          class="dot"
+          :class="{ active: activeTab === 'input' }"
+          @click="switchTab('input')"
+        ></div>
+      </div>
     </div>
     <div class="memo-timeline-area">
       <div class="timeline-header">
@@ -65,7 +83,7 @@ const isEditing = ref(false)
 const editingIndex = ref(-1)
 const selectedDates = ref<string[]>([])
 const activeFilter = ref<FilterType>()
-const isInputActive = ref(false)
+const activeTab = ref<'calendar' | 'input'>('calendar')
 
 const editingBlockId = computed(() => {
   if (isEditing.value && editingIndex.value !== -1) {
@@ -79,6 +97,71 @@ const editingMemo = computed(() => {
     return memos.value[editingIndex.value]
   }
   return undefined
+})
+
+// 添加滑动相关的状态
+const translateX = ref(0)
+const isDragging = ref(false)
+const startX = ref(0)
+const startTranslateX = ref(0)
+const containerWidth = ref(0)
+const contentWrapperRef = ref<HTMLElement | null>(null)
+
+// 初始化容器宽度
+const initContainerWidth = () => {
+  if (contentWrapperRef.value) {
+    containerWidth.value = contentWrapperRef.value.clientWidth / 2
+  }
+}
+
+// 切换标签页
+const switchTab = (tab: 'calendar' | 'input') => {
+  activeTab.value = tab
+  // 确保容器宽度已初始化
+  if (!containerWidth.value) {
+    initContainerWidth()
+  }
+  translateX.value = tab === 'calendar' ? 0 : -containerWidth.value
+}
+
+// 开始拖动
+const startDrag = (e: MouseEvent) => {
+  isDragging.value = true
+  startX.value = e.clientX
+  startTranslateX.value = translateX.value
+  // 获取容器宽度
+  initContainerWidth()
+}
+
+// 拖动中
+const onDrag = (e: MouseEvent) => {
+  if (!isDragging.value) return
+
+  const deltaX = e.clientX - startX.value
+  let newTranslateX = startTranslateX.value + deltaX
+
+  // 限制拖动范围
+  newTranslateX = Math.max(-containerWidth.value, Math.min(0, newTranslateX))
+  translateX.value = newTranslateX
+}
+
+// 结束拖动
+const endDrag = () => {
+  if (!isDragging.value) return
+  isDragging.value = false
+
+  // 根据拖动距离决定切换到哪个标签页
+  const threshold = containerWidth.value / 2
+  if (Math.abs(translateX.value) > threshold) {
+    switchTab('input')
+  } else {
+    switchTab('calendar')
+  }
+}
+
+// 监听标签页变化
+watch(activeTab, (tab) => {
+  switchTab(tab)
 })
 
 // 从块 ID 中获取时间
@@ -292,28 +375,23 @@ watch(() => filteredMemos.value, (newFilteredMemos) => {
   console.log('Filtered memos changed:', newFilteredMemos)
 }, { deep: true })
 
-const handleInputFocus = () => {
-  isInputActive.value = true
-}
-
-const handleInputBlur = () => {
-  // 如果不在编辑状态，则关闭激活状态
-  if (!isEditing.value) {
-    isInputActive.value = false
-  }
-}
-
 onMounted(() => {
   registerCommands()
   offTransactionEvent = useSiyuanEventTransactions(() => {
     // 可以在这里处理块的自动合并等操作
   })
+  // 初始化容器宽度
+  initContainerWidth()
+  // 监听窗口大小变化
+  window.addEventListener('resize', initContainerWidth)
 })
 
 onBeforeUnmount(() => {
   if (offTransactionEvent) {
     offTransactionEvent()
   }
+  // 移除窗口大小变化监听
+  window.removeEventListener('resize', initContainerWidth)
 })
 </script>
 
@@ -323,27 +401,63 @@ onBeforeUnmount(() => {
   flex-direction: column;
   height: 100%;
   gap: 8px;
-  padding: 8px;
+  padding: 0px;
 
-  .memo-calendar-area {
+  .memo-top-area {
     flex-shrink: 0;
-    transition: all 0.3s ease;
-    margin-bottom: 8px;
+    overflow: hidden;
+    border-radius: var(--b3-border-radius);
+    background: var(--b3-theme-background);
+    position: relative;
+    padding-bottom: 24px; // 为底部小圆点预留空间
 
-    &.simple-mode {
-      margin-bottom: -4px; // 当日历处于简约模式时，减少底部间距
+    .memo-content-wrapper {
+      display: flex;
+      width: 200%;
+      transition: transform 0.3s ease;
+      user-select: none; // 防止拖动时选中文本
+
+      &:active {
+        transition: none; // 拖动时禁用过渡动画
+      }
+
+      .memo-calendar-area {
+        width: 50%;
+        flex-shrink: 0;
+      }
+
+      .memo-input-area {
+        width: 50%;
+        flex-shrink: 0;
+      }
     }
-  }
 
-  .memo-input-area {
-    flex-shrink: 0;
-    width: 100%;
-    transition: all 0.3s ease;
-    margin: 8px 0;
+    .memo-dots {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
 
-    &.active {
-      .memo-input-card {
-        height: 200px; // 增加输入框的高度
+      .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--b3-theme-on-surface);
+        opacity: 0.2;
+        cursor: pointer;
+        transition: all 0.2s;
+
+        &:hover {
+          opacity: 0.3;
+        }
+
+        &.active {
+          opacity: 0.5;
+          background: var(--b3-theme-primary);
+          transform: scale(1.2);
+        }
       }
     }
   }
@@ -353,6 +467,8 @@ onBeforeUnmount(() => {
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    background: var(--b3-theme-background);
+    border-radius: var(--b3-border-radius);
 
     .timeline-header {
       flex-shrink: 0;

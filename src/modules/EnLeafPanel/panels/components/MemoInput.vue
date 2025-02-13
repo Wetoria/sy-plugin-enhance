@@ -79,8 +79,6 @@ const props = defineProps({
 const emit = defineEmits<{
   (e: 'submit', memo: Memo): void
   (e: 'cancel'): void
-  (e: 'focus'): void
-  (e: 'blur'): void
 }>()
 
 const blockId = ref('')
@@ -104,15 +102,6 @@ const afterProtyleLoad = (protyle: Protyle) => {
     if (target) {
       protyleUtilAreaRef.value?.appendChild(target)
     }
-  })
-
-  // 添加焦点事件监听
-  protyle.protyle.wysiwyg.element.addEventListener('focus', () => {
-    emit('focus')
-  })
-
-  protyle.protyle.wysiwyg.element.addEventListener('blur', () => {
-    emit('blur')
   })
 }
 
@@ -215,7 +204,7 @@ onBeforeUnmount(() => {
 .en-user-memo .memo-input-card {
   background: var(--b3-theme-background);
   border-radius: var(--b3-border-radius);
-  padding: 8px;
+  padding: 0px;
   width: calc(100% - 16px);
   margin-right: 8px;
   height: 100%;

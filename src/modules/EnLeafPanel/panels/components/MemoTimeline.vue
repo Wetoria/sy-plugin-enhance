@@ -87,19 +87,18 @@
 <script setup lang="ts">
 import type { Protyle } from 'siyuan'
 import type { PropType } from 'vue'
+import { request } from '@/api'
 import EnProtyle from '@/components/EnProtyle.vue'
+import { openDocById } from '@/utils/Note'
 import { VueFlow } from '@vue-flow/core'
 import { MiniMap } from '@vue-flow/minimap'
-import '@vue-flow/core/dist/style.css'
-import '@vue-flow/minimap/dist/style.css'
 import {
   onBeforeUnmount,
   ref,
   watch,
-  computed,
 } from 'vue'
-import { openDocById } from '@/utils/Note'
-import { request } from '@/api'
+import '@vue-flow/core/dist/style.css'
+import '@vue-flow/minimap/dist/style.css'
 
 export interface Memo {
   blockId: string
@@ -118,15 +117,15 @@ const props = defineProps({
   },
 })
 
-// 添加对 props.memos 的监听
-watch(() => props.memos, (newMemos) => {
-  console.log('Timeline received memos:', newMemos)
-}, { deep: true })
-
 const emit = defineEmits<{
   (e: 'edit', index: number): void
   (e: 'delete', index: number): void
 }>()
+
+// 添加对 props.memos 的监听
+watch(() => props.memos, (newMemos) => {
+  console.log('Timeline received memos:', newMemos)
+}, { deep: true })
 
 const protyleRefs = ref<Map<number, Protyle>>(new Map())
 
@@ -161,7 +160,7 @@ const renderWhiteboardMinimap = async (blockId: string) => {
         content
       FROM blocks
       WHERE id = '${blockId}'
-    `
+    `,
   }
   try {
     const result = await request('/api/query/sql', data)
@@ -422,7 +421,7 @@ onBeforeUnmount(() => {
     display: flex;
     align-items: center;
     gap: 4px;
-    padding: 8px;
+    padding: 0px;
     background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.1));
     color: var(--b3-theme-on-background);
     font-size: 14px;

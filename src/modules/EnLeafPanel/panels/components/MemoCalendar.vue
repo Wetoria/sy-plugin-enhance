@@ -1,12 +1,8 @@
 <template>
   <div
     class="memo-calendar"
-    :class="{ 'simple-mode': isSimpleMode }"
   >
-    <div
-      v-if="!isSimpleMode"
-      class="calendar-header"
-    >
+    <div class="calendar-header">
       <div class="year-month-selector">
         <span
           class="nav-btn"
@@ -64,39 +60,7 @@
         </span>
       </div>
     </div>
-    <div
-      v-if="isSimpleMode"
-      class="simple-calendar-header"
-    >
-      <div class="simple-weekdays">
-        <div
-          v-for="(day, index) in currentWeekDays"
-          :key="index"
-          class="simple-day"
-          :class="{
-            'today': day.isToday,
-            'has-memos': day.hasMemos,
-            'selected': isSelected(day.date),
-          }"
-          @click="handleDateClick($event, day.date)"
-        >
-          <div class="weekday">
-            {{ weekdays[index] }}
-          </div>
-          <div class="date">
-            {{ day.dayOfMonth }}
-          </div>
-          <div
-            v-if="day.hasMemos"
-            class="memo-indicator"
-          ></div>
-        </div>
-      </div>
-    </div>
-    <div
-      v-if="!isSimpleMode"
-      class="calendar-body"
-    >
+    <div class="calendar-body">
       <div class="calendar-weekdays">
         <div
           v-for="weekday in weekdays"
@@ -173,8 +137,7 @@ interface CalendarDay {
 
 interface Props {
   memos: Memo[]
-  modelValue?: string[] // YYYY-MM-DD[]
-  isSimpleMode?: boolean
+  modelValue?: string[]
 }
 
 const currentDate = ref(dayjs())
@@ -398,26 +361,6 @@ const selectMonth = (month: number) => {
   currentDate.value = currentDate.value.month(month - 1)
 }
 
-// 计算当前周的日期
-const currentWeekDays = computed(() => {
-  const today = dayjs()
-  const weekStart = today.startOf('week')
-  const days: CalendarDay[] = []
-
-  for (let i = 0; i < 7; i++) {
-    const date = weekStart.add(i, 'day')
-    days.push({
-      date: date.format('YYYY-MM-DD'),
-      dayOfMonth: date.date(),
-      isCurrentMonth: date.month() === today.month(),
-      isToday: date.isSame(today, 'day'),
-      hasMemos: hasMemoOnDate(date),
-    })
-  }
-
-  return days
-})
-
 // 监听 modelValue 变化
 watch(() => props.modelValue, (newValue) => {
   if (newValue) {
@@ -430,7 +373,7 @@ watch(() => props.modelValue, (newValue) => {
 .memo-calendar {
   background: var(--b3-theme-background);
   border-radius: var(--b3-border-radius);
-  padding: 8px;
+  padding: 0px;
 
   .calendar-header {
     display: flex;
@@ -624,80 +567,6 @@ watch(() => props.modelValue, (newValue) => {
             height: 4px;
             border-radius: 50%;
             background-color: var(--b3-theme-primary);
-          }
-        }
-      }
-    }
-  }
-
-  &.simple-mode {
-    padding: 4px;
-    background: transparent;
-
-    .simple-calendar-header {
-      .simple-weekdays {
-        display: flex;
-        gap: 2px;
-
-        .simple-day {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          padding: 2px;
-          cursor: pointer;
-          border-radius: var(--b3-border-radius);
-          position: relative;
-          transition: all 0.2s;
-
-          &:hover {
-            background-color: var(--b3-theme-background-light);
-          }
-
-          &.today {
-            .date {
-              color: var(--b3-theme-primary);
-              font-weight: bold;
-            }
-          }
-
-          &.selected {
-            background-color: var(--b3-theme-primary);
-            color: var(--b3-theme-on-primary);
-
-            .date {
-              color: inherit;
-            }
-
-            .memo-indicator {
-              background-color: var(--b3-theme-on-primary);
-            }
-          }
-
-          .weekday {
-            font-size: 12px;
-            opacity: 0.68;
-            line-height: 1;
-          }
-
-          .date {
-            font-size: 13px;
-            font-weight: 500;
-            line-height: 1;
-            margin-top: 2px;
-          }
-
-          .memo-indicator {
-            position: absolute;
-            bottom: 1px;
-            width: 3px;
-            height: 3px;
-            border-radius: 50%;
-            background-color: var(--b3-theme-primary);
-          }
-
-          &.has-memos {
-            font-weight: bold;
           }
         }
       }
