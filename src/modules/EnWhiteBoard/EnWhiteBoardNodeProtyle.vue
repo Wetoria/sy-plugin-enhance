@@ -176,7 +176,14 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   clickCard: [element: HTMLElement]
-  openInSidebar: [nodeId: string, blockId: string]
+  openInSidebar: [nodeId: string, blockId: string, blockInfo: {
+    title: string
+    name: string
+    alias: string
+    type: string
+    content: string
+    docName: string
+  }]
 }>()
 
 const {
@@ -444,7 +451,15 @@ const isSelected = computed(() => {
 
 const handleOpenInSidebar = () => {
   if (flowNode.id && nodeData.value.blockId) {
-    emit('openInSidebar', flowNode.id, nodeData.value.blockId)
+    // 传递更多信息到父组件
+    emit('openInSidebar', flowNode.id, nodeData.value.blockId, {
+      title: blockInfo.value.title,
+      name: blockInfo.value.name,
+      alias: blockInfo.value.alias,
+      type: blockInfo.value.type,
+      content: blockInfo.value.content,
+      docName: blockInfo.value.docName,
+    })
   }
 }
 

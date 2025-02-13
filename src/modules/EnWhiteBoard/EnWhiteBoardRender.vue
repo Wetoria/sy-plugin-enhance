@@ -325,10 +325,31 @@
       </template>
 
       <template v-if="embedWhiteBoardConfigData.boardOptions.selectedNodeId">
-        <EnProtyle
-          :block-id="embedWhiteBoardConfigData.boardOptions.selectedBlockId"
-          disableEnhance
-        />
+        <div class="sidebar-header">
+          <div class="sidebar-title">
+            {{ sidebarInfo.title || sidebarInfo.name || sidebarInfo.alias || sidebarInfo.docName || '未命名块' }}
+          </div>
+          <div
+            v-if="sidebarInfo.docName"
+            class="sidebar-doc-name"
+          >
+            {{ sidebarInfo.docName }}
+          </div>
+        </div>
+        <div class="sidebar-content">
+          <div class="sidebar-protyle-container">
+            <EnProtyle
+              :block-id="embedWhiteBoardConfigData.boardOptions.selectedBlockId"
+              disableEnhance
+              @after="afterSidebarProtyleLoad"
+            />
+            <div
+              ref="sidebarProtyleUtilAreaRef"
+              class="sidebar-protyle-util-area"
+              :data-whiteboard-node-protyle-util-area="embedWhiteBoardConfigData.boardOptions.selectedNodeId"
+            />
+          </div>
+        </div>
       </template>
       <template v-else>
         <EnWhiteBoardSettings
@@ -346,13 +367,6 @@
             </template>
           </a-button>
         </a-tooltip>
-        <a-tooltip content="节点内容">
-          <a-button @click="handleShowSelectedNode">
-            <template #icon>
-              <icon-edit />
-            </template>
-          </a-button>
-        </a-tooltip>
       </template>
       <template #SiderBottomButtonGroupAfter>
         <slot name="SiderRightBottomButtonGroupAfter" />
@@ -363,8 +377,8 @@
 
 <script setup lang="ts">
 import { request } from '@/api'
+import EnProtyle from '@/components/EnProtyle.vue'
 import { getNewDailyNoteBlockId } from '@/modules/DailyNote/DailyNote'
-
 import {
   EnWhiteBoardBlockDomTarget,
   generateWhiteBoardEdgeId,
@@ -375,6 +389,7 @@ import {
 } from '@/modules/EnWhiteBoard/EnWhiteBoard'
 
 import EnWhiteBoardEdgeBase from '@/modules/EnWhiteBoard/EnWhiteBoardEdgeBase.vue'
+
 import EnWhiteBoardSider from '@/modules/EnWhiteBoard/EnWhiteBoardSider.vue'
 import { EN_CONSTANTS } from '@/utils/Constants'
 import {
@@ -397,9 +412,10 @@ import {
   useVueFlow,
   VueFlow,
 } from '@vue-flow/core'
-
 import { MiniMap } from '@vue-flow/minimap'
+
 import { cloneDeep } from 'lodash-es'
+import { Protyle } from 'siyuan'
 import {
   computed,
   onMounted,
@@ -1101,7 +1117,27 @@ const onDrop = async (event: DragEvent) => {
   }
 }
 
-const handleOpenInSidebar = (nodeId: string, blockId: string) => {
+// 添加侧边栏状态
+const sidebarInfo = ref({
+  nodeId: '',
+  blockId: '',
+  title: '',
+  name: '',
+  alias: '',
+  type: '',
+  content: '',
+  docName: '',
+})
+
+// 处理打开侧边栏
+const handleOpenInSidebar = (nodeId: string, blockId: string, info: any) => {
+  // 更新侧边栏信息
+  sidebarInfo.value = {
+    nodeId,
+    blockId,
+    ...info,
+  }
+
   // 打开右侧栏
   embedBlockOptions.value.SiderRightShow = true
   embedBlockOptions.value.SiderRightWidth = moduleWhiteBoardOptions.value.siderRightWidthDefault
@@ -1136,6 +1172,31 @@ const handleShowSelectedNode = () => {
     embedWhiteBoardConfigData.value.boardOptions.selectedBlockId = lastSelectedNode.data.blockId
   }
 }
+
+// 添加侧边栏 Protyle 相关状态
+const sidebarProtyleRef = ref<Protyle | null>(null)
+const sidebarProtyleUtilAreaRef = ref<HTMLDivElement | null>(null)
+
+// 添加侧边栏 Protyle 加载后的处理函数
+const afterSidebarProtyleLoad = (protyle: Protyle) => {
+  sidebarProtyleRef.value = protyle
+
+  // 移动工具区域到指定容器
+  targetProtyleUtilClassList.forEach((className) => {
+    const target = protyle.protyle.element.querySelector(`.${className}`)
+    if (target) {
+      sidebarProtyleUtilAreaRef.value?.appendChild(target)
+    }
+  })
+}
+
+// 添加工具区域类名列表
+const targetProtyleUtilClassList = [
+  'protyle-gutters',
+  'protyle-select',
+  'protyle-toolbar',
+  'protyle-hint',
+]
 </script>
 
 <style lang="scss" scoped>
@@ -1360,6 +1421,69 @@ const handleShowSelectedNode = () => {
     .arco-icon {
       font-size: 14px;
     }
+  }
+}
+
+.sidebar-header {
+  padding: var(--en-gap);
+  border-bottom: 1px solid var(--b3-border-color);
+  margin-bottom: var(--en-gap);
+
+  .sidebar-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: var(--b3-theme-on-background);
+    margin-bottom: 4px;
+  }
+
+  .sidebar-doc-name {
+    font-size: 12px;
+    color: var(--b3-theme-on-surface);
+  }
+}
+
+.sidebar-content {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: var(--en-gap);
+  box-sizing: border-box;
+
+  .sidebar-protyle-container {
+    position: relative;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    border: 1px solid var(--b3-border-color);
+    border-radius: var(--b3-border-radius);
+    background-color: var(--b3-theme-background);
+
+    :deep(.protyle) {
+      height: 100%;
+
+      .protyle-content {
+        padding: var(--en-gap);
+      }
+
+      .protyle-wysiwyg {
+        padding-bottom: 16px !important;
+      }
+    }
+  }
+}
+
+.sidebar-protyle-util-area {
+  position: absolute;
+  z-index: 4;
+  top: 0;
+  left: 0;
+  height: 0;
+  pointer-events: none;
+
+  :deep(*) {
+    pointer-events: auto;
   }
 }
 </style>
