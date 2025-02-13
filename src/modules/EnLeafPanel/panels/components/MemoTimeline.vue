@@ -242,7 +242,7 @@ onBeforeUnmount(() => {
       left: 4px;
       top: 0;
       bottom: 0;
-      width: 2px;
+      width: 1px;
       background-color: var(--b3-border-color);
       opacity: 0.4;
     }
@@ -250,7 +250,7 @@ onBeforeUnmount(() => {
     .timeline-item {
       display: flex;
       flex-direction: column;
-      margin-bottom: 24px;
+      margin-bottom: 12px;
       position: relative;
 
       .timeline-meta {

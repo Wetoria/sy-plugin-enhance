@@ -404,12 +404,12 @@ onBeforeUnmount(() => {
   height: 100%;
   gap: 8px;
   padding: 0px;
+  max-height: 100%;
 
   .memo-top-area {
     flex-shrink: 0;
     overflow: hidden;
     border-radius: var(--b3-border-radius);
-    background: var(--b3-theme-background);
     position: relative;
     padding-bottom: 24px; // 为底部小圆点预留空间
 
@@ -462,21 +462,21 @@ onBeforeUnmount(() => {
 
   .memo-timeline-area {
     flex: 1;
+    min-height: 0; // 关键:允许flex子项收缩到小于其内容高度
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    background: var(--b3-theme-background);
     border-radius: var(--b3-border-radius);
 
     .timeline-header {
       flex-shrink: 0;
-      border-bottom: 1px solid var(--b3-border-color);
+      padding-bottom: 24px;
     }
 
     .timeline-content {
       flex: 1;
+      min-height: 0; // 关键:允许flex子项收缩到小于其内容高度
       overflow: auto;
-      min-height: 0;
     }
   }
 }

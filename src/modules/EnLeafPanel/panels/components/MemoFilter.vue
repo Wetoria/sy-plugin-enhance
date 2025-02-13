@@ -386,7 +386,7 @@ onMounted(() => {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    padding: 2px 8px;
+    padding: 8px 8px;
     border: none;
     background: transparent;
     border-radius: var(--b3-border-radius);

@@ -371,7 +371,6 @@ watch(() => props.modelValue, (newValue) => {
 
 <style lang="scss" scoped>
 .memo-calendar {
-  background: var(--b3-theme-background);
   border-radius: var(--b3-border-radius);
   padding: 0px;
 
