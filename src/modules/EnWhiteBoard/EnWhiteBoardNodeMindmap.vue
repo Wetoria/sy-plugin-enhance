@@ -31,6 +31,20 @@
       'backgroundColor': nodeData.style?.backgroundColor || 'var(--b3-theme-surface-light)',
     }"
   >
+    <!-- 添加子节点按钮 -->
+    <div class="add-child-button">
+      <a-button
+        size="mini"
+        type="primary"
+        shape="circle"
+        @click="handleAddChildNode"
+      >
+        <template #icon>
+          <icon-plus />
+        </template>
+      </a-button>
+    </div>
+
     <div class="mindmap-content">
       <!-- 中心节点 -->
       <div class="center-node">
@@ -69,10 +83,24 @@
           :key="childNode.id"
           class="mindmap-node"
         >
-          <EnWhiteBoardNodeProtyle
-            :nodeProps="childNode"
-            :enWhiteBoardProtyleUtilAreaRef="enWhiteBoardProtyleUtilAreaRef"
-          />
+          <div class="node-wrapper">
+            <EnWhiteBoardNodeProtyle
+              :nodeProps="childNode"
+              :enWhiteBoardProtyleUtilAreaRef="enWhiteBoardProtyleUtilAreaRef"
+            />
+            <div class="add-child-button">
+              <a-button
+                size="mini"
+                type="primary"
+                shape="circle"
+                @click.stop="() => handleAddChildNodeFor(childNode)"
+              >
+                <template #icon>
+                  <icon-plus />
+                </template>
+              </a-button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -103,7 +131,6 @@
 <script setup lang="ts">
 import { getNewDailyNoteBlockId } from '@/modules/DailyNote/DailyNote'
 import {
-  generateWhiteBoardEdgeId,
   generateWhiteBoardNodeId,
 } from '@/modules/EnWhiteBoard/EnWhiteBoard'
 import { EN_CONSTANTS } from '@/utils/Constants'
@@ -154,8 +181,7 @@ const {
   getNodes,
   setNodes,
   removeNodes,
-  setEdges,
-  edges,
+  onConnect,
 } = useVueFlow()
 
 const nodeData = computed(() => flowNode.data)
@@ -268,37 +294,45 @@ const handleEditLabel = () => {
   })
 }
 
-// 添加子节点
+// 添加自动连线处理
+onConnect((params) => {
+  // 当节点之间可以连接时,自动创建连线
+  const {
+    source,
+    target,
+  } = params
+  const nodes = getNodes.value || []
+  const sourceNode = nodes.find((node) => node.id === source)
+  const targetNode = nodes.find((node) => node.id === target)
+
+  if (sourceNode && targetNode) {
+    targetNode.data = {
+      ...targetNode.data,
+      parentId: sourceNode.id,
+    }
+    setNodes([...nodes])
+  }
+})
+
+// 修改 handleAddChildNode 函数
 const handleAddChildNode = async () => {
   const blockId = await getNewDailyNoteBlockId()
   const newNodeId = generateWhiteBoardNodeId()
 
-  // 计算新节点的位置
-  const parentNode = flowNode
-  const nodes = getNodes.value || []
-  const siblings = nodes.filter((node) => node.data?.parentId === flowNode.id)
-  const level = siblings.length + 1
-  const angle = (level * (360 / Math.max(8, siblings.length + 1))) * (Math.PI / 180) // 更均匀的分布
-  const radius = 300 // 增大半径，让布局更宽松
-
-  // 计算节点在圆上的位置
-  const x = parentNode.position.x + radius * Math.cos(angle)
-  const y = parentNode.position.y + radius * Math.sin(angle)
-
+  // 创建新节点
   const newNode = {
     id: newNodeId,
-    type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_PROTYLE, // 使用 Protyle 节点
+    type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_PROTYLE,
     data: {
       blockId,
       parentId: flowNode.id,
-      level,
     },
     position: {
-      x,
-      y,
+      x: flowNode.position.x + 200,
+      y: flowNode.position.y,
     },
-    width: 300, // 增大默认宽度
-    height: 150, // 增大默认高度
+    width: 240,
+    height: 120,
     connectable: true,
     draggable: true,
     selectable: true,
@@ -306,46 +340,6 @@ const handleAddChildNode = async () => {
 
   // 添加节点
   addNodes([newNode])
-
-  // 添加连线
-  const newEdge = {
-    id: generateWhiteBoardEdgeId(),
-    source: flowNode.id,
-    target: newNodeId,
-    type: EN_CONSTANTS.EN_WHITE_BOARD_EDGE_TYPE_BASE,
-    data: {
-      edgeType: 'smoothstep', // 使用平滑阶梯线
-      style: 'solid',
-      width: 2,
-      color: 'var(--b3-theme-primary)',
-      markerEnd: 'arrow', // 添加箭头
-    },
-  }
-
-  // 更新思维导图节点的数据，记录子节点关系
-  const mindmapData = {
-    ...flowNode.data,
-    children: [...(flowNode.data.children || []), {
-      id: newNodeId,
-      blockId,
-    }],
-  }
-
-  // 更新节点数据
-  const updatedNodes = nodes.map((node) => {
-    if (node.id === flowNode.id) {
-      return {
-        ...node,
-        data: mindmapData,
-      }
-    }
-    return node
-  })
-
-  setNodes(updatedNodes)
-  setEdges([...(edges.value || []), newEdge])
-
-  // 更新布局
   updateLayout()
 }
 
@@ -404,6 +398,35 @@ const updateLayout = () => {
   })
 
   setNodes(newNodes)
+}
+
+// 修改 handleAddChildNodeFor 函数
+const handleAddChildNodeFor = async (parentNode) => {
+  const blockId = await getNewDailyNoteBlockId()
+  const newNodeId = generateWhiteBoardNodeId()
+
+  // 创建新节点
+  const newNode = {
+    id: newNodeId,
+    type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_PROTYLE,
+    data: {
+      blockId,
+      parentId: parentNode.id,
+    },
+    position: {
+      x: parentNode.position.x + 200,
+      y: parentNode.position.y,
+    },
+    width: 240,
+    height: 120,
+    connectable: true,
+    draggable: true,
+    selectable: true,
+  }
+
+  // 添加节点
+  addNodes([newNode])
+  updateLayout()
 }
 
 </script>
@@ -484,6 +507,39 @@ const updateLayout = () => {
           background: var(--b3-theme-primary);
           transform: translateY(-50%);
         }
+
+        .node-wrapper {
+          position: relative;
+
+          .add-child-button {
+            position: absolute;
+            right: -16px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+
+            .arco-btn {
+              width: 24px;
+              height: 24px;
+              padding: 0;
+              font-size: 14px;
+              background-color: var(--b3-theme-primary);
+              border-color: var(--b3-theme-primary);
+              color: var(--b3-theme-on-primary);
+
+              &:hover {
+                background-color: var(--b3-theme-primary-hover);
+                border-color: var(--b3-theme-primary-hover);
+              }
+            }
+          }
+
+          &:hover .add-child-button {
+            opacity: 1;
+          }
+        }
       }
     }
   }
@@ -496,6 +552,36 @@ const updateLayout = () => {
 
   .Handle {
     display: none;
+  }
+
+  // 添加子节点按钮样式
+  .add-child-button {
+    position: absolute;
+    right: -16px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+
+    .arco-btn {
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      font-size: 14px;
+      background-color: var(--b3-theme-primary);
+      border-color: var(--b3-theme-primary);
+      color: var(--b3-theme-on-primary);
+
+      &:hover {
+        background-color: var(--b3-theme-primary-hover);
+        border-color: var(--b3-theme-primary-hover);
+      }
+    }
+  }
+
+  &:hover .add-child-button {
+    opacity: 1;
   }
 }
 

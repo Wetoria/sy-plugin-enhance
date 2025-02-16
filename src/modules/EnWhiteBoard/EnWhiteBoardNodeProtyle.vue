@@ -26,6 +26,7 @@
       'variant-card': nodeData.style?.variant === 'card',
       'variant-note': nodeData.style?.variant === 'note',
       'is-collapsed': isCollapsed,
+      'is-mindmap': isMindmapNode,
       ...nodeTypeClass,
     }"
     :data-en-flow-node-id="flowNode.id"
@@ -35,6 +36,22 @@
       'backgroundColor': nodeData.style?.backgroundColor,
     }"
   >
+    <!-- 思维导图模式下的添加子节点按钮 -->
+    <div
+      v-if="isMindmapNode"
+      class="add-child-button"
+    >
+      <a-button
+        size="mini"
+        type="primary"
+        shape="circle"
+        @click.stop="handleAddChildNode"
+      >
+        <template #icon>
+          <icon-plus />
+        </template>
+      </a-button>
+    </div>
 
     <div class="ProtyleToolbarArea">
       <div class="infos">
@@ -99,67 +116,76 @@
       @resize="onResize"
     />
 
+    <!-- 只在非思维导图节点时显示所有连接点 -->
+    <template v-if="!isMindmapNode">
+      <Handle
+        v-for="position in ['top', 'right', 'bottom', 'left']"
+        :id="position"
+        :key="position"
+        class="Handle"
+        :class="[position]"
+        type="source"
+        :position="Position[position.charAt(0).toUpperCase() + position.slice(1)]"
+      >
+        <div class="HandleIcon">
+          <component :is="handleIcons[position]" />
+        </div>
+      </Handle>
+    </template>
 
-    <Handle
-      id="top"
-      class="Handle Top"
-      type="source"
-      :position="Position.Top"
-    >
-      <div class="HandleIcon">
-        <icon-arrow-up />
-      </div>
-    </Handle>
-    <Handle
-      id="bottom"
-      class="Handle Bottom"
-      type="source"
-      :position="Position.Bottom"
-    >
-      <div class="HandleIcon">
-        <icon-arrow-down />
-      </div>
-    </Handle>
-    <Handle
-      id="left"
-      class="Handle Left"
-      type="source"
-      :position="Position.Left"
-    >
-      <div class="HandleIcon">
-        <icon-arrow-left />
-      </div>
-    </Handle>
-    <Handle
-      id="right"
-      class="Handle Right"
-      type="source"
-      :position="Position.Right"
-    >
-      <div class="HandleIcon">
-        <icon-arrow-right />
-      </div>
-    </Handle>
+    <!-- 思维导图节点只显示特定连接点 -->
+    <template v-else>
+      <!-- 所有思维导图节点都有右侧连接点(作为源)和左侧连接点(作为目标) -->
+      <Handle
+        id="right"
+        class="Handle Right"
+        type="source"
+        :position="Position.Right"
+      >
+        <div class="HandleIcon">
+          <IconArrowRight />
+        </div>
+      </Handle>
+      <Handle
+        id="left"
+        class="Handle Left"
+        type="target"
+        :position="Position.Left"
+      >
+        <div class="HandleIcon">
+          <IconArrowLeft />
+        </div>
+      </Handle>
+    </template>
   </div>
 </template>
 
 <script lang="ts">
-
+import { EN_CONSTANTS } from '@/utils/Constants'
 </script>
 
 <script setup lang="ts">
 import { request } from '@/api'
 import EnProtyle from '@/components/EnProtyle.vue'
+import { getNewDailyNoteBlockId } from '@/modules/DailyNote/DailyNote'
+
 import {
+  generateWhiteBoardEdgeId,
   generateWhiteBoardNodeId,
+  getWhiteBoardConfigRefById,
   useWhiteBoardModule,
 } from '@/modules/EnWhiteBoard/EnWhiteBoard'
-
 import { debounce } from '@/utils'
 import {
   useSiyuanDatabaseIndexCommit,
   useSiyuanEventTransactions,
 } from '@/utils/EventBusHooks'
+import {
+  IconArrowDown,
+  IconArrowLeft,
+  IconArrowRight,
+  IconArrowUp,
+} from '@arco-design/web-vue/es/icon'
 import {
   Handle,
   Position,
@@ -184,6 +210,12 @@ import EnWhiteBoardToolBar from './EnWhiteBoardToolBar.vue'
 
 const props = defineProps<{
   enWhiteBoardProtyleUtilAreaRef: HTMLElement
+  nodeProps: {
+    data: {
+      whiteBoardId: string
+      nodeId: string
+    }
+  }
 }>()
 
 const emit = defineEmits<{
@@ -212,6 +244,9 @@ const {
   removeNodes,
   getSelectedNodes,
   setNodes,
+  getEdges,
+  setEdges,
+  edges,
 } = useVueFlow()
 
 const nodeData = computed(() => flowNode.data)
@@ -563,7 +598,7 @@ watch(() => nodeData.value?.blockId, async (newBlockId) => {
 
 // 添加思维导图相关的计算属性和方法
 const nodeType = computed(() => nodeData.value?.nodeType || 'protyle')
-const isMindmapNode = computed(() => nodeType.value === 'mindmap')
+const isMindmapNode = computed(() => nodeData.value?.mindmap === true)
 const isTextNode = computed(() => nodeType.value === 'text')
 const isGingkoNode = computed(() => nodeType.value === 'gingko')
 
@@ -601,14 +636,15 @@ const updateMindmapLayout = () => {
   const parentWidth = flowNode.dimensions?.width || 300
   const parentHeight = flowNode.dimensions?.height || 150
 
-  // 增加间距
-  const horizontalSpacing = 400 // 增加水平间距
-  const verticalSpacing = 200 // 增加垂直间距
-  const minVerticalGap = 50 // 最小垂直间隙
+  // 调整间距和节点尺寸
+  const horizontalSpacing = 200 // 水平间距
+  const verticalSpacing = 20 // 减小垂直间距到 20px
+  const defaultWidth = 240 // 默认宽度
+  const defaultHeight = 120 // 默认高度
 
   // 计算子节点的总高度
   const totalChildrenHeight = children.reduce((sum, child) => {
-    return sum + (child.dimensions?.height || 150) + verticalSpacing
+    return sum + (child.dimensions?.height || defaultHeight) + verticalSpacing
   }, 0) - verticalSpacing // 减去最后一个节点的间距
 
   // 计算起始Y坐标，使子节点垂直居中对齐
@@ -616,8 +652,8 @@ const updateMindmapLayout = () => {
 
   // 计算子节点位置
   children.forEach((child, index) => {
-    const childHeight = child.dimensions?.height || 150
-    const childWidth = child.dimensions?.width || 300
+    const childHeight = child.dimensions?.height || defaultHeight
+    const childWidth = child.dimensions?.width || defaultWidth
 
     // 计算新位置
     const newX = parentX + parentWidth + horizontalSpacing
@@ -630,6 +666,11 @@ const updateMindmapLayout = () => {
         position: {
           x: newX,
           y: newY,
+        },
+        // 更新节点尺寸
+        dimensions: {
+          width: defaultWidth,
+          height: defaultHeight,
         },
       }
     }
@@ -661,6 +702,76 @@ const toggleMindmap = () => {
     updateMindmapLayout()
   }
 }
+
+// 修改 handleAddChildNode 函数
+const handleAddChildNode = async () => {
+  const blockId = await getNewDailyNoteBlockId()
+  const newNodeId = generateWhiteBoardNodeId()
+
+  // 创建新节点
+  const newNode = {
+    id: newNodeId,
+    type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_PROTYLE,
+    data: {
+      blockId,
+      parentId: flowNode.id,
+      mindmap: true, // 继承父节点的思维导图属性
+    },
+    position: {
+      x: flowNode.position.x + 200,
+      y: flowNode.position.y,
+    },
+    width: 240,
+    height: 120,
+    connectable: true,
+    draggable: true,
+    selectable: true,
+  }
+
+  // 添加节点
+  addNodes([newNode])
+
+  // 自动创建连线
+  const newEdge = {
+    id: generateWhiteBoardEdgeId(),
+    source: flowNode.id,
+    target: newNodeId,
+    sourceHandle: 'right',
+    targetHandle: 'left',
+    type: EN_CONSTANTS.EN_WHITE_BOARD_EDGE_TYPE_BASE,
+    data: {
+      label: '', // 添加必需的 label 属性
+      edgeType: 'smoothstep',
+      style: 'solid',
+      width: 2,
+      color: 'var(--b3-theme-on-surface)',
+      markerEnd: 'arrow',
+    },
+  }
+
+  const newEdges = [...(edges.value || []), newEdge]
+  setEdges(newEdges)
+
+  // 保存到配置中
+  if (embedWhiteBoardConfigData) {
+    embedWhiteBoardConfigData.value.boardOptions.nodes = getNodes.value
+    embedWhiteBoardConfigData.value.boardOptions.edges = newEdges
+  }
+
+  // 更新布局
+  updateMindmapLayout()
+}
+
+const handleIcons = {
+  top: IconArrowUp,
+  right: IconArrowRight,
+  bottom: IconArrowDown,
+  left: IconArrowLeft,
+}
+
+const {
+  embedWhiteBoardConfigData,
+} = getWhiteBoardConfigRefById(props.nodeProps.data.whiteBoardId, props.nodeProps.data.nodeId)
 </script>
 
 <style lang="scss" scoped>
@@ -1032,6 +1143,35 @@ const toggleMindmap = () => {
   &.is-mindmap {
     border-color: var(--b3-theme-primary-light);
     background-color: var(--b3-theme-background-light);
+
+    .add-child-button {
+      position: absolute;
+      right: -16px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 10;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+
+      .arco-btn {
+        width: 24px;
+        height: 24px;
+        padding: 0;
+        font-size: 14px;
+        background-color: var(--b3-theme-primary);
+        border-color: var(--b3-theme-primary);
+        color: var(--b3-theme-on-primary);
+
+        &:hover {
+          background-color: var(--b3-theme-primary-hover);
+          border-color: var(--b3-theme-primary-hover);
+        }
+      }
+    }
+
+    &:hover .add-child-button {
+      opacity: 1;
+    }
   }
 
   &.is-text {
