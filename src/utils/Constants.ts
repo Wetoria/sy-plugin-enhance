@@ -81,6 +81,7 @@ export enum EN_CONSTANTS {
 
   EN_WHITE_BOARD_NODE_TYPE_PROTYLE = 'EnWhiteBoardNodeProtyle',
   EN_WHITE_BOARD_NODE_TYPE_FRAME = 'EnWhiteBoardNodeFrame',
+  EN_WHITE_BOARD_NODE_TYPE_MINDMAP = 'EnWhiteBoardNodeMindmap',
 
   EN_WHITE_BOARD_EDGE_TYPE_BASE = 'EnWhiteBoardEdgeBase',
 

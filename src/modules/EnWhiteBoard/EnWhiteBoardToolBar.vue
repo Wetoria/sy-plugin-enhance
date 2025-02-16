@@ -165,6 +165,44 @@
               </template>
             </a-dropdown>
           </a-tooltip>
+          <a-tooltip content="节点类型">
+            <a-dropdown
+              trigger="click"
+              @select="onNodeTypeSelect"
+            >
+              <a-button>
+                <template #icon>
+                  <icon-apps />
+                </template>
+              </a-button>
+              <template #content>
+                <a-doption value="protyle">
+                  <div class="NodeTypeOption">
+                    <icon-edit />
+                    <span>普通节点</span>
+                  </div>
+                </a-doption>
+                <a-doption value="mindmap">
+                  <div class="NodeTypeOption">
+                    <icon-mind-mapping />
+                    <span>思维导图</span>
+                  </div>
+                </a-doption>
+                <a-doption value="text">
+                  <div class="NodeTypeOption">
+                    <icon-file />
+                    <span>文本节点</span>
+                  </div>
+                </a-doption>
+                <a-doption value="gingko">
+                  <div class="NodeTypeOption">
+                    <icon-branch />
+                    <span>银杏编辑器</span>
+                  </div>
+                </a-doption>
+              </template>
+            </a-dropdown>
+          </a-tooltip>
           <slot name="nodeToolbarExtra" />
         </a-button-group>
       </div>
@@ -1111,6 +1149,30 @@ const onOpenInSidebar = () => {
 
 const onCollapse = () => {
   emit('collapse')
+}
+
+const onNodeTypeSelect = (type: string) => {
+  if (!props.nodeId) return
+
+  const nodes = getNodes.value
+  const newNodes = nodes.map((node) => {
+    if (node.id === props.nodeId) {
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          nodeType: type,
+          mindmap: type === 'mindmap', // 兼容现有的 mindmap 标记
+        },
+      }
+    }
+    return node
+  })
+
+  setNodes(newNodes)
+  if (props.whiteBoardConfigData) {
+    props.whiteBoardConfigData.boardOptions.nodes = newNodes
+  }
 }
 </script>
 

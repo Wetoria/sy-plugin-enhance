@@ -22,6 +22,13 @@
         <icon-apps />
         <span>新建分组</span>
       </div>
+      <div
+        class="MenuItem"
+        @click="handleCreateMindmap"
+      >
+        <icon-mind-mapping />
+        <span>新建思维导图</span>
+      </div>
     </div>
     <div class="MenuGroup">
       <div
@@ -82,6 +89,8 @@ const {
   viewport,
   fitView,
   setCenter,
+  setEdges,
+  edges,
 } = useVueFlow()
 
 const {
@@ -136,6 +145,60 @@ const handleCreateFrame = () => {
   }
 
   addNodes([newFrame])
+  emit('close')
+}
+
+// 创建思维导图节点
+const handleCreateMindmap = async () => {
+  const rendererPoint = pointToRendererPoint({
+    x: props.position.x,
+    y: props.position.y,
+  }, viewport.value)
+
+  // 创建中心节点(思维导图节点)
+  const blockId = await getNewDailyNoteBlockId()
+  const mindmapNodeId = generateWhiteBoardNodeId()
+
+  const mindmapNode = {
+    id: mindmapNodeId,
+    type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_PROTYLE,
+    data: {
+      blockId,
+      mindmap: true, // 标记为思维导图节点
+      label: '新思维导图',
+    },
+    position: rendererPoint,
+    width: 300,
+    height: 150,
+    connectable: true,
+    draggable: true,
+    selectable: true,
+  }
+
+  // 创建三个初始子节点
+  const childNodes = await Promise.all([1, 2, 3].map(async (index) => {
+    const childBlockId = await getNewDailyNoteBlockId()
+    return {
+      id: generateWhiteBoardNodeId(),
+      type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_PROTYLE,
+      data: {
+        blockId: childBlockId,
+        parentId: mindmapNodeId,
+      },
+      position: {
+        x: rendererPoint.x + 200, // 临时位置,会被自动布局调整
+        y: rendererPoint.y,
+      },
+      width: 300,
+      height: 150,
+      connectable: true,
+      draggable: true,
+      selectable: true,
+    }
+  }))
+
+  // 添加所有节点
+  addNodes([mindmapNode, ...childNodes])
   emit('close')
 }
 

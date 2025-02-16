@@ -100,6 +100,12 @@
             @open-in-sidebar="handleOpenInSidebar"
           />
         </template>
+        <template #node-EnWhiteBoardNodeMindmap="node">
+          <EnWhiteBoardNodeMindmap
+            :nodeProps="node"
+            :enWhiteBoardProtyleUtilAreaRef="EnWhiteBoardProtyleUtilAreaRef"
+          />
+        </template>
         <template #edge-EnWhiteBoardEdgeBase="edge">
           <EnWhiteBoardEdgeBase
             v-bind="edge"
@@ -435,6 +441,7 @@ import {
   watchEffect,
 } from 'vue'
 import EnWhiteBoardContextMenu from './EnWhiteBoardContextMenu.vue'
+import EnWhiteBoardNodeMindmap from './EnWhiteBoardNodeMindmap.vue'
 import EnWhiteBoardNodeProtyle from './EnWhiteBoardNodeProtyle.vue'
 import EnWhiteBoardSettings from './EnWhiteBoardSettings.vue'
 import EnWhiteBoardToolBar from './EnWhiteBoardToolBar.vue'

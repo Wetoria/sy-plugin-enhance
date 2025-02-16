@@ -26,6 +26,7 @@
       'variant-card': nodeData.style?.variant === 'card',
       'variant-note': nodeData.style?.variant === 'note',
       'is-collapsed': isCollapsed,
+      ...nodeTypeClass,
     }"
     :data-en-flow-node-id="flowNode.id"
     :style="{
@@ -49,6 +50,17 @@
             <icon-sync />
           </template>
         </a-spin>
+        <a-button-group size="mini">
+          <a-button
+            v-if="isMindmapNode"
+            :class="{ active: isMindmapNode }"
+            @click="toggleMindmap"
+          >
+            <template #icon>
+              <icon-mind-mapping />
+            </template>
+          </a-button>
+        </a-button-group>
       </div>
     </div>
     <div
@@ -192,7 +204,6 @@ const {
 
 const {
   node: flowNode,
-  updateNodeData,
 } = useNode()
 
 const {
@@ -549,6 +560,107 @@ watch(() => nodeData.value?.blockId, async (newBlockId) => {
     await getBlockInfo(newBlockId)
   }
 }, { immediate: true })
+
+// 添加思维导图相关的计算属性和方法
+const nodeType = computed(() => nodeData.value?.nodeType || 'protyle')
+const isMindmapNode = computed(() => nodeType.value === 'mindmap')
+const isTextNode = computed(() => nodeType.value === 'text')
+const isGingkoNode = computed(() => nodeType.value === 'gingko')
+
+// 根据节点类型更新样式
+const nodeTypeClass = computed(() => ({
+  'is-mindmap': isMindmapNode.value,
+  'is-text': isTextNode.value,
+  'is-gingko': isGingkoNode.value,
+}))
+
+// 获取子节点
+const getChildNodes = () => {
+  if (!isMindmapNode.value) return []
+  const nodes = getNodes.value || []
+  return nodes.filter((node) => node.data?.parentId === flowNode.id)
+}
+
+// 监听子节点变化,自动更新布局
+watch(() => getChildNodes().length, () => {
+  if (isMindmapNode.value) {
+    updateMindmapLayout()
+  }
+})
+
+// 更新思维导图布局
+const updateMindmapLayout = () => {
+  if (!isMindmapNode.value) return
+  const children = getChildNodes()
+  if (!children?.length) return
+
+  const nodes = getNodes.value || []
+  const newNodes = [...nodes]
+  const parentX = flowNode.position.x
+  const parentY = flowNode.position.y
+  const parentWidth = flowNode.dimensions?.width || 300
+  const parentHeight = flowNode.dimensions?.height || 150
+
+  // 增加间距
+  const horizontalSpacing = 400 // 增加水平间距
+  const verticalSpacing = 200 // 增加垂直间距
+  const minVerticalGap = 50 // 最小垂直间隙
+
+  // 计算子节点的总高度
+  const totalChildrenHeight = children.reduce((sum, child) => {
+    return sum + (child.dimensions?.height || 150) + verticalSpacing
+  }, 0) - verticalSpacing // 减去最后一个节点的间距
+
+  // 计算起始Y坐标，使子节点垂直居中对齐
+  let currentY = parentY - totalChildrenHeight / 2
+
+  // 计算子节点位置
+  children.forEach((child, index) => {
+    const childHeight = child.dimensions?.height || 150
+    const childWidth = child.dimensions?.width || 300
+
+    // 计算新位置
+    const newX = parentX + parentWidth + horizontalSpacing
+    const newY = currentY + childHeight / 2
+
+    const nodeIndex = newNodes.findIndex((n) => n.id === child.id)
+    if (nodeIndex !== -1) {
+      newNodes[nodeIndex] = {
+        ...newNodes[nodeIndex],
+        position: {
+          x: newX,
+          y: newY,
+        },
+      }
+    }
+
+    // 更新下一个节点的Y坐标起点
+    currentY += childHeight + verticalSpacing
+  })
+
+  setNodes(newNodes)
+}
+
+// 添加思维导图工具栏按钮
+const toggleMindmap = () => {
+  const nodes = getNodes.value || []
+  const newNodes = nodes.map((node) => {
+    if (node.id === flowNode.id) {
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          mindmap: !isMindmapNode.value,
+        },
+      }
+    }
+    return node
+  })
+  setNodes(newNodes)
+  if (!isMindmapNode.value) {
+    updateMindmapLayout()
+  }
+}
 </script>
 
 <style lang="scss" scoped>
@@ -916,6 +1028,22 @@ watch(() => nodeData.value?.blockId, async (newBlockId) => {
       }
     }
   }
+
+  &.is-mindmap {
+    border-color: var(--b3-theme-primary-light);
+    background-color: var(--b3-theme-background-light);
+  }
+
+  &.is-text {
+    border: none;
+    background-color: transparent;
+    box-shadow: none;
+  }
+
+  &.is-gingko {
+    border-color: var(--b3-theme-success);
+    background-color: var(--b3-theme-background-light);
+  }
 }
 
 .EnWhiteBoardNodeToolbar {
@@ -925,6 +1053,13 @@ watch(() => nodeData.value?.blockId, async (newBlockId) => {
     align-items: center;
     padding: 8px;
     border-radius: 8px;
+  }
+}
+
+.operations {
+  .active {
+    color: var(--b3-theme-primary);
+    background: var(--b3-theme-primary-light);
   }
 }
 </style>
