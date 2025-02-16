@@ -38,13 +38,6 @@
           @center-view="() => setCenter(0, 0, { duration: 800 })"
         >
           <template #after>
-            <a-tooltip content="添加分组">
-              <a-button @click="() => createFrameNode(0, 0)">
-                <template #icon>
-                  <icon-apps />
-                </template>
-              </a-button>
-            </a-tooltip>
             <slot name="topButtonGroup" />
           </template>
         </EnWhiteBoardToolBar>
@@ -86,6 +79,7 @@
         @nodeDragStop="onMoveEnd"
         @nodeClick="onNodeClick"
         @paneClick="onPaneClick"
+        @paneContextMenu="onPaneContextMenu"
         @connect="onConnect"
         @connectStart="onConnectStart"
         @connectEnd="onConnectEnd"
@@ -104,11 +98,6 @@
             :nodeProps="node"
             :enWhiteBoardProtyleUtilAreaRef="EnWhiteBoardProtyleUtilAreaRef"
             @open-in-sidebar="handleOpenInSidebar"
-          />
-        </template>
-        <template #node-EnWhiteBoardNodeFrame="node">
-          <EnWhiteBoardNodeFrame
-            :nodeProps="node"
           />
         </template>
         <template #edge-EnWhiteBoardEdgeBase="edge">
@@ -384,6 +373,15 @@
         <slot name="SiderRightBottomButtonGroupAfter" />
       </template>
     </EnWhiteBoardSider>
+
+    <!-- 添加上下文菜单 -->
+    <Teleport to="body">
+      <EnWhiteBoardContextMenu
+        :visible="contextMenuVisible"
+        :position="contextMenuPosition"
+        @close="closeContextMenu"
+      />
+    </Teleport>
   </div>
 </template>
 
@@ -436,7 +434,7 @@ import {
   watch,
   watchEffect,
 } from 'vue'
-import EnWhiteBoardNodeFrame from './EnWhiteBoardNodeFrame.vue'
+import EnWhiteBoardContextMenu from './EnWhiteBoardContextMenu.vue'
 import EnWhiteBoardNodeProtyle from './EnWhiteBoardNodeProtyle.vue'
 import EnWhiteBoardSettings from './EnWhiteBoardSettings.vue'
 import EnWhiteBoardToolBar from './EnWhiteBoardToolBar.vue'
@@ -724,14 +722,46 @@ const onTouchStart = (event: TouchEvent) => {
   lastTouchY.value = y
 }
 
-// 修改原有的 onPaneClick 函数
+// 添加上下文菜单相关的状态
+const contextMenuVisible = ref(false)
+const contextMenuPosition = ref({
+  x: 0,
+  y: 0,
+})
+
+// 处理画布右键点击
+const onPaneContextMenu = (event: MouseEvent) => {
+  event.preventDefault()
+  contextMenuPosition.value = {
+    x: event.clientX,
+    y: event.clientY,
+  }
+  contextMenuVisible.value = true
+}
+
+// 关闭上下文菜单
+const closeContextMenu = () => {
+  contextMenuVisible.value = false
+}
+
+// 修改 onPaneClick 添加关闭菜单
 const onPaneClick = onCountClick((count, event) => {
   hideAllHelper()
+  closeContextMenu()
   if (count === 1) {
     disableLastProtyleEditable()
   } else if (count === 2) {
     createNewNode(event.offsetX, event.offsetY)
   }
+})
+
+// 监听全局点击事件关闭菜单
+onMounted(() => {
+  document.addEventListener('click', closeContextMenu)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', closeContextMenu)
 })
 
 onNodesChange((changes) => {
@@ -1210,33 +1240,6 @@ const targetProtyleUtilClassList = [
   'protyle-toolbar',
   'protyle-hint',
 ]
-
-// 添加创建 Frame 节点的函数
-const createFrameNode = (x: number, y: number) => {
-  const rendererPoint = pointToRendererPoint({
-    x,
-    y,
-  }, viewport.value)
-
-  const newNode = {
-    id: generateWhiteBoardNodeId(),
-    type: 'EnWhiteBoardNodeFrame',
-    data: {
-      label: '新建分组',
-    },
-    position: rendererPoint,
-    width: 400,
-    height: 300,
-    connectable: true,
-    draggable: true,
-    selectable: true,
-  }
-
-  addNodes([newNode])
-  if (embedWhiteBoardConfigData.value) {
-    embedWhiteBoardConfigData.value.boardOptions.nodes = getNodes.value
-  }
-}
 </script>
 
 <style lang="scss" scoped>

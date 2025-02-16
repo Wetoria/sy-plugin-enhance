@@ -80,6 +80,7 @@ export enum EN_CONSTANTS {
   EN_WHITE_BOARD_WHITEBOARD_LIST = `${WHITEBOARD_BASE_PATH}/WhiteboardList`,
 
   EN_WHITE_BOARD_NODE_TYPE_PROTYLE = 'EnWhiteBoardNodeProtyle',
+  EN_WHITE_BOARD_NODE_TYPE_FRAME = 'EnWhiteBoardNodeFrame',
 
   EN_WHITE_BOARD_EDGE_TYPE_BASE = 'EnWhiteBoardEdgeBase',
 
