@@ -667,12 +667,15 @@ const updateMindmapLayout = () => {
   const nodes = getNodes.value || []
   const newNodes = [...nodes]
   const nodeSpacing = 150 // 节点之间的垂直间距
-  const horizontalSpacing = 300 // 水平间距
+  const horizontalSpacing = 100 // 节点之间的水平间距
 
   // 计算总高度
   const totalHeight = (children.length - 1) * nodeSpacing
   // 计算起始Y坐标，使节点组居中于父节点
   const startY = flowNode.position.y - (totalHeight / 2)
+
+  // 获取父节点的右边界
+  const parentRightEdge = flowNode.position.x + (flowNode.dimensions?.width || 0)
 
   // 更新子节点位置
   children.forEach((child, index) => {
@@ -682,15 +685,16 @@ const updateMindmapLayout = () => {
       newNodes[nodeIndex] = {
         ...newNodes[nodeIndex],
         position: {
-          x: flowNode.position.x + horizontalSpacing,
+          x: parentRightEdge + horizontalSpacing,
           y,
         },
       }
 
       // 递归更新子节点
       updateChildrenPositions(child.id, {
-        x: flowNode.position.x + horizontalSpacing,
+        x: parentRightEdge + horizontalSpacing,
         y,
+        width: child.dimensions?.width || 0,
       })
     }
   })
@@ -699,18 +703,21 @@ const updateMindmapLayout = () => {
 }
 
 // 递归更新子节点位置
-const updateChildrenPositions = (parentId: string, parentPosition: { x: number, y: number }) => {
+const updateChildrenPositions = (parentId: string, parentPosition: { x: number, y: number, width: number }) => {
   const nodes = getNodes.value || []
   const children = nodes.filter((node) => node.data?.parentId === parentId)
   if (!children.length) return
 
   const nodeSpacing = 150 // 节点之间的垂直间距
-  const horizontalSpacing = 300 // 水平间距
+  const horizontalSpacing = 100 // 节点之间的水平间距
 
   // 计算总高度
   const totalHeight = (children.length - 1) * nodeSpacing
   // 计算起始Y坐标，使节点组居中于父节点
   const startY = parentPosition.y - (totalHeight / 2)
+
+  // 获取父节点的右边界
+  const parentRightEdge = parentPosition.x + parentPosition.width
 
   // 更新子节点位置
   children.forEach((child, index) => {
@@ -720,15 +727,16 @@ const updateChildrenPositions = (parentId: string, parentPosition: { x: number, 
       nodes[nodeIndex] = {
         ...nodes[nodeIndex],
         position: {
-          x: parentPosition.x + horizontalSpacing,
+          x: parentRightEdge + horizontalSpacing,
           y,
         },
       }
 
       // 递归更新子节点
       updateChildrenPositions(child.id, {
-        x: parentPosition.x + horizontalSpacing,
+        x: parentRightEdge + horizontalSpacing,
         y,
+        width: child.dimensions?.width || 0,
       })
     }
   })
@@ -795,7 +803,10 @@ const handleAddChildNode = async () => {
   // 获取当前节点的所有子节点
   const siblings = getNodes.value.filter((node) => node.data?.parentId === flowNode.id)
   const nodeSpacing = 150 // 节点之间的垂直间距
-  const horizontalSpacing = 300 // 水平间距
+  const horizontalSpacing = 100 // 节点之间的水平间距
+
+  // 获取父节点的右边界
+  const parentRightEdge = flowNode.position.x + (flowNode.dimensions?.width || 0)
 
   // 计算新节点的位置
   const totalHeight = siblings.length * nodeSpacing
@@ -812,7 +823,7 @@ const handleAddChildNode = async () => {
       mindmap: true, // 继承思维导图属性
     },
     position: {
-      x: flowNode.position.x + horizontalSpacing,
+      x: parentRightEdge + horizontalSpacing,
       y,
     },
     width: 240,
