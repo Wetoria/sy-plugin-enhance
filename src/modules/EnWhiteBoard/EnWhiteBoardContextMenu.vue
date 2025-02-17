@@ -172,8 +172,8 @@ const handleCreateMindmap = async () => {
       label: '新思维导图',
     },
     position,
-    width: 300,
-    height: 150,
+    width: moduleWhiteBoardOptions.value.cardWidthDefault,
+    height: moduleWhiteBoardOptions.value.cardHeightDefault,
     connectable: true,
     draggable: true,
     selectable: true,
@@ -185,7 +185,7 @@ const handleCreateMindmap = async () => {
   // 创建三个子节点
   const nodeSpacing = 150 // 节点之间的垂直间距
   const horizontalSpacing = 100 // 节点之间的水平间距
-  const parentRightEdge = position.x + 300 // 父节点宽度为300
+  const parentRightEdge = position.x + moduleWhiteBoardOptions.value.cardWidthDefault // 使用父节点实际宽度
 
   // 计算子节点的总高度和起始位置
   const totalHeight = 2 * nodeSpacing // 两个间距，三个节点
@@ -206,8 +206,8 @@ const handleCreateMindmap = async () => {
         x: parentRightEdge + horizontalSpacing,
         y: startY + (index * nodeSpacing),
       },
-      width: 300,
-      height: 150,
+      width: moduleWhiteBoardOptions.value.cardWidthDefault,
+      height: moduleWhiteBoardOptions.value.cardHeightDefault,
       connectable: true,
       draggable: true,
       selectable: true,
