@@ -379,6 +379,7 @@
       <EnWhiteBoardContextMenu
         :visible="contextMenuVisible"
         :position="contextMenuPosition"
+        :click-position="initialClickPosition"
         @close="closeContextMenu"
       />
     </Teleport>
@@ -728,6 +729,10 @@ const contextMenuPosition = ref({
   x: 0,
   y: 0,
 })
+const initialClickPosition = ref({
+  x: 0,
+  y: 0,
+})
 
 // 处理画布右键点击
 const onPaneContextMenu = (event: MouseEvent) => {
@@ -735,6 +740,10 @@ const onPaneContextMenu = (event: MouseEvent) => {
   contextMenuPosition.value = {
     x: event.clientX,
     y: event.clientY,
+  }
+  initialClickPosition.value = {
+    x: event.offsetX,
+    y: event.offsetY,
   }
   contextMenuVisible.value = true
 }

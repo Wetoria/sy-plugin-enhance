@@ -66,7 +66,6 @@ import {
 } from '@/modules/EnWhiteBoard/EnWhiteBoard'
 import { EN_CONSTANTS } from '@/utils/Constants'
 import {
-  pointToRendererPoint,
   useVueFlow,
 } from '@vue-flow/core'
 
@@ -75,6 +74,10 @@ import {
 const props = defineProps<{
   visible: boolean
   position: {
+    x: number
+    y: number
+  }
+  clickPosition: {
     x: number
     y: number
   }
@@ -91,6 +94,7 @@ const {
   setCenter,
   setEdges,
   edges,
+  project,
 } = useVueFlow()
 
 const {
@@ -99,10 +103,10 @@ const {
 
 // 创建新节点
 const handleCreateNode = async () => {
-  const rendererPoint = pointToRendererPoint({
-    x: props.position.x,
-    y: props.position.y,
-  }, viewport.value)
+  const position = project({
+    x: props.clickPosition.x,
+    y: props.clickPosition.y,
+  })
 
   const blockId = await getNewDailyNoteBlockId()
   const newNode = {
@@ -111,7 +115,7 @@ const handleCreateNode = async () => {
     data: {
       blockId,
     },
-    position: rendererPoint,
+    position,
     width: moduleWhiteBoardOptions.value.cardWidthDefault,
     height: moduleWhiteBoardOptions.value.cardHeightDefault,
     connectable: true,
@@ -125,10 +129,10 @@ const handleCreateNode = async () => {
 
 // 创建新分组
 const handleCreateFrame = () => {
-  const rendererPoint = pointToRendererPoint({
-    x: props.position.x,
-    y: props.position.y,
-  }, viewport.value)
+  const position = project({
+    x: props.clickPosition.x,
+    y: props.clickPosition.y,
+  })
 
   const newFrame = {
     id: generateWhiteBoardNodeId(),
@@ -136,7 +140,7 @@ const handleCreateFrame = () => {
     data: {
       label: '新分组',
     },
-    position: rendererPoint,
+    position,
     width: 400,
     height: 300,
     connectable: true,
@@ -150,10 +154,10 @@ const handleCreateFrame = () => {
 
 // 创建思维导图节点
 const handleCreateMindmap = async () => {
-  const rendererPoint = pointToRendererPoint({
-    x: props.position.x,
-    y: props.position.y,
-  }, viewport.value)
+  const position = project({
+    x: props.clickPosition.x,
+    y: props.clickPosition.y,
+  })
 
   // 创建中心节点
   const blockId = await getNewDailyNoteBlockId()
@@ -167,7 +171,7 @@ const handleCreateMindmap = async () => {
       mindmap: true,
       label: '新思维导图',
     },
-    position: rendererPoint,
+    position,
     width: 300,
     height: 150,
     connectable: true,
@@ -181,11 +185,11 @@ const handleCreateMindmap = async () => {
   // 创建三个子节点
   const nodeSpacing = 150 // 节点之间的垂直间距
   const horizontalSpacing = 100 // 节点之间的水平间距
-  const parentRightEdge = rendererPoint.x + 300 // 父节点宽度为300
+  const parentRightEdge = position.x + 300 // 父节点宽度为300
 
   // 计算子节点的总高度和起始位置
   const totalHeight = 2 * nodeSpacing // 两个间距，三个节点
-  const startY = rendererPoint.y - (totalHeight / 2)
+  const startY = position.y - (totalHeight / 2)
 
   // 创建子节点
   const childNodes = await Promise.all([0, 1, 2].map(async (index) => {
