@@ -61,6 +61,7 @@
 <script setup lang="ts">
 import { getNewDailyNoteBlockId } from '@/modules/DailyNote/DailyNote'
 import {
+  generateWhiteBoardEdgeId,
   generateWhiteBoardNodeId,
   useWhiteBoardModule,
 } from '@/modules/EnWhiteBoard/EnWhiteBoard'
@@ -178,16 +179,18 @@ const handleCreateMindmap = async () => {
   // 创建三个初始子节点
   const childNodes = await Promise.all([1, 2, 3].map(async (index) => {
     const childBlockId = await getNewDailyNoteBlockId()
+    const childNodeId = generateWhiteBoardNodeId()
     return {
-      id: generateWhiteBoardNodeId(),
+      id: childNodeId,
       type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_PROTYLE,
       data: {
         blockId: childBlockId,
         parentId: mindmapNodeId,
+        mindmap: true, // 子节点也标记为思维导图节点
       },
       position: {
-        x: rendererPoint.x + 200, // 临时位置,会被自动布局调整
-        y: rendererPoint.y,
+        x: rendererPoint.x + 200,
+        y: rendererPoint.y + (index - 1) * 150,
       },
       width: 300,
       height: 150,
@@ -197,8 +200,28 @@ const handleCreateMindmap = async () => {
     }
   }))
 
-  // 添加所有节点
+  // 创建连接边
+  const newEdges = childNodes.map((childNode) => ({
+    id: generateWhiteBoardEdgeId(),
+    source: mindmapNodeId,
+    target: childNode.id,
+    sourceHandle: 'right',
+    targetHandle: 'left',
+    type: EN_CONSTANTS.EN_WHITE_BOARD_EDGE_TYPE_BASE,
+    data: {
+      label: '',
+      edgeType: 'smoothstep',
+      style: 'solid',
+      width: 2,
+      color: 'var(--b3-theme-on-surface)',
+      markerEnd: 'arrow',
+    },
+  }))
+
+  // 添加所有节点和边
   addNodes([mindmapNode, ...childNodes])
+  setEdges([...edges.value, ...newEdges])
+
   emit('close')
 }
 
