@@ -170,7 +170,6 @@ import EnProtyle from '@/components/EnProtyle.vue'
 import { getNewDailyNoteBlockId } from '@/modules/DailyNote/DailyNote'
 
 import {
-  generateWhiteBoardEdgeId,
   generateWhiteBoardNodeId,
   getWhiteBoardConfigRefById,
   useWhiteBoardModule,
@@ -187,7 +186,6 @@ import {
   IconArrowUp,
 } from '@arco-design/web-vue/es/icon'
 import {
-  Connection,
   Handle,
   Position,
   useKeyPress,
@@ -508,6 +506,7 @@ const handleDuplicateNode = () => {
     },
     data: {
       ...sourceNode.data,
+      parentId: sourceNode.data.parentId,
     },
     selected: true,
     dragging: false,
@@ -518,17 +517,12 @@ const handleDuplicateNode = () => {
     ...node,
     selected: node.id === sourceNode.id ? false : node.selected,
   }))
-  setNodes(updatedNodes)
-  addNodes([newNode])
 
-  // 如果是思维导图节点且有父节点，使用模拟连接函数
-  if (isMindmapNode.value && sourceNode.data?.parentId) {
-    simulateConnection(sourceNode.data.parentId, newNodeId)
-  }
+  setNodes([...updatedNodes, newNode])
 
   // 更新白板配置
   if (embedWhiteBoardConfigData.value) {
-    embedWhiteBoardConfigData.value.boardOptions.nodes = getNodes.value
+    embedWhiteBoardConfigData.value.boardOptions.nodes = [...updatedNodes, newNode]
   }
 }
 
@@ -671,85 +665,45 @@ watch(() => getChildNodes().length, () => {
 
 // 更新思维导图布局
 const updateMindmapLayout = () => {
-  const children = getChildNodes()
-  if (!children?.length) return
+  const nodes = getNodes.value
+  const currentEdges = edges.value
 
-  const nodes = getNodes.value || []
-  const newNodes = [...nodes]
-  const nodeSpacing = 150 // 节点之间的垂直间距
-  const horizontalSpacing = 100 // 节点之间的水平间距
+  // 找到所有以当前节点为父节点的子节点
+  const childNodes = nodes.filter((node) => node.data?.parentId === flowNode.id)
 
-  // 计算总高度
-  const totalHeight = (children.length - 1) * nodeSpacing
-  // 计算起始Y坐标，使节点组居中于父节点
-  const startY = flowNode.position.y - (totalHeight / 2)
+  if (childNodes.length === 0) return
 
   // 获取父节点的右边界
   const parentRightEdge = flowNode.position.x + (flowNode.dimensions?.width || 0)
-
-  // 更新子节点位置
-  children.forEach((child, index) => {
-    const y = startY + (index * nodeSpacing)
-    const nodeIndex = newNodes.findIndex((n) => n.id === child.id)
-    if (nodeIndex !== -1) {
-      newNodes[nodeIndex] = {
-        ...newNodes[nodeIndex],
-        position: {
-          x: parentRightEdge + horizontalSpacing,
-          y,
-        },
-      }
-
-      // 递归更新子节点
-      updateChildrenPositions(child.id, {
-        x: parentRightEdge + horizontalSpacing,
-        y,
-        width: child.dimensions?.width || 0,
-      })
-    }
-  })
-
-  setNodes(newNodes)
-}
-
-// 递归更新子节点位置
-const updateChildrenPositions = (parentId: string, parentPosition: { x: number, y: number, width: number }) => {
-  const nodes = getNodes.value || []
-  const children = nodes.filter((node) => node.data?.parentId === parentId)
-  if (!children.length) return
-
   const nodeSpacing = 150 // 节点之间的垂直间距
   const horizontalSpacing = 100 // 节点之间的水平间距
 
-  // 计算总高度
-  const totalHeight = (children.length - 1) * nodeSpacing
-  // 计算起始Y坐标，使节点组居中于父节点
-  const startY = parentPosition.y - (totalHeight / 2)
+  // 计算子节点的总高度
+  const totalHeight = (childNodes.length - 1) * nodeSpacing
+  const startY = flowNode.position.y - (totalHeight / 2)
 
-  // 获取父节点的右边界
-  const parentRightEdge = parentPosition.x + parentPosition.width
-
-  // 更新子节点位置
-  children.forEach((child, index) => {
-    const y = startY + (index * nodeSpacing)
-    const nodeIndex = nodes.findIndex((n) => n.id === child.id)
-    if (nodeIndex !== -1) {
-      nodes[nodeIndex] = {
-        ...nodes[nodeIndex],
+  // 更新子节点的位置
+  const updatedNodes = nodes.map((node) => {
+    if (node.data?.parentId === flowNode.id) {
+      const index = childNodes.findIndex((n) => n.id === node.id)
+      return {
+        ...node,
         position: {
           x: parentRightEdge + horizontalSpacing,
-          y,
+          y: startY + (index * nodeSpacing),
         },
       }
-
-      // 递归更新子节点
-      updateChildrenPositions(child.id, {
-        x: parentRightEdge + horizontalSpacing,
-        y,
-        width: child.dimensions?.width || 0,
-      })
     }
+    return node
   })
+
+  setNodes(updatedNodes)
+
+  // 更新白板配置
+  if (embedWhiteBoardConfigData.value) {
+    embedWhiteBoardConfigData.value.boardOptions.nodes = updatedNodes
+    embedWhiteBoardConfigData.value.boardOptions.edges = currentEdges
+  }
 }
 
 // 添加思维导图工具栏按钮
@@ -771,78 +725,6 @@ const toggleMindmap = () => {
   if (!isMindmapNode.value) {
     updateMindmapLayout()
   }
-}
-
-// 修改连接处理部分
-const handleConnection = (connection: Connection) => {
-  // 生成唯一的边 ID
-  const edgeId = generateWhiteBoardEdgeId()
-
-  // 确保思维导图节点的连接点位置正确
-  const sourceNode = getNodes.value.find((node) => node.id === connection.source)
-  const targetNode = getNodes.value.find((node) => node.id === connection.target)
-
-  // 如果是思维导图节点，强制使用正确的连接点
-  const sourceHandle = sourceNode?.data?.mindmap ? 'right' : connection.sourceHandle
-  const targetHandle = targetNode?.data?.mindmap ? 'left' : connection.targetHandle
-
-  const edge = {
-    id: edgeId,
-    source: connection.source,
-    target: connection.target,
-    sourceHandle,
-    targetHandle,
-    type: EN_CONSTANTS.EN_WHITE_BOARD_EDGE_TYPE_BASE,
-    data: {
-      label: '',
-      edgeType: 'bezier',
-      style: 'solid',
-      width: 2,
-      color: 'var(--b3-theme-on-surface)',
-      markerEnd: 'arrow',
-    },
-  }
-
-  // 更新边集合
-  const newEdges = [...edges.value, edge]
-  setEdges(newEdges)
-
-  // 更新父子关系和节点配置
-  const nodes = getNodes.value
-  if (targetNode) {
-    const updatedNodes = nodes.map((node) => {
-      if (node.id === targetNode.id) {
-        return {
-          ...node,
-          data: {
-            ...node.data,
-            parentId: connection.source,
-            mindmap: true,
-          },
-        }
-      }
-      return node
-    })
-    setNodes(updatedNodes)
-
-    // 立即更新白板配置
-    if (embedWhiteBoardConfigData.value) {
-      embedWhiteBoardConfigData.value.boardOptions.nodes = updatedNodes
-      embedWhiteBoardConfigData.value.boardOptions.edges = newEdges
-    }
-  }
-}
-
-// 修改自动连接处理函数
-const simulateConnection = (sourceId: string, targetId: string) => {
-  // 创建连接
-  const connection = {
-    source: sourceId,
-    target: targetId,
-  } as Connection
-
-  // 直接调用 handleConnection
-  handleConnection(connection)
 }
 
 // 修改 handleAddChildNode 函数
@@ -883,20 +765,11 @@ const handleAddChildNode = async () => {
     selectable: true,
   }
 
-  // 先添加节点
+  // 更新节点
   const updatedNodes = [...getNodes.value, newNode]
   setNodes(updatedNodes)
 
-  // 创建连接
-  const connection = {
-    source: flowNode.id,
-    target: newNodeId,
-  } as Connection
-
-  // 处理连接
-  handleConnection(connection)
-
-  // 立即更新白板配置
+  // 更新白板配置
   if (embedWhiteBoardConfigData.value) {
     embedWhiteBoardConfigData.value.boardOptions.nodes = updatedNodes
   }
@@ -917,19 +790,6 @@ const handleIcons = {
 const {
   embedWhiteBoardConfigData,
 } = getWhiteBoardConfigRefById(props.nodeProps.data.whiteBoardId, props.nodeProps.data.nodeId)
-
-// 修改 onConnect 处理器
-onConnect((params) => {
-  handleConnection(params)
-})
-
-// 监听节点和边的变化
-watch([() => getNodes.value, () => edges.value], ([newNodes, newEdges]) => {
-  if (embedWhiteBoardConfigData.value) {
-    embedWhiteBoardConfigData.value.boardOptions.nodes = newNodes
-    embedWhiteBoardConfigData.value.boardOptions.edges = newEdges
-  }
-}, { deep: true })
 </script>
 
 <style lang="scss" scoped>

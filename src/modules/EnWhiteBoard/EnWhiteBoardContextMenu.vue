@@ -61,7 +61,6 @@
 <script setup lang="ts">
 import { getNewDailyNoteBlockId } from '@/modules/DailyNote/DailyNote'
 import {
-  generateWhiteBoardEdgeId,
   generateWhiteBoardNodeId,
   useWhiteBoardModule,
 } from '@/modules/EnWhiteBoard/EnWhiteBoard'
@@ -156,7 +155,7 @@ const handleCreateMindmap = async () => {
     y: props.position.y,
   }, viewport.value)
 
-  // 创建中心节点(思维导图节点)
+  // 创建中心节点
   const blockId = await getNewDailyNoteBlockId()
   const mindmapNodeId = generateWhiteBoardNodeId()
 
@@ -165,7 +164,7 @@ const handleCreateMindmap = async () => {
     type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_PROTYLE,
     data: {
       blockId,
-      mindmap: true, // 标记为思维导图节点
+      mindmap: true,
       label: '新思维导图',
     },
     position: rendererPoint,
@@ -176,21 +175,32 @@ const handleCreateMindmap = async () => {
     selectable: true,
   }
 
-  // 创建三个初始子节点
-  const childNodes = await Promise.all([1, 2, 3].map(async (index) => {
+  // 先添加中心节点
+  addNodes([mindmapNode])
+
+  // 创建三个子节点
+  const nodeSpacing = 150 // 节点之间的垂直间距
+  const horizontalSpacing = 100 // 节点之间的水平间距
+  const parentRightEdge = rendererPoint.x + 300 // 父节点宽度为300
+
+  // 计算子节点的总高度和起始位置
+  const totalHeight = 2 * nodeSpacing // 两个间距，三个节点
+  const startY = rendererPoint.y - (totalHeight / 2)
+
+  // 创建子节点
+  const childNodes = await Promise.all([0, 1, 2].map(async (index) => {
     const childBlockId = await getNewDailyNoteBlockId()
-    const childNodeId = generateWhiteBoardNodeId()
     return {
-      id: childNodeId,
+      id: generateWhiteBoardNodeId(),
       type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_PROTYLE,
       data: {
         blockId: childBlockId,
         parentId: mindmapNodeId,
-        mindmap: true, // 子节点也标记为思维导图节点
+        mindmap: true,
       },
       position: {
-        x: rendererPoint.x + 200,
-        y: rendererPoint.y + (index - 1) * 150,
+        x: parentRightEdge + horizontalSpacing,
+        y: startY + (index * nodeSpacing),
       },
       width: 300,
       height: 150,
@@ -200,27 +210,8 @@ const handleCreateMindmap = async () => {
     }
   }))
 
-  // 创建连接边
-  const newEdges = childNodes.map((childNode) => ({
-    id: generateWhiteBoardEdgeId(),
-    source: mindmapNodeId,
-    target: childNode.id,
-    sourceHandle: 'right',
-    targetHandle: 'left',
-    type: EN_CONSTANTS.EN_WHITE_BOARD_EDGE_TYPE_BASE,
-    data: {
-      label: '',
-      edgeType: 'smoothstep',
-      style: 'solid',
-      width: 2,
-      color: 'var(--b3-theme-on-surface)',
-      markerEnd: 'arrow',
-    },
-  }))
-
-  // 添加所有节点和边
-  addNodes([mindmapNode, ...childNodes])
-  setEdges([...edges.value, ...newEdges])
+  // 添加子节点
+  addNodes(childNodes)
 
   emit('close')
 }
