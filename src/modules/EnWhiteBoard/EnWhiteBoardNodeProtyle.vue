@@ -171,6 +171,7 @@ import { getNewDailyNoteBlockId } from '@/modules/DailyNote/DailyNote'
 
 import {
   generateWhiteBoardNodeId,
+  generateWhiteBoardEdgeId,
   getWhiteBoardConfigRefById,
   useWhiteBoardModule,
 } from '@/modules/EnWhiteBoard/EnWhiteBoard'
@@ -769,9 +770,31 @@ const handleAddChildNode = async () => {
   const updatedNodes = [...getNodes.value, newNode]
   setNodes(updatedNodes)
 
+  // 创建连接线
+  const newEdge = {
+    id: generateWhiteBoardEdgeId(),
+    type: EN_CONSTANTS.EN_WHITE_BOARD_EDGE_TYPE_BASE,
+    source: flowNode.id,
+    target: newNodeId,
+    sourceHandle: 'right',
+    targetHandle: 'left',
+    data: {
+      label: '',
+      edgeType: 'smoothstep',
+      width: 1,
+      style: 'solid',
+      color: 'var(--b3-theme-on-surface)',
+      markerEnd: 'arrow',
+    },
+  }
+
+  // 更新边 - 使用 addEdges 方法
+  addEdges([newEdge])
+
   // 更新白板配置
   if (embedWhiteBoardConfigData.value) {
     embedWhiteBoardConfigData.value.boardOptions.nodes = updatedNodes
+    embedWhiteBoardConfigData.value.boardOptions.edges = edges.value
   }
 
   // 更新布局
