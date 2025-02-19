@@ -95,7 +95,8 @@
       >
         <template #node-EnWhiteBoardNodeProtyle="node">
           <EnWhiteBoardNodeProtyle
-            :nodeProps="node"
+            :whiteBoardId="props.data.whiteBoardId"
+            :nodeId="node.id"
             :enWhiteBoardProtyleUtilAreaRef="EnWhiteBoardProtyleUtilAreaRef"
             @open-in-sidebar="handleOpenInSidebar"
           />
@@ -354,8 +355,8 @@
       </template>
       <template v-else>
         <EnWhiteBoardSettings
-          :whiteBoardId="data.whiteBoardId"
-          :nodeId="data.nodeId"
+          :whiteBoardId="props.data.whiteBoardId"
+          :nodeId="props.data.nodeId"
         />
       </template>
 

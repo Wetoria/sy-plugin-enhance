@@ -170,8 +170,8 @@ import EnProtyle from '@/components/EnProtyle.vue'
 import { getNewDailyNoteBlockId } from '@/modules/DailyNote/DailyNote'
 
 import {
-  generateWhiteBoardNodeId,
   generateWhiteBoardEdgeId,
+  generateWhiteBoardNodeId,
   getWhiteBoardConfigRefById,
   useWhiteBoardModule,
 } from '@/modules/EnWhiteBoard/EnWhiteBoard'
@@ -210,12 +210,8 @@ import EnWhiteBoardToolBar from './EnWhiteBoardToolBar.vue'
 
 const props = defineProps<{
   enWhiteBoardProtyleUtilAreaRef: HTMLElement
-  nodeProps: {
-    data: {
-      whiteBoardId: string
-      nodeId: string
-    }
-  }
+  whiteBoardId: string
+  nodeId: string
 }>()
 
 const emit = defineEmits<{
@@ -666,13 +662,18 @@ watch(() => getChildNodes().length, () => {
 
 // 更新思维导图布局
 const updateMindmapLayout = () => {
+  console.log('开始执行 updateMindmapLayout')
   const nodes = getNodes.value
   const currentEdges = edges.value
 
   // 找到所有以当前节点为父节点的子节点
   const childNodes = nodes.filter((node) => node.data?.parentId === flowNode.id)
+  console.log('找到的子节点:', childNodes)
 
-  if (childNodes.length === 0) return
+  if (childNodes.length === 0) {
+    console.log('没有子节点,退出布局更新')
+    return
+  }
 
   // 获取父节点的右边界
   const parentRightEdge = flowNode.position.x + (flowNode.dimensions?.width || 0)
@@ -698,12 +699,18 @@ const updateMindmapLayout = () => {
     return node
   })
 
+  console.log('更新布局前的节点:', nodes)
   setNodes(updatedNodes)
+  console.log('更新布局后的节点:', updatedNodes)
 
   // 更新白板配置
   if (embedWhiteBoardConfigData.value) {
+    console.log('布局更新前的白板配置:', embedWhiteBoardConfigData.value.boardOptions)
     embedWhiteBoardConfigData.value.boardOptions.nodes = updatedNodes
     embedWhiteBoardConfigData.value.boardOptions.edges = currentEdges
+    console.log('布局更新后的白板配置:', embedWhiteBoardConfigData.value.boardOptions)
+  } else {
+    console.warn('布局更新时 embedWhiteBoardConfigData.value 不存在')
   }
 }
 
@@ -732,6 +739,10 @@ const toggleMindmap = () => {
 const handleAddChildNode = async () => {
   const blockId = await getNewDailyNoteBlockId()
   const newNodeId = generateWhiteBoardNodeId()
+  console.log('开始创建子节点:', {
+    blockId,
+    newNodeId,
+  })
 
   // 获取当前节点的所有子节点
   const siblings = getNodes.value.filter((node) => node.data?.parentId === flowNode.id)
@@ -766,9 +777,13 @@ const handleAddChildNode = async () => {
     selectable: true,
   }
 
+  console.log('创建的新节点:', newNode)
+
   // 更新节点
   const updatedNodes = [...getNodes.value, newNode]
+  console.log('更新前的节点列表:', getNodes.value)
   setNodes(updatedNodes)
+  console.log('更新后的节点列表:', updatedNodes)
 
   // 创建连接线
   const newEdge = {
@@ -788,18 +803,31 @@ const handleAddChildNode = async () => {
     },
   }
 
-  // 更新边 - 使用 addEdges 方法
-  addEdges([newEdge])
+  console.log('创建的新边:', newEdge)
+  console.log('更新前的边列表:', edges.value)
+
+  // 更新边 - 使用 push 后重新赋值的方式来确保触发持久化
+  const currentEdges = edges.value || []
+  currentEdges.push(newEdge as any)
+  setEdges([...currentEdges])
+
+  console.log('更新后的边列表:', currentEdges)
 
   // 更新白板配置
   if (embedWhiteBoardConfigData.value) {
+    console.log('更新白板配置前:', embedWhiteBoardConfigData.value.boardOptions)
     embedWhiteBoardConfigData.value.boardOptions.nodes = updatedNodes
-    embedWhiteBoardConfigData.value.boardOptions.edges = edges.value
+    embedWhiteBoardConfigData.value.boardOptions.edges = currentEdges
+    console.log('更新白板配置后:', embedWhiteBoardConfigData.value.boardOptions)
+  } else {
+    console.warn('embedWhiteBoardConfigData.value 不存在')
   }
 
   // 更新布局
   if (isMindmapNode.value) {
+    console.log('开始更新思维导图布局')
     updateMindmapLayout()
+    console.log('完成更新思维导图布局')
   }
 }
 
@@ -812,7 +840,7 @@ const handleIcons = {
 
 const {
   embedWhiteBoardConfigData,
-} = getWhiteBoardConfigRefById(props.nodeProps.data.whiteBoardId, props.nodeProps.data.nodeId)
+} = getWhiteBoardConfigRefById(props.whiteBoardId, props.nodeId)
 </script>
 
 <style lang="scss" scoped>
