@@ -735,7 +735,24 @@ const toggleMindmap = () => {
   }
 }
 
-// 修改 handleAddChildNode 函数
+// 添加预设颜色数组
+const presetColors = [
+  'var(--b3-font-background1)',
+  'var(--b3-font-background2)',
+  'var(--b3-font-background3)',
+  'var(--b3-font-background4)',
+  'var(--b3-font-background5)',
+  'var(--b3-font-background6)',
+  'var(--b3-font-background7)',
+  'var(--b3-font-background8)',
+  'var(--b3-font-background9)',
+  'var(--b3-font-background10)',
+  'var(--b3-font-background11)',
+  'var(--b3-font-background12)',
+  'var(--b3-font-background13)',
+]
+
+// 在handleAddChildNode函数中修改边的颜色设置
 const handleAddChildNode = async () => {
   const blockId = await getNewDailyNoteBlockId()
   const newNodeId = generateWhiteBoardNodeId()
@@ -785,6 +802,10 @@ const handleAddChildNode = async () => {
   setNodes(updatedNodes)
   console.log('更新后的节点列表:', updatedNodes)
 
+  // 根据子节点数量选择颜色
+  const colorIndex = siblings.length % presetColors.length
+  const edgeColor = presetColors[colorIndex]
+
   // 创建连接线
   const newEdge = {
     id: generateWhiteBoardEdgeId(),
@@ -795,10 +816,10 @@ const handleAddChildNode = async () => {
     targetHandle: 'left',
     data: {
       label: '',
-      edgeType: 'smoothstep',
+      edgeType: 'bezier',
       width: 1,
       style: 'solid',
-      color: 'var(--b3-theme-on-surface)',
+      color: edgeColor,
       markerEnd: 'arrow',
     },
   }
