@@ -821,6 +821,7 @@ const handleAddChildNode = async () => {
       style: 'solid',
       color: edgeColor,
       markerEnd: 'arrow',
+      markerStart: undefined,
     },
   }
 

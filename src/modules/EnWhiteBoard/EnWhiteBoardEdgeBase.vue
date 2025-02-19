@@ -326,7 +326,7 @@ const edgeStyle = computed(() => {
     strokeWidth: data.width || 1,
     stroke: data.color || 'var(--b3-theme-on-surface)',
     strokeDasharray: data.style === 'dashed' ? '5,5' : data.style === 'dotted' ? '1,5' : undefined,
-    markerEnd: `url(#${data.markerEnd || 'arrow'})`,
+    markerEnd: data.markerEnd ? `url(#${data.markerEnd})` : undefined,
     markerStart: data.markerStart ? `url(#${data.markerStart})` : undefined,
   }
 })
