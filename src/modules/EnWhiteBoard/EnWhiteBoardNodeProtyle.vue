@@ -661,8 +661,11 @@ watch(() => getChildNodes().length, () => {
 })
 
 // 计算节点及其子树的总高度
-const calculateSubtreeHeight = (node, nodes, minVerticalSpacing) => {
+const calculateSubtreeHeight = (node, nodes) => {
+  // 获取节点自身的高度
   const nodeHeight = node.dimensions?.height || whiteBoardModuleOptions.value.cardHeightDefault
+
+  // 获取所有直接子节点
   const childNodes = nodes.filter((n) => n.data?.parentId === node.id)
 
   if (childNodes.length === 0) {
@@ -670,14 +673,23 @@ const calculateSubtreeHeight = (node, nodes, minVerticalSpacing) => {
   }
 
   // 递归计算每个子节点的子树高度
-  const childrenHeights = childNodes.map((child) => calculateSubtreeHeight(child, nodes, minVerticalSpacing))
+  const childrenHeights = childNodes.map((child) => calculateSubtreeHeight(child, nodes))
 
-  // 计算所有子树的总高度（包括间距）
-  const totalChildrenHeight = childrenHeights.reduce((sum, height) => sum + height, 0)
-    + (childNodes.length - 1) * minVerticalSpacing
+  // 计算子树的总高度(包含动态间距)
+  let totalChildrenHeight = 0
+  for (let i = 0; i < childrenHeights.length; i++) {
+    totalChildrenHeight += childrenHeights[i]
+    // 只在直接子节点之间添加间距
+    if (i < childrenHeights.length - 1) {
+      // 动态间距 = 相邻两个子树中较大者的20%
+      const spacing = Math.max(childrenHeights[i], childrenHeights[i + 1]) * 0.2
+      totalChildrenHeight += spacing
+    }
+  }
 
-  // 返回子树总高度和节点自身高度的最大值
-  return Math.max(nodeHeight, totalChildrenHeight)
+  // 返回子树总高度,不再与当前节点高度取最大值
+  // 因为父节点不需要容纳子节点的垂直空间
+  return totalChildrenHeight || nodeHeight
 }
 
 // 更新思维导图布局
@@ -700,7 +712,7 @@ const updateMindmapLayout = () => {
   const parentRightEdge = flowNode.position.x + (flowNode.dimensions?.width || 0)
 
   // 计算每个子节点的子树高度
-  const subtreeHeights = childNodes.map((node) => calculateSubtreeHeight(node, nodes, 0))
+  const subtreeHeights = childNodes.map((node) => calculateSubtreeHeight(node, nodes))
 
   // 计算总高度(包含动态间距)
   let totalHeight = 0
@@ -745,7 +757,7 @@ const updateMindmapLayout = () => {
       const childrenOfNode = nodes.filter((n) => n.data?.parentId === node.id)
       if (childrenOfNode.length > 0) {
         // 计算子节点的子树高度
-        const childSubtreeHeights = childrenOfNode.map((child) => calculateSubtreeHeight(child, nodes, 0))
+        const childSubtreeHeights = childrenOfNode.map((child) => calculateSubtreeHeight(child, nodes))
 
         // 计算子节点的总高度(包含动态间距)
         let childTotalHeight = 0
@@ -844,26 +856,30 @@ const presetColors = [
   'var(--b3-font-background13)',
 ]
 
-// 递归更新节点布局
-const updateMindmapLayoutRecursively = (nodeId) => {
-  const nodes = getNodes.value
-  const node = nodes.find((n) => n.id === nodeId)
-  if (!node) return
-
-  // 如果有父节点,先更新父节点的布局
-  if (node.data?.parentId) {
-    updateMindmapLayoutRecursively(node.data.parentId)
-  }
-
-  // 更新当前节点的布局
-  const currentNode = nodes.find((n) => n.id === nodeId)
-  if (currentNode && currentNode.data?.mindmap) {
-    updateNodeLayout(currentNode)
-  }
+// 检查节点尺寸是否已准备好
+const isNodeDimensionsReady = (node) => {
+  return node.dimensions?.width && node.dimensions?.height
 }
 
-// 为指定节点更新布局
-const updateNodeLayout = (node) => {
+// 等待节点尺寸准备好
+const waitForNodeDimensions = (nodes, maxAttempts = 5) => {
+  return new Promise((resolve) => {
+    let attempts = 0
+    const check = () => {
+      attempts++
+      const allReady = nodes.every(isNodeDimensionsReady)
+      if (allReady || attempts >= maxAttempts) {
+        resolve(allReady)
+      } else {
+        setTimeout(check, 100) // 每100ms检查一次
+      }
+    }
+    check()
+  })
+}
+
+// 修改 updateNodeLayout 函数
+const updateNodeLayout = async (node) => {
   console.log('开始执行 updateNodeLayout')
   const nodes = getNodes.value
   const currentEdges = edges.value
@@ -878,11 +894,17 @@ const updateNodeLayout = (node) => {
     return
   }
 
+  // 等待节点尺寸准备好
+  const dimensionsReady = await waitForNodeDimensions([node, ...childNodes])
+  if (!dimensionsReady) {
+    console.warn('节点尺寸未准备好,使用默认尺寸')
+  }
+
   // 获取父节点的右边界
-  const parentRightEdge = node.position.x + (node.dimensions?.width || 0)
+  const parentRightEdge = node.position.x + (node.dimensions?.width || whiteBoardModuleOptions.value.cardWidthDefault)
 
   // 计算每个子节点的子树高度
-  const subtreeHeights = childNodes.map((n) => calculateSubtreeHeight(n, nodes, 0))
+  const subtreeHeights = childNodes.map((n) => calculateSubtreeHeight(n, nodes))
 
   // 计算总高度(包含动态间距)
   let totalHeight = 0
@@ -927,7 +949,7 @@ const updateNodeLayout = (node) => {
       const childrenOfNode = nodes.filter((child) => child.data?.parentId === n.id)
       if (childrenOfNode.length > 0) {
         // 计算子节点的子树高度
-        const childSubtreeHeights = childrenOfNode.map((child) => calculateSubtreeHeight(child, nodes, 0))
+        const childSubtreeHeights = childrenOfNode.map((child) => calculateSubtreeHeight(child, nodes))
 
         // 计算子节点的总高度(包含动态间距)
         let childTotalHeight = 0
@@ -973,18 +995,31 @@ const updateNodeLayout = (node) => {
     return n
   })
 
-  console.log('更新布局前的节点:', nodes)
+  // 更新节点位置
   setNodes(updatedNodes)
-  console.log('更新布局后的节点:', updatedNodes)
 
   // 更新白板配置
   if (embedWhiteBoardConfigData.value) {
-    console.log('布局更新前的白板配置:', embedWhiteBoardConfigData.value.boardOptions)
     embedWhiteBoardConfigData.value.boardOptions.nodes = updatedNodes
     embedWhiteBoardConfigData.value.boardOptions.edges = currentEdges
-    console.log('布局更新后的白板配置:', embedWhiteBoardConfigData.value.boardOptions)
-  } else {
-    console.warn('布局更新时 embedWhiteBoardConfigData.value 不存在')
+  }
+}
+
+// 修改 updateMindmapLayoutRecursively 函数为异步
+const updateMindmapLayoutRecursively = async (nodeId) => {
+  const nodes = getNodes.value
+  const node = nodes.find((n) => n.id === nodeId)
+  if (!node) return
+
+  // 如果有父节点,先更新父节点的布局
+  if (node.data?.parentId) {
+    await updateMindmapLayoutRecursively(node.data.parentId)
+  }
+
+  // 更新当前节点的布局
+  const currentNode = nodes.find((n) => n.id === nodeId)
+  if (currentNode && currentNode.data?.mindmap) {
+    await updateNodeLayout(currentNode)
   }
 }
 
@@ -1090,20 +1125,10 @@ const handleAddChildNode = async () => {
 
   console.log('更新后的边列表:', currentEdges)
 
-  // 更新白板配置
-  if (embedWhiteBoardConfigData.value) {
-    console.log('更新白板配置前:', embedWhiteBoardConfigData.value.boardOptions)
-    embedWhiteBoardConfigData.value.boardOptions.nodes = updatedNodes
-    embedWhiteBoardConfigData.value.boardOptions.edges = currentEdges
-    console.log('更新白板配置后:', embedWhiteBoardConfigData.value.boardOptions)
-  } else {
-    console.warn('embedWhiteBoardConfigData.value 不存在')
-  }
-
   // 递归更新布局
   if (isMindmapNode.value) {
     console.log('开始递归更新思维导图布局')
-    updateMindmapLayoutRecursively(flowNode.id)
+    await updateMindmapLayoutRecursively(flowNode.id)
     console.log('完成递归更新思维导图布局')
   }
 }
