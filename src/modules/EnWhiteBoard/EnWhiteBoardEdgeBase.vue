@@ -322,10 +322,20 @@ const getData = () => {
 
 const edgeStyle = computed(() => {
   const data = getData()
+  const width = data.width || 1
+
+  // 根据线条粗细调整点线和虚线的间距
+  let dashArray
+  if (data.style === 'dashed') {
+    dashArray = `${width * 5},${width * 5}` // 虚线间距随线条粗细等比例变化
+  } else if (data.style === 'dotted') {
+    dashArray = `${width},${width * 2}` // 点线的点大小和间距随线条粗细变化，减小间距
+  }
+
   return {
-    strokeWidth: data.width || 1,
+    strokeWidth: width,
     stroke: data.color || 'var(--b3-theme-on-surface)',
-    strokeDasharray: data.style === 'dashed' ? '5,5' : data.style === 'dotted' ? '1,5' : undefined,
+    strokeDasharray: dashArray,
     markerEnd: data.markerEnd ? `url(#${data.markerEnd})` : undefined,
     markerStart: data.markerStart ? `url(#${data.markerStart})` : undefined,
   }
