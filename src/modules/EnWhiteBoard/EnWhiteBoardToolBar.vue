@@ -50,17 +50,11 @@
     <template v-if="isNodeToolbar">
       <div class="ToolbarContent">
         <a-button-group>
-          <a-tooltip content="删除节点">
-            <a-button @click="onRemoveNode">
+          <a-tooltip :content="nodeData?.isCollapsed ? '展开节点' : '折叠节点'">
+            <a-button @click="onCollapse">
               <template #icon>
-                <icon-delete />
-              </template>
-            </a-button>
-          </a-tooltip>
-          <a-tooltip content="复制节点">
-            <a-button @click="onDuplicateNode">
-              <template #icon>
-                <icon-copy />
+                <icon-caret-down v-if="!nodeData?.isCollapsed" />
+                <icon-caret-right v-else />
               </template>
             </a-button>
           </a-tooltip>
@@ -71,7 +65,7 @@
             >
               <a-button>
                 <template #icon>
-                  <icon-layout />
+                  <icon-skin />
                 </template>
               </a-button>
               <template #content>
@@ -88,20 +82,43 @@
               </template>
             </a-dropdown>
           </a-tooltip>
-          <a-tooltip content="在侧边栏中打开">
-            <a-button @click="onOpenInSidebar">
-              <template #icon>
-                <icon-right />
+          <a-tooltip content="节点类型">
+            <a-dropdown
+              trigger="click"
+              @select="onNodeTypeSelect"
+            >
+              <a-button>
+                <template #icon>
+                  <icon-apps />
+                </template>
+              </a-button>
+              <template #content>
+                <a-doption value="protyle">
+                  <div class="NodeTypeOption">
+                    <icon-edit />
+                    <span>普通节点</span>
+                  </div>
+                </a-doption>
+                <a-doption value="mindmap">
+                  <div class="NodeTypeOption">
+                    <icon-mind-mapping />
+                    <span>思维导图</span>
+                  </div>
+                </a-doption>
+                <a-doption value="text">
+                  <div class="NodeTypeOption">
+                    <icon-file />
+                    <span>文本节点</span>
+                  </div>
+                </a-doption>
+                <a-doption value="gingko">
+                  <div class="NodeTypeOption">
+                    <icon-branch />
+                    <span>银杏编辑器</span>
+                  </div>
+                </a-doption>
               </template>
-            </a-button>
-          </a-tooltip>
-          <a-tooltip :content="nodeData?.isCollapsed ? '展开节点' : '折叠节点'">
-            <a-button @click="onCollapse">
-              <template #icon>
-                <icon-caret-down v-if="!nodeData?.isCollapsed" />
-                <icon-caret-right v-else />
-              </template>
-            </a-button>
+            </a-dropdown>
           </a-tooltip>
           <a-tooltip content="节点颜色">
             <a-dropdown trigger="click">
@@ -165,45 +182,31 @@
               </template>
             </a-dropdown>
           </a-tooltip>
-          <a-tooltip content="节点类型">
-            <a-dropdown
-              trigger="click"
-              @select="onNodeTypeSelect"
-            >
-              <a-button>
-                <template #icon>
-                  <icon-apps />
-                </template>
-              </a-button>
-              <template #content>
-                <a-doption value="protyle">
-                  <div class="NodeTypeOption">
-                    <icon-edit />
-                    <span>普通节点</span>
-                  </div>
-                </a-doption>
-                <a-doption value="mindmap">
-                  <div class="NodeTypeOption">
-                    <icon-mind-mapping />
-                    <span>思维导图</span>
-                  </div>
-                </a-doption>
-                <a-doption value="text">
-                  <div class="NodeTypeOption">
-                    <icon-file />
-                    <span>文本节点</span>
-                  </div>
-                </a-doption>
-                <a-doption value="gingko">
-                  <div class="NodeTypeOption">
-                    <icon-branch />
-                    <span>银杏编辑器</span>
-                  </div>
-                </a-doption>
-              </template>
-            </a-dropdown>
-          </a-tooltip>
           <slot name="nodeToolbarExtra" />
+          <a-tooltip content="在侧边栏中打开">
+            <a-button @click="onOpenInSidebar">
+              <template #icon>
+                <icon-layout />
+              </template>
+            </a-button>
+          </a-tooltip>
+          <a-tooltip content="复制节点">
+            <a-button @click="onDuplicateNode">
+              <template #icon>
+                <icon-copy />
+              </template>
+            </a-button>
+          </a-tooltip>
+          <a-tooltip content="删除节点">
+            <a-button
+              class="danger-button"
+              @click="onRemoveNode"
+            >
+              <template #icon>
+                <icon-delete />
+              </template>
+            </a-button>
+          </a-tooltip>
         </a-button-group>
       </div>
     </template>
@@ -241,13 +244,6 @@
         <!-- 普通工具栏模式 -->
         <template v-else>
           <a-button-group>
-            <a-tooltip content="删除连线">
-              <a-button @click="onRemoveEdge">
-                <template #icon>
-                  <icon-delete />
-                </template>
-              </a-button>
-            </a-tooltip>
             <a-tooltip content="编辑标签">
               <a-button
                 @click="() => {
@@ -495,7 +491,7 @@
               >
                 <a-button>
                   <template #icon>
-                    <icon-double-left />
+                    <icon-left />
                   </template>
                 </a-button>
                 <template #content>
@@ -634,7 +630,7 @@
               >
                 <a-button>
                   <template #icon>
-                    <icon-double-right />
+                    <icon-right />
                   </template>
                 </a-button>
                 <template #content>
@@ -821,6 +817,16 @@
               </a-dropdown>
             </a-tooltip>
             <slot name="edgeToolbarExtra" />
+            <a-tooltip content="删除连线">
+              <a-button
+                class="danger-button"
+                @click="onRemoveEdge"
+              >
+                <template #icon>
+                  <icon-delete />
+                </template>
+              </a-button>
+            </a-tooltip>
           </a-button-group>
         </template>
       </div>
@@ -1282,6 +1288,15 @@ const onNodeTypeSelect = (type: string) => {
           background: var(--b3-theme-surface-light);
         }
       }
+    }
+  }
+
+  // 添加删除按钮的危险样式
+  .danger-button {
+    color: var(--b3-theme-error) !important;
+
+    &:hover {
+      background: var(--b3-theme-error-light) !important;
     }
   }
 }
