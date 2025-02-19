@@ -802,9 +802,28 @@ const handleAddChildNode = async () => {
   setNodes(updatedNodes)
   console.log('更新后的节点列表:', updatedNodes)
 
-  // 根据子节点数量选择颜色
-  const colorIndex = siblings.length % presetColors.length
-  const edgeColor = presetColors[colorIndex]
+  // 根据最下方子节点的连线颜色来决定新连线的颜色
+  let edgeColor = presetColors[0] // 默认使用第一个颜色
+  if (siblings.length > 0) {
+    // 获取所有连接到当前节点的边
+    const currentEdges = edges.value.filter((edge) => edge.source === flowNode.id)
+    // 按照目标节点的 y 坐标排序，找到最下方的边
+    const sortedEdges = currentEdges.sort((a, b) => {
+      const nodeA = getNodes.value.find((node) => node.id === a.target)
+      const nodeB = getNodes.value.find((node) => node.id === b.target)
+      return (nodeB?.position.y || 0) - (nodeA?.position.y || 0)
+    })
+
+    if (sortedEdges.length > 0) {
+      const lastEdge = sortedEdges[0]
+      // 找到最下方边的颜色在预设颜色中的索引
+      const lastColorIndex = presetColors.findIndex((color) => color === lastEdge.data?.color)
+      if (lastColorIndex !== -1) {
+        // 使用下一个颜色，如果是最后一个颜色则回到第一个
+        edgeColor = presetColors[(lastColorIndex + 1) % presetColors.length]
+      }
+    }
+  }
 
   // 创建连接线
   const newEdge = {
