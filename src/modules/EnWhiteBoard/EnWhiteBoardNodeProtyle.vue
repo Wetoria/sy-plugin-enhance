@@ -817,7 +817,7 @@ const handleAddChildNode = async () => {
     data: {
       label: '',
       edgeType: 'bezier',
-      width: 1,
+      width: 3,
       style: 'solid',
       color: edgeColor,
       markerEnd: 'arrow',
