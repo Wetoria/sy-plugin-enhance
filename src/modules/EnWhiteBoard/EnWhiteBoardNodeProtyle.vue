@@ -677,24 +677,89 @@ const updateMindmapLayout = () => {
 
   // 获取父节点的右边界
   const parentRightEdge = flowNode.position.x + (flowNode.dimensions?.width || 0)
-  const nodeSpacing = 150 // 节点之间的垂直间距
   const horizontalSpacing = 100 // 节点之间的水平间距
 
-  // 计算子节点的总高度
-  const totalHeight = (childNodes.length - 1) * nodeSpacing
-  const startY = flowNode.position.y - (totalHeight / 2)
+  // 计算每个子节点的高度和它们的子节点所需的总高度
+  const nodeHeights = childNodes.map((node) => {
+    const height = node.dimensions?.height || whiteBoardModuleOptions.value.cardHeightDefault
+    const childrenOfNode = nodes.filter((n) => n.data?.parentId === node.id)
+    let childrenHeight = 0
+    if (childrenOfNode.length > 0) {
+      // 计算子节点占用的总高度
+      childrenHeight = childrenOfNode.reduce((total, child) => {
+        return total + (child.dimensions?.height || whiteBoardModuleOptions.value.cardHeightDefault)
+      }, 0)
+      // 添加子节点之间的间距
+      childrenHeight += (childrenOfNode.length - 1) * 50 // 子节点之间的最小间距
+    }
+    // 返回节点自身高度和子节点高度的最大值
+    return Math.max(height, childrenHeight)
+  })
+
+  // 计算所有节点所需的总高度
+  const totalHeight = nodeHeights.reduce((sum, height) => sum + height, 0)
+  // 添加节点之间的最小间距
+  const minVerticalSpacing = 50 // 同级节点之间的最小间距
+  const totalSpacing = (childNodes.length - 1) * minVerticalSpacing
+  const finalTotalHeight = totalHeight + totalSpacing
+
+  // 计算起始Y坐标，使整体居中
+  const startY = flowNode.position.y - (finalTotalHeight / 2)
 
   // 更新子节点的位置
   const updatedNodes = nodes.map((node) => {
     if (node.data?.parentId === flowNode.id) {
       const index = childNodes.findIndex((n) => n.id === node.id)
-      return {
+      const currentY = startY + (nodeHeights.slice(0, index).reduce((sum, height) => sum + height + minVerticalSpacing, 0))
+
+      // 更新当前节点位置
+      const updatedNode = {
         ...node,
         position: {
           x: parentRightEdge + horizontalSpacing,
-          y: startY + (index * nodeSpacing),
+          y: currentY,
         },
       }
+
+      // 递归更新该节点的子节点位置
+      const childrenOfNode = nodes.filter((n) => n.data?.parentId === node.id)
+      if (childrenOfNode.length > 0) {
+        // 计算子节点的总高度
+        const childrenTotalHeight = childrenOfNode.reduce((total, child) => {
+          const childHeight = child.dimensions?.height || whiteBoardModuleOptions.value.cardHeightDefault
+          return total + childHeight
+        }, 0)
+        // 加上子节点之间的间距
+        const childrenSpacing = (childrenOfNode.length - 1) * minVerticalSpacing
+        const totalChildrenHeight = childrenTotalHeight + childrenSpacing
+
+        // 计算第一个子节点的起始位置，使子节点组在父节点中心对齐
+        const parentCenterY = currentY + ((node.dimensions?.height || whiteBoardModuleOptions.value.cardHeightDefault) / 2)
+        const childStartY = parentCenterY - (totalChildrenHeight / 2)
+
+        // 更新每个子节点的位置
+        let currentChildY = childStartY
+        childrenOfNode.forEach((childNode) => {
+          const childHeight = childNode.dimensions?.height || whiteBoardModuleOptions.value.cardHeightDefault
+          const childX = updatedNode.position.x + (updatedNode.dimensions?.width || whiteBoardModuleOptions.value.cardWidthDefault) + horizontalSpacing
+
+          nodes.forEach((n, i) => {
+            if (n.id === childNode.id) {
+              nodes[i] = {
+                ...n,
+                position: {
+                  x: childX,
+                  y: currentChildY,
+                },
+              }
+            }
+          })
+          // 更新下一个子节点的 Y 坐标
+          currentChildY += childHeight + minVerticalSpacing
+        })
+      }
+
+      return updatedNode
     }
     return node
   })
@@ -836,7 +901,7 @@ const handleAddChildNode = async () => {
     data: {
       label: '',
       edgeType: 'bezier',
-      width: 3,
+      width: 2,
       style: 'solid',
       color: edgeColor,
       markerEnd: undefined,
