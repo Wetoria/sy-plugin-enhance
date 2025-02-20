@@ -710,47 +710,33 @@ const calculateSubtreeHeight = (node, nodes) => {
   const childNodes = nodes.filter((n) => n.data?.parentId === node.id)
 
   if (childNodes.length === 0) {
-    return {
-      totalHeight: nodeHeight,
-      subtreeHeight: 0, // 没有子树时子树高度为0
-    }
+    return nodeHeight
   }
 
   // 递归计算每个子节点的子树高度
   const childrenHeights = childNodes.map((child) => calculateSubtreeHeight(child, nodes))
 
-  // 计算子树的总高度(包含间距)
-  let totalChildrenHeight = 0
-  for (let i = 0; i < childrenHeights.length; i++) {
-    totalChildrenHeight += childrenHeights[i].totalHeight
-    // 只在子节点之间添加间距
-    if (i < childrenHeights.length - 1) {
-      // 动态间距 = 相邻两个子树中较大者的20%
-      const spacing = Math.max(childrenHeights[i].totalHeight, childrenHeights[i + 1].totalHeight) * 0.2
-      totalChildrenHeight += spacing
-    }
-  }
+  // 计算子树的总高度(包含固定间距)
+  const verticalSpacing = 50 // 固定的垂直间距
+  const totalChildrenHeight = childrenHeights.reduce((sum, height, index) => {
+    return sum + height + (index < childrenHeights.length - 1 ? verticalSpacing : 0)
+  }, 0)
 
-  // 返回包含节点自身高度和子树高度的对象
-  return {
-    totalHeight: Math.max(nodeHeight, totalChildrenHeight), // 总高度是节点自身高度和子树总高度的较大值
-    subtreeHeight: totalChildrenHeight, // 子树高度仅包含子节点和它们之间的间距
-  }
+  // 返回子树总高度和节点自身高度的较大值
+  return Math.max(nodeHeight, totalChildrenHeight)
 }
 
 // 更新思维导图布局
 const updateMindmapLayout = () => {
-  console.log('开始执行 updateMindmapLayout')
   const nodes = getNodes.value
   const currentEdges = edges.value
-  const horizontalSpacing = 100 // 节点之间的水平间距
+  const horizontalSpacing = 100 // 固定的水平间距
+  const verticalSpacing = 50 // 固定的垂直间距
 
   // 找到所有以当前节点为父节点的子节点
   const childNodes = nodes.filter((node) => node.data?.parentId === flowNode.id)
-  console.log('找到的子节点:', childNodes)
 
   if (childNodes.length === 0) {
-    console.log('没有子节点,退出布局更新')
     return
   }
 
@@ -758,36 +744,26 @@ const updateMindmapLayout = () => {
   const parentRightEdge = flowNode.position.x + (flowNode.dimensions?.width || 0)
 
   // 计算每个子节点的子树高度
-  const subtreeHeights = childNodes.map((node) => calculateSubtreeHeight(node, nodes))
+  const childrenHeights = childNodes.map((node) => calculateSubtreeHeight(node, nodes))
 
-  // 计算总高度(包含间距)
-  let totalHeight = 0
-  for (let i = 0; i < childNodes.length; i++) {
-    totalHeight += subtreeHeights[i].totalHeight
-    if (i < childNodes.length - 1) {
-      // 动态间距 = 相邻两个子树中较大者的20%
-      const spacing = Math.max(subtreeHeights[i].totalHeight, subtreeHeights[i + 1].totalHeight) * 0.2
-      totalHeight += spacing
-    }
-  }
+  // 计算总高度
+  const totalHeight = childrenHeights.reduce((sum, height, index) => {
+    return sum + height + (index < childrenHeights.length - 1 ? verticalSpacing : 0)
+  }, 0)
 
-  // 计算起始Y坐标，使整体居中
-  const startY = flowNode.position.y - (totalHeight / 2)
+  // 计算起始Y坐标，使整体垂直居中于父节点
+  const startY = flowNode.position.y - (totalHeight / 2) + (flowNode.dimensions?.height || 0) / 2
 
   // 更新子节点的位置
   const updatedNodes = nodes.map((node) => {
     if (node.data?.parentId === flowNode.id) {
       const index = childNodes.findIndex((n) => n.id === node.id)
+      const nodeHeight = childrenHeights[index]
 
       // 计算当前节点的Y坐标
       let currentY = startY
       for (let i = 0; i < index; i++) {
-        currentY += subtreeHeights[i].totalHeight
-        if (i < index - 1) {
-          // 添加到下一个节点的动态间距
-          const spacing = Math.max(subtreeHeights[i].totalHeight, subtreeHeights[i + 1].totalHeight) * 0.2
-          currentY += spacing
-        }
+        currentY += childrenHeights[i] + verticalSpacing
       }
 
       // 更新当前节点位置
@@ -795,34 +771,23 @@ const updateMindmapLayout = () => {
         ...node,
         position: {
           x: parentRightEdge + horizontalSpacing,
-          y: currentY + (subtreeHeights[index].totalHeight / 2) - (node.dimensions?.height || whiteBoardModuleOptions.value.cardHeightDefault) / 2,
+          y: currentY + (nodeHeight - (node.dimensions?.height || 0)) / 2,
         },
       }
 
       // 递归更新该节点的子节点位置
       const childrenOfNode = nodes.filter((n) => n.data?.parentId === node.id)
       if (childrenOfNode.length > 0) {
-        // 计算子节点的子树高度
-        const childSubtreeHeights = childrenOfNode.map((child) => calculateSubtreeHeight(child, nodes))
+        const childrenHeights = childrenOfNode.map((child) => calculateSubtreeHeight(child, nodes))
+        const childTotalHeight = childrenHeights.reduce((sum, height, index) => {
+          return sum + height + (index < childrenHeights.length - 1 ? verticalSpacing : 0)
+        }, 0)
 
-        // 计算子节点的总高度(包含间距)
-        let childTotalHeight = 0
-        for (let i = 0; i < childrenOfNode.length; i++) {
-          childTotalHeight += childSubtreeHeights[i].totalHeight
-          if (i < childrenOfNode.length - 1) {
-            const spacing = Math.max(childSubtreeHeights[i].totalHeight, childSubtreeHeights[i + 1].totalHeight) * 0.2
-            childTotalHeight += spacing
-          }
-        }
+        let childStartY = updatedNode.position.y - (childTotalHeight / 2) + (node.dimensions?.height || 0) / 2
 
-        // 计算第一个子节点的起始位置，使子节点组在父节点中心对齐
-        let childStartY = updatedNode.position.y + (node.dimensions?.height || whiteBoardModuleOptions.value.cardHeightDefault) / 2 - childTotalHeight / 2
-
-        // 更新每个子节点的位置
         childrenOfNode.forEach((childNode, childIndex) => {
-          const childHeight = childSubtreeHeights[childIndex].totalHeight
-          const childNodeHeight = childNode.dimensions?.height || whiteBoardModuleOptions.value.cardHeightDefault
-          const childX = updatedNode.position.x + (updatedNode.dimensions?.width || whiteBoardModuleOptions.value.cardWidthDefault) + horizontalSpacing
+          const childHeight = childrenHeights[childIndex]
+          const childX = updatedNode.position.x + (updatedNode.dimensions?.width || 0) + horizontalSpacing
 
           nodes.forEach((n, i) => {
             if (n.id === childNode.id) {
@@ -830,17 +795,13 @@ const updateMindmapLayout = () => {
                 ...n,
                 position: {
                   x: childX,
-                  y: childStartY + (childHeight / 2) - (childNodeHeight / 2),
+                  y: childStartY + (childHeight - (childNode.dimensions?.height || 0)) / 2,
                 },
               }
             }
           })
 
-          // 更新下一个子节点的Y坐标
-          if (childIndex < childrenOfNode.length - 1) {
-            const spacing = Math.max(childHeight, childSubtreeHeights[childIndex + 1].totalHeight) * 0.2
-            childStartY += childHeight + spacing
-          }
+          childStartY += childHeight + verticalSpacing
         })
       }
 
@@ -849,18 +810,12 @@ const updateMindmapLayout = () => {
     return node
   })
 
-  console.log('更新布局前的节点:', nodes)
   setNodes(updatedNodes)
-  console.log('更新布局后的节点:', updatedNodes)
 
   // 更新白板配置
   if (embedWhiteBoardConfigData.value) {
-    console.log('布局更新前的白板配置:', embedWhiteBoardConfigData.value.boardOptions)
     embedWhiteBoardConfigData.value.boardOptions.nodes = updatedNodes
     embedWhiteBoardConfigData.value.boardOptions.edges = currentEdges
-    console.log('布局更新后的白板配置:', embedWhiteBoardConfigData.value.boardOptions)
-  } else {
-    console.warn('布局更新时 embedWhiteBoardConfigData.value 不存在')
   }
 }
 
@@ -926,17 +881,15 @@ const waitForNodeDimensions = (nodes, maxAttempts = 5) => {
 
 // 修改 updateNodeLayout 函数
 const updateNodeLayout = async (node) => {
-  console.log('开始执行 updateNodeLayout')
   const nodes = getNodes.value
   const currentEdges = edges.value
-  const horizontalSpacing = 100 // 节点之间的水平间距
+  const horizontalSpacing = 100 // 固定的水平间距
+  const verticalSpacing = 50 // 固定的垂直间距
 
   // 找到所有以当前节点为父节点的子节点
   const childNodes = nodes.filter((n) => n.data?.parentId === node.id)
-  console.log('找到的子节点:', childNodes)
 
   if (childNodes.length === 0) {
-    console.log('没有子节点,退出布局更新')
     return
   }
 
@@ -950,36 +903,26 @@ const updateNodeLayout = async (node) => {
   const parentRightEdge = node.position.x + (node.dimensions?.width || whiteBoardModuleOptions.value.cardWidthDefault)
 
   // 计算每个子节点的子树高度
-  const subtreeHeights = childNodes.map((n) => calculateSubtreeHeight(n, nodes))
+  const childrenHeights = childNodes.map((n) => calculateSubtreeHeight(n, nodes))
 
-  // 计算总高度(包含动态间距)
-  let totalHeight = 0
-  for (let i = 0; i < childNodes.length; i++) {
-    totalHeight += subtreeHeights[i].totalHeight
-    if (i < childNodes.length - 1) {
-      // 动态间距 = 相邻两个子树中较大者的20%
-      const spacing = Math.max(subtreeHeights[i].totalHeight, subtreeHeights[i + 1].totalHeight) * 0.2
-      totalHeight += spacing
-    }
-  }
+  // 计算总高度
+  const totalHeight = childrenHeights.reduce((sum, height, index) => {
+    return sum + height + (index < childrenHeights.length - 1 ? verticalSpacing : 0)
+  }, 0)
 
-  // 计算起始Y坐标，使整体居中
-  const startY = node.position.y - (totalHeight / 2)
+  // 计算起始Y坐标，使整体垂直居中于父节点
+  const startY = node.position.y - (totalHeight / 2) + (node.dimensions?.height || 0) / 2
 
   // 更新子节点的位置
   const updatedNodes = nodes.map((n) => {
     if (n.data?.parentId === node.id) {
       const index = childNodes.findIndex((child) => child.id === n.id)
+      const nodeHeight = childrenHeights[index]
 
       // 计算当前节点的Y坐标
       let currentY = startY
       for (let i = 0; i < index; i++) {
-        currentY += subtreeHeights[i].totalHeight
-        if (i < index - 1) {
-          // 添加到下一个节点的动态间距
-          const spacing = Math.max(subtreeHeights[i].totalHeight, subtreeHeights[i + 1].totalHeight) * 0.2
-          currentY += spacing
-        }
+        currentY += childrenHeights[i] + verticalSpacing
       }
 
       // 更新当前节点位置
@@ -987,33 +930,22 @@ const updateNodeLayout = async (node) => {
         ...n,
         position: {
           x: parentRightEdge + horizontalSpacing,
-          y: currentY + (subtreeHeights[index].totalHeight / 2) - (n.dimensions?.height || whiteBoardModuleOptions.value.cardHeightDefault) / 2,
+          y: currentY + (nodeHeight - (n.dimensions?.height || 0)) / 2,
         },
       }
 
       // 递归更新该节点的子节点位置
       const childrenOfNode = nodes.filter((child) => child.data?.parentId === n.id)
       if (childrenOfNode.length > 0) {
-        // 计算子节点的子树高度
-        const childSubtreeHeights = childrenOfNode.map((child) => calculateSubtreeHeight(child, nodes))
+        const childrenHeights = childrenOfNode.map((child) => calculateSubtreeHeight(child, nodes))
+        const childTotalHeight = childrenHeights.reduce((sum, height, index) => {
+          return sum + height + (index < childrenHeights.length - 1 ? verticalSpacing : 0)
+        }, 0)
 
-        // 计算子节点的总高度(包含动态间距)
-        let childTotalHeight = 0
-        for (let i = 0; i < childrenOfNode.length; i++) {
-          childTotalHeight += childSubtreeHeights[i].totalHeight
-          if (i < childrenOfNode.length - 1) {
-            const spacing = Math.max(childSubtreeHeights[i].totalHeight, childSubtreeHeights[i + 1].totalHeight) * 0.2
-            childTotalHeight += spacing
-          }
-        }
+        let childStartY = updatedNode.position.y - (childTotalHeight / 2) + (n.dimensions?.height || 0) / 2
 
-        // 计算第一个子节点的起始位置，使子节点组在父节点中心对齐
-        let childStartY = updatedNode.position.y + (n.dimensions?.height || whiteBoardModuleOptions.value.cardHeightDefault) / 2 - childTotalHeight / 2
-
-        // 更新每个子节点的位置
         childrenOfNode.forEach((childNode, childIndex) => {
-          const childHeight = childSubtreeHeights[childIndex].totalHeight
-          const childNodeHeight = childNode.dimensions?.height || whiteBoardModuleOptions.value.cardHeightDefault
+          const childHeight = childrenHeights[childIndex]
           const childX = updatedNode.position.x + (updatedNode.dimensions?.width || whiteBoardModuleOptions.value.cardWidthDefault) + horizontalSpacing
 
           nodes.forEach((node, i) => {
@@ -1022,17 +954,13 @@ const updateNodeLayout = async (node) => {
                 ...node,
                 position: {
                   x: childX,
-                  y: childStartY + (childHeight / 2) - (childNodeHeight / 2),
+                  y: childStartY + (childHeight - (childNode.dimensions?.height || 0)) / 2,
                 },
               }
             }
           })
 
-          // 更新下一个子节点的Y坐标
-          if (childIndex < childrenOfNode.length - 1) {
-            const spacing = Math.max(childHeight, childSubtreeHeights[childIndex + 1].totalHeight) * 0.2
-            childStartY += childHeight + spacing
-          }
+          childStartY += childHeight + verticalSpacing
         })
       }
 
