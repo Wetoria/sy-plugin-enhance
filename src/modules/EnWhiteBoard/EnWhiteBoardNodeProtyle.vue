@@ -1001,23 +1001,20 @@ const updateMindmapLayoutRecursively = async (nodeId) => {
 const handleAddChildNode = async () => {
   const blockId = await getNewDailyNoteBlockId()
   const newNodeId = generateWhiteBoardNodeId()
-  console.log('开始创建子节点:', {
-    blockId,
-    newNodeId,
-  })
 
   // 获取当前节点的所有子节点
   const siblings = getNodes.value.filter((node) => node.data?.parentId === flowNode.id)
-  const nodeSpacing = 150 // 节点之间的垂直间距
-  const horizontalSpacing = 100 // 节点之间的水平间距
+  const horizontalSpacing = 100 // 保持与布局函数一致的水平间距
+  const verticalSpacing = 50 // 保持与布局函数一致的垂直间距
 
   // 获取父节点的右边界
-  const parentRightEdge = flowNode.position.x + (flowNode.dimensions?.width || 0)
+  const parentRightEdge = flowNode.position.x + (flowNode.dimensions?.width || whiteBoardModuleOptions.value.cardWidthDefault)
 
-  // 计算新节点的位置
-  const totalHeight = siblings.length * nodeSpacing
-  const startY = flowNode.position.y - (totalHeight / 2)
-  const y = startY + (siblings.length * nodeSpacing)
+  // 计算新节点的初始位置 - 放在所有子节点的下方
+  const lastSibling = siblings[siblings.length - 1]
+  const initialY = lastSibling
+    ? lastSibling.position.y + (lastSibling.dimensions?.height || whiteBoardModuleOptions.value.cardHeightDefault) + verticalSpacing
+    : flowNode.position.y
 
   // 创建新节点
   const newNode = {
@@ -1030,7 +1027,7 @@ const handleAddChildNode = async () => {
     },
     position: {
       x: parentRightEdge + horizontalSpacing,
-      y,
+      y: initialY,
     },
     width: whiteBoardModuleOptions.value.cardWidthDefault,
     height: whiteBoardModuleOptions.value.cardHeightDefault,
@@ -1039,13 +1036,9 @@ const handleAddChildNode = async () => {
     selectable: true,
   }
 
-  console.log('创建的新节点:', newNode)
-
   // 更新节点
   const updatedNodes = [...getNodes.value, newNode]
-  console.log('更新前的节点列表:', getNodes.value)
   setNodes(updatedNodes)
-  console.log('更新后的节点列表:', updatedNodes)
 
   // 根据最下方子节点的连线颜色来决定新连线的颜色
   let edgeColor = presetColors[0] // 默认使用第一个颜色
@@ -1089,21 +1082,24 @@ const handleAddChildNode = async () => {
     },
   }
 
-  console.log('创建的新边:', newEdge)
-  console.log('更新前的边列表:', edges.value)
-
-  // 更新边 - 使用 push 后重新赋值的方式来确保触发持久化
+  // 更新边
   const currentEdges = edges.value || []
   currentEdges.push(newEdge as any)
   setEdges([...currentEdges])
 
-  console.log('更新后的边列表:', currentEdges)
+  // 等待节点渲染完成
+  await waitForNodeDimensions([newNode])
 
-  // 递归更新布局
-  if (isMindmapNode.value) {
-    console.log('开始递归更新思维导图布局')
-    await updateMindmapLayoutRecursively(flowNode.id)
-    console.log('完成递归更新思维导图布局')
+  // 等待一帧以确保状态更新完成
+  await new Promise((resolve) => requestAnimationFrame(resolve))
+
+  // 更新布局 - 使用递归更新以确保父节点和所有子节点都正确更新
+  await updateMindmapLayoutRecursively(flowNode.id)
+
+  // 更新白板配置
+  if (embedWhiteBoardConfigData.value) {
+    embedWhiteBoardConfigData.value.boardOptions.nodes = getNodes.value
+    embedWhiteBoardConfigData.value.boardOptions.edges = edges.value
   }
 }
 
