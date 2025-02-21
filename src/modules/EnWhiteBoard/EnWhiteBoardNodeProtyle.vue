@@ -803,24 +803,66 @@ const updateNodeLayout = async (node, level = 0) => {
 
 // 修改 handleAddChildNode 函数
 const handleAddChildNode = async () => {
-  const blockId = await getNewDailyNoteBlockId()
-  const newNodeId = generateWhiteBoardNodeId()
-
-  // 获取当前节点的所有子节点
-  const siblings = getNodes.value.filter((node) => node.data?.parentId === flowNode.id)
-  const horizontalSpacing = 80 // 减小水平间距
-  const verticalSpacing = 20 // 减小垂直间距
+  // 1. 先计算新节点的位置
+  const nodes = getNodes.value
+  const siblings = nodes.filter((node) => node.data?.parentId === flowNode.id)
+  const horizontalSpacing = 150 // 使用与updateNodeLayout相同的间距
 
   // 获取父节点的右边界
   const parentRightEdge = flowNode.position.x + (flowNode.dimensions?.width || whiteBoardModuleOptions.value.cardWidthDefault)
 
-  // 计算新节点的初始位置 - 放在所有子节点的下方
-  const lastSibling = siblings[siblings.length - 1]
-  const initialY = lastSibling
-    ? lastSibling.position.y + (lastSibling.dimensions?.height || whiteBoardModuleOptions.value.cardHeightDefault) + verticalSpacing
-    : flowNode.position.y
+  // 计算新节点的位置
+  const newNodePosition = {
+    x: parentRightEdge + horizontalSpacing,
+    y: flowNode.position.y,
+  }
 
-  // 创建新节点
+  // 2. 预先计算布局
+  if (siblings.length > 0) {
+    // 计算所有现有子节点(包括它们的子树)的总高度
+    const siblingHeights = await Promise.all(siblings.map(async (sibling) => {
+      return calculateSubtreeHeight(sibling, nodes)
+    }))
+
+    const totalSiblingHeight = siblingHeights.reduce((sum, height, index) => {
+      return sum + height + (index < siblingHeights.length - 1 ? 20 : 0)
+    }, 0)
+
+    // 计算新的总高度(包括新节点的默认高度)
+    const newNodeHeight = whiteBoardModuleOptions.value.cardHeightDefault
+    const newTotalHeight = totalSiblingHeight + newNodeHeight + 20 // 加上新节点高度和间距
+
+    // 计算所有节点的新位置
+    const startY = flowNode.position.y - (newTotalHeight / 2) + (flowNode.dimensions?.height || 0) / 2
+
+    // 先更新现有节点的位置
+    let currentY = startY
+    const updatedNodes = nodes.map((node) => {
+      if (node.data?.parentId === flowNode.id) {
+        const nodeHeight = calculateSubtreeHeight(node, nodes)
+        const newY = currentY + (nodeHeight - (node.dimensions?.height || 0)) / 2
+        currentY += nodeHeight + 20 // 加上垂直间距
+
+        return {
+          ...node,
+          position: {
+            x: node.position.x,
+            y: newY,
+          },
+        }
+      }
+      return node
+    })
+    setNodes(updatedNodes)
+
+    // 计算新节点的Y坐标
+    newNodePosition.y = currentY + (newNodeHeight / 2)
+  }
+
+  // 3. 创建新节点
+  const blockId = await getNewDailyNoteBlockId()
+  const newNodeId = generateWhiteBoardNodeId()
+
   const newNode = {
     id: newNodeId,
     type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_PROTYLE,
@@ -829,10 +871,7 @@ const handleAddChildNode = async () => {
       parentId: flowNode.id,
       mindmap: true,
     },
-    position: {
-      x: parentRightEdge + horizontalSpacing,
-      y: initialY,
-    },
+    position: newNodePosition,
     width: whiteBoardModuleOptions.value.cardWidthDefault,
     height: whiteBoardModuleOptions.value.cardHeightDefault,
     connectable: true,
@@ -840,16 +879,14 @@ const handleAddChildNode = async () => {
     selectable: true,
   }
 
-  // 更新节点
+  // 4. 添加新节点
   const updatedNodes = [...getNodes.value, newNode]
   setNodes(updatedNodes)
 
-  // 根据最下方子节点的连线颜色来决定新连线的颜色
+  // 5. 创建连接线
   let edgeColor = presetColors[0] // 默认使用第一个颜色
   if (siblings.length > 0) {
-    // 获取所有连接到当前节点的边
     const currentEdges = edges.value.filter((edge) => edge.source === flowNode.id)
-    // 按照目标节点的 y 坐标排序，找到最下方的边
     const sortedEdges = currentEdges.sort((a, b) => {
       const nodeA = getNodes.value.find((node) => node.id === a.target)
       const nodeB = getNodes.value.find((node) => node.id === b.target)
@@ -858,16 +895,13 @@ const handleAddChildNode = async () => {
 
     if (sortedEdges.length > 0) {
       const lastEdge = sortedEdges[0]
-      // 找到最下方边的颜色在预设颜色中的索引
       const lastColorIndex = presetColors.findIndex((color) => color === lastEdge.data?.color)
       if (lastColorIndex !== -1) {
-        // 使用下一个颜色，如果是最后一个颜色则回到第一个
         edgeColor = presetColors[(lastColorIndex + 1) % presetColors.length]
       }
     }
   }
 
-  // 创建连接线
   const newEdge = {
     id: generateWhiteBoardEdgeId(),
     type: EN_CONSTANTS.EN_WHITE_BOARD_EDGE_TYPE_BASE,
@@ -877,7 +911,7 @@ const handleAddChildNode = async () => {
     targetHandle: 'left',
     data: {
       label: '',
-      edgeType: 'bezier', // 使用贝塞尔曲线使连线更流畅
+      edgeType: 'bezier',
       width: 2,
       style: 'solid',
       color: edgeColor,
@@ -886,21 +920,17 @@ const handleAddChildNode = async () => {
     },
   }
 
-  // 更新边
   const currentEdges = edges.value || []
-  currentEdges.push(newEdge as any)
-  setEdges([...currentEdges])
+  setEdges([...currentEdges, newEdge])
 
-  // 等待节点渲染完成
+  // 6. 等待节点渲染完成
   await waitForNodeDimensions([newNode])
-
-  // 等待一帧以确保状态更新完成
   await new Promise((resolve) => requestAnimationFrame(resolve))
 
-  // 更新布局 - 使用递归更新以确保父节点和所有子节点都正确更新
+  // 7. 更新布局
   await updateMindmapLayoutRecursively(flowNode.id)
 
-  // 更新白板配置
+  // 8. 更新白板配置
   if (embedWhiteBoardConfigData.value) {
     embedWhiteBoardConfigData.value.boardOptions.nodes = getNodes.value
     embedWhiteBoardConfigData.value.boardOptions.edges = edges.value
