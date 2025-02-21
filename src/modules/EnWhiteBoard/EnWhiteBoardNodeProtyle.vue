@@ -730,8 +730,8 @@ const calculateSubtreeHeight = (node, nodes) => {
 const updateNodeLayout = async (node, level = 0) => {
   const nodes = getNodes.value
   const currentEdges = edges.value
-  const horizontalSpacing = 80 // 减小水平间距
-  const verticalSpacing = 20 // 减小垂直间距
+  const horizontalSpacing = 150 // 增加基础水平间距
+  const verticalSpacing = 20 // 保持垂直间距不变
 
   // 找到所有以当前节点为父节点的子节点
   const childNodes = nodes.filter((n) => n.data?.parentId === node.id)
@@ -769,8 +769,8 @@ const updateNodeLayout = async (node, level = 0) => {
     const childHeight = childrenHeights[i]
     const childY = currentY + (childHeight - (child.dimensions?.height || 0)) / 2
 
-    // 计算子节点的x坐标，根据层级增加间距
-    const childX = parentRightEdge + horizontalSpacing + (level * 10) // 每层增加一点间距
+    // 计算子节点的x坐标，使用固定的水平间距
+    const childX = parentRightEdge + horizontalSpacing
 
     // 更新当前子节点的位置
     const updatedNodes = nodes.map((n) => {
@@ -787,7 +787,7 @@ const updateNodeLayout = async (node, level = 0) => {
     })
     setNodes(updatedNodes)
 
-    // 递归更新子节点的子树，传递层级信息
+    // 递归更新子节点的子树
     await updateNodeLayout(child, level + 1)
 
     // 更新下一个子节点的起始Y坐标
