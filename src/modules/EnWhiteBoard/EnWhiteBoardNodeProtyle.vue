@@ -701,15 +701,20 @@ watch(() => getNodes.value, (newNodes, oldNodes) => {
   }
 }, { deep: true })
 
-// 计算节点及其子树的总高度
+// 优化高度计算函数，添加缓存
+const heightCache = new Map()
 const calculateSubtreeHeight = (node, nodes) => {
-  // 获取节点自身的高度
-  const nodeHeight = node.dimensions?.height || whiteBoardModuleOptions.value.cardHeightDefault
+  // 检查缓存
+  const cacheKey = `${node.id}-${node.dimensions?.height}`
+  if (heightCache.has(cacheKey)) {
+    return heightCache.get(cacheKey)
+  }
 
-  // 获取所有直接子节点
+  const nodeHeight = node.dimensions?.height || whiteBoardModuleOptions.value.cardHeightDefault
   const childNodes = nodes.filter((n) => n.data?.parentId === node.id)
 
   if (childNodes.length === 0) {
+    heightCache.set(cacheKey, nodeHeight)
     return nodeHeight
   }
 
@@ -722,83 +727,125 @@ const calculateSubtreeHeight = (node, nodes) => {
     return sum + height + (index < childrenHeights.length - 1 ? verticalSpacing : 0)
   }, 0)
 
-  // 返回子树总高度和节点自身高度的较大值
-  return Math.max(nodeHeight, totalChildrenHeight)
+  const result = Math.max(nodeHeight, totalChildrenHeight)
+  heightCache.set(cacheKey, result)
+  return result
 }
 
-// 修改 updateNodeLayout 函数
+// 优化布局函数
 const updateNodeLayout = async (node, level = 0) => {
   const nodes = getNodes.value
-  const currentEdges = edges.value
-  const horizontalSpacing = 150 // 增加基础水平间距
-  const verticalSpacing = 20 // 保持垂直间距不变
-
-  // 找到所有以当前节点为父节点的子节点
   const childNodes = nodes.filter((n) => n.data?.parentId === node.id)
+  if (childNodes.length === 0) return
 
-  if (childNodes.length === 0) {
-    return
-  }
+  // 清除高度缓存
+  heightCache.clear()
 
-  // 等待节点尺寸准备好
-  const dimensionsReady = await waitForNodeDimensions([node, ...childNodes])
-  if (!dimensionsReady) {
-    console.warn('节点尺寸未准备好,使用默认尺寸')
-  }
+  // 批量计算所有子节点的高度
+  const childrenHeights = childNodes.map((child) => calculateSubtreeHeight(child, nodes))
+  const horizontalSpacing = 150
+  const verticalSpacing = 20
 
-  // 获取父节点的右边界
-  const parentRightEdge = node.position.x + (node.dimensions?.width || whiteBoardModuleOptions.value.cardWidthDefault)
-
-  // 计算每个子节点的子树高度
-  const childrenHeights = await Promise.all(childNodes.map(async (child) => {
-    const subtreeHeight = calculateSubtreeHeight(child, nodes)
-    return subtreeHeight
-  }))
-
-  // 计算总高度（包含间距）
+  // 计算总高度
   const totalHeight = childrenHeights.reduce((sum, height, index) => {
     return sum + height + (index < childrenHeights.length - 1 ? verticalSpacing : 0)
   }, 0)
 
-  // 计算第一个子节点的起始Y坐标
-  let currentY = node.position.y - (totalHeight / 2) + (node.dimensions?.height || 0) / 2
+  // 获取父节点的右边界
+  const parentRightEdge = node.position.x + (node.dimensions?.width || whiteBoardModuleOptions.value.cardWidthDefault)
+  const childX = parentRightEdge + horizontalSpacing
 
-  // 更新每个子节点及其子树的位置
+  // 计算所有子节点的新位置
+  let currentY = node.position.y - (totalHeight / 2) + (node.dimensions?.height || 0) / 2
+  const nodeUpdates = []
+
+  // 收集所有需要更新的节点位置
   for (let i = 0; i < childNodes.length; i++) {
     const child = childNodes[i]
     const childHeight = childrenHeights[i]
     const childY = currentY + (childHeight - (child.dimensions?.height || 0)) / 2
 
-    // 计算子节点的x坐标，使用固定的水平间距
-    const childX = parentRightEdge + horizontalSpacing
-
-    // 更新当前子节点的位置
-    const updatedNodes = nodes.map((n) => {
-      if (n.id === child.id) {
-        return {
-          ...n,
-          position: {
-            x: childX,
-            y: childY,
-          },
-        }
-      }
-      return n
+    nodeUpdates.push({
+      id: child.id,
+      position: {
+        x: childX,
+        y: childY,
+      },
     })
-    setNodes(updatedNodes)
 
-    // 递归更新子节点的子树
-    await updateNodeLayout(child, level + 1)
-
-    // 更新下一个子节点的起始Y坐标
     currentY += childHeight + verticalSpacing
   }
+
+  // 批量更新节点位置
+  if (nodeUpdates.length > 0) {
+    const updatedNodes = nodes.map((node) => {
+      const update = nodeUpdates.find((u) => u.id === node.id)
+      if (update) {
+        return {
+          ...node,
+          position: update.position,
+        }
+      }
+      return node
+    })
+    setNodes(updatedNodes)
+  }
+
+  // 并行更新所有子节点的布局
+  await Promise.all(childNodes.map((child) => updateNodeLayout(child, level + 1)))
 
   // 更新白板配置
   if (embedWhiteBoardConfigData.value) {
     embedWhiteBoardConfigData.value.boardOptions.nodes = getNodes.value
-    embedWhiteBoardConfigData.value.boardOptions.edges = currentEdges
+    embedWhiteBoardConfigData.value.boardOptions.edges = edges.value
   }
+}
+
+// 优化递归布局函数
+const updateMindmapLayoutRecursively = async (nodeId) => {
+  const nodes = getNodes.value
+  const node = nodes.find((n) => n.id === nodeId)
+  if (!node) return
+
+  // 收集需要更新的所有节点ID
+  const nodesToUpdate = []
+  const collectNodes = (currentNode) => {
+    if (currentNode.data?.parentId) {
+      const parentNode = nodes.find((n) => n.id === currentNode.data.parentId)
+      if (parentNode) {
+        collectNodes(parentNode)
+      }
+    }
+    if (currentNode.data?.mindmap) {
+      nodesToUpdate.push(currentNode.id)
+    }
+  }
+  collectNodes(node)
+
+  // 从根节点开始，逐层更新布局
+  for (const id of nodesToUpdate) {
+    const currentNode = nodes.find((n) => n.id === id)
+    if (currentNode) {
+      await updateNodeLayout(currentNode)
+    }
+  }
+}
+
+// 优化等待节点尺寸函数
+const waitForNodeDimensions = (nodes, maxAttempts = 3) => {
+  return new Promise((resolve) => {
+    let attempts = 0
+    const check = () => {
+      attempts++
+      const allReady = nodes.every(isNodeDimensionsReady)
+      if (allReady || attempts >= maxAttempts) {
+        resolve(allReady)
+      } else {
+        requestAnimationFrame(check) // 使用requestAnimationFrame替代setTimeout
+      }
+    }
+    check()
+  })
 }
 
 // 修改 handleAddChildNode 函数
@@ -968,41 +1015,6 @@ const presetColors = [
 // 检查节点尺寸是否已准备好
 const isNodeDimensionsReady = (node) => {
   return node.dimensions?.width && node.dimensions?.height
-}
-
-// 等待节点尺寸准备好
-const waitForNodeDimensions = (nodes, maxAttempts = 5) => {
-  return new Promise((resolve) => {
-    let attempts = 0
-    const check = () => {
-      attempts++
-      const allReady = nodes.every(isNodeDimensionsReady)
-      if (allReady || attempts >= maxAttempts) {
-        resolve(allReady)
-      } else {
-        setTimeout(check, 100) // 每100ms检查一次
-      }
-    }
-    check()
-  })
-}
-
-// 修改 updateMindmapLayoutRecursively 函数为异步
-const updateMindmapLayoutRecursively = async (nodeId) => {
-  const nodes = getNodes.value
-  const node = nodes.find((n) => n.id === nodeId)
-  if (!node) return
-
-  // 如果有父节点,先更新父节点的布局
-  if (node.data?.parentId) {
-    await updateMindmapLayoutRecursively(node.data.parentId)
-  }
-
-  // 更新当前节点的布局
-  const currentNode = nodes.find((n) => n.id === nodeId)
-  if (currentNode && currentNode.data?.mindmap) {
-    await updateNodeLayout(currentNode)
-  }
 }
 
 // 添加思维导图工具栏按钮
