@@ -902,79 +902,62 @@ const updateNodeLayout = async (node) => {
   // 获取父节点的右边界
   const parentRightEdge = node.position.x + (node.dimensions?.width || whiteBoardModuleOptions.value.cardWidthDefault)
 
-  // 计算每个子节点的子树高度
-  const childrenHeights = childNodes.map((n) => calculateSubtreeHeight(n, nodes))
+  // 递归计算每个子树的高度和更新位置
+  const updateSubtreeLayout = async (parentNode, startX, startY) => {
+    const children = nodes.filter((n) => n.data?.parentId === parentNode.id)
+    if (children.length === 0) return 0
 
-  // 计算总高度
-  const totalHeight = childrenHeights.reduce((sum, height, index) => {
-    return sum + height + (index < childrenHeights.length - 1 ? verticalSpacing : 0)
-  }, 0)
+    // 计算所有子节点的子树高度
+    const childrenHeights = await Promise.all(children.map(async (child) => {
+      const subtreeHeight = calculateSubtreeHeight(child, nodes)
+      return subtreeHeight
+    }))
 
-  // 计算起始Y坐标，使整体垂直居中于父节点
-  const startY = node.position.y - (totalHeight / 2) + (node.dimensions?.height || 0) / 2
+    // 计算总高度（包含间距）
+    const totalHeight = childrenHeights.reduce((sum, height, index) => {
+      return sum + height + (index < childrenHeights.length - 1 ? verticalSpacing : 0)
+    }, 0)
 
-  // 更新子节点的位置
-  const updatedNodes = nodes.map((n) => {
-    if (n.data?.parentId === node.id) {
-      const index = childNodes.findIndex((child) => child.id === n.id)
-      const nodeHeight = childrenHeights[index]
+    // 计算第一个子节点的起始Y坐标
+    let currentY = startY - (totalHeight / 2) + (parentNode.dimensions?.height || 0) / 2
 
-      // 计算当前节点的Y坐标
-      let currentY = startY
-      for (let i = 0; i < index; i++) {
-        currentY += childrenHeights[i] + verticalSpacing
-      }
+    // 更新每个子节点及其子树的位置
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i]
+      const childHeight = childrenHeights[i]
+      const childY = currentY + (childHeight - (child.dimensions?.height || 0)) / 2
 
-      // 更新当前节点位置
-      const updatedNode = {
-        ...n,
-        position: {
-          x: parentRightEdge + horizontalSpacing,
-          y: currentY + (nodeHeight - (n.dimensions?.height || 0)) / 2,
-        },
-      }
+      // 更新当前子节点的位置，保持 x 坐标不变
+      const updatedNodes = nodes.map((n) => {
+        if (n.id === child.id) {
+          return {
+            ...n,
+            position: {
+              x: n.position.x, // 保持原有的 x 坐标
+              y: childY,
+            },
+          }
+        }
+        return n
+      })
+      setNodes(updatedNodes)
 
-      // 递归更新该节点的子节点位置
-      const childrenOfNode = nodes.filter((child) => child.data?.parentId === n.id)
-      if (childrenOfNode.length > 0) {
-        const childrenHeights = childrenOfNode.map((child) => calculateSubtreeHeight(child, nodes))
-        const childTotalHeight = childrenHeights.reduce((sum, height, index) => {
-          return sum + height + (index < childrenHeights.length - 1 ? verticalSpacing : 0)
-        }, 0)
+      // 递归更新子节点的子树，传递子节点当前的 x 坐标
+      await updateSubtreeLayout(child, child.position.x, childY)
 
-        let childStartY = updatedNode.position.y - (childTotalHeight / 2) + (n.dimensions?.height || 0) / 2
-
-        childrenOfNode.forEach((childNode, childIndex) => {
-          const childHeight = childrenHeights[childIndex]
-          const childX = updatedNode.position.x + (updatedNode.dimensions?.width || whiteBoardModuleOptions.value.cardWidthDefault) + horizontalSpacing
-
-          nodes.forEach((node, i) => {
-            if (node.id === childNode.id) {
-              nodes[i] = {
-                ...node,
-                position: {
-                  x: childX,
-                  y: childStartY + (childHeight - (childNode.dimensions?.height || 0)) / 2,
-                },
-              }
-            }
-          })
-
-          childStartY += childHeight + verticalSpacing
-        })
-      }
-
-      return updatedNode
+      // 更新下一个子节点的起始Y坐标
+      currentY += childHeight + verticalSpacing
     }
-    return n
-  })
 
-  // 更新节点位置
-  setNodes(updatedNodes)
+    return totalHeight
+  }
+
+  // 从当前节点开始更新整个子树的布局
+  await updateSubtreeLayout(node, node.position.x, node.position.y)
 
   // 更新白板配置
   if (embedWhiteBoardConfigData.value) {
-    embedWhiteBoardConfigData.value.boardOptions.nodes = updatedNodes
+    embedWhiteBoardConfigData.value.boardOptions.nodes = getNodes.value
     embedWhiteBoardConfigData.value.boardOptions.edges = currentEdges
   }
 }
