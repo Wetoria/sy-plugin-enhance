@@ -25,6 +25,7 @@
       'is-collapsed': isCollapsed,
       'is-selected': isSelected,
       'is-dragging': isDragging,
+      'can-drop': canDrop,
     }"
     :data-en-flow-node-id="flowNode.id"
     :style="{
@@ -37,6 +38,7 @@
     @dragend="handleDragEnd"
     @dragover="handleDragOver"
     @drop="handleDrop"
+    @dragleave="handleDragLeave"
   >
     <div
       class="FrameToolbarArea"
@@ -47,6 +49,7 @@
     >
       <div class="infos">
         <span class="frame-title">{{ nodeData.label || '未命名分组' }}</span>
+        <span class="child-count">{{ childNodes.length }}</span>
       </div>
       <div class="operations">
         <a-button-group size="mini">
@@ -151,6 +154,48 @@ const dragStartPos = ref({
 })
 const isDragging = ref(false)
 const containedNodes = ref<VueFlowNode[]>([])
+const canDrop = ref(false)
+
+// 添加子节点管理
+const childNodes = computed(() => {
+  return getNodes.value.filter(node => node.data?.parentId === flowNode.id)
+})
+
+// 检查节点是否在 Frame 内部
+const isNodeInside = (nodeRect: DOMRect, frameRect: DOMRect) => {
+  return (
+    nodeRect.left >= frameRect.left &&
+    nodeRect.right <= frameRect.right &&
+    nodeRect.top >= frameRect.top &&
+    nodeRect.bottom <= frameRect.bottom
+  )
+}
+
+// 更新节点的父子关系
+const updateNodeParent = (nodeId: string, parentId: string | null) => {
+  const nodes = getNodes.value
+  const newNodes = nodes.map(node => {
+    if (node.id === nodeId) {
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          parentId: parentId,
+        }
+      }
+    }
+    return node
+  })
+  setNodes(newNodes)
+}
+
+// 获取节点的相对位置
+const getRelativePosition = (nodeRect: DOMRect, frameRect: DOMRect) => {
+  return {
+    x: nodeRect.left - frameRect.left,
+    y: nodeRect.top - frameRect.top
+  }
+}
 
 const handleCollapse = () => {
   isCollapsed.value = !isCollapsed.value
@@ -257,21 +302,7 @@ const handleDragStart = (event: DragEvent) => {
   frameEl.style.opacity = '0.7'
 
   // 记录当前 Frame 内的所有节点
-  const nodes = getNodes.value
-  containedNodes.value = nodes.filter((node) => {
-    if (node.id === flowNode.id) return false
-
-    const nodeEl = document.querySelector(`[data-node-id="${node.id}"]`)
-    if (!nodeEl) return false
-
-    const nodeRect = nodeEl.getBoundingClientRect()
-    return (
-      nodeRect.left >= frameRect.left
-      && nodeRect.right <= frameRect.right
-      && nodeRect.top >= frameRect.top
-      && nodeRect.bottom <= frameRect.bottom
-    )
-  })
+  containedNodes.value = childNodes.value
 }
 
 const handleDragEnd = (event: DragEvent) => {
@@ -286,7 +317,7 @@ const handleDragEnd = (event: DragEvent) => {
   const dx = event.clientX - dragStartPos.value.x - frameRect.left
   const dy = event.clientY - dragStartPos.value.y - frameRect.top
 
-  // 更新节点位置
+  // 更新 Frame 和其子节点的位置
   const updatedNodes = getNodes.value.map((node) => {
     if (containedNodes.value.find((n) => n.id === node.id)) {
       return {
@@ -307,11 +338,13 @@ const handleDragEnd = (event: DragEvent) => {
 
 const handleDragOver = (event: DragEvent) => {
   event.preventDefault()
+  canDrop.value = true
   event.dataTransfer.dropEffect = 'move'
 }
 
 const handleDrop = (event: DragEvent) => {
   event.preventDefault()
+  canDrop.value = false
 
   // 获取被拖拽的节点ID
   const draggedNodeId = event.dataTransfer.getData('application/vueflow/nodeId')
@@ -322,28 +355,39 @@ const handleDrop = (event: DragEvent) => {
 
   // 计算相对位置
   const frameRect = containerRef.value.getBoundingClientRect()
-  const relativeX = event.clientX - frameRect.left
-  const relativeY = event.clientY - frameRect.top
+  const draggedNodeEl = document.querySelector(`[data-node-id="${draggedNodeId}"]`)
+  const draggedNodeRect = draggedNodeEl?.getBoundingClientRect()
 
-  // 更新节点位置
-  const updatedNodes = getNodes.value.map(node => {
-    if (node.id === draggedNodeId) {
-      return {
-        ...node,
-        position: {
-          x: flowNode.position.x + relativeX,
-          y: flowNode.position.y + relativeY,
-        },
-        data: {
-          ...node.data,
-          parentId: flowNode.id,
-        },
+  if (!draggedNodeRect) return
+
+  // 检查是否在 Frame 内部
+  if (isNodeInside(draggedNodeRect, frameRect)) {
+    // 更新节点位置和父子关系
+    const relativePos = getRelativePosition(draggedNodeRect, frameRect)
+    const updatedNodes = getNodes.value.map(node => {
+      if (node.id === draggedNodeId) {
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            parentId: flowNode.id,
+          },
+          position: {
+            x: flowNode.position.x + relativePos.x,
+            y: flowNode.position.y + relativePos.y,
+          },
+        }
       }
-    }
-    return node
-  })
+      return node
+    })
+    setNodes(updatedNodes)
+  }
+}
 
-  setNodes(updatedNodes)
+// 添加拖拽离开处理
+const handleDragLeave = (event: DragEvent) => {
+  event.preventDefault()
+  canDrop.value = false
 }
 </script>
 
@@ -378,6 +422,19 @@ const handleDrop = (event: DragEvent) => {
   &.is-dragging {
     opacity: 0.7;
     cursor: grabbing;
+
+    // 拖动时显示所有子节点
+    & ~ .vue-flow__node {
+      opacity: 0.7;
+      pointer-events: none;
+    }
+  }
+
+  // 添加拖拽目标样式
+  &.can-drop {
+    border-style: solid;
+    border-color: var(--b3-theme-primary);
+    box-shadow: 0 0 0 2px var(--b3-theme-primary-light);
   }
 
   .FrameToolbarArea {
@@ -425,6 +482,14 @@ const handleDrop = (event: DragEvent) => {
           background-color: var(--b3-theme-surface-light);
         }
       }
+
+      &::after {
+        content: attr(data-child-count);
+        font-size: 12px;
+        color: var(--b3-theme-on-surface);
+        opacity: 0.6;
+        margin-left: 8px;
+      }
     }
 
     .operations {
@@ -457,6 +522,14 @@ const handleDrop = (event: DragEvent) => {
     padding: var(--en-gap);
     min-height: 100px;
     cursor: default;
+
+    // 添加网格背景
+    background-image:
+      linear-gradient(to right, var(--b3-border-color) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--b3-border-color) 1px, transparent 1px);
+    background-size: 20px 20px;
+    background-color: transparent;
+    opacity: 0.1;
   }
 
   &.is-collapsed {
