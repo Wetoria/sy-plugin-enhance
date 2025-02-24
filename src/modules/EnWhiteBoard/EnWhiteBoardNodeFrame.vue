@@ -38,7 +38,13 @@
     @dragover="handleDragOver"
     @drop="handleDrop"
   >
-    <div class="FrameToolbarArea">
+    <div
+      class="FrameToolbarArea"
+      :style="{
+        transform: `scale(${1 / (viewport?.zoom || 1)})`,
+        transformOrigin: 'left top',
+      }"
+    >
       <div class="infos">
         <span class="frame-title">{{ nodeData.label || '未命名分组' }}</span>
       </div>
@@ -131,6 +137,7 @@ const {
   getNodes,
   setNodes,
   removeNodes,
+  viewport,
 } = useVueFlow()
 
 const nodeData = computed(() => flowNode.data)
@@ -374,19 +381,22 @@ const handleDrop = (event: DragEvent) => {
   }
 
   .FrameToolbarArea {
-    width: 100%;
+    position: absolute;
+    top: -30px;
+    left: 0;
     height: 30px;
-    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
     box-sizing: border-box;
-    padding: var(--en-gap);
-    background-color: color-mix(in srgb, var(--b3-theme-surface) 95%, transparent);
-    border-top-left-radius: calc(var(--b3-border-radius) - 2px);
-    border-top-right-radius: calc(var(--b3-border-radius) - 2px);
-    border-bottom: 1px solid var(--b3-border-color);
-    cursor: move;
+    padding: 4px 8px;
+    background: var(--b3-theme-surface);
+    border: 1px solid var(--b3-border-color);
+    border-radius: var(--b3-border-radius);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    white-space: nowrap;
+    z-index: 10;
+    pointer-events: all;
 
     .infos {
       flex: 1;
@@ -409,6 +419,7 @@ const handleDrop = (event: DragEvent) => {
         border-radius: 4px;
         transition: background-color 0.2s ease;
         cursor: text;
+        min-width: 60px;
 
         &:hover {
           background-color: var(--b3-theme-surface-light);
