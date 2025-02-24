@@ -39,6 +39,7 @@
     @dragover="handleDragOver"
     @drop="handleDrop"
     @dragleave="handleDragLeave"
+    @contextmenu="handleContextMenu"
   >
     <div
       class="FrameToolbarArea"
@@ -91,6 +92,46 @@
       </div>
     </Handle>
   </div>
+
+  <Teleport to="body">
+    <div
+      v-if="contextMenuVisible"
+      class="EnWhiteBoardFrameContextMenu"
+      :style="{
+        left: `${contextMenuPosition.x}px`,
+        top: `${contextMenuPosition.y}px`,
+      }"
+    >
+      <div class="MenuGroup">
+        <div
+          class="ContextMenuItem"
+          @click="createNodeInFrame"
+        >
+          <IconPlus />
+          <span>创建新节点</span>
+        </div>
+      </div>
+
+      <div class="MenuGroup">
+        <div
+          v-if="getSelectedNodes.length > 0"
+          class="ContextMenuItem"
+          @click="addSelectedNodesToFrame"
+        >
+          <IconPlus />
+          <span>添加选中节点到分组</span>
+        </div>
+        <div
+          v-if="childNodes.length > 0"
+          class="ContextMenuItem"
+          @click="removeNodesFromFrame"
+        >
+          <IconPlus />
+          <span>从分组中移除选中节点</span>
+        </div>
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -103,6 +144,7 @@ import {
   IconArrowLeft,
   IconArrowRight,
   IconArrowUp,
+  IconPlus,
 } from '@arco-design/web-vue/es/icon'
 import {
   Handle,
@@ -119,8 +161,15 @@ import { NodeToolbar } from '@vue-flow/node-toolbar'
 import {
   computed,
   ref,
+  onMounted,
+  onBeforeUnmount,
+  nextTick,
+  watch,
 } from 'vue'
 import EnWhiteBoardToolBar from './EnWhiteBoardToolBar.vue'
+import { getNewDailyNoteBlockId } from '@/modules/DailyNote/DailyNote'
+import { EN_CONSTANTS } from '@/utils/Constants'
+import { useWhiteBoardModule } from '@/modules/EnWhiteBoard/EnWhiteBoard'
 
 
 const handleIcons = {
@@ -163,25 +212,68 @@ const childNodes = computed(() => {
 
 // 检查节点是否在 Frame 内部
 const isNodeInside = (nodeRect: DOMRect, frameRect: DOMRect) => {
+  // 获取 Frame 的左上角和右下角坐标
+  const frameTopLeft = {
+    x: frameRect.left,
+    y: frameRect.top,
+  }
+  const frameBottomRight = {
+    x: frameRect.right,
+    y: frameRect.bottom,
+  }
+
+  // 获取节点的左上角和右下角坐标
+  const nodeTopLeft = {
+    x: nodeRect.left,
+    y: nodeRect.top,
+  }
+  const nodeBottomRight = {
+    x: nodeRect.right,
+    y: nodeRect.bottom,
+  }
+
+  // 节点必须完全在 Frame 内部
   return (
-    nodeRect.left >= frameRect.left &&
-    nodeRect.right <= frameRect.right &&
-    nodeRect.top >= frameRect.top &&
-    nodeRect.bottom <= frameRect.bottom
+    nodeTopLeft.x >= frameTopLeft.x &&      // 节点左边在 Frame 内
+    nodeBottomRight.x <= frameBottomRight.x && // 节点右边在 Frame 内
+    nodeTopLeft.y >= frameTopLeft.y &&      // 节点上边在 Frame 内
+    nodeBottomRight.y <= frameBottomRight.y    // 节点下边在 Frame 内
   )
 }
 
 // 更新节点的父子关系
 const updateNodeParent = (nodeId: string, parentId: string | null) => {
   const nodes = getNodes.value
+  const frameRect = containerRef.value?.getBoundingClientRect()
+
   const newNodes = nodes.map(node => {
     if (node.id === nodeId) {
+      const nodeEl = document.querySelector(`[data-en-flow-node-id="${node.id}"]`)
+      const nodeRect = nodeEl?.getBoundingClientRect()
+
+      // 如果是添加到 Frame,需要调整位置
+      if (parentId === flowNode.id && frameRect && nodeRect) {
+        const relativePos = getRelativePosition(nodeRect, frameRect)
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            parentId,
+          },
+          position: {
+            x: flowNode.position.x + relativePos.x,
+            y: flowNode.position.y + relativePos.y,
+          },
+        }
+      }
+
+      // 如果是移出 Frame,保持当前位置
       return {
         ...node,
         data: {
           ...node.data,
-          parentId: parentId,
-        }
+          parentId,
+        },
       }
     }
     return node
@@ -286,6 +378,11 @@ const isSelected = computed(() => {
 
 const onResize = (event: OnResize) => {
   console.log('onResize', event)
+  // 等待 DOM 更新
+  nextTick(() => {
+    detectNodesInFrame()
+    highlightPotentialNodes()
+  })
 }
 
 const handleDragStart = (event: DragEvent) => {
@@ -297,8 +394,9 @@ const handleDragStart = (event: DragEvent) => {
     y: event.clientY - frameRect.top,
   }
 
-  // 设置拖拽效果
+  // 设置拖拽效果和数据
   event.dataTransfer.effectAllowed = 'move'
+  event.dataTransfer.setData('application/vueflow/nodeId', flowNode.id)
   frameEl.style.opacity = '0.7'
 
   // 记录当前 Frame 内的所有节点
@@ -319,7 +417,17 @@ const handleDragEnd = (event: DragEvent) => {
 
   // 更新 Frame 和其子节点的位置
   const updatedNodes = getNodes.value.map((node) => {
-    if (containedNodes.value.find((n) => n.id === node.id)) {
+    if (node.id === flowNode.id) {
+      // 更新 Frame 位置
+      return {
+        ...node,
+        position: {
+          x: node.position.x + dx,
+          y: node.position.y + dy,
+        },
+      }
+    } else if (node.data?.parentId === flowNode.id) {
+      // 更新子节点位置
       return {
         ...node,
         position: {
@@ -334,6 +442,12 @@ const handleDragEnd = (event: DragEvent) => {
   setNodes(updatedNodes)
   isDragging.value = false
   containedNodes.value = []
+
+  // 检测新的子节点
+  nextTick(() => {
+    detectNodesInFrame()
+    highlightPotentialNodes()
+  })
 }
 
 const handleDragOver = (event: DragEvent) => {
@@ -355,7 +469,7 @@ const handleDrop = (event: DragEvent) => {
 
   // 计算相对位置
   const frameRect = containerRef.value.getBoundingClientRect()
-  const draggedNodeEl = document.querySelector(`[data-node-id="${draggedNodeId}"]`)
+  const draggedNodeEl = document.querySelector(`[data-en-flow-node-id="${draggedNodeId}"]`)
   const draggedNodeRect = draggedNodeEl?.getBoundingClientRect()
 
   if (!draggedNodeRect) return
@@ -389,6 +503,262 @@ const handleDragLeave = (event: DragEvent) => {
   event.preventDefault()
   canDrop.value = false
 }
+
+// 添加右键菜单状态
+const contextMenuVisible = ref(false)
+const contextMenuPosition = ref({ x: 0, y: 0 })
+const clickPosition = ref({ x: 0, y: 0 })
+
+// 处理右键菜单
+const handleContextMenu = (event: MouseEvent) => {
+  event.preventDefault()
+  event.stopPropagation()
+
+  // 记录点击位置(相对于 Frame)
+  const frameRect = containerRef.value.getBoundingClientRect()
+  clickPosition.value = {
+    x: event.clientX - frameRect.left,
+    y: event.clientY - frameRect.top,
+  }
+
+  // 设置菜单位置(相对于视口)
+  contextMenuPosition.value = {
+    x: event.clientX,
+    y: event.clientY,
+  }
+
+  contextMenuVisible.value = true
+}
+
+// 关闭右键菜单
+const closeContextMenu = () => {
+  contextMenuVisible.value = false
+}
+
+// 在 Frame 中创建新节点
+const createNodeInFrame = async () => {
+  const blockId = await getNewDailyNoteBlockId()
+  const newNodeId = generateWhiteBoardNodeId()
+
+  // 创建新节点
+  const newNode = {
+    id: newNodeId,
+    type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_PROTYLE,
+    data: {
+      blockId,
+      parentId: flowNode.id, // 设置父节点为当前 Frame
+    },
+    // 使用点击位置作为节点位置
+    position: {
+      x: flowNode.position.x + clickPosition.value.x,
+      y: flowNode.position.y + clickPosition.value.y,
+    },
+    width: moduleWhiteBoardOptions.value.cardWidthDefault,
+    height: moduleWhiteBoardOptions.value.cardHeightDefault,
+    connectable: true,
+    draggable: true,
+    selectable: true,
+  }
+
+  addNodes([newNode])
+  closeContextMenu()
+}
+
+const { moduleOptions: moduleWhiteBoardOptions } = useWhiteBoardModule()
+
+// 在 mounted 时添加全局点击事件监听
+onMounted(() => {
+  document.addEventListener('click', handleGlobalClick)
+  // 初始检测
+  nextTick(() => {
+    detectNodesInFrame()
+    highlightPotentialNodes()
+  })
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleGlobalClick)
+  clearPotentialNodesHighlight()
+})
+
+// 处理全局点击事件
+const handleGlobalClick = (event: MouseEvent) => {
+  // 如果点击的不是右键菜单内的元素，则关闭菜单
+  const menuEl = document.querySelector('.EnWhiteBoardFrameContextMenu')
+  if (menuEl && !menuEl.contains(event.target as Node)) {
+    closeContextMenu()
+  }
+}
+
+// 添加批量添加选中节点到 Frame 的功能
+const addSelectedNodesToFrame = () => {
+  const selectedNodes = getSelectedNodes.value
+  if (selectedNodes.length === 0) return
+
+  const frameRect = containerRef.value.getBoundingClientRect()
+  const updatedNodes = getNodes.value.map(node => {
+    if (selectedNodes.find(n => n.id === node.id)) {
+      const nodeEl = document.querySelector(`[data-en-flow-node-id="${node.id}"]`)
+      const nodeRect = nodeEl?.getBoundingClientRect()
+
+      if (nodeRect) {
+        const relativePos = getRelativePosition(nodeRect, frameRect)
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            parentId: flowNode.id,
+          },
+          position: {
+            x: flowNode.position.x + relativePos.x,
+            y: flowNode.position.y + relativePos.y,
+          },
+        }
+      }
+    }
+    return node
+  })
+
+  setNodes(updatedNodes)
+  closeContextMenu()
+}
+
+// 从 Frame 中移除节点
+const removeNodesFromFrame = () => {
+  const selectedNodes = getSelectedNodes.value
+  if (selectedNodes.length === 0) return
+
+  const updatedNodes = getNodes.value.map(node => {
+    if (selectedNodes.find(n => n.id === node.id) && node.data?.parentId === flowNode.id) {
+      const { parentId, ...restData } = node.data
+      return {
+        ...node,
+        data: restData,
+      }
+    }
+    return node
+  })
+
+  setNodes(updatedNodes)
+  closeContextMenu()
+}
+
+// 检测所有节点,找出在 Frame 范围内的节点
+const detectNodesInFrame = () => {
+  const frameRect = containerRef.value?.getBoundingClientRect()
+  const nodes = getNodes.value
+
+  // 找出所有在 Frame 范围内的节点
+  const nodesInFrame = nodes.filter(node => {
+    // 跳过自身和已经属于其他 Frame 的节点
+    if (node.id === flowNode.id || node.data?.parentId) return false
+
+    const nodeEl = document.querySelector(`[data-en-flow-node-id="${node.id}"]`)
+    if (!nodeEl) return false
+
+    const nodeRect = nodeEl.getBoundingClientRect()
+    return isNodeInside(nodeRect, frameRect)
+  })
+
+  // 更新这些节点的父子关系
+  if (nodesInFrame.length > 0) {
+    const updatedNodes = nodes.map(node => {
+      if (nodesInFrame.find(n => n.id === node.id)) {
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            parentId: flowNode.id,
+          },
+        }
+      }
+      return node
+    })
+    setNodes(updatedNodes)
+  }
+}
+
+// 监听其他节点的移动
+watch(() => getNodes.value, (newNodes, oldNodes) => {
+  if (!oldNodes) return
+
+  // 如果有节点位置发生变化
+  const hasPositionChange = newNodes.some((node, index) => {
+    const oldNode = oldNodes[index]
+    return (
+      oldNode &&
+      (node.position.x !== oldNode.position.x ||
+       node.position.y !== oldNode.position.y)
+    )
+  })
+
+  if (hasPositionChange) {
+    const frameRect = containerRef.value?.getBoundingClientRect()
+    if (frameRect) {
+      // 检查是否有节点移入 Frame
+      newNodes.forEach(node => {
+        // 跳过自身和已经属于其他 Frame 的节点
+        if (node.id === flowNode.id || node.data?.parentId) return
+
+        const nodeEl = document.querySelector(`[data-en-flow-node-id="${node.id}"]`)
+        if (!nodeEl) return
+
+        const nodeRect = nodeEl.getBoundingClientRect()
+        if (isNodeInside(nodeRect, frameRect)) {
+          // 自动添加到 Frame
+          updateNodeParent(node.id, flowNode.id)
+        }
+      })
+
+      // 检查是否有子节点移出 Frame
+      childNodes.value.forEach(node => {
+        const nodeEl = document.querySelector(`[data-en-flow-node-id="${node.id}"]`)
+        if (nodeEl) {
+          const nodeRect = nodeEl.getBoundingClientRect()
+          if (!isNodeInside(nodeRect, frameRect)) {
+            // 移除父子关系
+            updateNodeParent(node.id, null)
+          }
+        }
+      })
+    }
+
+    // 更新视觉提示
+    highlightPotentialNodes()
+  }
+}, { deep: true })
+
+// 添加一个计算属性来显示可能成为子节点的节点
+const potentialChildNodes = computed(() => {
+  const frameRect = containerRef.value?.getBoundingClientRect()
+  if (!frameRect) return []
+
+  return getNodes.value.filter(node => {
+    if (node.id === flowNode.id || node.data?.parentId) return false
+
+    const nodeEl = document.querySelector(`[data-en-flow-node-id="${node.id}"]`)
+    if (!nodeEl) return false
+
+    const nodeRect = nodeEl.getBoundingClientRect()
+    return isNodeInside(nodeRect, frameRect)
+  })
+})
+
+// 在样式中添加视觉提示
+const highlightPotentialNodes = () => {
+  potentialChildNodes.value.forEach(node => {
+    const nodeEl = document.querySelector(`[data-en-flow-node-id="${node.id}"]`)
+    if (nodeEl) {
+      nodeEl.classList.add('potential-frame-child')
+    }
+  })
+}
+
+const clearPotentialNodesHighlight = () => {
+  document.querySelectorAll('.potential-frame-child').forEach(el => {
+    el.classList.remove('potential-frame-child')
+  })
+}
 </script>
 
 <style lang="scss" scoped>
@@ -411,6 +781,11 @@ const handleDragLeave = (event: DragEvent) => {
     border-style: solid;
     border-color: var(--b3-theme-primary-light);
     box-shadow: 0 0 0 1px var(--b3-theme-primary-light);
+
+    .frame-content {
+      background-color: var(--b3-theme-surface-light);
+      opacity: 0.1;
+    }
   }
 
   &.is-selected {
@@ -483,12 +858,15 @@ const handleDragLeave = (event: DragEvent) => {
         }
       }
 
-      &::after {
-        content: attr(data-child-count);
+      .child-count {
         font-size: 12px;
         color: var(--b3-theme-on-surface);
         opacity: 0.6;
-        margin-left: 8px;
+        padding: 2px 6px;
+        background: var(--b3-theme-surface-light);
+        border-radius: 10px;
+        min-width: 16px;
+        text-align: center;
       }
     }
 
@@ -618,6 +996,11 @@ const handleDragLeave = (event: DragEvent) => {
       }
     }
   }
+
+  :deep(.potential-frame-child) {
+    outline: 2px dashed var(--b3-theme-primary-light) !important;
+    outline-offset: 2px;
+  }
 }
 
 .EnWhiteBoardNodeToolbar {
@@ -630,6 +1013,44 @@ const handleDragLeave = (event: DragEvent) => {
     background: var(--b3-theme-surface);
     border: 1px solid var(--b3-border-color);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.EnWhiteBoardFrameContextMenu {
+  position: fixed;
+  z-index: 1000;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: var(--b3-border-radius);
+  padding: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  min-width: 160px;
+
+  .MenuGroup {
+    &:not(:last-child) {
+      border-bottom: 1px solid var(--b3-border-color);
+      margin-bottom: 4px;
+      padding-bottom: 4px;
+    }
+  }
+
+  .ContextMenuItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    cursor: pointer;
+    border-radius: var(--b3-border-radius);
+    color: var(--b3-theme-on-surface);
+    font-size: 13px;
+
+    &:hover {
+      background: var(--b3-theme-surface-light);
+    }
+
+    .arco-icon {
+      font-size: 14px;
+    }
   }
 }
 </style>
