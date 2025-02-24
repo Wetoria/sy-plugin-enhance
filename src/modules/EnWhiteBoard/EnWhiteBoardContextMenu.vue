@@ -139,10 +139,15 @@ const handleCreateFrame = () => {
     type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME,
     data: {
       label: '新分组',
+      style: {
+        backgroundColor: 'var(--b3-theme-surface-light)',
+      },
     },
     position,
-    width: 400,
-    height: 300,
+    dimensions: {
+      width: 400,
+      height: 300,
+    },
     connectable: true,
     draggable: true,
     selectable: true,

@@ -101,6 +101,12 @@
             @open-in-sidebar="handleOpenInSidebar"
           />
         </template>
+        <template #node-EnWhiteBoardNodeFrame="node">
+          <EnWhiteBoardNodeFrame
+            :whiteBoardId="props.data.whiteBoardId"
+            :nodeId="node.id"
+          />
+        </template>
         <template #edge-EnWhiteBoardEdgeBase="edge">
           <EnWhiteBoardEdgeBase
             v-bind="edge"
@@ -401,7 +407,7 @@ import {
 } from '@/modules/EnWhiteBoard/EnWhiteBoard'
 
 import EnWhiteBoardEdgeBase from '@/modules/EnWhiteBoard/EnWhiteBoardEdgeBase.vue'
-
+import EnWhiteBoardNodeFrame from '@/modules/EnWhiteBoard/EnWhiteBoardNodeFrame.vue'
 import EnWhiteBoardSider from '@/modules/EnWhiteBoard/EnWhiteBoardSider.vue'
 import { EN_CONSTANTS } from '@/utils/Constants'
 import {
