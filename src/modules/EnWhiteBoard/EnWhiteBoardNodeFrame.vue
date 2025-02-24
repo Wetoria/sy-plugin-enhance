@@ -41,8 +41,8 @@
     <div
       class="FrameToolbarArea"
       :style="{
-        transform: `scale(${1 / (viewport?.zoom || 1)})`,
-        transformOrigin: 'left top',
+        transform: `translate(0, calc(-100% - 4px)) scale(${1 / (viewport?.zoom || 1)})`,
+        transformOrigin: 'left bottom',
       }"
     >
       <div class="infos">
@@ -382,7 +382,7 @@ const handleDrop = (event: DragEvent) => {
 
   .FrameToolbarArea {
     position: absolute;
-    top: -30px;
+    top: 0;
     left: 0;
     height: 30px;
     display: flex;
