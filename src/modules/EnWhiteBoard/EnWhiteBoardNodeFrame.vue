@@ -33,13 +33,10 @@
       '--en-frame-height': isCollapsed ? '30px' : `${flowNode.dimensions.height}px`,
       'backgroundColor': nodeData.style?.backgroundColor || 'var(--b3-theme-surface-light)',
     }"
-    draggable="true"
-    @dragstart="handleDragStart"
-    @dragend="handleDragEnd"
-    @dragover="handleDragOver"
-    @drop="handleDrop"
-    @dragleave="handleDragLeave"
+    @mousedown="handleMouseDown"
+    @mouseup="handleMouseUp"
     @contextmenu="handleContextMenu"
+    @click="handleFrameClick"
   >
     <div
       class="FrameToolbarArea"
@@ -191,6 +188,8 @@ const {
   setNodes,
   removeNodes,
   viewport,
+  addSelectedNodes,
+  removeSelectedNodes,
 } = useVueFlow()
 
 const nodeData = computed(() => flowNode.data)
@@ -370,89 +369,40 @@ const onResize = (event: OnResize) => {
   })
 }
 
-const handleDragStart = (event: DragEvent) => {
+const handleMouseDown = (event: MouseEvent) => {
+  // 获取 Frame 范围内的所有节点
+  const nodesInFrame = getNodes.value.filter((node) => {
+    // 跳过自身和已经是其他 Frame 的子节点
+    if (node.id === flowNode.id || (node.data?.parentId && node.data.parentId !== flowNode.id)) return false
+    // 使用已有的 isNodeInside 函数检查节点是否在 Frame 范围内
+    return isNodeInside(node)
+  })
+
+  // 先清除所有选中状态
+  const updatedNodes = getNodes.value.map((node) => ({
+    ...node,
+    selected: false,
+    dragging: node.id === flowNode.id || nodesInFrame.some((n) => n.id === node.id),
+  }))
+  setNodes(updatedNodes)
+
+  // 选中 Frame 和范围内的节点
+  const nodesToSelect = [flowNode, ...nodesInFrame]
+  addSelectedNodes(nodesToSelect)
+
+  containedNodes.value = nodesInFrame
   isDragging.value = true
-  const frameEl = event.currentTarget as HTMLElement
-  const frameRect = frameEl.getBoundingClientRect()
-  dragStartPos.value = {
-    x: event.clientX - frameRect.left,
-    y: event.clientY - frameRect.top,
-  }
-
-  // 设置拖拽效果和数据
-  event.dataTransfer.effectAllowed = 'move'
-  event.dataTransfer.setData('application/vueflow/nodeId', flowNode.id)
-  frameEl.style.opacity = '0.7'
-
-  // 记录当前 Frame 内的所有节点
-  containedNodes.value = childNodes.value
 }
 
-const handleDragEnd = (event: DragEvent) => {
+const handleMouseUp = () => {
   if (!isDragging.value) return
-
-  const frameEl = event.currentTarget as HTMLElement
-  frameEl.style.opacity = '1'
-
-  const frameRect = frameEl.getBoundingClientRect()
-
-  // 计算拖拽偏移量
-  const dx = event.clientX - dragStartPos.value.x - frameRect.left
-  const dy = event.clientY - dragStartPos.value.y - frameRect.top
-
-  // 更新 Frame 和其子节点的位置
-  handleFrameMove(dx, dy)
-
   isDragging.value = false
   containedNodes.value = []
-}
 
-const handleDragOver = (event: DragEvent) => {
-  event.preventDefault()
-  canDrop.value = true
-  event.dataTransfer.dropEffect = 'move'
-}
-
-const handleDrop = (event: DragEvent) => {
-  event.preventDefault()
-  canDrop.value = false
-
-  // 获取被拖拽的节点ID
-  const draggedNodeId = event.dataTransfer.getData('application/vueflow/nodeId')
-  if (!draggedNodeId) return
-
-  const draggedNode = getNodes.value.find((node) => node.id === draggedNodeId)
-  if (!draggedNode || draggedNode.id === flowNode.id) return
-
-  // 计算相对位置
-  const frameRect = containerRef.value.getBoundingClientRect()
-  const draggedNodeEl = document.querySelector(`[data-en-flow-node-id="${draggedNodeId}"]`)
-  const draggedNodeRect = draggedNodeEl?.getBoundingClientRect()
-
-  if (!draggedNodeRect) return
-
-  // 检查是否在 Frame 内部
-  if (isNodeInside(draggedNode)) {
-    // 更新节点位置和父子关系
-    const relativePos = getRelativePosition(draggedNodeRect, frameRect)
-    const updatedNodes = getNodes.value.map((node) => {
-      if (node.id === draggedNodeId) {
-        return {
-          ...node,
-          data: {
-            ...node.data,
-            parentId: flowNode.id,
-          },
-          position: {
-            x: flowNode.position.x + relativePos.x,
-            y: flowNode.position.y + relativePos.y,
-          },
-        }
-      }
-      return node
-    })
-    setNodes(updatedNodes)
-  }
+  // 检查其他节点是否需要加入或移出 Frame
+  nextTick(() => {
+    checkNodesInFrameBoundary()
+  })
 }
 
 // 添加拖拽离开处理
@@ -773,6 +723,29 @@ const handleFrameMove = (dx: number, dy: number) => {
     checkNodesInFrameBoundary()
   })
 }
+
+const handleFrameClick = (event: MouseEvent) => {
+  // 获取 Frame 范围内的所有节点
+  const nodesInFrame = getNodes.value.filter((node) => {
+    // 跳过自身和已经是其他 Frame 的子节点
+    if (node.id === flowNode.id || (node.data?.parentId && node.data.parentId !== flowNode.id)) return false
+    // 使用已有的 isNodeInside 函数检查节点是否在 Frame 范围内
+    return isNodeInside(node)
+  })
+
+  // 先清除所有选中状态
+  const updatedNodes = getNodes.value.map((node) => ({
+    ...node,
+    selected: false,
+  }))
+  setNodes(updatedNodes)
+
+  // 选中 Frame 和范围内的节点
+  const nodesToSelect = [flowNode, ...nodesInFrame]
+  addSelectedNodes(nodesToSelect)
+
+  containedNodes.value = nodesInFrame
+}
 </script>
 
 <style lang="scss" scoped>
@@ -1075,3 +1048,4 @@ const handleFrameMove = (dx: number, dy: number) => {
   z-index: 2 !important; // 使用 !important 确保优先级
 }
 </style>
+
