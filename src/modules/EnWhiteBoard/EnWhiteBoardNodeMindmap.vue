@@ -517,19 +517,31 @@ watch(() => getNodes.value, (newNodes, oldNodes) => {
   width: 100%;
   height: 100%;
   border-color: var(--b3-theme-primary-light);
-  background-color: var(--b3-theme-background-light);
-  border-radius: var(--en-whiteboard-card-radius);
+  background-color: var(--b3-theme-background);
+  border-radius: 24px;
   border: 2px solid;
   position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: var(--b3-theme-primary);
+
+    .add-child-button {
+      opacity: 1;
+      transform: translateY(-50%) scale(1);
+    }
+  }
 
   .add-child-button {
     position: absolute;
     right: -16px;
     top: 50%;
-    transform: translateY(-50%);
+    transform: translateY(-50%) scale(0.9);
     z-index: 10;
     opacity: 0;
-    transition: opacity 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     .arco-btn {
       width: 24px;
@@ -539,28 +551,28 @@ watch(() => getNodes.value, (newNodes, oldNodes) => {
       background-color: var(--b3-theme-primary);
       border-color: var(--b3-theme-primary);
       color: var(--b3-theme-on-primary);
+      box-shadow: 0 2px 6px rgba(var(--primary-6), 0.4);
+      transition: all 0.3s ease;
 
       &:hover {
         background-color: var(--b3-theme-primary-hover);
         border-color: var(--b3-theme-primary-hover);
+        transform: scale(1.1);
       }
     }
   }
 
-  &:hover .add-child-button {
-    opacity: 1;
-  }
-
   .ProtyleToolbarArea {
     width: 100%;
-    height: 30px;
+    height: 36px;
     flex-shrink: 0;
-    background-color: color-mix(in srgb, var(--b3-theme-surface) 65%, transparent);
+    background-color: transparent;
     display: flex;
     align-items: center;
     justify-content: space-between;
     box-sizing: border-box;
-    padding: var(--en-gap);
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--b3-border-color);
 
     .infos {
       flex: 1;
@@ -568,12 +580,13 @@ watch(() => getNodes.value, (newNodes, oldNodes) => {
       margin-right: var(--en-gap);
 
       .block-title {
-        font-size: 12px;
-        color: var(--b3-theme-on-surface);
+        font-size: 14px;
+        color: var(--b3-theme-on-background);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
         display: block;
+        font-weight: 500;
       }
     }
 
@@ -591,21 +604,25 @@ watch(() => getNodes.value, (newNodes, oldNodes) => {
     flex: 1;
     position: relative;
     overflow: hidden;
+    padding: 12px;
   }
 
   .Handle {
     width: 21px;
     height: 21px;
-    z-index: -1;
+    z-index: 1;
     opacity: 0;
-    border-color: var(--b3-theme-primary-light);
+    border: 2px solid var(--b3-theme-primary-light);
     background-color: var(--b3-theme-background);
     color: var(--b3-theme-primary-light);
-    position: absolute;
+    transition: all 0.3s ease;
+    cursor: pointer;
 
     &:hover {
-      background-color: var(--b3-border-color);
       opacity: 1;
+      background-color: var(--b3-theme-primary-light);
+      color: var(--b3-theme-on-primary);
+      transform: scale(1.1);
     }
 
     .HandleIcon {
@@ -626,9 +643,9 @@ watch(() => getNodes.value, (newNodes, oldNodes) => {
   }
 
   &.is-collapsed {
-    height: 30px !important;
-    min-height: 30px !important;
-    transition: height 0.3s ease-in-out;
+    height: 36px !important;
+    min-height: 36px !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     .main {
       display: none;
@@ -637,7 +654,6 @@ watch(() => getNodes.value, (newNodes, oldNodes) => {
     .ProtyleToolbarArea {
       border-bottom: none;
       border-radius: var(--b3-border-radius);
-      background-color: var(--b3-theme-surface);
       height: 100%;
     }
 

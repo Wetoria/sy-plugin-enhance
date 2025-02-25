@@ -322,7 +322,7 @@ const getData = () => {
 
 const edgeStyle = computed(() => {
   const data = getData()
-  const width = data.width || 1
+  const width = data.width || 2
 
   // 根据线条粗细调整点线和虚线的间距
   let dashArray
@@ -334,10 +334,12 @@ const edgeStyle = computed(() => {
 
   return {
     strokeWidth: width,
-    stroke: data.color || 'var(--b3-theme-on-surface)',
+    stroke: data.color || 'var(--b3-theme-primary)',
     strokeDasharray: dashArray,
     markerEnd: data.markerEnd ? `url(#${data.markerEnd})` : undefined,
     markerStart: data.markerStart ? `url(#${data.markerStart})` : undefined,
+    filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1))',
+    transition: 'all 0.3s ease',
   }
 })
 
