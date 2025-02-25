@@ -124,6 +124,12 @@ const {
   setEdges,
 } = useVueFlow()
 
+// 添加getChildNodes函数 - 移到前面
+const getChildNodes = () => {
+  const nodes = getNodes.value || []
+  return nodes.filter((node) => node.data?.parentId === props.nodeId)
+}
+
 // 优化高度计算函数，添加缓存
 const heightCache = new Map()
 const calculateSubtreeHeight = (node, nodes) => {
@@ -156,8 +162,13 @@ const calculateSubtreeHeight = (node, nodes) => {
 }
 
 // 优化布局函数
-const updateNodeLayout = async (node, level = 0) => {
+const updateNodeLayout = async (nodeId) => {
   const nodes = getNodes.value
+  const node = nodes.find((n) => n.id === nodeId)
+  if (!node || !node.position || !node.dimensions) {
+    return // 如果节点不存在或没有必要的属性，直接返回
+  }
+
   const childNodes = nodes.filter((n) => n.data?.parentId === node.id)
   if (childNodes.length === 0) return
 
@@ -185,6 +196,8 @@ const updateNodeLayout = async (node, level = 0) => {
   // 收集所有需要更新的节点位置
   for (let i = 0; i < childNodes.length; i++) {
     const child = childNodes[i]
+    if (!child.dimensions) continue // 跳过没有尺寸信息的节点
+
     const childHeight = childrenHeights[i]
     const childY = currentY + (childHeight - (child.dimensions?.height || 0)) / 2
 
@@ -215,18 +228,33 @@ const updateNodeLayout = async (node, level = 0) => {
   }
 
   // 并行更新所有子节点的布局
-  await Promise.all(childNodes.map((child) => updateNodeLayout(child, level + 1)))
+  await Promise.all(childNodes.map((child) => updateNodeLayout(child.id)))
 }
+
+// 修改watch逻辑，添加必要的检查
+watch([
+  () => getChildNodes().length,
+  () => props.nodeData?.parentId,
+], () => {
+  // 确保节点ID存在且有效
+  if (props.nodeId && getNodes.value?.some((node) => node.id === props.nodeId)) {
+    updateNodeLayout(props.nodeId)
+  }
+})
 
 // 优化递归布局函数
 const updateMindmapLayoutRecursively = async (nodeId) => {
   const nodes = getNodes.value
   const node = nodes.find((n) => n.id === nodeId)
-  if (!node) return
+  if (!node || !node.position || !node.dimensions) {
+    return // 如果节点不存在或没有必要的属性，直接返回
+  }
 
   // 收集需要更新的所有节点ID
   const nodesToUpdate = []
   const collectNodes = (currentNode) => {
+    if (!currentNode) return
+
     if (currentNode.data?.parentId) {
       const parentNode = nodes.find((n) => n.id === currentNode.data.parentId)
       if (parentNode) {
@@ -242,8 +270,8 @@ const updateMindmapLayoutRecursively = async (nodeId) => {
   // 从根节点开始，逐层更新布局
   for (const id of nodesToUpdate) {
     const currentNode = nodes.find((n) => n.id === id)
-    if (currentNode) {
-      await updateNodeLayout(currentNode)
+    if (currentNode && currentNode.position && currentNode.dimensions) {
+      await updateNodeLayout(currentNode.id)
     }
   }
 }
@@ -254,11 +282,11 @@ const waitForNodeDimensions = (nodes, maxAttempts = 3) => {
     let attempts = 0
     const check = () => {
       attempts++
-      const allReady = nodes.every(isNodeDimensionsReady)
+      const allReady = nodes.every((node) => node && isNodeDimensionsReady(node))
       if (allReady || attempts >= maxAttempts) {
         resolve(allReady)
       } else {
-        requestAnimationFrame(check) // 使用requestAnimationFrame替代setTimeout
+        requestAnimationFrame(check)
       }
     }
     check()
@@ -268,12 +296,17 @@ const waitForNodeDimensions = (nodes, maxAttempts = 3) => {
 // 修改 handleAddChildNode 函数
 const handleAddChildNode = async () => {
   // 1. 先计算新节点的位置
-  const nodes = getNodes.value
+  const nodes = getNodes.value || [] // 添加默认空数组
+  const parentNode = nodes.find((node) => node.id === props.nodeId)
+  if (!parentNode || !parentNode.position) {
+    console.warn('Parent node not found or invalid')
+    return
+  }
+
   const siblings = nodes.filter((node) => node.data?.parentId === props.nodeId)
   const horizontalSpacing = 150 // 使用与updateNodeLayout相同的间距
 
   // 获取父节点的右边界
-  const parentNode = nodes.find((node) => node.id === props.nodeId)
   const parentRightEdge = parentNode.position.x + (parentNode.dimensions?.width || moduleWhiteBoardOptions.value.cardWidthDefault)
 
   // 计算新节点的位置
@@ -284,123 +317,136 @@ const handleAddChildNode = async () => {
 
   // 2. 预先计算布局
   if (siblings.length > 0) {
-    // 计算所有现有子节点(包括它们的子树)的总高度
-    const siblingHeights = await Promise.all(siblings.map(async (sibling) => {
-      return calculateSubtreeHeight(sibling, nodes)
-    }))
+    try {
+      // 计算所有现有子节点(包括它们的子树)的总高度
+      const siblingHeights = await Promise.all(siblings.map(async (sibling) => {
+        return calculateSubtreeHeight(sibling, nodes)
+      }))
 
-    const totalSiblingHeight = siblingHeights.reduce((sum, height, index) => {
-      return sum + height + (index < siblingHeights.length - 1 ? 20 : 0)
-    }, 0)
+      const totalSiblingHeight = siblingHeights.reduce((sum, height, index) => {
+        return sum + height + (index < siblingHeights.length - 1 ? 20 : 0)
+      }, 0)
 
-    // 计算新的总高度(包括新节点的默认高度)
-    const newNodeHeight = moduleWhiteBoardOptions.value.cardHeightDefault
-    const newTotalHeight = totalSiblingHeight + newNodeHeight + 20 // 加上新节点高度和间距
+      // 计算新的总高度(包括新节点的默认高度)
+      const newNodeHeight = moduleWhiteBoardOptions.value.cardHeightDefault
+      const newTotalHeight = totalSiblingHeight + newNodeHeight + 20 // 加上新节点高度和间距
 
-    // 计算所有节点的新位置
-    const startY = parentNode.position.y - (newTotalHeight / 2) + (parentNode.dimensions?.height || 0) / 2
+      // 计算所有节点的新位置
+      const startY = parentNode.position.y - (newTotalHeight / 2) + (parentNode.dimensions?.height || 0) / 2
 
-    // 先更新现有节点的位置
-    let currentY = startY
-    const updatedNodes = nodes.map((node) => {
-      if (node.data?.parentId === props.nodeId) {
-        const nodeHeight = calculateSubtreeHeight(node, nodes)
-        const newY = currentY + (nodeHeight - (node.dimensions?.height || 0)) / 2
-        currentY += nodeHeight + 20 // 加上垂直间距
+      // 先更新现有节点的位置
+      let currentY = startY
+      const updatedNodes = nodes.map((node) => {
+        if (node.data?.parentId === props.nodeId) {
+          const nodeHeight = calculateSubtreeHeight(node, nodes)
+          const newY = currentY + (nodeHeight - (node.dimensions?.height || 0)) / 2
+          currentY += nodeHeight + 20 // 加上垂直间距
 
-        return {
-          ...node,
-          position: {
-            x: node.position.x,
-            y: newY,
-          },
+          return {
+            ...node,
+            position: {
+              x: node.position.x,
+              y: newY,
+            },
+          }
         }
+        return node
+      })
+
+      if (Array.isArray(updatedNodes)) {
+        setNodes(updatedNodes)
       }
-      return node
-    })
-    setNodes(updatedNodes)
 
-    // 计算新节点的Y坐标
-    newNodePosition.y = currentY + (newNodeHeight / 2)
-  }
-
-  // 3. 创建新节点
-  const blockId = await getNewDailyNoteBlockId()
-  const newNodeId = generateWhiteBoardNodeId()
-
-  const newNode = {
-    id: newNodeId,
-    type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_PROTYLE,
-    data: {
-      blockId,
-      parentId: props.nodeId,
-      mindmap: true,
-    },
-    position: newNodePosition,
-    width: moduleWhiteBoardOptions.value.cardWidthDefault,
-    height: moduleWhiteBoardOptions.value.cardHeightDefault,
-    connectable: true,
-    draggable: true,
-    selectable: true,
-  }
-
-  // 4. 添加新节点
-  const updatedNodes = [...getNodes.value, newNode]
-  setNodes(updatedNodes)
-
-  // 5. 创建连接线
-  let edgeColor = presetColors[0] // 默认使用第一个颜色
-  if (siblings.length > 0) {
-    const currentEdges = edges.value.filter((edge) => edge.source === props.nodeId)
-    const sortedEdges = currentEdges.sort((a, b) => {
-      const nodeA = getNodes.value.find((node) => node.id === a.target)
-      const nodeB = getNodes.value.find((node) => node.id === b.target)
-      return (nodeB?.position.y || 0) - (nodeA?.position.y || 0)
-    })
-
-    if (sortedEdges.length > 0) {
-      const lastEdge = sortedEdges[0]
-      const lastColorIndex = presetColors.findIndex((color) => color === lastEdge.data?.color)
-      if (lastColorIndex !== -1) {
-        edgeColor = presetColors[(lastColorIndex + 1) % presetColors.length]
-      }
+      // 计算新节点的Y坐标
+      newNodePosition.y = currentY + (newNodeHeight / 2)
+    } catch (error) {
+      console.error('Error updating sibling positions:', error)
     }
   }
 
-  const newEdge = {
-    id: generateWhiteBoardEdgeId(),
-    type: EN_CONSTANTS.EN_WHITE_BOARD_EDGE_TYPE_BASE,
-    source: props.nodeId,
-    target: newNodeId,
-    sourceHandle: 'right',
-    targetHandle: 'left',
-    data: {
-      label: '',
-      edgeType: 'bezier',
-      width: 2,
-      style: 'solid',
-      color: edgeColor,
-      markerEnd: 'arrow',
-      markerStart: undefined,
-    },
+  // 3. 创建新节点
+  try {
+    const blockId = await getNewDailyNoteBlockId()
+    const newNodeId = generateWhiteBoardNodeId()
+
+    const newNode = {
+      id: newNodeId,
+      type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_PROTYLE,
+      data: {
+        blockId,
+        parentId: props.nodeId,
+        mindmap: true,
+      },
+      position: newNodePosition,
+      width: moduleWhiteBoardOptions.value.cardWidthDefault,
+      height: moduleWhiteBoardOptions.value.cardHeightDefault,
+      connectable: true,
+      draggable: true,
+      selectable: true,
+    }
+
+    // 4. 添加新节点
+    const currentNodes = getNodes.value || []
+    const updatedNodes = Array.isArray(currentNodes) ? [...currentNodes, newNode] : [newNode]
+    setNodes(updatedNodes)
+
+    // 5. 创建连接线
+    let edgeColor = presetColors[0] // 默认使用第一个颜色
+    const currentEdges = edges.value || []
+
+    if (siblings.length > 0) {
+      const sourceEdges = currentEdges.filter((edge) => edge.source === props.nodeId)
+      const sortedEdges = sourceEdges.sort((a, b) => {
+        const nodeA = nodes.find((node) => node.id === a.target)
+        const nodeB = nodes.find((node) => node.id === b.target)
+        return (nodeB?.position.y || 0) - (nodeA?.position.y || 0)
+      })
+
+      if (sortedEdges.length > 0) {
+        const lastEdge = sortedEdges[0]
+        const lastColorIndex = presetColors.findIndex((color) => color === lastEdge.data?.color)
+        if (lastColorIndex !== -1) {
+          edgeColor = presetColors[(lastColorIndex + 1) % presetColors.length]
+        }
+      }
+    }
+
+    const newEdge = {
+      id: generateWhiteBoardEdgeId(),
+      type: EN_CONSTANTS.EN_WHITE_BOARD_EDGE_TYPE_BASE,
+      source: props.nodeId,
+      target: newNodeId,
+      sourceHandle: 'right',
+      targetHandle: 'left',
+      data: {
+        label: '',
+        edgeType: 'bezier',
+        width: 2,
+        style: 'solid',
+        color: edgeColor,
+        markerEnd: 'arrow',
+        markerStart: undefined,
+      },
+    }
+
+    const updatedEdges = Array.isArray(currentEdges) ? [...currentEdges, newEdge] : [newEdge]
+    setEdges(updatedEdges)
+
+    // 6. 同步更新配置数据
+    if (props.whiteBoardConfigData) {
+      props.whiteBoardConfigData.boardOptions.nodes = updatedNodes
+      props.whiteBoardConfigData.boardOptions.edges = updatedEdges
+    }
+
+    // 7. 等待节点渲染完成
+    await waitForNodeDimensions([newNode])
+    await new Promise((resolve) => requestAnimationFrame(resolve))
+
+    // 8. 更新布局
+    await updateMindmapLayoutRecursively(props.nodeId)
+  } catch (error) {
+    console.error('Error creating new node:', error)
   }
-
-  const currentEdges = edges.value || []
-  const updatedEdges = [...currentEdges, newEdge]
-  setEdges(updatedEdges)
-
-  // 6. 同步更新配置数据
-  if (props.whiteBoardConfigData) {
-    props.whiteBoardConfigData.boardOptions.nodes = updatedNodes
-    props.whiteBoardConfigData.boardOptions.edges = updatedEdges
-  }
-
-  // 7. 等待节点渲染完成
-  await waitForNodeDimensions([newNode])
-  await new Promise((resolve) => requestAnimationFrame(resolve))
-
-  // 8. 更新布局
-  await updateMindmapLayoutRecursively(props.nodeId)
 }
 
 // 检查节点尺寸是否已准备好
@@ -439,20 +485,6 @@ const nodeTypeClass = computed(() => ({
 // 修改toggleMindmap函数
 const toggleMindmap = () => {
   emit('toggleMindmap')
-}
-
-// 添加watch监听子节点数量和父节点变化
-watch([
-  () => getChildNodes().length,
-  () => props.nodeData?.parentId,
-], () => {
-  updateNodeLayout(props.nodeId)
-})
-
-// 添加getChildNodes函数
-const getChildNodes = () => {
-  const nodes = getNodes.value || []
-  return nodes.filter((node) => node.data?.parentId === props.nodeId)
 }
 
 // 监听节点变化，处理删除等操作
