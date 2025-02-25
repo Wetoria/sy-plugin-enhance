@@ -49,15 +49,6 @@
         <span class="frame-title">{{ nodeData.label || '未命名分组' }}</span>
         <span class="child-count">{{ childNodes.length }}</span>
       </div>
-      <div class="operations">
-        <a-button-group size="mini">
-          <a-button @click="handleEditLabel">
-            <template #icon>
-              <icon-edit />
-            </template>
-          </a-button>
-        </a-button-group>
-      </div>
     </div>
 
     <div
@@ -139,7 +130,6 @@ import {
 } from '@/modules/EnWhiteBoard/EnWhiteBoard'
 
 import { EN_CONSTANTS } from '@/utils/Constants'
-import { Modal } from '@arco-design/web-vue'
 import {
   IconArrowDown,
   IconArrowLeft,
@@ -324,32 +314,6 @@ const handleDuplicateNode = () => {
   }))
   setNodes(updatedNodes)
   addNodes([newNode])
-}
-
-const handleEditLabel = () => {
-  const label = nodeData.value.label || ''
-  Modal.confirm({
-    title: '编辑分组名称',
-    content: '请输入新的分组名称',
-    okText: '确定',
-    cancelText: '取消',
-    onOk: () => {
-      const nodes = getNodes.value
-      const newNodes = nodes.map((node) => {
-        if (node.id === flowNode.id) {
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              label,
-            },
-          }
-        }
-        return node
-      })
-      setNodes(newNodes)
-    },
-  })
 }
 
 const isMultipleSelected = computed(() => {
@@ -803,14 +767,14 @@ const handleFrameClick = (event: MouseEvent) => {
 
   .FrameToolbarArea {
     position: absolute;
-    top: 0;
+    top: -4px;
     left: 0;
     height: 30px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     box-sizing: border-box;
-    padding: 4px 8px;
+    padding: 2px;
     background: var(--b3-theme-surface);
     border: 1px solid var(--b3-border-color);
     border-radius: var(--b3-border-radius);
@@ -825,11 +789,10 @@ const handleFrameClick = (event: MouseEvent) => {
       margin-right: var(--en-gap);
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 4px;
 
       .frame-title {
         font-size: 13px;
-        font-weight: 500;
         color: var(--b3-theme-on-surface);
         white-space: nowrap;
         overflow: hidden;
@@ -839,22 +802,12 @@ const handleFrameClick = (event: MouseEvent) => {
         padding: 2px 4px;
         border-radius: 4px;
         transition: background-color 0.2s ease;
-        cursor: text;
-        min-width: 60px;
-
-        &:hover {
-          background-color: var(--b3-theme-surface-light);
-        }
       }
 
       .child-count {
         font-size: 12px;
         color: var(--b3-theme-on-surface);
         opacity: 0.6;
-        padding: 2px 6px;
-        background: var(--b3-theme-surface-light);
-        border-radius: 10px;
-        min-width: 16px;
         text-align: center;
       }
     }
