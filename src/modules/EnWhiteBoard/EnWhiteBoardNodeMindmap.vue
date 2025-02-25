@@ -391,10 +391,16 @@ const handleAddChildNode = async () => {
     setNodes(updatedNodes)
 
     // 5. 创建连接线
-    let edgeColor = presetColors[0] // 默认使用第一个颜色
     const currentEdges = edges.value || []
 
-    if (siblings.length > 0) {
+    // 获取父节点的连线颜色
+    let edgeColor = presetColors[0] // 默认使用第一个颜色
+    const parentEdge = currentEdges.find((edge) => edge.target === props.nodeId)
+    if (parentEdge?.data?.color) {
+      // 如果父节点有连线，继承其颜色
+      edgeColor = parentEdge.data.color
+    } else if (siblings.length > 0) {
+      // 只有在第一层（没有父节点连线）时才使用循环颜色
       const sourceEdges = currentEdges.filter((edge) => edge.source === props.nodeId)
       const sortedEdges = sourceEdges.sort((a, b) => {
         const nodeA = nodes.find((node) => node.id === a.target)
