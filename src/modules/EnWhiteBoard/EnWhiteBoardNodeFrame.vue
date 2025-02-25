@@ -237,16 +237,17 @@ const isNodeInside = (node: VueFlowNode) => {
 // 更新节点的父子关系
 const updateNodeParent = (nodeId: string, parentId: string | null) => {
   const nodes = getNodes.value
-  const frameRect = containerRef.value?.getBoundingClientRect()
+  const targetNode = nodes.find((node) => node.id === nodeId)
+  if (!targetNode) return
 
   const newNodes = nodes.map((node) => {
     if (node.id === nodeId) {
-      const nodeEl = document.querySelector(`[data-en-flow-node-id="${node.id}"]`)
-      const nodeRect = nodeEl?.getBoundingClientRect()
+      // 如果是添加到 Frame
+      if (parentId === flowNode.id) {
+        // 计算相对于 Frame 的位置
+        const relativeX = node.position.x - flowNode.position.x
+        const relativeY = node.position.y - flowNode.position.y
 
-      // 如果是添加到 Frame,需要调整位置
-      if (parentId === flowNode.id && frameRect && nodeRect) {
-        const relativePos = getRelativePosition(nodeRect, frameRect)
         return {
           ...node,
           data: {
@@ -254,13 +255,13 @@ const updateNodeParent = (nodeId: string, parentId: string | null) => {
             parentId,
           },
           position: {
-            x: flowNode.position.x + relativePos.x,
-            y: flowNode.position.y + relativePos.y,
+            x: flowNode.position.x + relativeX,
+            y: flowNode.position.y + relativeY,
           },
         }
       }
 
-      // 如果是移出 Frame,保持当前位置
+      // 如果是移出 Frame，保持当前位置
       return {
         ...node,
         data: {
@@ -272,14 +273,6 @@ const updateNodeParent = (nodeId: string, parentId: string | null) => {
     return node
   })
   setNodes(newNodes)
-}
-
-// 获取节点的相对位置
-const getRelativePosition = (nodeRect: DOMRect, frameRect: DOMRect) => {
-  return {
-    x: nodeRect.left - frameRect.left,
-    y: nodeRect.top - frameRect.top,
-  }
 }
 
 const handleCollapse = () => {
@@ -370,10 +363,9 @@ const isSelected = computed(() => {
 })
 
 const onResize = (event: OnResize) => {
-  console.log('onResize', event)
   // 等待 DOM 更新
   nextTick(() => {
-    detectNodesInFrame()
+    checkNodesInFrameBoundary()
     highlightPotentialNodes()
   })
 }
@@ -409,38 +401,10 @@ const handleDragEnd = (event: DragEvent) => {
   const dy = event.clientY - dragStartPos.value.y - frameRect.top
 
   // 更新 Frame 和其子节点的位置
-  const updatedNodes = getNodes.value.map((node) => {
-    if (node.id === flowNode.id) {
-      // 更新 Frame 位置
-      return {
-        ...node,
-        position: {
-          x: node.position.x + dx,
-          y: node.position.y + dy,
-        },
-      }
-    } else if (node.data?.parentId === flowNode.id) {
-      // 更新子节点位置
-      return {
-        ...node,
-        position: {
-          x: node.position.x + dx,
-          y: node.position.y + dy,
-        },
-      }
-    }
-    return node
-  })
+  handleFrameMove(dx, dy)
 
-  setNodes(updatedNodes)
   isDragging.value = false
   containedNodes.value = []
-
-  // 检测新的子节点
-  nextTick(() => {
-    detectNodesInFrame()
-    highlightPotentialNodes()
-  })
 }
 
 const handleDragOver = (event: DragEvent) => {
@@ -678,40 +642,98 @@ const detectNodesInFrame = () => {
 watch(() => getNodes.value, (newNodes, oldNodes) => {
   if (!oldNodes) return
 
-  // 如果有节点位置发生变化
-  const hasPositionChange = newNodes.some((node, index) => {
+  // 如果有节点位置或尺寸发生变化
+  const hasChange = newNodes.some((node, index) => {
     const oldNode = oldNodes[index]
     return (
       oldNode
-      && (node.position.x !== oldNode.position.x
-        || node.position.y !== oldNode.position.y)
+      && (
+        // 位置变化
+        node.position.x !== oldNode.position.x
+        || node.position.y !== oldNode.position.y
+        // 尺寸变化
+        || node.dimensions?.width !== oldNode.dimensions?.width
+        || node.dimensions?.height !== oldNode.dimensions?.height
+      )
     )
   })
 
-  if (hasPositionChange) {
-    // 检查是否有节点移入 Frame
-    newNodes.forEach((node) => {
-      // 跳过自身和已经属于其他 Frame 的节点
-      if (node.id === flowNode.id || node.data?.parentId) return
-
-      if (isNodeInside(node)) {
-        // 自动添加到 Frame
-        updateNodeParent(node.id, flowNode.id)
-      }
-    })
-
-    // 检查是否有子节点移出 Frame
-    childNodes.value.forEach((node) => {
-      if (!isNodeInside(node)) {
-        // 移除父子关系
-        updateNodeParent(node.id, null)
-      }
-    })
-
-    // 更新视觉提示
+  if (hasChange) {
+    checkNodesInFrameBoundary()
     highlightPotentialNodes()
   }
 }, { deep: true })
+
+// 监听 Frame 自身的变化
+watch(() => [
+  flowNode.position.x,
+  flowNode.position.y,
+  flowNode.dimensions.width,
+  flowNode.dimensions.height,
+], () => {
+  nextTick(() => {
+    checkNodesInFrameBoundary()
+    highlightPotentialNodes()
+  })
+})
+
+// Frame 节点移动时的处理
+const handleFrameMove = (dx: number, dy: number) => {
+  const updatedNodes = getNodes.value.map((node) => {
+    if (node.id === flowNode.id) {
+      // 更新 Frame 位置
+      return {
+        ...node,
+        position: {
+          x: node.position.x + dx,
+          y: node.position.y + dy,
+        },
+      }
+    } else if (node.data?.parentId === flowNode.id) {
+      // 更新子节点位置
+      return {
+        ...node,
+        position: {
+          x: node.position.x + dx,
+          y: node.position.y + dy,
+        },
+      }
+    }
+    return node
+  })
+
+  setNodes(updatedNodes)
+
+  // 检查其他节点是否需要加入或移出 Frame
+  nextTick(() => {
+    checkNodesInFrameBoundary()
+  })
+}
+
+// 检查节点是否在 Frame 边界附近
+const checkNodesInFrameBoundary = () => {
+  const nodes = getNodes.value
+  const margin = 5 // 边界检测的容差值
+
+  nodes.forEach((node) => {
+    if (node.id === flowNode.id) return
+
+    // 检查是否是子节点且移出了范围
+    if (node.data?.parentId === flowNode.id) {
+      if (!isNodeInside(node)) {
+        // 移出范围，需要移除父子关系
+        updateNodeParent(node.id, null)
+      }
+    }
+    // 检查是否是非子节点但进入了范围
+    else if (!node.data?.parentId) {
+      if (isNodeInside(node)) {
+        // 进入范围，需要建立父子关系
+        updateNodeParent(node.id, flowNode.id)
+      }
+    }
+  })
+}
 
 // 添加一个计算属性来显示可能成为子节点的节点
 const potentialChildNodes = computed(() => {
