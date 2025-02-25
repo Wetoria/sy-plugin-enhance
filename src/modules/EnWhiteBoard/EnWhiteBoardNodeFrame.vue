@@ -529,9 +529,111 @@ const createNodeInFrame = async () => {
 
 const { moduleOptions: moduleWhiteBoardOptions } = useWhiteBoardModule()
 
-// 在 mounted 时添加全局点击事件监听
+// 检查节点是否在 Frame 边界附近
+const checkNodesInFrameBoundary = () => {
+  const nodes = getNodes.value
+  const margin = 5 // 边界检测的容差值
+
+  nodes.forEach((node) => {
+    if (node.id === flowNode.id) return
+
+    // 检查是否是子节点且移出了范围
+    if (node.data?.parentId === flowNode.id) {
+      if (!isNodeInside(node)) {
+        // 移出范围，需要移除父子关系
+        updateNodeParent(node.id, null)
+      }
+    }
+    // 检查是否是非子节点但进入了范围
+    else if (!node.data?.parentId) {
+      if (isNodeInside(node)) {
+        // 进入范围，需要建立父子关系
+        updateNodeParent(node.id, flowNode.id)
+      }
+    }
+  })
+}
+
+// 添加一个计算属性来显示可能成为子节点的节点
+const potentialChildNodes = computed(() => {
+  return getNodes.value.filter((node) => {
+    if (node.id === flowNode.id || node.data?.parentId) return false
+    return isNodeInside(node)
+  })
+})
+
+// 在样式中添加视觉提示
+const highlightPotentialNodes = () => {
+  potentialChildNodes.value.forEach((node) => {
+    const nodeEl = document.querySelector(`[data-en-flow-node-id="${node.id}"]`)
+    if (nodeEl) {
+      nodeEl.classList.add('potential-frame-child')
+    }
+  })
+}
+
+const clearPotentialNodesHighlight = () => {
+  document.querySelectorAll('.potential-frame-child').forEach((el) => {
+    el.classList.remove('potential-frame-child')
+  })
+}
+
+// 添加实时检测逻辑
+let lastCheckTime = 0
+const CHECK_INTERVAL = 16 // 约60fps的检测频率
+
+const throttledCheck = () => {
+  const now = Date.now()
+  if (now - lastCheckTime >= CHECK_INTERVAL) {
+    checkNodesInFrameBoundary()
+    highlightPotentialNodes()
+    lastCheckTime = now
+  }
+}
+
+// 监听其他节点的移动
+watch(() => getNodes.value, (newNodes, oldNodes) => {
+  if (!oldNodes) return
+
+  // 检查每个节点的变化
+  newNodes.forEach((node, index) => {
+    const oldNode = oldNodes[index]
+    if (!oldNode) return
+
+    // 如果节点正在拖动或位置/尺寸发生变化
+    if (
+      node.dragging
+      || node.position.x !== oldNode.position.x
+      || node.position.y !== oldNode.position.y
+      || node.dimensions?.width !== oldNode.dimensions?.width
+      || node.dimensions?.height !== oldNode.dimensions?.height
+    ) {
+      throttledCheck()
+    }
+  })
+}, {
+  deep: true,
+  immediate: true,
+})
+
+// 监听 Frame 自身的变化
+watch(() => ({
+  x: flowNode.position.x,
+  y: flowNode.position.y,
+  width: flowNode.dimensions?.width,
+  height: flowNode.dimensions?.height,
+  dragging: flowNode.dragging,
+}), () => {
+  throttledCheck()
+}, {
+  deep: true,
+  immediate: true,
+})
+
+// 在组件挂载时添加全局鼠标移动监听
 onMounted(() => {
   document.addEventListener('click', handleGlobalClick)
+  document.addEventListener('mousemove', throttledCheck)
   // 初始检测
   nextTick(() => {
     detectNodesInFrame()
@@ -541,6 +643,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleGlobalClick)
+  document.removeEventListener('mousemove', throttledCheck)
   clearPotentialNodesHighlight()
 })
 
@@ -638,45 +741,6 @@ const detectNodesInFrame = () => {
   }
 }
 
-// 监听其他节点的移动
-watch(() => getNodes.value, (newNodes, oldNodes) => {
-  if (!oldNodes) return
-
-  // 如果有节点位置或尺寸发生变化
-  const hasChange = newNodes.some((node, index) => {
-    const oldNode = oldNodes[index]
-    return (
-      oldNode
-      && (
-        // 位置变化
-        node.position.x !== oldNode.position.x
-        || node.position.y !== oldNode.position.y
-        // 尺寸变化
-        || node.dimensions?.width !== oldNode.dimensions?.width
-        || node.dimensions?.height !== oldNode.dimensions?.height
-      )
-    )
-  })
-
-  if (hasChange) {
-    checkNodesInFrameBoundary()
-    highlightPotentialNodes()
-  }
-}, { deep: true })
-
-// 监听 Frame 自身的变化
-watch(() => [
-  flowNode.position.x,
-  flowNode.position.y,
-  flowNode.dimensions.width,
-  flowNode.dimensions.height,
-], () => {
-  nextTick(() => {
-    checkNodesInFrameBoundary()
-    highlightPotentialNodes()
-  })
-})
-
 // Frame 节点移动时的处理
 const handleFrameMove = (dx: number, dy: number) => {
   const updatedNodes = getNodes.value.map((node) => {
@@ -709,55 +773,6 @@ const handleFrameMove = (dx: number, dy: number) => {
     checkNodesInFrameBoundary()
   })
 }
-
-// 检查节点是否在 Frame 边界附近
-const checkNodesInFrameBoundary = () => {
-  const nodes = getNodes.value
-  const margin = 5 // 边界检测的容差值
-
-  nodes.forEach((node) => {
-    if (node.id === flowNode.id) return
-
-    // 检查是否是子节点且移出了范围
-    if (node.data?.parentId === flowNode.id) {
-      if (!isNodeInside(node)) {
-        // 移出范围，需要移除父子关系
-        updateNodeParent(node.id, null)
-      }
-    }
-    // 检查是否是非子节点但进入了范围
-    else if (!node.data?.parentId) {
-      if (isNodeInside(node)) {
-        // 进入范围，需要建立父子关系
-        updateNodeParent(node.id, flowNode.id)
-      }
-    }
-  })
-}
-
-// 添加一个计算属性来显示可能成为子节点的节点
-const potentialChildNodes = computed(() => {
-  return getNodes.value.filter((node) => {
-    if (node.id === flowNode.id || node.data?.parentId) return false
-    return isNodeInside(node)
-  })
-})
-
-// 在样式中添加视觉提示
-const highlightPotentialNodes = () => {
-  potentialChildNodes.value.forEach((node) => {
-    const nodeEl = document.querySelector(`[data-en-flow-node-id="${node.id}"]`)
-    if (nodeEl) {
-      nodeEl.classList.add('potential-frame-child')
-    }
-  })
-}
-
-const clearPotentialNodesHighlight = () => {
-  document.querySelectorAll('.potential-frame-child').forEach((el) => {
-    el.classList.remove('potential-frame-child')
-  })
-}
 </script>
 
 <style lang="scss" scoped>
@@ -775,11 +790,14 @@ const clearPotentialNodesHighlight = () => {
   background-color: color-mix(in srgb, var(--b3-theme-surface-light) 85%, transparent);
   backdrop-filter: blur(8px);
   cursor: move;
+  z-index: -1;
 
-  &:hover {
+  &:hover,
+  &.is-selected {
     border-style: solid;
     border-color: var(--b3-theme-primary-light);
     box-shadow: 0 0 0 1px var(--b3-theme-primary-light);
+    z-index: -1; // 确保选中和悬停时也保持在底层
 
     .frame-content {
       background-color: var(--b3-theme-surface-light);
@@ -788,7 +806,6 @@ const clearPotentialNodesHighlight = () => {
   }
 
   &.is-selected {
-    border-style: solid;
     border-color: var(--b3-theme-primary);
     box-shadow: 0 0 0 2px var(--b3-theme-primary-light);
   }
@@ -934,7 +951,7 @@ const clearPotentialNodesHighlight = () => {
   .Handle {
     width: 21px;
     height: 21px;
-    z-index: -1;
+    z-index: 10;
     opacity: 0;
     border-color: var(--b3-theme-primary-light);
     background-color: var(--b3-theme-background);
@@ -1051,5 +1068,10 @@ const clearPotentialNodesHighlight = () => {
       font-size: 14px;
     }
   }
+}
+
+// 修改全局样式，确保其他节点始终在 Frame 上层，包括选中状态
+:deep(.vue-flow__node:not(.EnWhiteBoardNodeFrameContainer)) {
+  z-index: 2 !important; // 使用 !important 确保优先级
 }
 </style>
