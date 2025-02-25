@@ -43,6 +43,7 @@
         :displayText="displayText"
         :isMergingToSuperBlock="isMergingToSuperBlock"
         :nodeData="nodeData"
+        :whiteBoardConfigData="embedWhiteBoardConfigData"
         @toggleMindmap="handleToggleMindmap"
       >
         <div

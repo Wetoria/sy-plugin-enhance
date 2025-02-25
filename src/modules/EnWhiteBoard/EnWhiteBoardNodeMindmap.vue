@@ -104,6 +104,7 @@ const props = defineProps<{
   displayText: string
   isMergingToSuperBlock: boolean
   nodeData: any
+  whiteBoardConfigData?: any
 }>()
 
 // 添加emit定义
@@ -385,13 +386,20 @@ const handleAddChildNode = async () => {
   }
 
   const currentEdges = edges.value || []
-  setEdges([...currentEdges, newEdge])
+  const updatedEdges = [...currentEdges, newEdge]
+  setEdges(updatedEdges)
 
-  // 6. 等待节点渲染完成
+  // 6. 同步更新配置数据
+  if (props.whiteBoardConfigData) {
+    props.whiteBoardConfigData.boardOptions.nodes = updatedNodes
+    props.whiteBoardConfigData.boardOptions.edges = updatedEdges
+  }
+
+  // 7. 等待节点渲染完成
   await waitForNodeDimensions([newNode])
   await new Promise((resolve) => requestAnimationFrame(resolve))
 
-  // 7. 更新布局
+  // 8. 更新布局
   await updateMindmapLayoutRecursively(props.nodeId)
 }
 
