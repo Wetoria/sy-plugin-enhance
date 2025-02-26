@@ -287,7 +287,7 @@ const layoutUtils = {
         width: 2,
         style: 'solid',
         color: edgeColor,
-        markerEnd: 'arrow',
+        markerEnd: undefined,
         markerStart: undefined,
       },
     }

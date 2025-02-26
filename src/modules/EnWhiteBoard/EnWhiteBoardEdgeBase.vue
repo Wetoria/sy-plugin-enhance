@@ -322,7 +322,7 @@ const getData = () => {
 
 const edgeStyle = computed(() => {
   const data = getData()
-  const width = data.width || 2
+  const width = data.width || 1
 
   // 根据线条粗细调整点线和虚线的间距
   let dashArray
@@ -332,14 +332,28 @@ const edgeStyle = computed(() => {
     dashArray = `${width},${width * 2}` // 点线的点大小和间距随线条粗细变化，减小间距
   }
 
+  // 只有当源节点和目标节点都是思维导图节点时才添加过渡动画
+  const isMindmapEdge = props.sourceNode?.data?.mindmap && props.targetNode?.data?.mindmap
+
+  // 如果是预览连线,使用默认样式
+  if (!('id' in props)) {
+    return {
+      strokeWidth: 1,
+      stroke: 'var(--b3-theme-on-surface)',
+      strokeDasharray: undefined,
+      markerEnd: 'url(#arrow)',
+      markerStart: undefined,
+      transition: 'none',
+    }
+  }
+
   return {
     strokeWidth: width,
-    stroke: data.color || 'var(--b3-theme-primary)',
+    stroke: data.color || 'var(--b3-theme-on-surface)',
     strokeDasharray: dashArray,
-    markerEnd: data.markerEnd ? `url(#${data.markerEnd})` : undefined,
+    markerEnd: `url(#${data.markerEnd || 'arrow'})`,
     markerStart: data.markerStart ? `url(#${data.markerStart})` : undefined,
-    filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1))',
-    transition: 'all 0.3s ease',
+    transition: isMindmapEdge ? 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)' : 'none',
   }
 })
 
