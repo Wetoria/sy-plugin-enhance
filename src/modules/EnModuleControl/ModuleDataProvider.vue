@@ -27,8 +27,10 @@ import {
   provideGlobalWindowDataModule,
   provideParentAuth,
   useGlobalData,
+  watchConfigChanged,
 } from '@/modules/EnModuleControl/ModuleProvide'
 import { isInEnWindow } from '@/modules/EnWindow.vue'
+import { moduleEnableStatusSwitcher } from '@/utils'
 import {
   EN_CONSTANTS,
   EN_MODULE_LIST,
@@ -277,6 +279,17 @@ onBeforeUnmount(() => {
 })
 
 // #endregion 模块数据控制逻辑
+
+
+watchConfigChanged(
+  () => plugin.isMobile,
+  () => {
+    moduleEnableStatusSwitcher('isMobile', plugin.isMobile)
+    return () => {
+      moduleEnableStatusSwitcher('isMobile')
+    }
+  },
+)
 </script>
 
 <style lang="scss" scoped>

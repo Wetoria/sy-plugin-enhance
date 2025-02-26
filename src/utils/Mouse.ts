@@ -61,6 +61,7 @@ function getLastMouseClickPosition() {
 
 export function useMousePostion(props: {
   immediate?: boolean
+  wait?: number
   onMouseMoveStart?: (event: MouseEvent) => void
   onMouseMove?: (event: MouseEvent) => void
   onMouseMoveEnd?: (event: MouseEvent) => void
@@ -69,6 +70,7 @@ export function useMousePostion(props: {
 }) {
   const {
     immediate = true,
+    wait = 500,
     onMouseMove,
     onMouseUp,
     onMouseDown,
@@ -82,7 +84,7 @@ export function useMousePostion(props: {
   const mouseMoveEndInner = debounce((event: MouseEvent) => {
     mouseMoveFlag = false
     onMouseMoveEnd?.(event)
-  }, 500)
+  }, wait)
 
   const onMouseMoveInner = (event: MouseEvent) => {
     if (!mouseMoveFlag) {
