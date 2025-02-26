@@ -569,6 +569,16 @@ watch(() => getNodes.value, (newNodes, oldNodes) => {
   }
 }, { deep: true })
 
+// 添加子节点数量变化的监听器
+watch(() => getChildNodes(), async (newChildNodes, oldChildNodes) => {
+  if (!oldChildNodes) return
+
+  // 如果子节点数量发生变化，触发重新布局
+  if (newChildNodes.length !== oldChildNodes.length) {
+    await updateMindmapLayoutRecursively(props.nodeId)
+  }
+}, { deep: true })
+
 // 添加优化后的等待节点尺寸函数
 const waitForNodeDimensions = (nodes, maxAttempts = 3) => {
   return new Promise((resolve) => {
