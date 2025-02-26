@@ -358,34 +358,175 @@ const layoutUtils = {
   },
 }
 
-// 优化后的布局更新函数
-const updateNodeLayout = async (nodeId) => {
-  const nodes = getNodes.value
-  const node = nodes.find((n) => n.id === nodeId)
-  if (!node || !node.position) return
+// 添加新的缓存管理器
+const layoutCache = {
+  nodeHeights: new Map(),
+  nodePositions: new Map(),
+  pendingUpdates: new Set(),
+  batchTimeout: null,
 
-  layoutUtils.clearCache()
-  const positions = layoutUtils.calculateNodePositions(
-    node,
-    nodes,
-    node.position.x,
-    node.position.y,
-  )
+  clear() {
+    this.nodeHeights.clear()
+    this.nodePositions.clear()
+    this.pendingUpdates.clear()
+    if (this.batchTimeout) {
+      clearTimeout(this.batchTimeout)
+      this.batchTimeout = null
+    }
+  },
 
-  if (positions.size > 0) {
-    const updatedNodes = await layoutUtils.batchUpdateNodePositions(positions, nodes)
-    setNodes(updatedNodes)
-  }
+  // 批量处理节点更新
+  scheduleBatchUpdate() {
+    if (this.batchTimeout) return
+
+    this.batchTimeout = setTimeout(() => {
+      this.processBatchUpdate()
+    }, 16) // 约一帧的时间
+  },
+
+  async processBatchUpdate() {
+    if (this.pendingUpdates.size === 0) return
+
+    const nodes = getNodes.value
+    const updatedNodes = new Map()
+
+    // 按层级排序节点以确保正确的更新顺序
+    const sortedNodes = Array.from(this.pendingUpdates)
+      .map((id) => nodes.find((n) => n.id === id))
+      .filter(Boolean)
+      .sort((a, b) => {
+        const aDepth = getNodeDepth(a, nodes)
+        const bDepth = getNodeDepth(b, nodes)
+        return aDepth - bDepth
+      })
+
+    // 批量计算所有需要更新的节点位置
+    for (const node of sortedNodes) {
+      const positions = calculateNodePositionsOptimized(
+        node,
+        nodes,
+        node.position.x,
+        node.position.y,
+      )
+      positions.forEach((pos, id) => updatedNodes.set(id, pos))
+    }
+
+    // 一次性更新所有节点位置
+    if (updatedNodes.size > 0) {
+      const finalNodes = nodes.map((node) => {
+        const newPos = updatedNodes.get(node.id)
+        return newPos
+          ? {
+              ...node,
+              position: newPos,
+            }
+          : node
+      })
+      setNodes(finalNodes)
+    }
+
+    this.pendingUpdates.clear()
+    this.batchTimeout = null
+  },
 }
 
-// 使用防抖优化布局更新
-const debouncedUpdateLayout = debounce(updateNodeLayout, 100)
+// 优化后的节点深度计算函数
+const getNodeDepth = (node, nodes, cache = new Map()) => {
+  if (cache.has(node.id)) return cache.get(node.id)
 
-// 优化递归布局函数
-const updateMindmapLayoutRecursively = async (nodeId) => {
+  if (!node.data?.parentId) {
+    cache.set(node.id, 0)
+    return 0
+  }
+
+  const parent = nodes.find((n) => n.id === node.data.parentId)
+  if (!parent) {
+    cache.set(node.id, 0)
+    return 0
+  }
+
+  const parentDepth = getNodeDepth(parent, nodes, cache)
+  const depth = parentDepth + 1
+  cache.set(node.id, depth)
+  return depth
+}
+
+// 优化后的高度计算函数
+const calculateNodeHeightOptimized = (node, nodes) => {
+  if (layoutCache.nodeHeights.has(node.id)) {
+    return layoutCache.nodeHeights.get(node.id)
+  }
+
+  const nodeHeight = node.dimensions?.height || layoutUtils.getDefaultDimensions().height
+  const childNodes = nodes.filter((n) => n.data?.parentId === node.id)
+
+  if (childNodes.length === 0) {
+    layoutCache.nodeHeights.set(node.id, nodeHeight)
+    return nodeHeight
+  }
+
+  const childrenHeights = childNodes.map((child) => calculateNodeHeightOptimized(child, nodes))
+  const verticalSpacing = 20
+  const totalChildrenHeight = childrenHeights.reduce((sum, height, index) => {
+    return sum + height + (index < childrenHeights.length - 1 ? verticalSpacing : 0)
+  }, 0)
+
+  const result = Math.max(nodeHeight, totalChildrenHeight)
+  layoutCache.nodeHeights.set(node.id, result)
+  return result
+}
+
+// 优化后的位置计算函数
+const calculateNodePositionsOptimized = (node, nodes, parentX = 0, startY = 0) => {
+  const positions = new Map()
+  const horizontalSpacing = 150
+  const verticalSpacing = 20
+
+  const childNodes = nodes.filter((n) => n.data?.parentId === node.id)
+  if (childNodes.length === 0) return positions
+
+  // 使用缓存的高度计算
+  const childrenHeights = childNodes.map((child) => calculateNodeHeightOptimized(child, nodes))
+  const totalHeight = childrenHeights.reduce((sum, height, index) => {
+    return sum + height + (index < childrenHeights.length - 1 ? verticalSpacing : 0)
+  }, 0)
+
+  const nodeWidth = node.dimensions?.width || layoutUtils.getDefaultDimensions().width
+  const childX = parentX + nodeWidth + horizontalSpacing
+  let currentY = startY - (totalHeight / 2) + (node.dimensions?.height || 0) / 2
+
+  childNodes.forEach((child, index) => {
+    const childHeight = childrenHeights[index]
+    const childY = currentY + (childHeight - (child.dimensions?.height || 0)) / 2
+
+    positions.set(child.id, {
+      x: childX,
+      y: childY,
+    })
+    currentY += childHeight + verticalSpacing
+
+    // 递归计算子节点位置
+    const childPositions = calculateNodePositionsOptimized(child, nodes, childX, childY)
+    childPositions.forEach((pos, id) => positions.set(id, pos))
+  })
+
+  return positions
+}
+
+// 优化后的布局更新函数
+const updateNodeLayout = (nodeId) => {
+  layoutCache.pendingUpdates.add(nodeId)
+  layoutCache.scheduleBatchUpdate()
+}
+
+// 优化后的递归布局函数
+const updateMindmapLayoutRecursively = (nodeId) => {
   const nodes = getNodes.value
   const node = nodes.find((n) => n.id === nodeId)
   if (!node || !node.position) return
+
+  // 清除旧的缓存
+  layoutCache.clear()
 
   // 收集需要更新的所有节点
   const nodesToUpdate = new Set()
@@ -401,20 +542,9 @@ const updateMindmapLayoutRecursively = async (nodeId) => {
   }
   collectNodes(node)
 
-  // 按层级顺序更新布局
-  const updatePromises = Array.from(nodesToUpdate).map((id) => debouncedUpdateLayout(id))
-  await Promise.all(updatePromises)
-}
-
-// 添加防抖函数
-function debounce(fn, delay) {
-  let timer = null
-  return function (...args) {
-    if (timer) clearTimeout(timer)
-    timer = setTimeout(() => {
-      fn.apply(this, args)
-    }, delay)
-  }
+  // 将所有需要更新的节点添加到待更新队列
+  nodesToUpdate.forEach((id) => layoutCache.pendingUpdates.add(id))
+  layoutCache.scheduleBatchUpdate()
 }
 
 // 优化后的handleAddChildNode函数
