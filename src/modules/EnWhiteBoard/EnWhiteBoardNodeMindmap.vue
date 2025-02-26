@@ -130,170 +130,166 @@ const getChildNodes = () => {
   return nodes.filter((node) => node.data?.parentId === props.nodeId)
 }
 
-// 优化高度计算函数，添加缓存
-const heightCache = new Map()
-const calculateSubtreeHeight = (node, nodes) => {
-  // 检查缓存
-  const cacheKey = `${node.id}-${node.dimensions?.height}`
-  if (heightCache.has(cacheKey)) {
-    return heightCache.get(cacheKey)
-  }
+// 添加工具函数和缓存
+const layoutUtils = {
+  // 缓存对象
+  cache: {
+    heights: new Map(),
+    positions: new Map(),
+  },
 
-  const nodeHeight = node.dimensions?.height || moduleWhiteBoardOptions.value.cardHeightDefault
-  const childNodes = nodes.filter((n) => n.data?.parentId === node.id)
+  // 清除缓存
+  clearCache() {
+    this.cache.heights.clear()
+    this.cache.positions.clear()
+  },
 
-  if (childNodes.length === 0) {
-    heightCache.set(cacheKey, nodeHeight)
-    return nodeHeight
-  }
+  // 获取节点默认尺寸
+  getDefaultDimensions() {
+    return {
+      width: moduleWhiteBoardOptions.value.cardWidthDefault,
+      height: moduleWhiteBoardOptions.value.cardHeightDefault,
+    }
+  },
 
-  // 递归计算每个子节点的子树高度
-  const childrenHeights = childNodes.map((child) => calculateSubtreeHeight(child, nodes))
+  // 计算节点高度（带缓存）
+  calculateNodeHeight(node, nodes) {
+    const cacheKey = `${node.id}-${node.dimensions?.height}`
+    if (this.cache.heights.has(cacheKey)) {
+      return this.cache.heights.get(cacheKey)
+    }
 
-  // 计算子树的总高度(包含固定间距)
-  const verticalSpacing = 20 // 减小垂直间距使布局更紧凑
-  const totalChildrenHeight = childrenHeights.reduce((sum, height, index) => {
-    return sum + height + (index < childrenHeights.length - 1 ? verticalSpacing : 0)
-  }, 0)
+    const nodeHeight = node.dimensions?.height || this.getDefaultDimensions().height
+    const childNodes = nodes.filter((n) => n.data?.parentId === node.id)
 
-  const result = Math.max(nodeHeight, totalChildrenHeight)
-  heightCache.set(cacheKey, result)
-  return result
-}
+    if (childNodes.length === 0) {
+      this.cache.heights.set(cacheKey, nodeHeight)
+      return nodeHeight
+    }
 
-// 优化布局函数
-const updateNodeLayout = async (nodeId) => {
-  const nodes = getNodes.value
-  const node = nodes.find((n) => n.id === nodeId)
-  if (!node || !node.position || !node.dimensions) {
-    return // 如果节点不存在或没有必要的属性，直接返回
-  }
+    const childrenHeights = childNodes.map((child) => this.calculateNodeHeight(child, nodes))
+    const verticalSpacing = 20
+    const totalChildrenHeight = childrenHeights.reduce((sum, height, index) => {
+      return sum + height + (index < childrenHeights.length - 1 ? verticalSpacing : 0)
+    }, 0)
 
-  const childNodes = nodes.filter((n) => n.data?.parentId === node.id)
-  if (childNodes.length === 0) return
+    const result = Math.max(nodeHeight, totalChildrenHeight)
+    this.cache.heights.set(cacheKey, result)
+    return result
+  },
 
-  // 清除高度缓存
-  heightCache.clear()
+  // 计算节点位置
+  calculateNodePositions(node, nodes, parentX = 0, startY = 0) {
+    const positions = new Map()
+    const horizontalSpacing = 150
+    const verticalSpacing = 20
 
-  // 批量计算所有子节点的高度
-  const childrenHeights = childNodes.map((child) => calculateSubtreeHeight(child, nodes))
-  const horizontalSpacing = 150
-  const verticalSpacing = 20
+    const childNodes = nodes.filter((n) => n.data?.parentId === node.id)
+    if (childNodes.length === 0) return positions
 
-  // 计算总高度
-  const totalHeight = childrenHeights.reduce((sum, height, index) => {
-    return sum + height + (index < childrenHeights.length - 1 ? verticalSpacing : 0)
-  }, 0)
+    const childrenHeights = childNodes.map((child) => this.calculateNodeHeight(child, nodes))
+    const totalHeight = childrenHeights.reduce((sum, height, index) => {
+      return sum + height + (index < childrenHeights.length - 1 ? verticalSpacing : 0)
+    }, 0)
 
-  // 获取父节点的右边界
-  const parentRightEdge = node.position.x + (node.dimensions?.width || moduleWhiteBoardOptions.value.cardWidthDefault)
-  const childX = parentRightEdge + horizontalSpacing
+    const nodeWidth = node.dimensions?.width || this.getDefaultDimensions().width
+    const childX = parentX + nodeWidth + horizontalSpacing
+    let currentY = startY - (totalHeight / 2) + (node.dimensions?.height || 0) / 2
 
-  // 计算所有子节点的新位置
-  let currentY = node.position.y - (totalHeight / 2) + (node.dimensions?.height || 0) / 2
-  const nodeUpdates = []
+    childNodes.forEach((child, index) => {
+      const childHeight = childrenHeights[index]
+      const childY = currentY + (childHeight - (child.dimensions?.height || 0)) / 2
 
-  // 收集所有需要更新的节点位置
-  for (let i = 0; i < childNodes.length; i++) {
-    const child = childNodes[i]
-    if (!child.dimensions) continue // 跳过没有尺寸信息的节点
-
-    const childHeight = childrenHeights[i]
-    const childY = currentY + (childHeight - (child.dimensions?.height || 0)) / 2
-
-    nodeUpdates.push({
-      id: child.id,
-      position: {
+      positions.set(child.id, {
         x: childX,
         y: childY,
-      },
+      })
+      currentY += childHeight + verticalSpacing
+
+      // 递归计算子节点的位置
+      const childPositions = this.calculateNodePositions(child, nodes, childX, childY)
+      childPositions.forEach((pos, id) => positions.set(id, pos))
     })
 
-    currentY += childHeight + verticalSpacing
-  }
+    return positions
+  },
 
   // 批量更新节点位置
-  if (nodeUpdates.length > 0) {
+  async batchUpdateNodePositions(positions, nodes) {
     const updatedNodes = nodes.map((node) => {
-      const update = nodeUpdates.find((u) => u.id === node.id)
-      if (update) {
+      const newPosition = positions.get(node.id)
+      if (newPosition) {
         return {
           ...node,
-          position: update.position,
+          position: newPosition,
         }
       }
       return node
     })
-    setNodes(updatedNodes)
-  }
-
-  // 并行更新所有子节点的布局
-  await Promise.all(childNodes.map((child) => updateNodeLayout(child.id)))
+    return updatedNodes
+  },
 }
 
-// 修改watch逻辑，添加必要的检查
-watch([
-  () => getChildNodes().length,
-  () => props.nodeData?.parentId,
-], () => {
-  // 确保节点ID存在且有效
-  if (props.nodeId && getNodes.value?.some((node) => node.id === props.nodeId)) {
-    updateNodeLayout(props.nodeId)
+// 优化后的布局更新函数
+const updateNodeLayout = async (nodeId) => {
+  const nodes = getNodes.value
+  const node = nodes.find((n) => n.id === nodeId)
+  if (!node || !node.position) return
+
+  layoutUtils.clearCache()
+  const positions = layoutUtils.calculateNodePositions(
+    node,
+    nodes,
+    node.position.x,
+    node.position.y,
+  )
+
+  if (positions.size > 0) {
+    const updatedNodes = await layoutUtils.batchUpdateNodePositions(positions, nodes)
+    setNodes(updatedNodes)
   }
-})
+}
+
+// 使用防抖优化布局更新
+const debouncedUpdateLayout = debounce(updateNodeLayout, 100)
 
 // 优化递归布局函数
 const updateMindmapLayoutRecursively = async (nodeId) => {
   const nodes = getNodes.value
   const node = nodes.find((n) => n.id === nodeId)
-  if (!node || !node.position || !node.dimensions) {
-    return // 如果节点不存在或没有必要的属性，直接返回
-  }
+  if (!node || !node.position) return
 
-  // 收集需要更新的所有节点ID
-  const nodesToUpdate = []
+  // 收集需要更新的所有节点
+  const nodesToUpdate = new Set()
   const collectNodes = (currentNode) => {
     if (!currentNode) return
-
+    if (currentNode.data?.mindmap) {
+      nodesToUpdate.add(currentNode.id)
+    }
     if (currentNode.data?.parentId) {
       const parentNode = nodes.find((n) => n.id === currentNode.data.parentId)
-      if (parentNode) {
-        collectNodes(parentNode)
-      }
-    }
-    if (currentNode.data?.mindmap) {
-      nodesToUpdate.push(currentNode.id)
+      collectNodes(parentNode)
     }
   }
   collectNodes(node)
 
-  // 从根节点开始，逐层更新布局
-  for (const id of nodesToUpdate) {
-    const currentNode = nodes.find((n) => n.id === id)
-    if (currentNode && currentNode.position && currentNode.dimensions) {
-      await updateNodeLayout(currentNode.id)
-    }
+  // 按层级顺序更新布局
+  const updatePromises = Array.from(nodesToUpdate).map((id) => debouncedUpdateLayout(id))
+  await Promise.all(updatePromises)
+}
+
+// 添加防抖函数
+function debounce(fn, delay) {
+  let timer = null
+  return function (...args) {
+    if (timer) clearTimeout(timer)
+    timer = setTimeout(() => {
+      fn.apply(this, args)
+    }, delay)
   }
 }
 
-// 优化等待节点尺寸函数
-const waitForNodeDimensions = (nodes, maxAttempts = 3) => {
-  return new Promise((resolve) => {
-    let attempts = 0
-    const check = () => {
-      attempts++
-      const allReady = nodes.every((node) => node && isNodeDimensionsReady(node))
-      if (allReady || attempts >= maxAttempts) {
-        resolve(allReady)
-      } else {
-        requestAnimationFrame(check)
-      }
-    }
-    check()
-  })
-}
-
-// 修改 handleAddChildNode 函数
+// 修改handleAddChildNode 函数
 const handleAddChildNode = async () => {
   // 1. 先计算新节点的位置
   const nodes = getNodes.value || [] // 添加默认空数组
@@ -320,7 +316,7 @@ const handleAddChildNode = async () => {
     try {
       // 计算所有现有子节点(包括它们的子树)的总高度
       const siblingHeights = await Promise.all(siblings.map(async (sibling) => {
-        return calculateSubtreeHeight(sibling, nodes)
+        return layoutUtils.calculateNodeHeight(sibling, nodes)
       }))
 
       const totalSiblingHeight = siblingHeights.reduce((sum, height, index) => {
@@ -328,7 +324,7 @@ const handleAddChildNode = async () => {
       }, 0)
 
       // 计算新的总高度(包括新节点的默认高度)
-      const newNodeHeight = moduleWhiteBoardOptions.value.cardHeightDefault
+      const newNodeHeight = layoutUtils.getDefaultDimensions().height
       const newTotalHeight = totalSiblingHeight + newNodeHeight + 20 // 加上新节点高度和间距
 
       // 计算所有节点的新位置
@@ -338,7 +334,7 @@ const handleAddChildNode = async () => {
       let currentY = startY
       const updatedNodes = nodes.map((node) => {
         if (node.data?.parentId === props.nodeId) {
-          const nodeHeight = calculateSubtreeHeight(node, nodes)
+          const nodeHeight = layoutUtils.calculateNodeHeight(node, nodes)
           const newY = currentY + (nodeHeight - (node.dimensions?.height || 0)) / 2
           currentY += nodeHeight + 20 // 加上垂直间距
 
@@ -378,8 +374,8 @@ const handleAddChildNode = async () => {
         mindmap: true,
       },
       position: newNodePosition,
-      width: moduleWhiteBoardOptions.value.cardWidthDefault,
-      height: moduleWhiteBoardOptions.value.cardHeightDefault,
+      width: layoutUtils.getDefaultDimensions().width,
+      height: layoutUtils.getDefaultDimensions().height,
       connectable: true,
       draggable: true,
       selectable: true,
@@ -514,6 +510,25 @@ watch(() => getNodes.value, (newNodes, oldNodes) => {
     })
   }
 }, { deep: true })
+
+// 添加优化后的等待节点尺寸函数
+const waitForNodeDimensions = (nodes, maxAttempts = 3) => {
+  return new Promise((resolve) => {
+    let attempts = 0
+    const check = () => {
+      attempts++
+      const allReady = nodes.every((node) =>
+        node && node.dimensions?.width && node.dimensions?.height,
+      )
+      if (allReady || attempts >= maxAttempts) {
+        resolve(allReady)
+      } else {
+        requestAnimationFrame(check)
+      }
+    }
+    check()
+  })
+}
 </script>
 
 <style lang="scss" scoped>
