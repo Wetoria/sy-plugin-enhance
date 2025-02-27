@@ -783,24 +783,6 @@ const waitForNodeDimensions = (nodes, maxAttempts = 3) => {
     z-index: 10;
     opacity: 0;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-    .arco-btn {
-      width: 24px;
-      height: 24px;
-      padding: 0;
-      font-size: 14px;
-      background-color: var(--b3-theme-primary);
-      border-color: var(--b3-theme-primary);
-      color: var(--b3-theme-on-primary);
-      box-shadow: 0 2px 6px rgba(var(--primary-6), 0.4);
-      transition: all 0.3s ease;
-
-      &:hover {
-        background-color: var(--b3-theme-primary-hover);
-        border-color: var(--b3-theme-primary-hover);
-        transform: scale(1.1);
-      }
-    }
   }
 
   .ProtyleToolbarArea {
@@ -814,31 +796,6 @@ const waitForNodeDimensions = (nodes, maxAttempts = 3) => {
     box-sizing: border-box;
     padding: 8px 12px;
     border-bottom: 1px solid var(--b3-border-color);
-
-    .infos {
-      flex: 1;
-      overflow: hidden;
-      margin-right: var(--en-gap);
-
-      .block-title {
-        font-size: 14px;
-        color: var(--b3-theme-on-background);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        display: block;
-        font-weight: 500;
-      }
-    }
-
-    .operations {
-      flex-shrink: 0;
-
-      .active {
-        color: var(--b3-theme-primary);
-        background: var(--b3-theme-primary-light);
-      }
-    }
   }
 
   .main {
@@ -865,22 +822,6 @@ const waitForNodeDimensions = (nodes, maxAttempts = 3) => {
       color: var(--b3-theme-on-primary);
       transform: scale(1.1);
     }
-
-    .HandleIcon {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      pointer-events: none;
-    }
-
-    &.left {
-      left: -16px;
-    }
-    &.right {
-      right: -16px;
-    }
   }
 
   &.is-collapsed {
@@ -891,32 +832,6 @@ const waitForNodeDimensions = (nodes, maxAttempts = 3) => {
     .main {
       display: none;
     }
-
-    .ProtyleToolbarArea {
-      border-bottom: none;
-      border-radius: var(--b3-border-radius);
-      height: 100%;
-    }
-
-    .Handle {
-      display: none;
-    }
-  }
-
-  &.is-text {
-    border: none;
-    background-color: transparent;
-    box-shadow: none;
-  }
-
-  &.is-gingko {
-    border-color: var(--b3-theme-success);
-    background-color: var(--b3-theme-background-light);
-  }
-
-  // 添加节点过渡动画
-  &.mindmap-node-transition {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 </style>
