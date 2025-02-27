@@ -222,6 +222,8 @@ const {
   removeNodes,
   addNodes,
   getSelectedNodes,
+  getEdges,
+  setEdges,
 } = useVueFlow()
 
 const nodeData = computed(() => flowNode.data)
@@ -483,11 +485,28 @@ const handleCollapse = () => {
           ...node.data,
           isCollapsed: isCollapsed.value,
         },
+        height: isCollapsed.value ? 30 : (node.data.originalHeight || node.dimensions.height), // 更新高度
       }
     }
     return node
   })
   setNodes(newNodes)
+
+  // 更新连线位置
+  const edgesToUpdate = getEdges.value.filter((edge) => edge.source === flowNode.id || edge.target === flowNode.id)
+  const updatedEdges = edgesToUpdate.map((edge) => {
+    return {
+      ...edge,
+      source: edge.source,
+      target: edge.target,
+      // 根据新位置更新连线
+      sourceX: flowNode.position.x + (isCollapsed.value ? 0 : nodeData.value.dimensions.width),
+      sourceY: flowNode.position.y,
+      targetX: edge.targetNode.position.x,
+      targetY: edge.targetNode.position.y,
+    }
+  })
+  setEdges(updatedEdges)
 }
 
 // 修改块信息状态
