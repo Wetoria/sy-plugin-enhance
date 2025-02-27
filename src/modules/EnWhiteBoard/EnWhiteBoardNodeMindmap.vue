@@ -104,13 +104,14 @@ const props = defineProps<{
   isCollapsed: boolean
   displayText: string
   isMergingToSuperBlock: boolean
-  nodeData: any
+  nodeData: { nodeType: string, parentId?: string, mindmap?: boolean } // 更具体的类型
   whiteBoardConfigData?: any
 }>()
 
 // 添加emit定义
 const emit = defineEmits<{
   toggleMindmap: []
+  showError: [message: string]
 }>()
 
 const {
@@ -185,15 +186,19 @@ const layoutUtils = {
       return nodeHeight
     }
 
-    const childrenHeights = childNodes.map((child) => this.calculateNodeHeight(child, nodes))
+    let totalHeight = nodeHeight
     const verticalSpacing = 20
-    const totalChildrenHeight = childrenHeights.reduce((sum, height, index) => {
-      return sum + height + (index < childrenHeights.length - 1 ? verticalSpacing : 0)
-    }, 0)
 
-    const result = Math.max(nodeHeight, totalChildrenHeight)
-    this.cache.heights.set(cacheKey, result)
-    return result
+    // 使用迭代方式计算子节点高度
+    const stack = [...childNodes]
+    while (stack.length > 0) {
+      const currentNode = stack.pop()
+      const currentHeight = this.calculateNodeHeight(currentNode, nodes)
+      totalHeight += currentHeight + verticalSpacing
+    }
+
+    this.cache.heights.set(cacheKey, totalHeight)
+    return totalHeight
   },
 
   // 计算节点位置
@@ -214,7 +219,16 @@ const layoutUtils = {
     const childX = parentX + nodeWidth + horizontalSpacing
     let currentY = startY - (totalHeight / 2) + (node.dimensions?.height || 0) / 2
 
-    childNodes.forEach((child, index) => {
+    // 使用迭代方式计算子节点位置
+    const stack = childNodes.map((child, index) => ({
+      child,
+      index,
+    }))
+    while (stack.length > 0) {
+      const {
+        child,
+        index,
+      } = stack.pop()
       const childHeight = childrenHeights[index]
       const childY = currentY + (childHeight - (child.dimensions?.height || 0)) / 2
 
@@ -224,10 +238,10 @@ const layoutUtils = {
       })
       currentY += childHeight + verticalSpacing
 
-      // 递归计算子节点的位置
+      // 递归计算子节点位置
       const childPositions = this.calculateNodePositions(child, nodes, childX, childY)
       childPositions.forEach((pos, id) => positions.set(id, pos))
-    })
+    }
 
     return positions
   },
@@ -547,6 +561,28 @@ const updateMindmapLayoutRecursively = (nodeId) => {
   layoutCache.scheduleBatchUpdate()
 }
 
+// 计算边的颜色
+const calculateEdgeColor = (parentEdge, siblings, currentEdges) => {
+  let edgeColor = presetColors[0]
+  if (parentEdge?.data?.color) {
+    edgeColor = parentEdge.data.color
+  } else if (siblings.length > 0) {
+    const sourceEdges = currentEdges.filter((edge) => edge.source === props.nodeId)
+      .sort((a, b) => {
+        const nodeA = getNodes.value.find((node) => node.id === a.target)
+        const nodeB = getNodes.value.find((node) => node.id === b.target)
+        return (nodeB?.position.y || 0) - (nodeA?.position.y || 0)
+      })
+    if (sourceEdges[0]?.data?.color) {
+      const lastColorIndex = presetColors.findIndex((color) => color === sourceEdges[0].data.color)
+      if (lastColorIndex !== -1) {
+        edgeColor = presetColors[(lastColorIndex + 1) % presetColors.length]
+      }
+    }
+  }
+  return edgeColor
+}
+
 // 优化后的handleAddChildNode函数
 const handleAddChildNode = async () => {
   try {
@@ -574,23 +610,7 @@ const handleAddChildNode = async () => {
 
     // 3. 确定边的颜色
     const parentEdge = currentEdges.find((edge) => edge.target === props.nodeId)
-    let edgeColor = presetColors[0]
-    if (parentEdge?.data?.color) {
-      edgeColor = parentEdge.data.color
-    } else if (siblings.length > 0) {
-      const sourceEdges = currentEdges.filter((edge) => edge.source === props.nodeId)
-        .sort((a, b) => {
-          const nodeA = nodes.find((node) => node.id === a.target)
-          const nodeB = nodes.find((node) => node.id === b.target)
-          return (nodeB?.position.y || 0) - (nodeA?.position.y || 0)
-        })
-      if (sourceEdges[0]?.data?.color) {
-        const lastColorIndex = presetColors.findIndex((color) => color === sourceEdges[0].data.color)
-        if (lastColorIndex !== -1) {
-          edgeColor = presetColors[(lastColorIndex + 1) % presetColors.length]
-        }
-      }
-    }
+    const edgeColor = calculateEdgeColor(parentEdge, siblings, currentEdges)
 
     // 4. 创建新节点（使用计算好的最终位置）
     const {
@@ -636,6 +656,8 @@ const handleAddChildNode = async () => {
     await updateMindmapLayoutRecursively(props.nodeId)
   } catch (error) {
     console.error('Error creating new node:', error)
+    // 提示用户发生错误
+    emit('showError', '创建新节点时发生错误，请重试。')
   }
 }
 
@@ -862,8 +884,8 @@ const waitForNodeDimensions = (nodes, maxAttempts = 3) => {
   }
 
   &.is-collapsed {
-    height: 36px !important;
-    min-height: 36px !important;
+    height: 36px;
+    min-height: 36px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     .main {
