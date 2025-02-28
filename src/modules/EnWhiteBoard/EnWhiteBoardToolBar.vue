@@ -182,6 +182,13 @@
               </template>
             </a-dropdown>
           </a-tooltip>
+          <a-tooltip content="自动适配高度">
+            <a-button @click="onAutoFitHeight">
+              <template #icon>
+                <IconExpand />
+              </template>
+            </a-button>
+          </a-tooltip>
           <slot name="nodeToolbarExtra" />
           <a-tooltip content="在侧边栏中打开">
             <a-button @click="onOpenInSidebar">
@@ -836,6 +843,7 @@
 
 <script setup lang="ts">
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
+import { IconExpand } from '@arco-design/web-vue/es/icon'
 import {
   Edge,
   useVueFlow,
@@ -1180,6 +1188,63 @@ const onNodeTypeSelect = (type: string) => {
     props.whiteBoardConfigData.boardOptions.nodes = newNodes
   }
 }
+
+const onAutoFitHeight = () => {
+  console.log('自动适配高度按钮被点击')
+  console.log('当前节点 ID:', props.nodeId)
+  const nodeElement = document.querySelector(`[data-en-flow-node-id='${props.nodeId}']`)
+  if (nodeElement) {
+    console.log('找到的节点元素:', nodeElement)
+    const wysiwygElement = nodeElement.querySelector('.protyle-wysiwyg.protyle-wysiwyg--attr')
+    if (wysiwygElement) {
+      // 计算总高度
+      const toolbarHeight = 30 // ProtyleToolbarArea 高度
+      const bottomPadding = 16 // 编辑器底部内边距
+      const borderWidth = 4 // 上下边框宽度总和
+      const contentHeight = wysiwygElement.scrollHeight // 内容实际高度
+
+      // 计算节点需要的总高度
+      const newHeight = toolbarHeight + contentHeight + bottomPadding + borderWidth
+
+      console.log('高度计算明细:', {
+        toolbarHeight,
+        contentHeight,
+        bottomPadding,
+        borderWidth,
+        totalHeight: newHeight,
+      })
+
+      const nodes = getNodes.value
+      const newNodes = nodes.map((node) => {
+        if (node.id === props.nodeId) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              originalHeight: node.dimensions.height, // 保存原始高度
+              height: newHeight,
+            },
+            dimensions: {
+              ...node.dimensions,
+              height: newHeight,
+            },
+            height: newHeight,
+          }
+        }
+        return node
+      })
+      console.log('更新后的节点数据:', newNodes)
+      setNodes(newNodes)
+      if (props.whiteBoardConfigData) {
+        props.whiteBoardConfigData.boardOptions.nodes = newNodes
+      }
+    } else {
+      console.log('未找到 WYSIWYG 元素，检查选择器')
+    }
+  } else {
+    console.log('未找到节点元素，检查选择器和节点 ID')
+  }
+}
 </script>
 
 <style lang="scss" scoped>
@@ -1458,3 +1523,4 @@ const onNodeTypeSelect = (type: string) => {
   }
 }
 </style>
+
