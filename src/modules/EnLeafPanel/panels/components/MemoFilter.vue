@@ -161,7 +161,8 @@ async function getDailyNotes() {
         C.root_id as doc_id,
         C.updated as block_time,
         D.date_value,
-        C.parent_id
+        C.parent_id,
+        C.type as block_type
       FROM blocks C
       JOIN daily_docs D ON C.root_id = D.doc_id
       WHERE
@@ -174,34 +175,41 @@ async function getDailyNotes() {
   const result = await request('/api/query/sql', data)
   console.log('Initial SQL result:', result)
 
-  // 处理每个块，获取其所有父块ID
+  // 创建一个映射来跟踪每个块的子块
+  const blockChildrenMap = new Map<string, string[]>()
+  
+  // 首先构建父子关系映射
+  result.forEach((item: any) => {
+    if (item.parent_id) {
+      if (!blockChildrenMap.has(item.parent_id)) {
+        blockChildrenMap.set(item.parent_id, [])
+      }
+      blockChildrenMap.get(item.parent_id)?.push(item.block_id)
+    }
+  })
+  
+  // 找出所有顶级块（直接在文档下的块）
+  const topLevelBlocks = result.filter((item: any) => {
+    // 检查父块是否为文档块
+    return !item.parent_id || item.parent_id === item.doc_id || 
+           result.findIndex((b: any) => b.block_id === item.parent_id) === -1
+  })
+  
+  console.log('Top level blocks:', topLevelBlocks.length)
+  
+  // 处理顶级块，获取其内容
   const processedResults = await Promise.all(
-    result.map(async (item: any) => {
-      const allParentIds = await getParentBlockIds(item.block_id, item.parent_id)
-      console.log('Block ID:', item.block_id, 'All parent IDs:', allParentIds)
-      // 使用最后一个ID（最顶层的父块ID）或原始ID
-      const finalBlockId = allParentIds[allParentIds.length - 1] || item.block_id
+    topLevelBlocks.map(async (item: any) => {
       return {
         ...item,
-        block_id: finalBlockId,
+        block_id: item.block_id,
         original_block_id: item.block_id,
-        all_parent_ids: allParentIds,
       }
-    }),
+    })
   )
-
-  // 对结果进行去重，确保每个最终的block_id只出现一次
-  const uniqueResults = processedResults.reduce((acc: any[], current: any) => {
-    const existingIndex = acc.findIndex((item) => item.block_id === current.block_id)
-    if (existingIndex === -1) {
-      // 如果这个block_id还没有出现过，添加到结果中
-      acc.push(current)
-    }
-    return acc
-  }, [])
-
-  console.log('Final processed results:', uniqueResults)
-  return uniqueResults
+  
+  console.log('Final processed results:', processedResults.length)
+  return processedResults
 }
 
 // 获取白板块

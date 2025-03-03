@@ -115,6 +115,8 @@ export interface Memo {
   docPath?: string
   whiteBoardConfig?: any
   hasTimestamp?: boolean
+  blockType?: string
+  dateValue?: string
 }
 
 const props = defineProps({

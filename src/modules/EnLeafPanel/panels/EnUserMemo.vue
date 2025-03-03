@@ -438,18 +438,23 @@ const handleDailyNoteInfo = (info: { dailyNotes: any[] }) => {
         const time = getTimeFromBlockId(note.block_id)
         if (!time) return null
 
+        // 添加块类型信息
         return {
           blockId: note.block_id,
           time,
           type: 'daily',
           dailyNoteId: note.doc_id,
           content: note.block_content,
+          blockType: note.block_type, // 添加块类型
+          dateValue: note.date_value, // 添加日期值
         }
       } catch (err) {
         console.error('Error processing note:', err)
         return null
       }
     }).filter(Boolean) as Memo[]
+
+    console.log('Processed daily memos:', dailyMemos.length)
 
     // 更新备忘录列表，保留非日记类型的备忘录
     memos.value = [
@@ -469,6 +474,7 @@ const handleDailyNoteInfo = (info: { dailyNotes: any[] }) => {
       time: note.block_time,
       type: activeFilter.value,
       content: note.block_content,
+      blockType: note.block_type, // 添加块类型
     }))
 
     // 更新备忘录列表，保留其他类型的备忘录
