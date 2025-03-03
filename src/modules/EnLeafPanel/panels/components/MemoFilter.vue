@@ -325,7 +325,8 @@ async function getWhiteboardNotes() {
 
 // 获取批注块
 async function getAnnotationNotes() {
-  const data = {
+  // 查询所有带有custom-en-comment-ref-id属性的批注块
+  const annotationData = {
     stmt: `
       SELECT
         B.id as block_id,
@@ -333,18 +334,82 @@ async function getAnnotationNotes() {
         B.root_id as doc_id,
         B.updated as block_time,
         B.parent_id,
-        D.hpath as doc_path
+        D.hpath as doc_path,
+        B.type as block_type,
+        B.markdown as block_markdown,
+        B.ial as block_ial
       FROM blocks B
       JOIN blocks D ON B.root_id = D.id
-      WHERE
-        B.type = 'widget'
-        AND B.content LIKE '%sy-enhance-annotation%'
+      WHERE B.ial LIKE '%custom-en-comment-ref-id%'
       ORDER BY B.updated DESC
+      LIMIT 100
     `,
   }
-  const result = await request('/api/query/sql', data)
-  console.log('Initial annotation SQL result:', result)
-  return result
+  
+  const annotationResult = await request('/api/query/sql', annotationData)
+  console.log('Annotation blocks with ref-id:', annotationResult)
+  
+  // 简化处理，直接使用批注块
+  const formattedResults = await Promise.all(annotationResult.map(async (item: any) => {
+    // 从block_time中提取时间，或者使用当前时间
+    let time = new Date().toISOString().replace('T', ' ').substring(0, 19)
+    
+    // 安全地处理block_time
+    if (item.block_time) {
+      try {
+        const timestamp = parseInt(item.block_time)
+        if (!isNaN(timestamp)) {
+          const date = new Date(timestamp)
+          if (!isNaN(date.getTime())) {
+            time = date.toISOString().replace('T', ' ').substring(0, 19)
+          }
+        }
+      } catch (err) {
+        console.error('Error parsing block_time:', err, item.block_time)
+      }
+    }
+    
+    // 尝试从IAL中提取引用ID
+    let refId = ''
+    if (item.block_ial) {
+      const refIdMatch = item.block_ial.match(/custom-en-comment-ref-id="([^"]*)"/)
+      if (refIdMatch && refIdMatch[1]) {
+        refId = refIdMatch[1]
+      }
+    }
+    
+    // 验证引用的块ID是否存在
+    let finalBlockId = item.block_id // 默认使用批注块ID
+    if (refId) {
+      // 检查引用的块是否存在
+      const checkData = {
+        stmt: `SELECT id FROM blocks WHERE id = '${refId}'`
+      }
+      try {
+        const checkResult = await request('/api/query/sql', checkData)
+        if (checkResult && checkResult.length > 0) {
+          finalBlockId = refId // 如果引用块存在，使用引用块ID
+        } else {
+          console.warn(`Referenced block ${refId} not found, using original block ID`)
+        }
+      } catch (err) {
+        console.error('Error checking referenced block:', err)
+      }
+    }
+    
+    return {
+      blockId: finalBlockId,
+      time: time,
+      type: 'annotation',
+      docId: item.doc_id,
+      docPath: item.doc_path || '未知文档',
+      blockType: item.block_type,
+      originalBlockId: item.block_id // 保存原始批注块ID
+    }
+  }))
+  
+  console.log('Simplified annotation results:', formattedResults)
+  return formattedResults
 }
 
 // 确保白板模块在组件挂载时初始化

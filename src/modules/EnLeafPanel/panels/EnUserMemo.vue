@@ -467,6 +467,21 @@ const handleDailyNoteInfo = (info: { dailyNotes: any[] }) => {
       memo.time.split(' ')[0],
     ))]
     selectedDates.value = datesWithNotes
+  } else if (activeFilter.value === 'annotation') {
+    // 批注类型的数据处理
+    console.log('Processing annotation notes:', dailyNotes)
+    
+    // 直接使用从MemoFilter返回的格式化数据
+    const annotationMemos: Memo[] = dailyNotes
+    
+    // 更新备忘录列表，只使用批注类型的备忘录
+    memos.value = annotationMemos
+    
+    // 更新日历组件的日期标记
+    const datesWithNotes = [...new Set(annotationMemos.map((memo) =>
+      memo.time.split(' ')[0],
+    ))]
+    selectedDates.value = datesWithNotes
   } else {
     // 其他类型的数据处理
     const newMemos: Memo[] = dailyNotes.map((note) => ({

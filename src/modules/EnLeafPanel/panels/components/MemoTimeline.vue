@@ -49,6 +49,37 @@
                   </div>
                 </div>
               </template>
+              <template v-else-if="memo.type === 'annotation'">
+                <div v-if="memo.blockId" class="annotation-container">
+                  <EnProtyle
+                    :block-id="memo.blockId"
+                    :preview="true"
+                    disableEnhance
+                    :options="{
+                      render: {
+                        gutter: false,
+                        breadcrumb: false,
+                        scroll: false,
+                      },
+                    }"
+                    @after="(protyle) => afterProtyleLoad(protyle, index)"
+                  />
+                  <div class="annotation-source" v-if="memo.docPath">
+                    <span class="annotation-source-label">来源：</span>
+                    <span class="annotation-source-path" @click="openDocument(memo.docId)">{{ getDocName(memo.docPath) }}</span>
+                    <span class="annotation-ref-link" @click="openBlock(memo.blockId)">
+                      <svg><use xlink:href="#iconLink"></use></svg>
+                      <span>查看原文</span>
+                    </span>
+                  </div>
+                </div>
+                <div v-else class="annotation-error">
+                  <div class="error-message">
+                    <svg><use xlink:href="#iconExclamation"></use></svg>
+                    <span>无法加载批注内容</span>
+                  </div>
+                </div>
+              </template>
               <template v-else>
                 <EnProtyle
                   :block-id="memo.blockId"
@@ -98,6 +129,7 @@ import { request } from '@/api'
 import EnProtyle from '@/components/EnProtyle.vue'
 import { VueFlow } from '@vue-flow/core'
 import { MiniMap } from '@vue-flow/minimap'
+import { openTab } from 'siyuan'
 import {
   onBeforeUnmount,
   ref,
@@ -109,14 +141,15 @@ import '@vue-flow/minimap/dist/style.css'
 export interface Memo {
   blockId: string
   time: string
-  type?: 'daily' | 'whiteboard' | 'note' | string
+  type: 'daily' | 'whiteboard' | 'annotation' | string
   content?: string
   dailyNoteId?: string
-  docPath?: string
-  whiteBoardConfig?: any
-  hasTimestamp?: boolean
   blockType?: string
   dateValue?: string
+  docId?: string
+  docPath?: string
+  whiteBoardConfig?: any
+  originalBlockId?: string
 }
 
 const props = defineProps({
@@ -147,12 +180,18 @@ const targetProtyleUtilClassList = [
 
 const afterProtyleLoad = (protyle: Protyle, index: number) => {
   console.log('Protyle loaded for memo:', props.memos[index])
+  console.log('Protyle block ID:', props.memos[index].blockId)
+  console.log('Protyle instance:', protyle)
+  
   protyleRefs.value.set(index, protyle)
 
   // 设置为只读
   const wysiwygEl = protyle.protyle.wysiwyg.element
   if (wysiwygEl) {
     wysiwygEl.setAttribute('contenteditable', 'false')
+    console.log('Set contenteditable to false')
+  } else {
+    console.warn('wysiwyg element not found')
   }
 
   // 移动工具区域到指定位置
@@ -164,6 +203,9 @@ const afterProtyleLoad = (protyle: Protyle, index: number) => {
         utilArea.appendChild(target)
       }
     })
+    console.log('Moved util area elements')
+  } else {
+    console.warn('Util area not found for index:', index)
   }
 }
 
@@ -204,6 +246,65 @@ const handleDelete = (index: number) => {
     return // 日记和白板不允许删除
   }
   emit('delete', index)
+}
+
+// 打开文档
+const openDocument = (docId: string) => {
+  if (!docId) return
+  
+  openTab({
+    app: window.siyuan.ws.app,
+    doc: {
+      id: docId,
+    }
+  })
+}
+
+// 从文档路径中获取文档名称
+const getDocName = (docPath: string) => {
+  if (!docPath) return '未知文档'
+  
+  // 从路径中提取文档名
+  const parts = docPath.split('/')
+  return parts[parts.length - 1] || docPath
+}
+
+// 打开指定的块
+const openBlock = (blockId: string) => {
+  if (!blockId) return
+  
+  // 使用思源API打开块
+  openTab({
+    app: window.siyuan.ws.app,
+    doc: {
+      id: blockId,
+      action: ['cb-get-focus'],
+    }
+  })
+}
+
+// 获取引用块的内容
+const getRefContent = async (blockId: string) => {
+  if (!blockId) return null
+  
+  try {
+    const data = {
+      stmt: `
+        SELECT
+          content,
+          markdown
+        FROM blocks
+        WHERE id = '${blockId}'
+      `
+    }
+    const result = await request('/api/query/sql', data)
+    if (result && result.length > 0) {
+      return result[0]
+    }
+  } catch (err) {
+    console.error('Failed to get ref content:', err)
+  }
+  return null
 }
 
 onBeforeUnmount(() => {
@@ -439,6 +540,71 @@ onBeforeUnmount(() => {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+  }
+}
+
+.annotation-container {
+  width: 100%;
+}
+
+.annotation-error {
+  padding: 16px;
+  background-color: var(--b3-theme-error-lighter);
+  border-radius: var(--b3-border-radius);
+  border-left: 3px solid var(--b3-theme-error);
+  
+  .error-message {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--b3-theme-error);
+    
+    svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+  }
+}
+
+.annotation-source {
+  font-size: 12px;
+  color: var(--b3-theme-on-surface-light);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  
+  .annotation-source-path {
+    color: var(--b3-theme-primary);
+    cursor: pointer;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+  
+  .annotation-ref-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--b3-theme-primary);
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: var(--b3-border-radius);
+    background-color: var(--b3-theme-background);
+    
+    svg {
+      width: 12px;
+      height: 12px;
+      fill: currentColor;
+    }
+    
+    &:hover {
+      background-color: var(--b3-theme-surface-light);
+      text-decoration: underline;
     }
   }
 }
