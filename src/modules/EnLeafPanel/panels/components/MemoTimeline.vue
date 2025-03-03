@@ -64,14 +64,6 @@
                     }"
                     @after="(protyle) => afterProtyleLoad(protyle, index)"
                   />
-                  <div class="annotation-source" v-if="memo.docPath">
-                    <span class="annotation-source-label">来源：</span>
-                    <span class="annotation-source-path" @click="openDocument(memo.docId)">{{ getDocName(memo.docPath) }}</span>
-                    <span class="annotation-ref-link" @click="openBlock(memo.blockId)">
-                      <svg><use xlink:href="#iconLink"></use></svg>
-                      <span>查看原文</span>
-                    </span>
-                  </div>
                 </div>
                 <div v-else class="annotation-error">
                   <div class="error-message">
@@ -358,12 +350,14 @@ onBeforeUnmount(() => {
       .timeline-meta {
         margin-bottom: 8px;
         position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
 
         .timeline-dot {
           position: absolute;
           left: -20px;
-          top: 50%;
-          transform: translateY(-50%);
+          top: 8px;
           width: 8px;
           height: 8px;
           border-radius: 50%;
@@ -564,47 +558,6 @@ onBeforeUnmount(() => {
       width: 16px;
       height: 16px;
       fill: currentColor;
-    }
-  }
-}
-
-.annotation-source {
-  font-size: 12px;
-  color: var(--b3-theme-on-surface-light);
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
-  
-  .annotation-source-path {
-    color: var(--b3-theme-primary);
-    cursor: pointer;
-    
-    &:hover {
-      text-decoration: underline;
-    }
-  }
-  
-  .annotation-ref-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    color: var(--b3-theme-primary);
-    cursor: pointer;
-    padding: 2px 6px;
-    border-radius: var(--b3-border-radius);
-    background-color: var(--b3-theme-background);
-    
-    svg {
-      width: 12px;
-      height: 12px;
-      fill: currentColor;
-    }
-    
-    &:hover {
-      background-color: var(--b3-theme-surface-light);
-      text-decoration: underline;
     }
   }
 }
