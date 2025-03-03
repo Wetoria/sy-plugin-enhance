@@ -76,6 +76,11 @@ const openLeafTab = () => {
   flex-direction: column;
   height: 100%;
   overflow: auto;
+  box-sizing: border-box;
+  
+  .en-leaf-panel--tab & {
+    padding: 8px;
+  }
 }
 
 .block__icons {
@@ -134,12 +139,12 @@ const openLeafTab = () => {
 
   &--tab {
     width: 100%;
-    max-width: 960px;
     margin: 0 auto;
-    padding: 0 16px;
+    padding: 0;
     height: 100%;
     display: flex;
     flex-direction: column;
+    overflow-x: hidden;
   }
 }
 

@@ -542,6 +542,15 @@ const switchTab = (tab: 'calendar' | 'input') => {
   }
   // 使用50%作为偏移单位，因为每个面板宽度是50%
   translateX.value = tab === 'calendar' ? 0 : -50
+  
+  // 确保在DOM更新后，底部切换按钮位置正确
+  nextTick(() => {
+    const dotsElement = document.querySelector('.memo-dots') as HTMLElement;
+    if (dotsElement) {
+      dotsElement.style.transform = 'translateX(-50%)';
+    }
+  });
+  
   console.log('切换标签页:', tab, '滑动位置:', translateX.value)
 }
 
@@ -579,6 +588,14 @@ const endDrag = () => {
   } else {
     switchTab('calendar')
   }
+  
+  // 确保在DOM更新后，底部切换按钮位置正确
+  nextTick(() => {
+    const dotsElement = document.querySelector('.memo-dots') as HTMLElement;
+    if (dotsElement) {
+      dotsElement.style.transform = 'translateX(-50%)';
+    }
+  });
 }
 
 // 从块 ID 中获取时间
@@ -674,6 +691,13 @@ const editMemo = (index: number) => {
     // 使用nextTick确保DOM已经更新
     nextTick(() => {
       switchTab('input')
+      // 再次确保底部切换按钮位置正确
+      nextTick(() => {
+        const dotsElement = document.querySelector('.memo-dots') as HTMLElement;
+        if (dotsElement) {
+          dotsElement.style.transform = 'translateX(-50%)';
+        }
+      });
       // 聚焦到输入框
       enEventBus.emit(EN_EVENT_BUS_KEYS.MEMO_FOCUS_INPUT)
     })
@@ -919,6 +943,8 @@ onBeforeUnmount(() => {
   padding: 0px;
   max-height: 100%;
   overflow: auto;
+  max-width: 100%;
+  box-sizing: border-box;
 
   // 宽屏布局
   &--wide {
@@ -929,6 +955,7 @@ onBeforeUnmount(() => {
     display: flex;
     width: 100%;
     height: 100%;
+    box-sizing: border-box;
     
     .memo-main-area {
       flex: 1;
@@ -936,7 +963,8 @@ onBeforeUnmount(() => {
       display: flex;
       flex-direction: column;
       overflow: auto;
-      padding-right: 16px;
+      padding-right: 8px;
+      box-sizing: border-box;
       
       .memo-timeline-area {
         flex: 1;
@@ -952,9 +980,10 @@ onBeforeUnmount(() => {
       flex-direction: column;
       gap: 16px;
       border-left: 1px solid var(--b3-border-color);
-      padding-left: 16px;
+      padding-left: 8px;
       overflow-y: auto;
       max-height: 100%;
+      box-sizing: border-box;
       
       .memo-calendar-container {
         width: 100%;
@@ -970,6 +999,7 @@ onBeforeUnmount(() => {
     }
     
     .memo-input-container {
+      padding: 0 8px;
       margin-bottom: 16px;
     }
   }
@@ -981,6 +1011,7 @@ onBeforeUnmount(() => {
     width: 100%;
     height: 100%;
     overflow: auto;
+    box-sizing: border-box;
     
     .memo-filter-container {
       margin-bottom: 8px;
@@ -994,6 +1025,8 @@ onBeforeUnmount(() => {
     position: relative;
     padding-bottom: 24px;
     margin-bottom: 8px;
+    width: 100%;
+    box-sizing: border-box;
 
     .memo-content-wrapper {
       display: flex;
@@ -1001,6 +1034,8 @@ onBeforeUnmount(() => {
       transform-origin: left;
       transition: transform 0.3s ease;
       user-select: none;
+      position: relative;
+      z-index: 1;
 
       &:active {
         transition: none;
@@ -1016,7 +1051,7 @@ onBeforeUnmount(() => {
       .memo-input-area {
         width: 50%;
         flex-shrink: 0;
-        padding: 0 8px;
+        padding: 0;
         overflow: hidden;
         height: 300px;
       }
@@ -1029,6 +1064,8 @@ onBeforeUnmount(() => {
       transform: translateX(-50%);
       display: flex;
       gap: 8px;
+      width: auto;
+      z-index: 10;
 
       .dot {
         width: 8px;
@@ -1066,7 +1103,7 @@ onBeforeUnmount(() => {
       min-height: 0;
       overflow-y: auto;
       overflow-x: hidden;
-      padding: 0 8px;
+      padding: 0 8px 16px;
 
       &::-webkit-scrollbar {
         width: 4px;
@@ -1087,7 +1124,7 @@ onBeforeUnmount(() => {
 :deep(.timeline-content) {
   overflow-y: auto !important;
   overflow-x: hidden;
-  padding: 0 16px 16px;
+  padding: 0 8px 16px;
   
   &::-webkit-scrollbar {
     width: 4px;
@@ -1183,13 +1220,13 @@ onBeforeUnmount(() => {
 
 // 卡片模式样式
 .card-content {
-  padding: 16px;
+  padding: 8px;
   overflow-y: auto;
   height: 100%;
   
   .card-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: 1fr;
     gap: 16px;
   }
   
@@ -1251,7 +1288,7 @@ onBeforeUnmount(() => {
 
 // Gallery模式样式
 .gallery-content {
-  padding: 16px;
+  padding: 8px;
   overflow-y: auto;
   height: 100%;
   
@@ -1327,7 +1364,7 @@ onBeforeUnmount(() => {
 
 // 瀑布流模式样式
 .waterfall-content {
-  padding: 16px;
+  padding: 8px;
   overflow-y: auto;
   height: 100%;
   
@@ -1407,16 +1444,154 @@ onBeforeUnmount(() => {
 
 // 响应式调整
 @media (max-width: 768px) {
-  .card-grid {
-    grid-template-columns: 1fr !important;
-  }
-  
   .gallery-grid {
     grid-template-columns: 1fr !important;
   }
   
   .waterfall-container {
     flex-direction: column !important;
+  }
+}
+
+// 添加参照截图的样式优化到其他模式
+.timeline-content, .gallery-content, .waterfall-content, .card-content {
+  :deep(.protyle-wysiwyg) {
+    padding: 0;
+  }
+  
+  :deep(.protyle-wysiwyg[contenteditable="false"]) {
+    background-color: transparent;
+  }
+  
+  :deep(.protyle-wysiwyg[data-doc-type="NodeDocument"]) {
+    padding: 0;
+  }
+  
+  :deep(.protyle-action) {
+    display: none;
+  }
+  
+  :deep(.protyle-attr) {
+    display: none;
+  }
+  
+  :deep(.protyle-title) {
+    display: none;
+  }
+  
+  :deep(.protyle-background) {
+    display: none;
+  }
+  
+  :deep(.b3-typography) {
+    margin: 0;
+  }
+  
+  :deep(img) {
+    max-width: 100%;
+    border-radius: var(--b3-border-radius);
+  }
+  
+  :deep(.protyle-task) {
+    margin: 4px 0;
+    display: flex;
+    align-items: flex-start;
+    
+    input[type="checkbox"] {
+      margin-right: 6px;
+      margin-top: 3px;
+      flex-shrink: 0;
+      appearance: none;
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border: 1px solid var(--b3-border-color);
+      border-radius: 3px;
+      position: relative;
+      cursor: pointer;
+      
+      &:checked {
+        background-color: var(--b3-theme-primary);
+        border-color: var(--b3-theme-primary);
+        
+        &::after {
+          content: "";
+          position: absolute;
+          left: 5px;
+          top: 2px;
+          width: 4px;
+          height: 8px;
+          border: solid white;
+          border-width: 0 2px 2px 0;
+          transform: rotate(45deg);
+        }
+      }
+    }
+  }
+  
+  :deep(.protyle-task--done) {
+    color: var(--b3-theme-on-surface-light);
+    text-decoration: line-through;
+  }
+  
+  :deep(blockquote) {
+    margin: 8px 0;
+    padding: 8px 16px;
+    border-left: 4px solid var(--b3-theme-primary-lightest);
+    background-color: var(--b3-theme-background-light);
+    border-radius: 0 var(--b3-border-radius) var(--b3-border-radius) 0;
+  }
+  
+  :deep(span[data-type="tag"]) {
+    color: var(--b3-theme-primary);
+    background-color: var(--b3-theme-primary-lightest);
+    padding: 2px 6px;
+    border-radius: var(--b3-border-radius);
+    font-size: 0.9em;
+    margin: 0 2px;
+  }
+  
+  :deep(a) {
+    color: var(--b3-theme-primary);
+    text-decoration: none;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+  
+  :deep(.emoji) {
+    display: inline-block;
+    vertical-align: middle;
+    width: 1.2em;
+    height: 1.2em;
+    margin: 0 2px;
+  }
+  
+  :deep(p) {
+    margin: 8px 0;
+  }
+  
+  :deep(.protyle-icons) {
+    margin-top: 8px;
+    display: flex;
+    gap: 8px;
+    
+    .protyle-icon {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 6px;
+      border-radius: 12px;
+      background-color: var(--b3-theme-background-light);
+      font-size: 12px;
+      
+      svg {
+        width: 14px;
+        height: 14px;
+        fill: var(--b3-theme-on-surface);
+      }
+    }
   }
 }
 </style>

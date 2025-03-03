@@ -123,7 +123,7 @@ const handleSubmit = () => {
           const memo: Memo = {
             blockId: blockId.value,
             time: new Date().toLocaleString() + (props.isEditing ? ' (已编辑)' : ''),
-            hasTimestamp: false,
+            type: 'daily',
           }
           emit('submit', memo)
 
@@ -138,7 +138,7 @@ const handleSubmit = () => {
         const memo: Memo = {
           blockId: blockId.value,
           time: new Date().toLocaleString() + (props.isEditing ? ' (已编辑)' : ''),
-          hasTimestamp: false,
+          type: 'daily',
         }
         emit('submit', memo)
 
@@ -222,7 +222,7 @@ onBeforeUnmount(() => {
       min-height: 0;
       display: flex;
       flex-direction: column;
-      padding: 12px;
+      padding: 12px 12px 12px 8px;
 
       :deep(.EnProtyleContainer) {
         flex: 1;
