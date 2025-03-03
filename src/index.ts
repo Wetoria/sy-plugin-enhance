@@ -1,4 +1,3 @@
-
 import '@/utils/GlobalModule'
 import PluginInfoString from '@/../plugin.json'
 import '@/utils/Log'
@@ -13,7 +12,9 @@ import {
 
 import { SyFrontendTypes } from './utils/Siyuan'
 import { openSettings } from '@/modules/Settings/Settings'
+import { initDock } from '@/modules/EnLeafPanel/EnLeafPanel'
 
+const DOCK_TYPE = 'sy_plugin_enhance_dock'
 
 let PluginInfo = {
   version: '',
@@ -55,6 +56,9 @@ export default class EnhancePlugin extends Plugin {
     } catch (err) {
       this.isElectron = false
     }
+
+    // 初始化叶归侧边栏
+    initDock(this)
 
     init(this)
   }
