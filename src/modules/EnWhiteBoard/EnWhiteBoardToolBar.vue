@@ -50,17 +50,11 @@
     <template v-if="isNodeToolbar">
       <div class="ToolbarContent">
         <a-button-group>
-          <a-tooltip content="删除节点">
-            <a-button @click="onRemoveNode">
+          <a-tooltip :content="nodeData?.isCollapsed ? '展开节点' : '折叠节点'">
+            <a-button @click="onCollapse">
               <template #icon>
-                <icon-delete />
-              </template>
-            </a-button>
-          </a-tooltip>
-          <a-tooltip content="复制节点">
-            <a-button @click="onDuplicateNode">
-              <template #icon>
-                <icon-copy />
+                <icon-caret-down v-if="!nodeData?.isCollapsed" />
+                <icon-caret-right v-else />
               </template>
             </a-button>
           </a-tooltip>
@@ -71,7 +65,7 @@
             >
               <a-button>
                 <template #icon>
-                  <icon-layout />
+                  <icon-skin />
                 </template>
               </a-button>
               <template #content>
@@ -88,12 +82,43 @@
               </template>
             </a-dropdown>
           </a-tooltip>
-          <a-tooltip content="在侧边栏中打开">
-            <a-button @click="onOpenInSidebar">
-              <template #icon>
-                <icon-right />
+          <a-tooltip content="节点类型">
+            <a-dropdown
+              trigger="click"
+              @select="onNodeTypeSelect"
+            >
+              <a-button>
+                <template #icon>
+                  <icon-apps />
+                </template>
+              </a-button>
+              <template #content>
+                <a-doption value="protyle">
+                  <div class="NodeTypeOption">
+                    <icon-edit />
+                    <span>普通节点</span>
+                  </div>
+                </a-doption>
+                <a-doption value="mindmap">
+                  <div class="NodeTypeOption">
+                    <icon-mind-mapping />
+                    <span>思维导图</span>
+                  </div>
+                </a-doption>
+                <a-doption value="text">
+                  <div class="NodeTypeOption">
+                    <icon-file />
+                    <span>文本节点</span>
+                  </div>
+                </a-doption>
+                <a-doption value="gingko">
+                  <div class="NodeTypeOption">
+                    <icon-branch />
+                    <span>银杏编辑器</span>
+                  </div>
+                </a-doption>
               </template>
-            </a-button>
+            </a-dropdown>
           </a-tooltip>
           <a-tooltip content="节点颜色">
             <a-dropdown trigger="click">
@@ -157,7 +182,38 @@
               </template>
             </a-dropdown>
           </a-tooltip>
+          <a-tooltip content="自动适配高度">
+            <a-button @click="onAutoFitHeight">
+              <template #icon>
+                <IconExpand />
+              </template>
+            </a-button>
+          </a-tooltip>
           <slot name="nodeToolbarExtra" />
+          <a-tooltip content="在侧边栏中打开">
+            <a-button @click="onOpenInSidebar">
+              <template #icon>
+                <icon-layout />
+              </template>
+            </a-button>
+          </a-tooltip>
+          <a-tooltip content="复制节点">
+            <a-button @click="onDuplicateNode">
+              <template #icon>
+                <icon-copy />
+              </template>
+            </a-button>
+          </a-tooltip>
+          <a-tooltip content="删除节点">
+            <a-button
+              class="danger-button"
+              @click="onRemoveNode"
+            >
+              <template #icon>
+                <icon-delete />
+              </template>
+            </a-button>
+          </a-tooltip>
         </a-button-group>
       </div>
     </template>
@@ -195,13 +251,6 @@
         <!-- 普通工具栏模式 -->
         <template v-else>
           <a-button-group>
-            <a-tooltip content="删除连线">
-              <a-button @click="onRemoveEdge">
-                <template #icon>
-                  <icon-delete />
-                </template>
-              </a-button>
-            </a-tooltip>
             <a-tooltip content="编辑标签">
               <a-button
                 @click="() => {
@@ -449,7 +498,7 @@
               >
                 <a-button>
                   <template #icon>
-                    <icon-double-left />
+                    <icon-left />
                   </template>
                 </a-button>
                 <template #content>
@@ -588,7 +637,7 @@
               >
                 <a-button>
                   <template #icon>
-                    <icon-double-right />
+                    <icon-right />
                   </template>
                 </a-button>
                 <template #content>
@@ -775,6 +824,16 @@
               </a-dropdown>
             </a-tooltip>
             <slot name="edgeToolbarExtra" />
+            <a-tooltip content="删除连线">
+              <a-button
+                class="danger-button"
+                @click="onRemoveEdge"
+              >
+                <template #icon>
+                  <icon-delete />
+                </template>
+              </a-button>
+            </a-tooltip>
           </a-button-group>
         </template>
       </div>
@@ -784,6 +843,7 @@
 
 <script setup lang="ts">
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
+import { IconExpand } from '@arco-design/web-vue/es/icon'
 import {
   Edge,
   useVueFlow,
@@ -812,6 +872,7 @@ const emit = defineEmits<{
   duplicateNode: [nodeId: string]
   removeEdge: [edgeId: string]
   openInSidebar: [nodeId: string]
+  collapse: []
 }>()
 
 const {
@@ -826,10 +887,17 @@ const {
 
 const isEditingLabel = ref(false)
 const editingLabelText = ref('')
+const isCollapsed = ref(false)
 
 const currentEdge = computed(() => {
   if (!props.edgeId) return null
   return edges.value.find((edge) => edge.id === props.edgeId)
+})
+
+const nodeData = computed(() => {
+  if (!props.nodeId) return null
+  const node = getNodes.value.find((node) => node.id === props.nodeId)
+  return node?.data
 })
 
 const onFitView = () => {
@@ -1092,6 +1160,91 @@ const onOpenInSidebar = () => {
     emit('openInSidebar', props.nodeId)
   }
 }
+
+const onCollapse = () => {
+  emit('collapse')
+}
+
+const onNodeTypeSelect = (type: string) => {
+  if (!props.nodeId) return
+
+  const nodes = getNodes.value
+  const newNodes = nodes.map((node) => {
+    if (node.id === props.nodeId) {
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          nodeType: type,
+          mindmap: type === 'mindmap', // 兼容现有的 mindmap 标记
+        },
+      }
+    }
+    return node
+  })
+
+  setNodes(newNodes)
+  if (props.whiteBoardConfigData) {
+    props.whiteBoardConfigData.boardOptions.nodes = newNodes
+  }
+}
+
+const onAutoFitHeight = () => {
+  console.log('自动适配高度按钮被点击')
+  console.log('当前节点 ID:', props.nodeId)
+  const nodeElement = document.querySelector(`[data-en-flow-node-id='${props.nodeId}']`)
+  if (nodeElement) {
+    console.log('找到的节点元素:', nodeElement)
+    const wysiwygElement = nodeElement.querySelector('.protyle-wysiwyg.protyle-wysiwyg--attr')
+    if (wysiwygElement) {
+      // 计算总高度
+      const toolbarHeight = 30 // ProtyleToolbarArea 高度
+      const bottomPadding = 16 // 编辑器底部内边距
+      const borderWidth = 4 // 上下边框宽度总和
+      const contentHeight = wysiwygElement.scrollHeight // 内容实际高度
+
+      // 计算节点需要的总高度
+      const newHeight = toolbarHeight + contentHeight + bottomPadding + borderWidth
+
+      console.log('高度计算明细:', {
+        toolbarHeight,
+        contentHeight,
+        bottomPadding,
+        borderWidth,
+        totalHeight: newHeight,
+      })
+
+      const nodes = getNodes.value
+      const newNodes = nodes.map((node) => {
+        if (node.id === props.nodeId) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              originalHeight: node.dimensions.height, // 保存原始高度
+              height: newHeight,
+            },
+            dimensions: {
+              ...node.dimensions,
+              height: newHeight,
+            },
+            height: newHeight,
+          }
+        }
+        return node
+      })
+      console.log('更新后的节点数据:', newNodes)
+      setNodes(newNodes)
+      if (props.whiteBoardConfigData) {
+        props.whiteBoardConfigData.boardOptions.nodes = newNodes
+      }
+    } else {
+      console.log('未找到 WYSIWYG 元素，检查选择器')
+    }
+  } else {
+    console.log('未找到节点元素，检查选择器和节点 ID')
+  }
+}
 </script>
 
 <style lang="scss" scoped>
@@ -1200,6 +1353,15 @@ const onOpenInSidebar = () => {
           background: var(--b3-theme-surface-light);
         }
       }
+    }
+  }
+
+  // 添加删除按钮的危险样式
+  .danger-button {
+    color: var(--b3-theme-error) !important;
+
+    &:hover {
+      background: var(--b3-theme-error-light) !important;
     }
   }
 }
@@ -1353,4 +1515,12 @@ const onOpenInSidebar = () => {
     }
   }
 }
+
+.main {
+  &.collapsed {
+    height: 0;
+    overflow: hidden;
+  }
+}
 </style>
+

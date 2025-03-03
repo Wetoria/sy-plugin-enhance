@@ -15,6 +15,7 @@
       @remove-node="handleRemoveNode"
       @duplicate-node="handleDuplicateNode"
       @open-in-sidebar="handleOpenInSidebar"
+      @collapse="handleCollapse"
     />
   </NodeToolbar>
   <div
@@ -24,124 +25,148 @@
       'variant-default': !nodeData.style?.variant || nodeData.style.variant === 'default',
       'variant-card': nodeData.style?.variant === 'card',
       'variant-note': nodeData.style?.variant === 'note',
+      'is-collapsed': isCollapsed,
+      'is-mindmap': isMindmapNode,
+      ...nodeTypeClass,
     }"
     :data-en-flow-node-id="flowNode.id"
     :style="{
       '--en-card-width': `${flowNode.dimensions.width}px`,
-      '--en-card-height': `${flowNode.dimensions.height}px`,
+      '--en-card-height': isCollapsed ? '30px' : `${flowNode.dimensions.height}px`,
       'backgroundColor': nodeData.style?.backgroundColor,
     }"
   >
-
-    <div class="ProtyleToolbarArea">
-      <div class="infos">
-
-      </div>
-
-      <div class="operations">
-        <a-spin v-if="isMergingToSuperBlock">
-          <template #icon>
-            <icon-sync />
-          </template>
-        </a-spin>
-      </div>
-    </div>
-    <div
-      ref="mainRef"
-      class="main EnWhiteBoardNodeProtyleMain"
-      :data-en-flow-node-id="flowNode.id"
-      @wheel.capture="captureWheel"
-      @mousedown.capture="captureMouseDown"
-      @click.capture="captureClick"
-    >
-
-      <template v-if="nodeData.blockId">
-        <EnProtyle
-          :block-id="nodeData.blockId"
-          disableEnhance
-          @after="afterProtyleLoad"
-        />
-        <Teleport
-          v-if="enWhiteBoardProtyleUtilAreaRef"
-          :to="enWhiteBoardProtyleUtilAreaRef"
+    <template v-if="isMindmapNode">
+      <EnWhiteBoardNodeMindmap
+        :nodeId="flowNode.id"
+        :isCollapsed="isCollapsed"
+        :displayText="displayText"
+        :isMergingToSuperBlock="isMergingToSuperBlock"
+        :nodeData="nodeData"
+        :whiteBoardConfigData="embedWhiteBoardConfigData"
+        @toggleMindmap="handleToggleMindmap"
+      >
+        <div
+          ref="mainRef"
+          class="main EnWhiteBoardNodeProtyleMain"
+          :data-en-flow-node-id="flowNode.id"
+          @wheel.capture="captureWheel"
+          @mousedown.capture="captureMouseDown"
+          @click.capture="captureClick"
         >
-          <div
-            ref="protyleUtilAreaRef"
-            :data-en-whiteboard-node-protyle-util-area="flowNode.id"
+          <template v-if="nodeData.blockId">
+            <EnProtyle
+              :block-id="nodeData.blockId"
+              disableEnhance
+              @after="afterProtyleLoad"
+            />
+            <Teleport
+              v-if="enWhiteBoardProtyleUtilAreaRef"
+              :to="enWhiteBoardProtyleUtilAreaRef"
+            >
+              <div
+                ref="protyleUtilAreaRef"
+                :data-en-whiteboard-node-protyle-util-area="flowNode.id"
+              >
+              </div>
+            </Teleport>
+          </template>
+        </div>
+      </EnWhiteBoardNodeMindmap>
+    </template>
+    <template v-else>
+      <div class="ProtyleToolbarArea">
+        <div class="infos">
+          <span
+            class="block-title"
+            :title="displayText"
+          >{{ displayText }}</span>
+        </div>
+
+        <div class="operations">
+          <a-spin v-if="isMergingToSuperBlock">
+            <template #icon>
+              <icon-sync />
+            </template>
+          </a-spin>
+        </div>
+      </div>
+      <div
+        ref="mainRef"
+        class="main EnWhiteBoardNodeProtyleMain"
+        :data-en-flow-node-id="flowNode.id"
+        @wheel.capture="captureWheel"
+        @mousedown.capture="captureMouseDown"
+        @click.capture="captureClick"
+      >
+
+        <template v-if="nodeData.blockId">
+          <EnProtyle
+            :block-id="nodeData.blockId"
+            disableEnhance
+            @after="afterProtyleLoad"
+          />
+          <Teleport
+            v-if="enWhiteBoardProtyleUtilAreaRef"
+            :to="enWhiteBoardProtyleUtilAreaRef"
           >
+            <div
+              ref="protyleUtilAreaRef"
+              :data-en-whiteboard-node-protyle-util-area="flowNode.id"
+            >
 
-          </div>
-        </Teleport>
-      </template>
-    </div>
+            </div>
+          </Teleport>
+        </template>
+      </div>
 
-    <NodeResizer
-      :min-width="100"
-      :min-height="36"
-      color="transparent"
-      @resize="onResize"
-    />
+      <NodeResizer
+        :min-width="100"
+        :min-height="36"
+        color="transparent"
+        @resize="onResize"
+      />
 
-
-    <Handle
-      id="top"
-      class="Handle Top"
-      type="source"
-      :position="Position.Top"
-    >
-      <div class="HandleIcon">
-        <icon-arrow-up />
-      </div>
-    </Handle>
-    <Handle
-      id="bottom"
-      class="Handle Bottom"
-      type="source"
-      :position="Position.Bottom"
-    >
-      <div class="HandleIcon">
-        <icon-arrow-down />
-      </div>
-    </Handle>
-    <Handle
-      id="left"
-      class="Handle Left"
-      type="source"
-      :position="Position.Left"
-    >
-      <div class="HandleIcon">
-        <icon-arrow-left />
-      </div>
-    </Handle>
-    <Handle
-      id="right"
-      class="Handle Right"
-      type="source"
-      :position="Position.Right"
-    >
-      <div class="HandleIcon">
-        <icon-arrow-right />
-      </div>
-    </Handle>
+      <!-- 只在非思维导图节点时显示所有连接点 -->
+      <Handle
+        v-for="position in ['top', 'right', 'bottom', 'left']"
+        :id="position"
+        :key="position"
+        class="Handle"
+        :class="[position.toLowerCase()]"
+        type="source"
+        :position="Position[position.charAt(0).toUpperCase() + position.slice(1)]"
+      >
+        <div class="HandleIcon">
+          <component :is="handleIcons[position]" />
+        </div>
+      </Handle>
+    </template>
   </div>
 </template>
 
 <script lang="ts">
-
 </script>
 
 <script setup lang="ts">
+import { request } from '@/api'
 import EnProtyle from '@/components/EnProtyle.vue'
 import {
   generateWhiteBoardNodeId,
+  getWhiteBoardConfigRefById,
   useWhiteBoardModule,
 } from '@/modules/EnWhiteBoard/EnWhiteBoard'
 import { debounce } from '@/utils'
-
 import {
   useSiyuanDatabaseIndexCommit,
   useSiyuanEventTransactions,
 } from '@/utils/EventBusHooks'
+import {
+  IconArrowDown,
+  IconArrowLeft,
+  IconArrowRight,
+  IconArrowUp,
+} from '@arco-design/web-vue/es/icon'
 import {
   Handle,
   Position,
@@ -160,16 +185,27 @@ import {
   onBeforeUnmount,
   onMounted,
   ref,
+  watch,
 } from 'vue'
+import EnWhiteBoardNodeMindmap from './EnWhiteBoardNodeMindmap.vue'
 import EnWhiteBoardToolBar from './EnWhiteBoardToolBar.vue'
 
 const props = defineProps<{
   enWhiteBoardProtyleUtilAreaRef: HTMLElement
+  whiteBoardId: string
+  nodeId: string
 }>()
 
 const emit = defineEmits<{
   clickCard: [element: HTMLElement]
-  openInSidebar: [nodeId: string, blockId: string]
+  openInSidebar: [nodeId: string, blockId: string, blockInfo: {
+    title: string
+    name: string
+    alias: string
+    type: string
+    content: string
+    docName: string
+  }]
 }>()
 
 const {
@@ -182,10 +218,12 @@ const {
 
 const {
   getNodes,
-  addNodes,
-  removeNodes,
-  getSelectedNodes,
   setNodes,
+  removeNodes,
+  addNodes,
+  getSelectedNodes,
+  getEdges,
+  setEdges,
 } = useVueFlow()
 
 const nodeData = computed(() => flowNode.data)
@@ -195,13 +233,10 @@ const containerRef = ref<HTMLDivElement | null>(null)
 const spaceKeyPressing = useKeyPress('Space')
 const captureWheel = (event: WheelEvent) => {
   if (!event.ctrlKey && !event.altKey && !event.shiftKey && !event.metaKey && !spaceKeyPressing.value) {
-
     const protyleContent = mainRef.value?.querySelector('.protyle-content')
-
     if (!protyleContent) {
       return
     }
-
     const {
       scrollTop,
       scrollHeight,
@@ -222,32 +257,18 @@ const targetProtyleUtilClassList = [
   'protyle-toolbar',
   'protyle-hint',
 ]
+
 const protyleUtilAreaRef = ref<HTMLDivElement | null>(null)
 const cardProtyleRef = ref<Protyle | null>(null)
+
 const afterProtyleLoad = (protyle: Protyle) => {
   cardProtyleRef.value = protyle
-
   targetProtyleUtilClassList.forEach((className) => {
     const target = protyle.protyle.element.querySelector(`.${className}`)
     if (target) {
       protyleUtilAreaRef.value?.appendChild(target)
     }
   })
-
-  // protyle?.protyle?.wysiwyg?.element?.addEventListener('mousedown', (event) => {
-  //   const target = event.target as HTMLElement
-  //   const mainElement = target.closest('.EnWhiteBoardNodeProtyleMain')
-  //   if (mainElement && !mainElement.classList.contains('nodrag')) {
-  //     event.stopImmediatePropagation()
-  //     const newEvent = new MouseEvent('mousedown', {
-  //       bubbles: true,
-  //       cancelable: true,
-  //       view: window,
-  //       ...event,
-  //     })
-  //     mainElement.parentElement?.dispatchEvent(newEvent)
-  //   }
-  // }, true)
 }
 
 const captureMouseDown = (event: MouseEvent) => {
@@ -274,7 +295,6 @@ const captureClick = (event: MouseEvent) => {
   const protyleContent = target.closest('.protyle-content')
   const isInProtyleContent = !!protyleContent
   if (isInProtyleContent) {
-
     const lastRect = cardProtyleRef.value?.protyle.wysiwyg.element.lastElementChild.getBoundingClientRect()
     if (event.y > lastRect.bottom) {
       event.stopImmediatePropagation()
@@ -376,7 +396,9 @@ onMounted(() => {
     removeNodeCreatedByOther(event)
     mergeTopLevelBlocksIntoSuperBlock()
   })
+  isCollapsed.value = flowNode.data?.isCollapsed || false
 })
+
 onBeforeUnmount(() => {
   if (offTransactionEvent) {
     offTransactionEvent()
@@ -389,6 +411,12 @@ const onResize = (event: OnResize) => {
 
 const handleRemoveNode = () => {
   removeNodes([flowNode])
+  // 更新白板配置
+  if (embedWhiteBoardConfigData.value) {
+    embedWhiteBoardConfigData.value.boardOptions.nodes = getNodes.value.filter(
+      (node) => node.id !== flowNode.id,
+    )
+  }
 }
 
 const handleDuplicateNode = () => {
@@ -396,7 +424,6 @@ const handleDuplicateNode = () => {
   const sourceNode = nodes.find((node) => node.id === flowNode.id)
   if (!sourceNode) return
 
-  // 创建新节点，保持相同的 blockId
   const newNode = {
     ...sourceNode,
     id: generateWhiteBoardNodeId(),
@@ -407,20 +434,16 @@ const handleDuplicateNode = () => {
     data: {
       ...sourceNode.data,
     },
-    // 重置节点的连线相关属性
-    selected: true, // 将新节点设置为选中状态
+    selected: true,
     dragging: false,
     resizing: false,
   }
 
-  // 取消选中原始节点
   const updatedNodes = nodes.map((node) => ({
     ...node,
     selected: node.id === sourceNode.id ? false : node.selected,
   }))
   setNodes(updatedNodes)
-
-  // 添加新节点
   addNodes([newNode])
 }
 
@@ -435,8 +458,156 @@ const isSelected = computed(() => {
 
 const handleOpenInSidebar = () => {
   if (flowNode.id && nodeData.value.blockId) {
-    emit('openInSidebar', flowNode.id, nodeData.value.blockId)
+    // 传递更多信息到父组件
+    emit('openInSidebar', flowNode.id, nodeData.value.blockId, {
+      title: blockInfo.value.title,
+      name: blockInfo.value.name,
+      alias: blockInfo.value.alias,
+      type: blockInfo.value.type,
+      content: blockInfo.value.content,
+      docName: blockInfo.value.docName,
+    })
   }
+}
+
+const isCollapsed = ref(false)
+
+const handleCollapse = () => {
+  isCollapsed.value = !isCollapsed.value
+
+  // 更新节点数据
+  const nodes = getNodes.value
+  const newNodes = nodes.map((node) => {
+    if (node.id === flowNode.id) {
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          isCollapsed: isCollapsed.value,
+        },
+        height: isCollapsed.value ? 30 : (node.data.originalHeight || node.dimensions.height), // 更新高度
+      }
+    }
+    return node
+  })
+  setNodes(newNodes)
+
+  // 更新连线位置
+  const edgesToUpdate = getEdges.value.filter((edge) => edge.source === flowNode.id || edge.target === flowNode.id)
+  const updatedEdges = edgesToUpdate.map((edge) => {
+    return {
+      ...edge,
+      source: edge.source,
+      target: edge.target,
+      // 根据新位置更新连线
+      sourceX: flowNode.position.x + (isCollapsed.value ? 0 : nodeData.value.dimensions.width),
+      sourceY: flowNode.position.y,
+      targetX: edge.targetNode.position.x,
+      targetY: edge.targetNode.position.y,
+    }
+  })
+  setEdges(updatedEdges)
+}
+
+// 修改块信息状态
+const blockInfo = ref({
+  title: '', // 文档标题
+  name: '', // 块命名
+  alias: '', // 块别名
+  type: '', // 块类型
+  content: '', // 块内容
+  docName: '', // 所属文档标题
+})
+
+// 获取块信息的函数
+const getBlockInfo = async (blockId: string) => {
+  try {
+    // 获取块信息
+    const blockResponse = await request('/api/block/getBlockInfo', { id: blockId })
+    if (blockResponse) {
+      // 获取块所属文档信息
+      const docResponse = await request('/api/block/getDocInfo', { id: blockId })
+
+      // 如果没有标题等信息，获取第一个子块的内容
+      let firstChildContent = ''
+      if (!blockResponse.name && !blockResponse.alias && blockResponse.type !== 'd') {
+        const childResponse = await request('/api/block/getChildBlocks', { id: blockId })
+        if (childResponse?.data?.length > 0) {
+          const firstChild = childResponse.data[0]
+          firstChildContent = firstChild.content?.substring(0, 7) || ''
+        }
+      }
+
+      blockInfo.value = {
+        title: blockResponse.type === 'd' ? blockResponse.name : '',
+        name: blockResponse.name || '',
+        alias: blockResponse.alias || '',
+        type: blockResponse.type || '',
+        content: firstChildContent,
+        docName: docResponse?.name || '',
+      }
+    }
+  } catch (error) {
+    console.error('获取块信息失败:', error)
+  }
+}
+
+// 计算显示的文本
+const displayText = computed(() => {
+  // 如果是文档块，直接显示文档标题
+  if (blockInfo.value.type === 'd') {
+    return blockInfo.value.title || '无标题文档'
+  }
+
+  // 按优先级显示：块命名 > 块别名 > 所属文档标题 > 第一个子块内容 > 默认文本
+  return blockInfo.value.name
+    || blockInfo.value.alias
+    || blockInfo.value.docName
+    || blockInfo.value.content
+    || '未命名块'
+})
+
+// 监听 blockId 变化
+watch(() => nodeData.value?.blockId, async (newBlockId) => {
+  if (newBlockId) {
+    await getBlockInfo(newBlockId)
+  }
+}, { immediate: true })
+
+// 添加思维导图相关的计算属性和方法
+const isMindmapNode = computed(() => nodeData.value?.mindmap === true)
+
+// 根据节点类型更新样式
+const nodeTypeClass = computed(() => ({
+  'is-mindmap': isMindmapNode.value,
+}))
+
+const handleIcons = {
+  top: IconArrowUp,
+  right: IconArrowRight,
+  bottom: IconArrowDown,
+  left: IconArrowLeft,
+}
+
+const {
+  embedWhiteBoardConfigData,
+} = getWhiteBoardConfigRefById(props.whiteBoardId, props.nodeId)
+
+const handleToggleMindmap = () => {
+  const nodes = getNodes.value || []
+  const newNodes = nodes.map((node) => {
+    if (node.id === flowNode.id) {
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          mindmap: !isMindmapNode.value,
+        },
+      }
+    }
+    return node
+  })
+  setNodes(newNodes)
 }
 </script>
 
@@ -461,10 +632,7 @@ const handleOpenInSidebar = () => {
     flex: 1;
     display: flex;
     flex-direction: column;
-
-
     position: relative;
-
     overflow: hidden;
 
     &:not(.nodrag) {
@@ -478,7 +646,6 @@ const handleOpenInSidebar = () => {
     :deep(.protyle-wysiwyg) {
       padding-bottom: 16px !important;
     }
-
   }
 
   .ProtyleToolbarArea {
@@ -493,6 +660,25 @@ const handleOpenInSidebar = () => {
 
     box-sizing: border-box;
     padding: var(--en-gap);
+
+    .infos {
+      flex: 1;
+      overflow: hidden;
+      margin-right: var(--en-gap);
+
+      .block-title {
+        font-size: 12px;
+        color: var(--b3-theme-on-surface);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: block;
+      }
+    }
+
+    .operations {
+      flex-shrink: 0;
+    }
   }
 
   :deep(.vue-flow__resize-control) {
@@ -549,7 +735,6 @@ const handleOpenInSidebar = () => {
         --en-line-vertical-width: min(max(8px, calc(var(--en-card-width) * 0.2)), 30px);
         --en-line-horizontal-height: min(max(8px, calc(var(--en-card-height) * 0.2)), 30px);
       }
-
 
       // 调整大小
       &.top::before,
@@ -612,7 +797,6 @@ const handleOpenInSidebar = () => {
         width: var(--en-whiteboard-resizer-width);
         height: 100%;
       }
-
 
       &.top.left {
         top: 0;
@@ -683,7 +867,6 @@ const handleOpenInSidebar = () => {
   }
 
   .Handle {
-    // border-radius: var(--en-whiteboard-card-radius);
     width: 21px;
     height: 21px;
     z-index: -1;
@@ -691,6 +874,7 @@ const handleOpenInSidebar = () => {
     border-color: var(--b3-theme-primary-light);
     background-color: var(--b3-theme-background);
     color: var(--b3-theme-primary-light);
+    position: absolute;
 
     &:hover {
       background-color: var(--b3-border-color);
@@ -703,22 +887,21 @@ const handleOpenInSidebar = () => {
       display: flex;
       align-items: center;
       justify-content: center;
-
       pointer-events: none;
     }
-  }
 
-  .Handle.Top {
-    top: -16px;
-  }
-  .Handle.Bottom {
-    bottom: -16px;
-  }
-  .Handle.Left {
-    left: -16px;
-  }
-  .Handle.Right {
-    right: -16px;
+    &.top {
+      top: -16px;
+    }
+    &.bottom {
+      bottom: -16px;
+    }
+    &.left {
+      left: -16px;
+    }
+    &.right {
+      right: -16px;
+    }
   }
 
   &.variant-default {
@@ -750,6 +933,42 @@ const handleOpenInSidebar = () => {
       border-radius: 0 0 20px 20px;
     }
   }
+
+  &.is-collapsed {
+    height: 30px !important;
+    min-height: 30px !important;
+    transition: height 0.3s ease-in-out;
+
+    .main {
+      display: none;
+    }
+
+    .ProtyleToolbarArea {
+      border-bottom: none;
+      border-radius: var(--b3-border-radius);
+      background-color: var(--b3-theme-surface);
+      height: 100%;
+    }
+
+    .Handle,
+    :deep(.vue-flow__resize-control) {
+      display: none;
+    }
+
+    &.variant-default {
+      border: 1px solid var(--b3-border-color);
+    }
+
+    &.variant-card {
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    &.variant-note {
+      &::before {
+        display: none;
+      }
+    }
+  }
 }
 
 .EnWhiteBoardNodeToolbar {
@@ -760,6 +979,10 @@ const handleOpenInSidebar = () => {
     padding: 8px;
     border-radius: 8px;
   }
+}
+
+.operations {
+  flex-shrink: 0;
 }
 </style>
 

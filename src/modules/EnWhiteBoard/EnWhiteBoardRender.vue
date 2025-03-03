@@ -79,6 +79,7 @@
         @nodeDragStop="onMoveEnd"
         @nodeClick="onNodeClick"
         @paneClick="onPaneClick"
+        @paneContextMenu="onPaneContextMenu"
         @connect="onConnect"
         @connectStart="onConnectStart"
         @connectEnd="onConnectEnd"
@@ -94,9 +95,16 @@
       >
         <template #node-EnWhiteBoardNodeProtyle="node">
           <EnWhiteBoardNodeProtyle
-            :nodeProps="node"
+            :whiteBoardId="props.data.whiteBoardId"
+            :nodeId="node.id"
             :enWhiteBoardProtyleUtilAreaRef="EnWhiteBoardProtyleUtilAreaRef"
             @open-in-sidebar="handleOpenInSidebar"
+          />
+        </template>
+        <template #node-EnWhiteBoardNodeFrame="node">
+          <EnWhiteBoardNodeFrame
+            :whiteBoardId="props.data.whiteBoardId"
+            :nodeId="node.id"
           />
         </template>
         <template #edge-EnWhiteBoardEdgeBase="edge">
@@ -325,15 +333,36 @@
       </template>
 
       <template v-if="embedWhiteBoardConfigData.boardOptions.selectedNodeId">
-        <EnProtyle
-          :block-id="embedWhiteBoardConfigData.boardOptions.selectedBlockId"
-          disableEnhance
-        />
+        <div class="sidebar-header">
+          <div class="sidebar-title">
+            {{ sidebarInfo.title || sidebarInfo.name || sidebarInfo.alias || sidebarInfo.docName || '未命名块' }}
+          </div>
+          <div
+            v-if="sidebarInfo.docName"
+            class="sidebar-doc-name"
+          >
+            {{ sidebarInfo.docName }}
+          </div>
+        </div>
+        <div class="sidebar-content">
+          <div class="sidebar-protyle-container">
+            <EnProtyle
+              :block-id="embedWhiteBoardConfigData.boardOptions.selectedBlockId"
+              disableEnhance
+              @after="afterSidebarProtyleLoad"
+            />
+            <div
+              ref="sidebarProtyleUtilAreaRef"
+              class="sidebar-protyle-util-area"
+              :data-whiteboard-node-protyle-util-area="embedWhiteBoardConfigData.boardOptions.selectedNodeId"
+            />
+          </div>
+        </div>
       </template>
       <template v-else>
         <EnWhiteBoardSettings
-          :whiteBoardId="data.whiteBoardId"
-          :nodeId="data.nodeId"
+          :whiteBoardId="props.data.whiteBoardId"
+          :nodeId="props.data.nodeId"
         />
       </template>
 
@@ -346,25 +375,28 @@
             </template>
           </a-button>
         </a-tooltip>
-        <a-tooltip content="节点内容">
-          <a-button @click="handleShowSelectedNode">
-            <template #icon>
-              <icon-edit />
-            </template>
-          </a-button>
-        </a-tooltip>
       </template>
       <template #SiderBottomButtonGroupAfter>
         <slot name="SiderRightBottomButtonGroupAfter" />
       </template>
     </EnWhiteBoardSider>
+
+    <!-- 添加上下文菜单 -->
+    <Teleport to="body">
+      <EnWhiteBoardContextMenu
+        :visible="contextMenuVisible"
+        :position="contextMenuPosition"
+        :click-position="initialClickPosition"
+        @close="closeContextMenu"
+      />
+    </Teleport>
   </div>
 </template>
 
 <script setup lang="ts">
 import { request } from '@/api'
+import EnProtyle from '@/components/EnProtyle.vue'
 import { getNewDailyNoteBlockId } from '@/modules/DailyNote/DailyNote'
-
 import {
   EnWhiteBoardBlockDomTarget,
   generateWhiteBoardEdgeId,
@@ -375,6 +407,7 @@ import {
 } from '@/modules/EnWhiteBoard/EnWhiteBoard'
 
 import EnWhiteBoardEdgeBase from '@/modules/EnWhiteBoard/EnWhiteBoardEdgeBase.vue'
+import EnWhiteBoardNodeFrame from '@/modules/EnWhiteBoard/EnWhiteBoardNodeFrame.vue'
 import EnWhiteBoardSider from '@/modules/EnWhiteBoard/EnWhiteBoardSider.vue'
 import { EN_CONSTANTS } from '@/utils/Constants'
 import {
@@ -397,9 +430,10 @@ import {
   useVueFlow,
   VueFlow,
 } from '@vue-flow/core'
-
 import { MiniMap } from '@vue-flow/minimap'
+
 import { cloneDeep } from 'lodash-es'
+import { Protyle } from 'siyuan'
 import {
   computed,
   onMounted,
@@ -408,6 +442,7 @@ import {
   watch,
   watchEffect,
 } from 'vue'
+import EnWhiteBoardContextMenu from './EnWhiteBoardContextMenu.vue'
 import EnWhiteBoardNodeProtyle from './EnWhiteBoardNodeProtyle.vue'
 import EnWhiteBoardSettings from './EnWhiteBoardSettings.vue'
 import EnWhiteBoardToolBar from './EnWhiteBoardToolBar.vue'
@@ -695,14 +730,54 @@ const onTouchStart = (event: TouchEvent) => {
   lastTouchY.value = y
 }
 
-// 修改原有的 onPaneClick 函数
+// 添加上下文菜单相关的状态
+const contextMenuVisible = ref(false)
+const contextMenuPosition = ref({
+  x: 0,
+  y: 0,
+})
+const initialClickPosition = ref({
+  x: 0,
+  y: 0,
+})
+
+// 处理画布右键点击
+const onPaneContextMenu = (event: MouseEvent) => {
+  event.preventDefault()
+  contextMenuPosition.value = {
+    x: event.clientX,
+    y: event.clientY,
+  }
+  initialClickPosition.value = {
+    x: event.offsetX,
+    y: event.offsetY,
+  }
+  contextMenuVisible.value = true
+}
+
+// 关闭上下文菜单
+const closeContextMenu = () => {
+  contextMenuVisible.value = false
+}
+
+// 修改 onPaneClick 添加关闭菜单
 const onPaneClick = onCountClick((count, event) => {
   hideAllHelper()
+  closeContextMenu()
   if (count === 1) {
     disableLastProtyleEditable()
   } else if (count === 2) {
     createNewNode(event.offsetX, event.offsetY)
   }
+})
+
+// 监听全局点击事件关闭菜单
+onMounted(() => {
+  document.addEventListener('click', closeContextMenu)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', closeContextMenu)
 })
 
 onNodesChange((changes) => {
@@ -711,6 +786,14 @@ onNodesChange((changes) => {
   hideAllHelper()
 
   changes.forEach((change) => {
+    if (change.type === 'add') {
+      // 确保节点数组已初始化
+      if (!embedWhiteBoardConfigData.value.boardOptions.nodes) {
+        embedWhiteBoardConfigData.value.boardOptions.nodes = []
+      }
+      // 添加新节点
+      embedWhiteBoardConfigData.value.boardOptions.nodes.push(change.item)
+    }
     if (change.type !== 'add') {
       const targetNode = nodes.value.find((node) => node.id === (change as Exclude<NodeChange, NodeAddChange>).id)
       if (!targetNode) {
@@ -744,13 +827,22 @@ onEdgesChange((changes) => {
   // changes are arrays of type `EdgeChange`
   console.log('onEdgesChange', changes)
   changes.forEach((change) => {
-    const targetEdge = edges.value.find((e) => e.id === (change as Exclude<EdgeChange, EdgeAddChange>).id)
-    if (!targetEdge) {
-      return
-    }
+    if (change.type === 'add') {
+      // 确保边数组已初始化
+      if (!embedWhiteBoardConfigData.value.boardOptions.edges) {
+        embedWhiteBoardConfigData.value.boardOptions.edges = []
+      }
+      // 添加新边
+      embedWhiteBoardConfigData.value.boardOptions.edges.push(change.item)
+    } else {
+      const targetEdge = edges.value.find((e) => e.id === (change as Exclude<EdgeChange, EdgeAddChange>).id)
+      if (!targetEdge) {
+        return
+      }
 
-    if (change.type === 'remove') {
-      embedWhiteBoardConfigData.value.boardOptions.edges = edges.value.filter((e) => e.id !== change.id)
+      if (change.type === 'remove') {
+        embedWhiteBoardConfigData.value.boardOptions.edges = edges.value.filter((e) => e.id !== change.id)
+      }
     }
   })
 })
@@ -1101,7 +1193,27 @@ const onDrop = async (event: DragEvent) => {
   }
 }
 
-const handleOpenInSidebar = (nodeId: string, blockId: string) => {
+// 添加侧边栏状态
+const sidebarInfo = ref({
+  nodeId: '',
+  blockId: '',
+  title: '',
+  name: '',
+  alias: '',
+  type: '',
+  content: '',
+  docName: '',
+})
+
+// 处理打开侧边栏
+const handleOpenInSidebar = (nodeId: string, blockId: string, info: any) => {
+  // 更新侧边栏信息
+  sidebarInfo.value = {
+    nodeId,
+    blockId,
+    ...info,
+  }
+
   // 打开右侧栏
   embedBlockOptions.value.SiderRightShow = true
   embedBlockOptions.value.SiderRightWidth = moduleWhiteBoardOptions.value.siderRightWidthDefault
@@ -1136,6 +1248,31 @@ const handleShowSelectedNode = () => {
     embedWhiteBoardConfigData.value.boardOptions.selectedBlockId = lastSelectedNode.data.blockId
   }
 }
+
+// 添加侧边栏 Protyle 相关状态
+const sidebarProtyleRef = ref<Protyle | null>(null)
+const sidebarProtyleUtilAreaRef = ref<HTMLDivElement | null>(null)
+
+// 添加侧边栏 Protyle 加载后的处理函数
+const afterSidebarProtyleLoad = (protyle: Protyle) => {
+  sidebarProtyleRef.value = protyle
+
+  // 移动工具区域到指定容器
+  targetProtyleUtilClassList.forEach((className) => {
+    const target = protyle.protyle.element.querySelector(`.${className}`)
+    if (target) {
+      sidebarProtyleUtilAreaRef.value?.appendChild(target)
+    }
+  })
+}
+
+// 添加工具区域类名列表
+const targetProtyleUtilClassList = [
+  'protyle-gutters',
+  'protyle-select',
+  'protyle-toolbar',
+  'protyle-hint',
+]
 </script>
 
 <style lang="scss" scoped>
@@ -1360,6 +1497,69 @@ const handleShowSelectedNode = () => {
     .arco-icon {
       font-size: 14px;
     }
+  }
+}
+
+.sidebar-header {
+  padding: var(--en-gap);
+  border-bottom: 1px solid var(--b3-border-color);
+  margin-bottom: var(--en-gap);
+
+  .sidebar-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: var(--b3-theme-on-background);
+    margin-bottom: 4px;
+  }
+
+  .sidebar-doc-name {
+    font-size: 12px;
+    color: var(--b3-theme-on-surface);
+  }
+}
+
+.sidebar-content {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: var(--en-gap);
+  box-sizing: border-box;
+
+  .sidebar-protyle-container {
+    position: relative;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    border: 1px solid var(--b3-border-color);
+    border-radius: var(--b3-border-radius);
+    background-color: var(--b3-theme-background);
+
+    :deep(.protyle) {
+      height: 100%;
+
+      .protyle-content {
+        padding: var(--en-gap);
+      }
+
+      .protyle-wysiwyg {
+        padding-bottom: 16px !important;
+      }
+    }
+  }
+}
+
+.sidebar-protyle-util-area {
+  position: absolute;
+  z-index: 4;
+  top: 0;
+  left: 0;
+  height: 0;
+  pointer-events: none;
+
+  :deep(*) {
+    pointer-events: auto;
   }
 }
 </style>
