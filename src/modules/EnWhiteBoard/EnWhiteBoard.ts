@@ -373,3 +373,22 @@ export function unloadWhiteBoard() {
     deleteWhiteBoardConfigById(whiteBoardId)
   })
 }
+
+// 保存白板配置
+export const saveWhiteBoardConfig = (whiteBoardId: string, nodeId: string, configData: any) => {
+  const configRef = getWhiteBoardConfigRefById(whiteBoardId, nodeId)
+  if (configRef?.embedWhiteBoardConfigData) {
+    Object.assign(configRef.embedWhiteBoardConfigData.value, configData)
+  }
+}
+
+// 更新白板节点和边
+export const updateWhiteBoardNodesAndEdges = (whiteBoardId: string, nodeId: string, nodes: any[], edges: any[]) => {
+  const configRef = getWhiteBoardConfigRefById(whiteBoardId, nodeId)
+  if (configRef?.embedWhiteBoardConfigData) {
+    Object.assign(configRef.embedWhiteBoardConfigData.value.boardOptions, {
+      nodes,
+      edges,
+    })
+  }
+}
