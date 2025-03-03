@@ -560,7 +560,6 @@ onBeforeUnmount(() => {
 .fn__flex-1.sy__sy-plugin-enhancesy_plugin_enhance_dock > div,
 .fn__flex-1.sy__sy-plugin-enhancesy_plugin_enhance_dock > div > .fn__flex-1.fn__flex-column {
     max-height: 100% !important;
-    overflow: hidden;
 };
 
 .en-user-memo {
@@ -569,7 +568,7 @@ onBeforeUnmount(() => {
   height: 100%;
   padding: 0px;
   max-height: 100%;
-  overflow: hidden;
+  overflow: auto;
 
   // 宽屏布局
   &--wide {
@@ -586,8 +585,14 @@ onBeforeUnmount(() => {
       min-width: 0;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
+      overflow: auto;
       padding-right: 16px;
+      
+      .memo-timeline-area {
+        flex: 1;
+        min-height: 0;
+        overflow: auto;
+      }
     }
     
     .memo-side-area {
@@ -625,6 +630,7 @@ onBeforeUnmount(() => {
     flex-direction: column;
     width: 100%;
     height: 100%;
+    overflow: auto;
     
     .memo-filter-container {
       margin-bottom: 8px;
@@ -695,7 +701,7 @@ onBeforeUnmount(() => {
   .memo-timeline-area {
     flex: 1;
     min-height: 0;
-    overflow: hidden;
+    overflow: auto;
     display: flex;
     flex-direction: column;
     border-radius: var(--b3-border-radius);

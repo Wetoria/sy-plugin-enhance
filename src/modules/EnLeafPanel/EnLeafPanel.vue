@@ -75,7 +75,7 @@ const openLeafTab = () => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  overflow: hidden;
+  overflow: auto;
 }
 
 .block__icons {
@@ -130,7 +130,6 @@ const openLeafTab = () => {
     height: 100%;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
   }
 
   &--tab {
@@ -141,13 +140,10 @@ const openLeafTab = () => {
     height: 100%;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
   }
 }
 
 :deep(.timeline-content) {
-  overflow-y: auto !important;
-  overflow-x: hidden;
   padding: 0 16px 16px;
   
   &::-webkit-scrollbar {
