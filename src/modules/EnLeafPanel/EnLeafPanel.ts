@@ -1,8 +1,10 @@
 import { Plugin } from 'siyuan'
 import { createApp } from 'vue'
-import EnDockVue from './EnLeafPanel.vue'
+import EnLeafPanel from './EnLeafPanel.vue'
+import { openTab } from 'siyuan'
 
 const DOCK_TYPE = 'sy_plugin_enhance_dock'
+const TAB_TYPE = 'sy_plugin_enhance_tab'
 
 export function initDock(plugin: Plugin) {
   // 注册叶子图标
@@ -18,8 +20,8 @@ export function initDock(plugin: Plugin) {
     config: {
       position: 'RightTop',
       size: {
-        width: 200,
-        height: 200,
+        width: 300,
+        height: 0,
       },
       icon: 'iconEnLeaf2',
       title: '叶归',
@@ -31,13 +33,58 @@ export function initDock(plugin: Plugin) {
       console.log(`${DOCK_TYPE} resize`)
     },
     init() {
-      const app = createApp(EnDockVue)
+      const app = createApp(EnLeafPanel, {
+        mode: 'dock',
+        plugin,
+      })
       const container = document.createElement('div')
       this.element.appendChild(container)
       app.mount(container)
     },
     destroy() {
       console.log("destroy dock:", DOCK_TYPE)
+    },
+  })
+  
+  // 初始化自定义页签
+  initTab(plugin)
+}
+
+// 初始化自定义页签
+export function initTab(plugin: Plugin) {
+  // 注册自定义页签
+  plugin.addTab({
+    type: TAB_TYPE,
+    init() {
+      const app = createApp(EnLeafPanel, {
+        mode: 'tab',
+        plugin,
+      })
+      const container = document.createElement('div')
+      this.element.appendChild(container)
+      app.mount(container)
+    },
+    beforeDestroy() {
+      console.log("before destroy tab:", TAB_TYPE)
+    },
+    destroy() {
+      console.log("destroy tab:", TAB_TYPE)
+    }
+  })
+}
+
+// 打开叶归页签
+export function openLeafTab(plugin: Plugin) {
+  openTab({
+    app: plugin.app,
+    custom: {
+      icon: "iconEnLeaf2",
+      title: "叶归",
+      data: {
+        text: "叶归",
+        type: TAB_TYPE,
+      },
+      id: plugin.name + TAB_TYPE,
     },
   })
 }
