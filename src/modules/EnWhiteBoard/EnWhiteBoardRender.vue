@@ -786,6 +786,14 @@ onNodesChange((changes) => {
   hideAllHelper()
 
   changes.forEach((change) => {
+    if (change.type === 'add') {
+      // 确保节点数组已初始化
+      if (!embedWhiteBoardConfigData.value.boardOptions.nodes) {
+        embedWhiteBoardConfigData.value.boardOptions.nodes = []
+      }
+      // 添加新节点
+      embedWhiteBoardConfigData.value.boardOptions.nodes.push(change.item)
+    }
     if (change.type !== 'add') {
       const targetNode = nodes.value.find((node) => node.id === (change as Exclude<NodeChange, NodeAddChange>).id)
       if (!targetNode) {
@@ -819,13 +827,22 @@ onEdgesChange((changes) => {
   // changes are arrays of type `EdgeChange`
   console.log('onEdgesChange', changes)
   changes.forEach((change) => {
-    const targetEdge = edges.value.find((e) => e.id === (change as Exclude<EdgeChange, EdgeAddChange>).id)
-    if (!targetEdge) {
-      return
-    }
+    if (change.type === 'add') {
+      // 确保边数组已初始化
+      if (!embedWhiteBoardConfigData.value.boardOptions.edges) {
+        embedWhiteBoardConfigData.value.boardOptions.edges = []
+      }
+      // 添加新边
+      embedWhiteBoardConfigData.value.boardOptions.edges.push(change.item)
+    } else {
+      const targetEdge = edges.value.find((e) => e.id === (change as Exclude<EdgeChange, EdgeAddChange>).id)
+      if (!targetEdge) {
+        return
+      }
 
-    if (change.type === 'remove') {
-      embedWhiteBoardConfigData.value.boardOptions.edges = edges.value.filter((e) => e.id !== change.id)
+      if (change.type === 'remove') {
+        embedWhiteBoardConfigData.value.boardOptions.edges = edges.value.filter((e) => e.id !== change.id)
+      }
     }
   })
 })
