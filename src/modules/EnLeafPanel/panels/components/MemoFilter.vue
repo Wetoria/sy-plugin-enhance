@@ -59,6 +59,9 @@ const emit = defineEmits<{
 
 // 切换筛选器
 const toggleFilter = (filter: FilterType) => {
+  // 无论是否选中当前过滤器，都先清空数据
+  emit('dailyNoteInfo', { dailyNotes: [] })
+  
   if (props.modelValue === filter) {
     // 如果已经选中，则取消选中
     emit('update:modelValue', undefined)

@@ -406,7 +406,13 @@ const registerCommands = () => {
 let offTransactionEvent: (() => void) | null = null
 
 // 监听筛选器变化
-watch(activeFilter, (filter) => {
+watch(activeFilter, (filter, oldFilter) => {
+  if (filter !== oldFilter) {
+    // 当过滤器变化时，清空备忘录列表
+    memos.value = []
+    console.log(`Filter changed from ${oldFilter} to ${filter}, cleared memos`)
+  }
+  
   if (filter === 'daily') {
     // 日记筛选的状态已经在 handleDailyNoteInfo 中处理
     console.log('Daily note filter activated')
@@ -417,19 +423,16 @@ watch(activeFilter, (filter) => {
 const handleDailyNoteInfo = (info: { dailyNotes: any[] }) => {
   const dailyNotes = info?.dailyNotes || []
 
+  // 每次切换过滤器时，先清空所有数据
+  // 这样可以确保不会显示其他类型的数据
+  memos.value = []
+
   if (!dailyNotes.length) {
-    if (activeFilter.value === 'whiteboard') {
-      // 如果是白板筛选，直接使用数据
-      memos.value = dailyNotes
-    } else {
-      // 其他情况，只清空对应类型的数据
-      memos.value = memos.value.filter((memo) => memo.type !== activeFilter.value)
-    }
     return
   }
 
   if (activeFilter.value === 'whiteboard') {
-    // 如果是白板数据，直接替换
+    // 如果是白板数据，直接使用数据
     memos.value = dailyNotes
   } else if (activeFilter.value === 'daily') {
     // 将日记块转换为Memo格式
@@ -456,11 +459,8 @@ const handleDailyNoteInfo = (info: { dailyNotes: any[] }) => {
 
     console.log('Processed daily memos:', dailyMemos.length)
 
-    // 更新备忘录列表，保留非日记类型的备忘录
-    memos.value = [
-      ...memos.value.filter((memo) => memo.type !== 'daily'),
-      ...dailyMemos,
-    ]
+    // 更新备忘录列表，只使用日记类型的备忘录
+    memos.value = dailyMemos
 
     // 更新日历组件的日期标记
     const datesWithNotes = [...new Set(dailyMemos.map((memo) =>
@@ -477,11 +477,8 @@ const handleDailyNoteInfo = (info: { dailyNotes: any[] }) => {
       blockType: note.block_type, // 添加块类型
     }))
 
-    // 更新备忘录列表，保留其他类型的备忘录
-    memos.value = [
-      ...memos.value.filter((memo) => memo.type !== activeFilter.value),
-      ...newMemos,
-    ]
+    // 更新备忘录列表，只使用当前类型的备忘录
+    memos.value = newMemos
   }
 }
 
