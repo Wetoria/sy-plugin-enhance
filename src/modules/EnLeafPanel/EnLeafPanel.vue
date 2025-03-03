@@ -75,6 +75,7 @@ const openLeafTab = () => {
   display: flex;
   flex-direction: column;
   height: 100%;
+  overflow: hidden;
 }
 
 .block__icons {
@@ -84,6 +85,7 @@ const openLeafTab = () => {
   height: 32px;
   box-sizing: border-box;
   border-bottom: 1px solid var(--b3-border-color);
+  flex-shrink: 0;
 
   .block__logo {
     display: flex;
@@ -125,6 +127,10 @@ const openLeafTab = () => {
   &--dock {
     width: 100%;
     min-width: 240px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
 
   &--tab {
@@ -132,6 +138,34 @@ const openLeafTab = () => {
     max-width: 960px;
     margin: 0 auto;
     padding: 0 16px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
+}
+
+:deep(.timeline-content) {
+  overflow-y: auto !important;
+  overflow-x: hidden;
+  padding: 0 16px 16px;
+  
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--b3-scroll-color);
+    border-radius: 4px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background-color: var(--b3-scroll-track-color);
+  }
+}
+
+:deep(.calendar-area),
+:deep(.input-area) {
+  overflow: hidden;
 }
 </style>

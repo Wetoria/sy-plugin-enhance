@@ -1,5 +1,5 @@
 <template>
-  <div class="memo-actions">
+  <div class="memo-actions" :class="{ 'memo-actions--vertical': isVertical }">
     <div class="action-group">
       <button
         class="filter-btn"
@@ -49,12 +49,24 @@ export type FilterType = 'daily' | 'whiteboard' | 'annotation'
 
 const props = defineProps<{
   modelValue?: FilterType
+  isVertical?: boolean
 }>()
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: FilterType | undefined): void
   (e: 'dailyNoteInfo', value: { dailyNotes: any[] }): void
 }>()
+
+// 切换筛选器
+const toggleFilter = (filter: FilterType) => {
+  if (props.modelValue === filter) {
+    // 如果已经选中，则取消选中
+    emit('update:modelValue', undefined)
+  } else {
+    // 否则选中
+    emit('update:modelValue', filter)
+  }
+}
 
 // 监听 props 变化
 watch(() => props.modelValue, async (newValue) => {
@@ -324,37 +336,6 @@ async function getAnnotationNotes() {
   return result
 }
 
-const toggleFilter = async (type: FilterType) => {
-  if (props.modelValue === type) {
-    emit('update:modelValue', undefined)
-    // 清空信息
-    emit('dailyNoteInfo', { dailyNotes: [] })
-  } else {
-    emit('update:modelValue', type)
-    try {
-      let notes = []
-      if (type === 'daily') {
-        notes = await getDailyNotes() || []
-        console.log('Daily notes from database:', notes)
-      } else if (type === 'whiteboard') {
-        notes = await getWhiteboardNotes() || []
-        console.log('Whiteboard notes from plugin:', notes)
-      } else if (type === 'annotation') {
-        notes = await getAnnotationNotes() || []
-        console.log('Annotation notes from database:', notes)
-      }
-
-      // 发送信息
-      emit('dailyNoteInfo', {
-        dailyNotes: notes,
-      })
-    } catch (err) {
-      console.error(`Failed to get ${type} notes:`, err)
-      emit('dailyNoteInfo', { dailyNotes: [] })
-    }
-  }
-}
-
 // 确保白板模块在组件挂载时初始化
 onMounted(() => {
   const { moduleOptions } = useWhiteBoardModule()
@@ -373,55 +354,62 @@ onMounted(() => {
 <style lang="scss">
 .memo-actions {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 4px 8px 4px 0;
+  flex-wrap: wrap;
+  gap: 8px;
+  
+  &--vertical {
+    flex-direction: column;
+    
+    .action-group {
+      flex-direction: column;
+      width: 100%;
+      
+      .filter-btn {
+        width: 100%;
+        justify-content: flex-start;
+        text-align: left;
+        padding: 8px 12px;
+      }
+    }
+  }
 
   .action-group {
     display: flex;
-    gap: 4px;
+    gap: 8px;
+    flex-wrap: wrap;
   }
 
   .filter-btn {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: 4px;
-    padding: 8px 8px;
-    border: none;
-    background: transparent;
+    padding: 4px 8px;
     border-radius: var(--b3-border-radius);
-    color: var(--b3-theme-on-background);
-    font-size: 12px;
+    background-color: var(--b3-theme-surface);
+    border: 1px solid var(--b3-theme-surface-lighter);
     cursor: pointer;
-    transition: all 0.2s;
-    opacity: 0.68;
+    transition: all 0.2s ease;
+    font-size: 12px;
+    color: var(--b3-theme-on-surface);
 
     &:hover {
-      background-color: var(--b3-theme-primary-light);
-      opacity: 0.5;
+      background-color: var(--b3-theme-surface-lighter);
     }
 
     &.active {
-      background-color: var(--b3-theme-primary);
-      color: var(--b3-theme-on-primary);
-      opacity: 1;
+      background-color: var(--b3-theme-primary-lightest);
+      border-color: var(--b3-theme-primary-light);
+      color: var(--b3-theme-primary);
 
-      &:hover {
-        background-color: var(--b3-theme-primary);
-        opacity: 0.9;
+      .action-icon {
+        fill: var(--b3-theme-primary);
       }
     }
 
     .action-icon {
-      height: 14px;
       width: 14px;
-      fill: currentColor;
-      flex-shrink: 0;
-    }
-
-    .btn-text {
-      line-height: 1;
-      font-weight: 500;
+      height: 14px;
+      fill: var(--b3-theme-on-surface);
     }
   }
 }

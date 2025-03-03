@@ -109,11 +109,12 @@ import '@vue-flow/minimap/dist/style.css'
 export interface Memo {
   blockId: string
   time: string
-  type?: 'memo' | 'daily' | 'whiteboard' | 'annotation'
-  dailyNoteId?: string // 如果是日记块，这里存放日记文档的ID
+  type?: 'daily' | 'whiteboard' | 'note' | string
   content?: string
-  docPath?: string // 文档路径
-  whiteBoardConfig?: any // 白板配置
+  dailyNoteId?: string
+  docPath?: string
+  whiteBoardConfig?: any
+  hasTimestamp?: boolean
 }
 
 const props = defineProps({
