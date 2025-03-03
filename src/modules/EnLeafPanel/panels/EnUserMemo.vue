@@ -13,12 +13,129 @@
           />
         </div>
         <div class="memo-timeline-area">
-          <div class="timeline-content">
+          <!-- 根据显示模式显示不同的内容 -->
+          <div v-if="displayMode === 'timeline'" class="timeline-content">
             <MemoTimeline
               :memos="filteredMemos"
               @edit="editMemo"
               @delete="deleteMemo"
             />
+          </div>
+          
+          <!-- 卡片模式 -->
+          <div v-else-if="displayMode === 'card'" class="card-content">
+            <div class="card-grid">
+              <div 
+                v-for="(memo, index) in filteredMemos" 
+                :key="index"
+                class="memo-card-item"
+              >
+                <div class="memo-card-header">
+                  <div class="memo-card-time">{{ memo.time }}</div>
+                  <div class="memo-card-actions">
+                    <span class="action-icon" @click="editMemo(index)">
+                      <svg><use xlink:href="#iconEdit"></use></svg>
+                    </span>
+                    <span class="action-icon" @click="deleteMemo(index)">
+                      <svg><use xlink:href="#iconTrashcan"></use></svg>
+                    </span>
+                  </div>
+                </div>
+                <div class="memo-card-body">
+                  <EnProtyle
+                    :block-id="memo.blockId"
+                    :preview="true"
+                    disableEnhance
+                    :options="{
+                      render: {
+                        gutter: false,
+                        breadcrumb: false,
+                        scroll: false,
+                      },
+                    }"
+                    @after="(protyle) => afterProtyleLoad(protyle, index)"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Gallery模式 -->
+          <div v-else-if="displayMode === 'gallery'" class="gallery-content">
+            <div class="gallery-grid">
+              <div 
+                v-for="(memo, index) in filteredMemos" 
+                :key="index"
+                class="gallery-item"
+              >
+                <div class="gallery-item-content">
+                  <EnProtyle
+                    :block-id="memo.blockId"
+                    :preview="true"
+                    disableEnhance
+                    :options="{
+                      render: {
+                        gutter: false,
+                        breadcrumb: false,
+                        scroll: false,
+                      },
+                    }"
+                    @after="(protyle) => afterProtyleLoad(protyle, index)"
+                  />
+                </div>
+                <div class="gallery-item-footer">
+                  <div class="gallery-item-time">{{ memo.time }}</div>
+                  <div class="gallery-item-actions">
+                    <span class="action-icon" @click="editMemo(index)">
+                      <svg><use xlink:href="#iconEdit"></use></svg>
+                    </span>
+                    <span class="action-icon" @click="deleteMemo(index)">
+                      <svg><use xlink:href="#iconTrashcan"></use></svg>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 瀑布流模式 -->
+          <div v-else-if="displayMode === 'waterfall'" class="waterfall-content">
+            <div class="waterfall-container">
+              <div class="waterfall-column" v-for="colIndex in 2" :key="colIndex">
+                <div 
+                  v-for="(memo, index) in getWaterfallColumnMemos(colIndex)"
+                  :key="index"
+                  class="waterfall-item"
+                >
+                  <div class="waterfall-item-content">
+                    <EnProtyle
+                      :block-id="memo.blockId"
+                      :preview="true"
+                      disableEnhance
+                      :options="{
+                        render: {
+                          gutter: false,
+                          breadcrumb: false,
+                          scroll: false,
+                        },
+                      }"
+                      @after="(protyle) => afterProtyleLoad(protyle, getOriginalIndex(colIndex, index))"
+                    />
+                  </div>
+                  <div class="waterfall-item-footer">
+                    <div class="waterfall-item-time">{{ memo.time }}</div>
+                    <div class="waterfall-item-actions">
+                      <span class="action-icon" @click="editMemo(getOriginalIndex(colIndex, index))">
+                        <svg><use xlink:href="#iconEdit"></use></svg>
+                      </span>
+                      <span class="action-icon" @click="deleteMemo(getOriginalIndex(colIndex, index))">
+                        <svg><use xlink:href="#iconTrashcan"></use></svg>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -37,6 +154,45 @@
             :is-vertical="true"
             @dailyNoteInfo="handleDailyNoteInfo"
           />
+          
+          <!-- 添加显示模式切换组件 -->
+          <div class="display-mode-switcher">
+            <div class="switcher-title">显示模式</div>
+            <div class="switcher-options">
+              <div 
+                class="switcher-option" 
+                :class="{ active: displayMode === 'timeline' }"
+                @click="displayMode = 'timeline'"
+              >
+                <svg><use xlink:href="#iconList"></use></svg>
+                <span>时间线</span>
+              </div>
+              <div 
+                class="switcher-option" 
+                :class="{ active: displayMode === 'card' }"
+                @click="displayMode = 'card'"
+              >
+                <svg><use xlink:href="#iconMenu"></use></svg>
+                <span>卡片</span>
+              </div>
+              <div 
+                class="switcher-option" 
+                :class="{ active: displayMode === 'gallery' }"
+                @click="displayMode = 'gallery'"
+              >
+                <svg><use xlink:href="#iconImage"></use></svg>
+                <span>相册</span>
+              </div>
+              <div 
+                class="switcher-option" 
+                :class="{ active: displayMode === 'waterfall' }"
+                @click="displayMode = 'waterfall'"
+              >
+                <svg><use xlink:href="#iconLayout"></use></svg>
+                <span>瀑布流</span>
+              </div>
+            </div>
+          </div>
         </div>
         
         <!-- 调试按钮 -->
@@ -98,15 +254,171 @@
           v-model="activeFilter"
           @dailyNoteInfo="handleDailyNoteInfo"
         />
+        
+        <!-- 添加显示模式切换组件 -->
+        <div class="display-mode-switcher">
+          <div class="switcher-title">显示模式</div>
+          <div class="switcher-options">
+            <div 
+              class="switcher-option" 
+              :class="{ active: displayMode === 'timeline' }"
+              @click="displayMode = 'timeline'"
+            >
+              <svg><use xlink:href="#iconList"></use></svg>
+              <span>时间线</span>
+            </div>
+            <div 
+              class="switcher-option" 
+              :class="{ active: displayMode === 'card' }"
+              @click="displayMode = 'card'"
+            >
+              <svg><use xlink:href="#iconMenu"></use></svg>
+              <span>卡片</span>
+            </div>
+            <div 
+              class="switcher-option" 
+              :class="{ active: displayMode === 'gallery' }"
+              @click="displayMode = 'gallery'"
+            >
+              <svg><use xlink:href="#iconImage"></use></svg>
+              <span>相册</span>
+            </div>
+            <div 
+              class="switcher-option" 
+              :class="{ active: displayMode === 'waterfall' }"
+              @click="displayMode = 'waterfall'"
+            >
+              <svg><use xlink:href="#iconLayout"></use></svg>
+              <span>瀑布流</span>
+            </div>
+          </div>
+        </div>
       </div>
       
       <div class="memo-timeline-area">
-        <div class="timeline-content">
+        <!-- 根据显示模式显示不同的内容 -->
+        <div v-if="displayMode === 'timeline'" class="timeline-content">
           <MemoTimeline
             :memos="filteredMemos"
             @edit="editMemo"
             @delete="deleteMemo"
           />
+        </div>
+        
+        <!-- 卡片模式 -->
+        <div v-else-if="displayMode === 'card'" class="card-content">
+          <div class="card-grid">
+            <div 
+              v-for="(memo, index) in filteredMemos" 
+              :key="index"
+              class="memo-card-item"
+            >
+              <div class="memo-card-header">
+                <div class="memo-card-time">{{ memo.time }}</div>
+                <div class="memo-card-actions">
+                  <span class="action-icon" @click="editMemo(index)">
+                    <svg><use xlink:href="#iconEdit"></use></svg>
+                  </span>
+                  <span class="action-icon" @click="deleteMemo(index)">
+                    <svg><use xlink:href="#iconTrashcan"></use></svg>
+                  </span>
+                </div>
+              </div>
+              <div class="memo-card-body">
+                <EnProtyle
+                  :block-id="memo.blockId"
+                  :preview="true"
+                  disableEnhance
+                  :options="{
+                    render: {
+                      gutter: false,
+                      breadcrumb: false,
+                      scroll: false,
+                    },
+                  }"
+                  @after="(protyle) => afterProtyleLoad(protyle, index)"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Gallery模式 -->
+        <div v-else-if="displayMode === 'gallery'" class="gallery-content">
+          <div class="gallery-grid">
+            <div 
+              v-for="(memo, index) in filteredMemos" 
+              :key="index"
+              class="gallery-item"
+            >
+              <div class="gallery-item-content">
+                <EnProtyle
+                  :block-id="memo.blockId"
+                  :preview="true"
+                  disableEnhance
+                  :options="{
+                    render: {
+                      gutter: false,
+                      breadcrumb: false,
+                      scroll: false,
+                    },
+                  }"
+                  @after="(protyle) => afterProtyleLoad(protyle, index)"
+                />
+              </div>
+              <div class="gallery-item-footer">
+                <div class="gallery-item-time">{{ memo.time }}</div>
+                <div class="gallery-item-actions">
+                  <span class="action-icon" @click="editMemo(index)">
+                    <svg><use xlink:href="#iconEdit"></use></svg>
+                  </span>
+                  <span class="action-icon" @click="deleteMemo(index)">
+                    <svg><use xlink:href="#iconTrashcan"></use></svg>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 瀑布流模式 -->
+        <div v-else-if="displayMode === 'waterfall'" class="waterfall-content">
+          <div class="waterfall-container">
+            <div class="waterfall-column" v-for="colIndex in 2" :key="colIndex">
+              <div 
+                v-for="(memo, index) in getWaterfallColumnMemos(colIndex)"
+                :key="index"
+                class="waterfall-item"
+              >
+                <div class="waterfall-item-content">
+                  <EnProtyle
+                    :block-id="memo.blockId"
+                    :preview="true"
+                    disableEnhance
+                    :options="{
+                      render: {
+                        gutter: false,
+                        breadcrumb: false,
+                        scroll: false,
+                      },
+                    }"
+                    @after="(protyle) => afterProtyleLoad(protyle, getOriginalIndex(colIndex, index))"
+                  />
+                </div>
+                <div class="waterfall-item-footer">
+                  <div class="waterfall-item-time">{{ memo.time }}</div>
+                  <div class="waterfall-item-actions">
+                    <span class="action-icon" @click="editMemo(getOriginalIndex(colIndex, index))">
+                      <svg><use xlink:href="#iconEdit"></use></svg>
+                    </span>
+                    <span class="action-icon" @click="deleteMemo(getOriginalIndex(colIndex, index))">
+                      <svg><use xlink:href="#iconTrashcan"></use></svg>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       
@@ -145,6 +457,8 @@ import MemoCalendar from './components/MemoCalendar.vue'
 import MemoFilter from './components/MemoFilter.vue'
 import MemoInput from './components/MemoInput.vue'
 import MemoTimeline from './components/MemoTimeline.vue'
+import type { DisplayMode } from '../types'
+import EnProtyle from '@/components/EnProtyle.vue'
 
 // 开发环境标志
 const isDev = import.meta.env.DEV || false
@@ -156,6 +470,8 @@ const editingIndex = ref(-1)
 const selectedDates = ref<string[]>([])
 const activeFilter = ref<FilterType>('daily')
 const activeTab = ref<'calendar' | 'input'>('calendar')
+// 添加显示模式状态
+const displayMode = ref<DisplayMode>('timeline')
 
 // 响应式布局状态
 const isWideLayout = ref(false)
@@ -516,6 +832,28 @@ const handleResize = () => {
 // ResizeObserver实例
 let resizeObserver: ResizeObserver | null = null
 
+// 瀑布流布局辅助函数
+const getWaterfallColumnMemos = (columnIndex: number) => {
+  if (!filteredMemos.value || filteredMemos.value.length === 0) return []
+  
+  // 将备忘录分为两列
+  return filteredMemos.value.filter((_, index) => {
+    return index % 2 === (columnIndex - 1)
+  })
+}
+
+// 获取原始索引
+const getOriginalIndex = (columnIndex: number, index: number) => {
+  // 计算在原始数组中的索引
+  return (index * 2) + (columnIndex - 1)
+}
+
+// 添加afterProtyleLoad函数
+const afterProtyleLoad = (protyle: any, index: number) => {
+  // 这里可以添加加载后的处理逻辑
+  console.log('Protyle loaded for memo at index:', index)
+}
+
 onMounted(() => {
   registerCommands()
   offTransactionEvent = useSiyuanEventTransactions(() => {
@@ -794,6 +1132,291 @@ onBeforeUnmount(() => {
     &:hover {
       opacity: 0.9;
     }
+  }
+}
+
+// 显示模式切换器样式
+.display-mode-switcher {
+  margin-top: 16px;
+  padding: 8px;
+  border-radius: var(--b3-border-radius);
+  background-color: var(--b3-theme-background);
+  
+  .switcher-title {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: var(--b3-theme-on-surface);
+  }
+  
+  .switcher-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    
+    .switcher-option {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: var(--b3-border-radius);
+      cursor: pointer;
+      transition: background-color 0.2s;
+      
+      svg {
+        width: 14px;
+        height: 14px;
+        fill: currentColor;
+      }
+      
+      &:hover {
+        background-color: var(--b3-theme-background-light);
+      }
+      
+      &.active {
+        background-color: var(--b3-theme-primary-lightest);
+        color: var(--b3-theme-primary);
+      }
+    }
+  }
+}
+
+// 卡片模式样式
+.card-content {
+  padding: 16px;
+  overflow-y: auto;
+  height: 100%;
+  
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  
+  .memo-card-item {
+    border-radius: var(--b3-border-radius);
+    background-color: var(--b3-theme-background);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .memo-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--b3-border-color);
+      
+      .memo-card-time {
+        font-size: 12px;
+        color: var(--b3-theme-on-surface-light);
+      }
+      
+      .memo-card-actions {
+        display: flex;
+        gap: 8px;
+        
+        .action-icon {
+          cursor: pointer;
+          padding: 4px;
+          border-radius: 50%;
+          
+          svg {
+            width: 14px;
+            height: 14px;
+            fill: var(--b3-theme-on-surface-light);
+          }
+          
+          &:hover {
+            background-color: var(--b3-theme-background-light);
+            
+            svg {
+              fill: var(--b3-theme-primary);
+            }
+          }
+        }
+      }
+    }
+    
+    .memo-card-body {
+      padding: 16px;
+    }
+  }
+}
+
+// Gallery模式样式
+.gallery-content {
+  padding: 16px;
+  overflow-y: auto;
+  height: 100%;
+  
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+  }
+  
+  .gallery-item {
+    border-radius: var(--b3-border-radius);
+    background-color: var(--b3-theme-background);
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .gallery-item-content {
+      padding: 16px 16px 8px;
+      max-height: 320px;
+      overflow: hidden;
+      
+      :deep(img) {
+        width: 100%;
+        height: auto;
+        object-fit: cover;
+        border-radius: var(--b3-border-radius);
+      }
+    }
+    
+    .gallery-item-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 16px 12px;
+      
+      .gallery-item-time {
+        font-size: 12px;
+        color: var(--b3-theme-on-surface-light);
+      }
+      
+      .gallery-item-actions {
+        display: flex;
+        gap: 8px;
+        
+        .action-icon {
+          cursor: pointer;
+          padding: 4px;
+          border-radius: 50%;
+          
+          svg {
+            width: 14px;
+            height: 14px;
+            fill: var(--b3-theme-on-surface-light);
+          }
+          
+          &:hover {
+            background-color: var(--b3-theme-background-light);
+            
+            svg {
+              fill: var(--b3-theme-primary);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// 瀑布流模式样式
+.waterfall-content {
+  padding: 16px;
+  overflow-y: auto;
+  height: 100%;
+  
+  .waterfall-container {
+    display: flex;
+    gap: 16px;
+  }
+  
+  .waterfall-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .waterfall-item {
+    border-radius: var(--b3-border-radius);
+    background-color: var(--b3-theme-background);
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .waterfall-item-content {
+      padding: 16px 16px 8px;
+      
+      :deep(img) {
+        width: 100%;
+        height: auto;
+        object-fit: cover;
+        border-radius: var(--b3-border-radius);
+      }
+    }
+    
+    .waterfall-item-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 16px 12px;
+      
+      .waterfall-item-time {
+        font-size: 12px;
+        color: var(--b3-theme-on-surface-light);
+      }
+      
+      .waterfall-item-actions {
+        display: flex;
+        gap: 8px;
+        
+        .action-icon {
+          cursor: pointer;
+          padding: 4px;
+          border-radius: 50%;
+          
+          svg {
+            width: 14px;
+            height: 14px;
+            fill: var(--b3-theme-on-surface-light);
+          }
+          
+          &:hover {
+            background-color: var(--b3-theme-background-light);
+            
+            svg {
+              fill: var(--b3-theme-primary);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// 响应式调整
+@media (max-width: 768px) {
+  .card-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .gallery-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .waterfall-container {
+    flex-direction: column !important;
   }
 }
 </style>
