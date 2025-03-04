@@ -114,7 +114,7 @@
                 <a-doption value="gingko">
                   <div class="NodeTypeOption">
                     <icon-branch />
-                    <span>银杏编辑器</span>
+                    <span>树形卡片</span>
                   </div>
                 </a-doption>
               </template>
