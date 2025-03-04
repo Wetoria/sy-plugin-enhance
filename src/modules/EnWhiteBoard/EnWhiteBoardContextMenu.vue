@@ -170,7 +170,7 @@ const handleCreateMindmap = async () => {
 
   const mindmapNode = {
     id: mindmapNodeId,
-    type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_PROTYLE,
+    type: 'EnWhiteBoardNodeMindmap',
     data: {
       blockId,
       mindmap: true,

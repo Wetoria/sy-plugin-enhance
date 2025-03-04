@@ -593,12 +593,44 @@ const {
   embedWhiteBoardConfigData,
 } = getWhiteBoardConfigRefById(props.whiteBoardId, props.nodeId)
 
+// 获取节点类型
+const nodeType = computed(() => {
+  return isMindmapNode.value ? 'EnWhiteBoardNodeMindmap' : 'EnWhiteBoardNodeProtyle'
+})
+
+// 更新节点类型
+const updateNodeType = () => {
+  if (!flowNode) return
+  
+  // 如果节点类型已经正确，则不需要更新
+  if (flowNode.type === nodeType.value) return
+  
+  // 更新节点类型
+  const nodes = getNodes.value || []
+  const newNodes = nodes.map((node) => {
+    if (node.id === flowNode.id) {
+      return {
+        ...node,
+        type: nodeType.value,
+      }
+    }
+    return node
+  })
+  setNodes(newNodes)
+}
+
+// 监听思维导图状态变化，更新节点类型
+watch(isMindmapNode, (newValue) => {
+  updateNodeType()
+}, { immediate: true })
+
 const handleToggleMindmap = () => {
   const nodes = getNodes.value || []
   const newNodes = nodes.map((node) => {
     if (node.id === flowNode.id) {
       return {
         ...node,
+        type: !isMindmapNode.value ? 'EnWhiteBoardNodeMindmap' : 'EnWhiteBoardNodeProtyle',
         data: {
           ...node.data,
           mindmap: !isMindmapNode.value,
@@ -992,22 +1024,36 @@ const handleToggleMindmap = () => {
   --en-whiteboard-card-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   transition: box-shadow 0.3s ease;
 
-  .EnWhiteBoardNodeProtyleContainer {
-    transition: box-shadow 0.3s ease;
-  }
-
-  &.dragging {
-    --en-whiteboard-card-cursor: grabbing;
-
+  // 只有非思维导图节点应用这些样式
+  &:not(.vue-flow__node-EnWhiteBoardNodeMindmap) {
     .EnWhiteBoardNodeProtyleContainer {
-      box-shadow: var(--en-whiteboard-card-shadow);
-      transform: translateY(-2px);
-      transition: box-shadow 0.3s ease, transform 0.3s ease;
+      transition: box-shadow 0.3s ease;
+    }
+
+    &.dragging {
+      --en-whiteboard-card-cursor: grabbing;
+
+      .EnWhiteBoardNodeProtyleContainer {
+        box-shadow: var(--en-whiteboard-card-shadow);
+        transform: translateY(-2px);
+        transition: box-shadow 0.3s ease, transform 0.3s ease;
+      }
+    }
+
+    &.selected {
+      .EnWhiteBoardNodeProtyleContainer {
+        border-color: var(--b3-theme-primary-light);
+      }
     }
   }
+}
 
+// 为思维导图节点添加独立的样式
+.vue-flow__node-EnWhiteBoardNodeMindmap {
+  --en-whiteboard-mindmap-cursor: default;
+  
   &.selected {
-    .EnWhiteBoardNodeProtyleContainer {
+    .EnWhiteBoardNodeMindmapContainer {
       border-color: var(--b3-theme-primary-light);
     }
   }

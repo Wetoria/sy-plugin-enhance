@@ -101,6 +101,14 @@
             @open-in-sidebar="handleOpenInSidebar"
           />
         </template>
+        <template #node-EnWhiteBoardNodeMindmap="node">
+          <EnWhiteBoardNodeProtyle
+            :whiteBoardId="props.data.whiteBoardId"
+            :nodeId="node.id"
+            :enWhiteBoardProtyleUtilAreaRef="EnWhiteBoardProtyleUtilAreaRef"
+            @open-in-sidebar="handleOpenInSidebar"
+          />
+        </template>
         <template #node-EnWhiteBoardNodeFrame="node">
           <EnWhiteBoardNodeFrame
             :whiteBoardId="props.data.whiteBoardId"
