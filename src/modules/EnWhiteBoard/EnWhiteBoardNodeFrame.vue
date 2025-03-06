@@ -16,6 +16,22 @@
       @duplicate-node="handleDuplicateNode"
       @collapse="handleCollapse"
     />
+    <div class="AdditionalToolbar" v-if="!isCollapsed">
+      <div class="ToolbarBtn" @click="toggleLock" :class="{ 'active': isLocked }">
+        <IconLock v-if="isLocked" />
+        <IconUnlock v-else />
+      </div>
+      <div class="ToolbarBtn" @click="bringForward">
+        <IconToTop />
+      </div>
+      <div class="ToolbarBtn" @click="sendBackward">
+        <IconToBottom />
+      </div>
+      <div class="ToolbarBtn color-picker">
+        <input type="color" v-model="frameColor" @change="updateFrameColor" />
+        <IconPalette />
+      </div>
+    </div>
   </NodeToolbar>
 
   <div
@@ -26,12 +42,15 @@
       'is-selected': isSelected,
       'is-dragging': isDragging,
       'can-drop': canDrop,
+      'is-locked': isLocked,
     }"
     :data-en-flow-node-id="flowNode.id"
     :style="{
-      '--en-frame-width': `${flowNode.dimensions.width}px`,
-      '--en-frame-height': isCollapsed ? '30px' : `${flowNode.dimensions.height}px`,
+      '--en-frame-width': `${(flowNode as any).dimensions?.width || 0}px`,
+      '--en-frame-height': isCollapsed ? '30px' : `${(flowNode as any).dimensions?.height || 0}px`,
       'backgroundColor': nodeData.style?.backgroundColor || 'var(--b3-theme-surface-light)',
+      'borderColor': nodeData.style?.borderColor || 'var(--b3-border-color)',
+      'borderStyle': nodeData.style?.borderStyle || 'dashed',
     }"
     @mousedown="handleMouseDown"
     @mouseup="handleMouseUp"
@@ -118,6 +137,117 @@
           <span>从分组中移除选中节点</span>
         </div>
       </div>
+
+      <div class="MenuGroup">
+        <div class="ContextMenuItem" @click="toggleLock">
+          <IconLock v-if="isLocked" />
+          <IconUnlock v-else />
+          <span>{{ isLocked ? '解锁分组' : '锁定分组' }}</span>
+        </div>
+        <div class="ContextMenuItem" @click="duplicateFrame">
+          <IconCopy />
+          <span>复制分组</span>
+        </div>
+      </div>
+
+      <div class="MenuGroup">
+        <div class="ContextMenuItem" @click="bringForward">
+          <IconToTop />
+          <span>前移一层</span>
+        </div>
+        <div class="ContextMenuItem" @click="sendBackward">
+          <IconToBottom />
+          <span>后移一层</span>
+        </div>
+      </div>
+
+      <div class="MenuGroup">
+        <div class="ContextMenuItem" @click="showColorPicker = true">
+          <IconPalette />
+          <span>更改颜色</span>
+        </div>
+        <div v-if="showColorPicker" class="ColorPickerContainer">
+          <input type="color" v-model="frameColor" @change="updateFrameColor" />
+          <div class="BorderStylePicker">
+            <div class="ContextMenuItem" @click="updateFrameBorderStyle('dashed')">
+              <span>虚线边框</span>
+            </div>
+            <div class="ContextMenuItem" @click="updateFrameBorderStyle('solid')">
+              <span>实线边框</span>
+            </div>
+            <div class="ContextMenuItem" @click="updateFrameBorderStyle('dotted')">
+              <span>点状边框</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="MenuGroup" v-if="childNodes.length > 1">
+        <div class="ContextMenuItem" @click="alignChildNodes('left')">
+          <IconAlignLeft />
+          <span>左对齐</span>
+        </div>
+        <div class="ContextMenuItem" @click="alignChildNodes('center')">
+          <IconAlignCenter />
+          <span>居中对齐</span>
+        </div>
+        <div class="ContextMenuItem" @click="alignChildNodes('right')">
+          <IconAlignRight />
+          <span>右对齐</span>
+        </div>
+        <div class="ContextMenuItem" @click="alignChildNodes('top')">
+          <IconUp />
+          <span>顶部对齐</span>
+        </div>
+        <div class="ContextMenuItem" @click="alignChildNodes('middle')">
+          <IconMinus />
+          <span>垂直居中</span>
+        </div>
+        <div class="ContextMenuItem" @click="alignChildNodes('bottom')">
+          <IconDown />
+          <span>底部对齐</span>
+        </div>
+        <div class="ContextMenuItem" @click="distributeChildNodes('horizontal')">
+          <IconLeft />
+          <span>水平均分</span>
+        </div>
+        <div class="ContextMenuItem" @click="distributeChildNodes('vertical')">
+          <IconRight />
+          <span>垂直均分</span>
+        </div>
+      </div>
+    </div>
+  </Teleport>
+
+  <Teleport to="body">
+    <div v-if="colorPickerVisible" class="ColorPickerModal">
+      <div class="ColorPickerHeader">
+        <span>自定义分组样式</span>
+        <div class="CloseBtn" @click="colorPickerVisible = false">✕</div>
+      </div>
+      <div class="ColorPickerContent">
+        <div class="ColorPickerItem">
+          <span>背景颜色:</span>
+          <input type="color" v-model="frameColor" @change="updateFrameColor" />
+        </div>
+        <div class="ColorPickerItem">
+          <span>边框颜色:</span>
+          <input type="color" v-model="frameBorderColor" @change="updateFrameBorderColor" />
+        </div>
+        <div class="ColorPickerItem">
+          <span>边框样式:</span>
+          <select v-model="frameBorderStyle" @change="updateFrameBorderStyle">
+            <option value="dashed">虚线</option>
+            <option value="solid">实线</option>
+            <option value="dotted">点状</option>
+            <option value="double">双线</option>
+          </select>
+        </div>
+        <div class="ColorPickerItem">
+          <span>透明度:</span>
+          <input type="range" min="0" max="1" step="0.1" v-model="frameOpacity" @change="updateFrameOpacity" />
+        </div>
+      </div>
     </div>
   </Teleport>
 </template>
@@ -136,6 +266,20 @@ import {
   IconArrowRight,
   IconArrowUp,
   IconPlus,
+  IconLock,
+  IconUnlock,
+  IconCopy,
+  IconToTop,
+  IconToBottom,
+  IconPalette,
+  IconAlignLeft,
+  IconAlignCenter,
+  IconAlignRight,
+  IconUp,
+  IconMinus,
+  IconDown,
+  IconLeft,
+  IconRight,
 } from '@arco-design/web-vue/es/icon'
 import {
   Handle,
@@ -200,19 +344,32 @@ const childNodes = computed(() => {
   return getNodes.value.filter((node) => node.data?.parentId === flowNode.id)
 })
 
+// 添加获取相对位置的函数
+const getRelativePosition = (nodeRect: DOMRect, frameRect: DOMRect) => {
+  return {
+    x: nodeRect.left - frameRect.left,
+    y: nodeRect.top - frameRect.top,
+  }
+}
+
 // 检查节点是否在 Frame 内部
 const isNodeInside = (node: VueFlowNode) => {
   // Frame的范围
   const frameLeft = flowNode.position.x
   const frameTop = flowNode.position.y
-  const frameRight = frameLeft + flowNode.dimensions.width
-  const frameBottom = frameTop + flowNode.dimensions.height
+  const frameWidth = (flowNode as any).dimensions?.width || 0
+  const frameHeight = (flowNode as any).dimensions?.height || 0
+  const frameRight = frameLeft + frameWidth
+  const frameBottom = frameTop + frameHeight
 
   // 节点的范围
   const nodeLeft = node.position.x
   const nodeTop = node.position.y
-  const nodeRight = nodeLeft + (node.dimensions?.width || 0)
-  const nodeBottom = nodeTop + (node.dimensions?.height || 0)
+  // 修复类型错误，使用安全访问
+  const nodeWidth = (node as any).dimensions?.width || (node as any).width || 0
+  const nodeHeight = (node as any).dimensions?.height || (node as any).height || 0
+  const nodeRight = nodeLeft + nodeWidth
+  const nodeBottom = nodeTop + nodeHeight
 
   // 节点必须完全在 Frame 内部
   return (
@@ -234,13 +391,13 @@ const updateNodeParent = (nodeId: string, parentId: string | null) => {
       // 如果是添加到 Frame
       if (parentId === flowNode.id) {
         // 计算相对于 Frame 的位置
-        const relativeX = node.position.x - flowNode.position.x
-        const relativeY = node.position.y - flowNode.position.y
+        const relativeX = targetNode.position.x - flowNode.position.x
+        const relativeY = targetNode.position.y - flowNode.position.y
 
         return {
-          ...node,
+          ...targetNode,
           data: {
-            ...node.data,
+            ...targetNode.data,
             parentId,
           },
           position: {
@@ -252,9 +409,9 @@ const updateNodeParent = (nodeId: string, parentId: string | null) => {
 
       // 如果是移出 Frame，保持当前位置
       return {
-        ...node,
+        ...targetNode,
         data: {
-          ...node.data,
+          ...targetNode.data,
           parentId,
         },
       }
@@ -334,6 +491,12 @@ const onResize = (event: OnResize) => {
 }
 
 const handleMouseDown = (event: MouseEvent) => {
+  // 如果已锁定，则不允许拖动
+  if (isLocked.value) {
+    event.stopPropagation()
+    return
+  }
+
   // 获取 Frame 范围内的所有节点
   const nodesInFrame = getNodes.value.filter((node) => {
     // 跳过自身和已经是其他 Frame 的子节点
@@ -553,6 +716,13 @@ onMounted(() => {
     detectNodesInFrame()
     highlightPotentialNodes()
   })
+  
+  // 初始化状态
+  isLocked.value = nodeData.value?.isLocked || false
+  frameColor.value = nodeData.value?.style?.backgroundColor || ''
+  frameBorderColor.value = nodeData.value?.style?.borderColor || ''
+  frameBorderStyle.value = nodeData.value?.style?.borderStyle || 'dashed'
+  frameOpacity.value = nodeData.value?.style?.opacity || 0.3
 })
 
 onBeforeUnmount(() => {
@@ -710,6 +880,357 @@ const handleFrameClick = (event: MouseEvent) => {
 
   containedNodes.value = nodesInFrame
 }
+
+// 添加新的状态变量
+const isLocked = ref(false)
+const frameColor = ref(nodeData.value?.style?.backgroundColor || '')
+const frameBorderColor = ref(nodeData.value?.style?.borderColor || '')
+const frameBorderStyle = ref(nodeData.value?.style?.borderStyle || 'dashed')
+const frameOpacity = ref(nodeData.value?.style?.opacity || 0.3)
+const colorPickerVisible = ref(false)
+const showColorPicker = ref(false)
+
+// 锁定功能
+const toggleLock = () => {
+  isLocked.value = !isLocked.value
+  
+  // 更新节点数据
+  const nodes = getNodes.value
+  const newNodes = nodes.map((node) => {
+    if (node.id === flowNode.id) {
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          isLocked: isLocked.value,
+        },
+        // 设置节点是否可拖动
+        draggable: !isLocked.value,
+      }
+    }
+    return node
+  })
+  setNodes(newNodes)
+}
+
+// 复制Frame
+const duplicateFrame = () => {
+  // 复制 Frame 和其中的所有子节点
+  const nodes = getNodes.value
+  const frameNode = nodes.find((node) => node.id === flowNode.id)
+  const childrenNodes = nodes.filter((node) => node.data?.parentId === flowNode.id)
+  
+  if (!frameNode) return
+  
+  // 创建新 ID
+  const newFrameId = generateWhiteBoardNodeId()
+  
+  // 复制 Frame
+  const offsetX = 50
+  const offsetY = 50
+  const newFrameNode = {
+    ...frameNode,
+    id: newFrameId,
+    position: {
+      x: frameNode.position.x + offsetX,
+      y: frameNode.position.y + offsetY,
+    },
+    data: {
+      ...frameNode.data,
+    },
+    selected: true,
+  }
+  
+  // 复制子节点
+  const newChildNodes = childrenNodes.map((child) => {
+    const newChildId = generateWhiteBoardNodeId()
+    return {
+      ...child,
+      id: newChildId,
+      position: {
+        x: child.position.x + offsetX,
+        y: child.position.y + offsetY,
+      },
+      data: {
+        ...child.data,
+        parentId: newFrameId,
+      },
+      selected: true,
+    }
+  })
+  
+  // 添加新节点
+  const updatedNodes = nodes.map((node) => ({
+    ...node,
+    selected: false,
+  }))
+  setNodes(updatedNodes)
+  addNodes([newFrameNode, ...newChildNodes])
+  closeContextMenu()
+}
+
+// 更新颜色相关函数
+const updateFrameColor = () => {
+  const nodes = getNodes.value
+  const newNodes = nodes.map((node) => {
+    if (node.id === flowNode.id) {
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          style: {
+            ...node.data?.style,
+            backgroundColor: frameColor.value,
+          },
+        },
+      }
+    }
+    return node
+  })
+  setNodes(newNodes)
+  showColorPicker.value = false
+}
+
+const updateFrameBorderColor = () => {
+  const nodes = getNodes.value
+  const newNodes = nodes.map((node) => {
+    if (node.id === flowNode.id) {
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          style: {
+            ...node.data?.style,
+            borderColor: frameBorderColor.value,
+          },
+        },
+      }
+    }
+    return node
+  })
+  setNodes(newNodes)
+}
+
+const updateFrameBorderStyle = (style) => {
+  frameBorderStyle.value = style
+  const nodes = getNodes.value
+  const newNodes = nodes.map((node) => {
+    if (node.id === flowNode.id) {
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          style: {
+            ...node.data?.style,
+            borderStyle: style,
+          },
+        },
+      }
+    }
+    return node
+  })
+  setNodes(newNodes)
+  showColorPicker.value = false
+}
+
+const updateFrameOpacity = () => {
+  const nodes = getNodes.value
+  const newNodes = nodes.map((node) => {
+    if (node.id === flowNode.id) {
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          style: {
+            ...node.data?.style,
+            opacity: frameOpacity.value,
+          },
+        },
+      }
+    }
+    return node
+  })
+  setNodes(newNodes)
+}
+
+// 层级调整函数
+const bringForward = () => {
+  // 将节点在数组中的位置向后移，提高z-index
+  const nodes = getNodes.value
+  const index = nodes.findIndex((node) => node.id === flowNode.id)
+  
+  if (index < nodes.length - 1) {
+    const newNodes = [...nodes]
+    const temp = newNodes[index]
+    newNodes[index] = newNodes[index + 1]
+    newNodes[index + 1] = temp
+    setNodes(newNodes)
+  }
+  closeContextMenu()
+}
+
+const sendBackward = () => {
+  // 将节点在数组中的位置向前移，降低z-index
+  const nodes = getNodes.value
+  const index = nodes.findIndex((node) => node.id === flowNode.id)
+  
+  if (index > 0) {
+    const newNodes = [...nodes]
+    const temp = newNodes[index]
+    newNodes[index] = newNodes[index - 1]
+    newNodes[index - 1] = temp
+    setNodes(newNodes)
+  }
+  closeContextMenu()
+}
+
+// 对齐函数
+const alignChildNodes = (alignment) => {
+  if (childNodes.value.length <= 1) return
+  
+  const nodes = getNodes.value
+  const frameNode = nodes.find((node) => node.id === flowNode.id)
+  if (!frameNode) return
+  
+  const frameLeft = frameNode.position.x
+  const frameTop = frameNode.position.y
+  const frameWidth = (frameNode as any).dimensions?.width || (frameNode as any).width || 0
+  const frameHeight = (frameNode as any).dimensions?.height || (frameNode as any).height || 0
+  const frameRight = frameLeft + frameWidth
+  const frameBottom = frameTop + frameHeight
+  
+  const newNodes = nodes.map((node) => {
+    if (node.data?.parentId === flowNode.id) {
+      const nodeWidth = (node as any).dimensions?.width || (node as any).width || 0
+      const nodeHeight = (node as any).dimensions?.height || (node as any).height || 0
+      
+      let newX = node.position.x
+      let newY = node.position.y
+      
+      switch (alignment) {
+        case 'left':
+          newX = frameLeft + 10 // 边距
+          break
+        case 'center':
+          newX = frameLeft + (frameWidth - nodeWidth) / 2
+          break
+        case 'right':
+          newX = frameRight - nodeWidth - 10 // 边距
+          break
+        case 'top':
+          newY = frameTop + 10 // 边距
+          break
+        case 'middle':
+          newY = frameTop + (frameHeight - nodeHeight) / 2
+          break
+        case 'bottom':
+          newY = frameBottom - nodeHeight - 10 // 边距
+          break
+      }
+      
+      return {
+        ...node,
+        position: {
+          x: newX,
+          y: newY,
+        },
+      }
+    }
+    return node
+  })
+  
+  setNodes(newNodes)
+  closeContextMenu()
+}
+
+// 均分分布函数
+const distributeChildNodes = (direction) => {
+  if (childNodes.value.length <= 2) return
+  
+  const nodes = getNodes.value
+  const frameNode = nodes.find((node) => node.id === flowNode.id)
+  if (!frameNode) return
+  
+  const frameLeft = frameNode.position.x
+  const frameTop = frameNode.position.y
+  const frameWidth = (frameNode as any).dimensions?.width || (frameNode as any).width || 0
+  const frameHeight = (frameNode as any).dimensions?.height || (frameNode as any).height || 0
+  
+  const children = childNodes.value
+  
+  // 根据方向排序子节点
+  const sortedChildren = [...children].sort((a, b) => {
+    if (direction === 'horizontal') {
+      return a.position.x - b.position.x
+    } else {
+      return a.position.y - b.position.y
+    }
+  })
+  
+  if (direction === 'horizontal') {
+    // 计算总宽度
+    const totalWidth = sortedChildren.reduce((sum, node) => {
+      const width = (node as any).dimensions?.width || (node as any).width || 0
+      return sum + width
+    }, 0)
+    
+    // 计算间距
+    const availableSpace = frameWidth - totalWidth
+    const gap = availableSpace / (sortedChildren.length + 1)
+    
+    // 更新位置
+    let currentX = frameLeft + gap
+    const newNodes = nodes.map((node) => {
+      if (sortedChildren.find((child) => child.id === node.id)) {
+        const width = (node as any).dimensions?.width || (node as any).width || 0
+        const position = {
+          x: currentX,
+          y: node.position.y,
+        }
+        currentX += width + gap
+        return {
+          ...node,
+          position,
+        }
+      }
+      return node
+    })
+    
+    setNodes(newNodes)
+  } else {
+    // 计算总高度
+    const totalHeight = sortedChildren.reduce((sum, node) => {
+      const height = (node as any).dimensions?.height || (node as any).height || 0
+      return sum + height
+    }, 0)
+    
+    // 计算间距
+    const availableSpace = frameHeight - totalHeight
+    const gap = availableSpace / (sortedChildren.length + 1)
+    
+    // 更新位置
+    let currentY = frameTop + gap
+    const newNodes = nodes.map((node) => {
+      if (sortedChildren.find((child) => child.id === node.id)) {
+        const height = (node as any).dimensions?.height || (node as any).height || 0
+        const position = {
+          x: node.position.x,
+          y: currentY,
+        }
+        currentY += height + gap
+        return {
+          ...node,
+          position,
+        }
+      }
+      return node
+    })
+    
+    setNodes(newNodes)
+  }
+  
+  closeContextMenu()
+}
 </script>
 
 <style lang="scss" scoped>
@@ -763,6 +1284,23 @@ const handleFrameClick = (event: MouseEvent) => {
     border-style: solid;
     border-color: var(--b3-theme-primary);
     box-shadow: 0 0 0 2px var(--b3-theme-primary-light);
+  }
+
+  &.is-locked {
+    cursor: not-allowed;
+    border-color: var(--b3-theme-error-light);
+    
+    &:hover {
+      border-color: var(--b3-theme-error);
+    }
+    
+    .Handle {
+      display: none;
+    }
+    
+    :deep(.vue-flow__resize-control) {
+      display: none;
+    }
   }
 
   .FrameToolbarArea {
@@ -941,7 +1479,8 @@ const handleFrameClick = (event: MouseEvent) => {
 
   :deep(.potential-frame-child) {
     outline: 2px dashed var(--b3-theme-primary-light) !important;
-    outline-offset: 2px;
+    outline-offset: 4px !important;
+    transition: outline 0.2s ease;
   }
 }
 
@@ -996,9 +1535,156 @@ const handleFrameClick = (event: MouseEvent) => {
   }
 }
 
-// 修改全局样式，确保其他节点始终在 Frame 上层，包括选中状态
+.AdditionalToolbar {
+  display: flex;
+  gap: 4px;
+  margin-left: 8px;
+  border-left: 1px solid var(--b3-border-color);
+  padding-left: 8px;
+  
+  .ToolbarBtn {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    background-color: transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background-color: var(--b3-theme-surface-light);
+    }
+    
+    &.active {
+      color: var(--b3-theme-primary);
+      background-color: var(--b3-theme-primary-light);
+    }
+    
+    &.color-picker {
+      position: relative;
+      overflow: hidden;
+      
+      input[type="color"] {
+        position: absolute;
+        width: 30px;
+        height: 30px;
+        top: -3px;
+        left: -3px;
+        padding: 0;
+        border: none;
+        opacity: 0;
+        cursor: pointer;
+      }
+    }
+  }
+}
+
+.ColorPickerModal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1100;
+  width: 300px;
+  background-color: var(--b3-theme-surface);
+  border-radius: var(--b3-border-radius);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  
+  .ColorPickerHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--b3-border-color);
+    
+    span {
+      font-weight: 500;
+      font-size: 14px;
+    }
+    
+    .CloseBtn {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border-radius: 50%;
+      
+      &:hover {
+        background-color: var(--b3-theme-surface-light);
+      }
+    }
+  }
+  
+  .ColorPickerContent {
+    padding: 16px;
+    
+    .ColorPickerItem {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+      
+      span {
+        font-size: 13px;
+      }
+      
+      input[type="color"] {
+        width: 30px;
+        height: 30px;
+        padding: 0;
+        border: 1px solid var(--b3-border-color);
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      
+      select {
+        padding: 4px 8px;
+        border: 1px solid var(--b3-border-color);
+        border-radius: 4px;
+        background-color: var(--b3-theme-background);
+        color: var(--b3-theme-on-background);
+      }
+      
+      input[type="range"] {
+        width: 150px;
+      }
+    }
+  }
+}
+
+.ColorPickerContainer {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  
+  input[type="color"] {
+    width: 100%;
+    height: 30px;
+    padding: 0;
+    border: 1px solid var(--b3-border-color);
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .BorderStylePicker {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+
 :deep(.vue-flow__node:not(.EnWhiteBoardNodeFrameContainer)) {
-  z-index: 2 !important; // 使用 !important 确保优先级
+  z-index: 2 !important;
 }
 </style>
 
