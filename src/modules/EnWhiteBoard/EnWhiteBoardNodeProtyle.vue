@@ -56,6 +56,44 @@
       </div>
     </EnWhiteBoardNodeMindmap>
   </template>
+  <template v-else-if="isTreeCardNode">
+    <EnWhiteBoardNodeTreeCard
+      :nodeId="flowNode.id"
+      :isCollapsed="isCollapsed"
+      :displayText="displayText"
+      :isMergingToSuperBlock="isMergingToSuperBlock"
+      :nodeData="nodeData"
+      :whiteBoardConfigData="embedWhiteBoardConfigData"
+      @toggleTreeCard="handleToggleTreeCard"
+    >
+      <div
+        ref="mainRef"
+        class="main EnWhiteBoardNodeProtyleMain"
+        :data-en-flow-node-id="flowNode.id"
+        @wheel.capture="captureWheel"
+        @mousedown.capture="captureMouseDown"
+        @click.capture="captureClick"
+      >
+        <template v-if="nodeData.blockId">
+          <EnProtyle
+            :block-id="nodeData.blockId"
+            disableEnhance
+            @after="afterProtyleLoad"
+          />
+          <Teleport
+            v-if="enWhiteBoardProtyleUtilAreaRef"
+            :to="enWhiteBoardProtyleUtilAreaRef"
+          >
+            <div
+              ref="protyleUtilAreaRef"
+              :data-en-whiteboard-node-protyle-util-area="flowNode.id"
+            >
+            </div>
+          </Teleport>
+        </template>
+      </div>
+    </EnWhiteBoardNodeTreeCard>
+  </template>
   <div
     v-else
     ref="containerRef"
@@ -184,6 +222,7 @@ import {
   watch,
 } from 'vue'
 import EnWhiteBoardNodeMindmap from './EnWhiteBoardNodeMindmap.vue'
+import EnWhiteBoardNodeTreeCard from './EnWhiteBoardNodeTreeCard.vue'
 import EnWhiteBoardToolBar from './EnWhiteBoardToolBar.vue'
 
 const props = defineProps<{
@@ -636,6 +675,49 @@ const handleToggleMindmap = () => {
     return node
   })
   setNodes(newNodes)
+}
+
+// 添加TreeCard节点类型的判断
+const isTreeCardNode = computed(() => nodeData.value?.treecard === true)
+
+// 添加TreeCard节点的模板部分
+const handleToggleTreeCard = () => {
+  // 切换节点类型
+  const newNodes = getNodes.value.map((node) => {
+    if (node.id === flowNode.id) {
+      return {
+        ...node,
+        type: !isTreeCardNode.value ? EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_TREECARD : EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_PROTYLE,
+        data: {
+          ...node.data,
+          treecard: !isTreeCardNode.value,
+        },
+      }
+    }
+    return node
+  })
+  setNodes(newNodes)
+}
+
+// 节点类名
+const nodeClass = computed(() => {
+  return {
+    'is-selected': isSelected.value,
+    'is-collapsed': isCollapsed.value,
+    'is-mindmap': isMindmapNode.value,
+    'is-treecard': isTreeCardNode.value,
+  }
+})
+
+// 获取节点类型
+const getNodeType = () => {
+  if (isMindmapNode.value) {
+    return 'EnWhiteBoardNodeMindmap'
+  } else if (isTreeCardNode.value) {
+    return 'EnWhiteBoardNodeTreeCard'
+  } else {
+    return 'EnWhiteBoardNodeProtyle'
+  }
 }
 </script>
 

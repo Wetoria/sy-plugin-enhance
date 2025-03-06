@@ -29,6 +29,13 @@
         <icon-mind-mapping />
         <span>新建思维导图</span>
       </div>
+      <div
+        class="MenuItem"
+        @click="handleCreateTreeCard"
+      >
+        <icon-apps />
+        <span>新建树形卡片</span>
+      </div>
     </div>
     <div class="MenuGroup">
       <div
@@ -62,6 +69,7 @@
 import { getNewDailyNoteBlockId } from '@/modules/DailyNote/DailyNote'
 import {
   generateWhiteBoardNodeId,
+  generateWhiteBoardEdgeId,
   useWhiteBoardModule,
 } from '@/modules/EnWhiteBoard/EnWhiteBoard'
 import { EN_CONSTANTS } from '@/utils/Constants'
@@ -89,6 +97,7 @@ const emit = defineEmits<{
 
 const {
   addNodes,
+  addEdges,
   viewport,
   fitView,
   setCenter,
@@ -222,6 +231,85 @@ const handleCreateMindmap = async () => {
   // 添加子节点
   addNodes(childNodes)
 
+  emit('close')
+}
+
+// 创建树形卡片节点
+const handleCreateTreeCard = async () => {
+  try {
+    const position = project({
+      x: props.clickPosition.x,
+      y: props.clickPosition.y,
+    })
+    
+    // 创建根节点
+    const blockId = await getNewDailyNoteBlockId()
+    const treeCardNodeId = generateWhiteBoardNodeId()
+    
+    const treeCardNode = {
+      id: treeCardNodeId,
+      type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_TREECARD,
+      data: {
+        blockId,
+        treecard: true,
+      },
+      position,
+      width: moduleWhiteBoardOptions.value.cardWidthDefault,
+      height: moduleWhiteBoardOptions.value.cardHeightDefault,
+      connectable: true,
+      draggable: true,
+      selectable: true,
+    }
+    
+    addNodes([treeCardNode])
+    
+    // 创建子节点
+    const childBlockId = await getNewDailyNoteBlockId()
+    const childNodeId = generateWhiteBoardNodeId()
+    
+    const childNode = {
+      id: childNodeId,
+      type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_PROTYLE,
+      data: {
+        blockId: childBlockId,
+        parentId: treeCardNodeId,
+        treecard: true,
+      },
+      position: {
+        x: position.x,
+        y: position.y + moduleWhiteBoardOptions.value.cardHeightDefault + 30,
+      },
+      width: moduleWhiteBoardOptions.value.cardWidthDefault,
+      height: moduleWhiteBoardOptions.value.cardHeightDefault,
+      connectable: true,
+      draggable: true,
+      selectable: true,
+    }
+    
+    const edge = {
+      id: generateWhiteBoardEdgeId(),
+      type: EN_CONSTANTS.EN_WHITE_BOARD_EDGE_TYPE_BASE,
+      source: treeCardNodeId,
+      target: childNodeId,
+      sourceHandle: 'bottom',
+      targetHandle: 'left',
+      data: {
+        label: '',
+        edgeType: 'bezier',
+        width: 2,
+        style: 'solid',
+        color: 'var(--b3-font-background1)',
+        markerEnd: undefined,
+        markerStart: undefined,
+      },
+    }
+    
+    addNodes([childNode])
+    addEdges([edge])
+  } catch (error) {
+    console.error('Error creating TreeCard:', error)
+  }
+  
   emit('close')
 }
 
