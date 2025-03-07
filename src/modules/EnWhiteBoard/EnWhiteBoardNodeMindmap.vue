@@ -7,12 +7,31 @@
     }"
   >
     <!-- 思维导图模式下的添加子节点按钮 -->
-    <div class="add-child-button">
+    <div 
+      v-if="!hasParent || parentEdgeHandle === 'left'"
+      class="add-child-button left"
+      @click.stop="handleAddChildNode('left')"
+    >
       <a-button
         size="mini"
         type="primary"
         shape="circle"
-        @click.stop="handleAddChildNode"
+      >
+        <template #icon>
+          <icon-plus />
+        </template>
+      </a-button>
+    </div>
+
+    <div 
+      v-if="!hasParent || parentEdgeHandle === 'right'"
+      class="add-child-button right"
+      @click.stop="handleAddChildNode('right')"
+    >
+      <a-button
+        size="mini"
+        type="primary"
+        shape="circle"
       >
         <template #icon>
           <icon-plus />
@@ -68,11 +87,11 @@
       <slot></slot>
     </div>
 
-    <!-- 思维导图节点只显示特定连接点 -->
+    <!-- 思维导图节点的连接点 -->
     <Handle
       id="right"
       class="Handle right"
-      type="source"
+      :type="parentEdgeHandle === 'left' ? 'target' : 'source'"
       :position="Position.Right"
     >
       <div class="HandleIcon">
@@ -82,7 +101,7 @@
     <Handle
       id="left"
       class="Handle left"
-      type="target"
+      :type="parentEdgeHandle === 'right' ? 'target' : 'source'"
       :position="Position.Left"
     >
       <div class="HandleIcon">
@@ -317,55 +336,100 @@ const calculateNodeHeightOptimized = (node, nodes) => {
   return result
 }
 
-// 优化后的位置计算函数
+// 修改位置计算函数
 const calculateNodePositionsOptimized = (node, nodes, parentX = 0, startY = 0) => {
-  // 如果不是思维导图节点，直接返回空Map
-  if (!node.data?.mindmap) {
-    return new Map()
-  }
+  if (!node.data?.mindmap) return new Map()
 
   const positions = new Map()
   const horizontalSpacing = 150
   const verticalSpacing = 20
 
-  // 如果节点被折叠，则不计算子节点位置
-  if (node.data?.folded) {
-    return positions
-  }
+  if (node.data?.folded) return positions
   
-  // 只获取思维导图子节点（仅考虑可见节点）
+  // 获取所有可见的子节点
   const childNodes = nodes.filter((n) => 
     n.data?.mindmap && 
     n.data?.parentId === node.id && 
-    !n.hidden // 跳过隐藏节点
+    !n.hidden
   )
   
   if (childNodes.length === 0) return positions
 
-  // 使用缓存的高度计算
-  const childrenHeights = childNodes.map((child) => calculateNodeHeightOptimized(child, nodes))
-  const totalHeight = childrenHeights.reduce((sum, height, index) => {
-    return sum + height + (index < childrenHeights.length - 1 ? verticalSpacing : 0)
-  }, 0)
-
   const nodeWidth = node.dimensions?.width || getDefaultDimensions().width
-  const childX = parentX + nodeWidth + horizontalSpacing
-  let currentY = startY - (totalHeight / 2) + (node.dimensions?.height || 0) / 2
 
-  childNodes.forEach((child, index) => {
-    const childHeight = childrenHeights[index]
-    const childY = currentY + (childHeight - (child.dimensions?.height || 0)) / 2
-
-    positions.set(child.id, {
-      x: childX,
-      y: childY,
-    })
-    currentY += childHeight + verticalSpacing
-
-    // 递归计算子节点位置
-    const childPositions = calculateNodePositionsOptimized(child, nodes, childX, childY)
-    childPositions.forEach((pos, id) => positions.set(id, pos))
+  // 分离左右两侧的子节点
+  const leftNodes = childNodes.filter(child => {
+    const edge = edges.value.find(e => e.target === child.id)
+    return edge?.sourceHandle === 'left'
   })
+
+  const rightNodes = childNodes.filter(child => {
+    const edge = edges.value.find(e => e.target === child.id)
+    return edge?.sourceHandle === 'right'
+  })
+
+  // 计算左侧节点位置
+  if (leftNodes.length > 0) {
+    const leftHeights = leftNodes.map(child => calculateNodeHeightOptimized(child, nodes))
+    const leftTotalHeight = leftHeights.reduce((sum, height, index) => 
+      sum + height + (index < leftHeights.length - 1 ? verticalSpacing : 0), 0
+    )
+    
+    let currentY = startY - (leftTotalHeight / 2) + (node.dimensions?.height || 0) / 2
+    const leftX = parentX - horizontalSpacing
+
+    leftNodes.forEach((child, index) => {
+      const childHeight = leftHeights[index]
+      const childWidth = child.dimensions?.width || getDefaultDimensions().width
+      
+      positions.set(child.id, {
+        x: leftX - childWidth,
+        y: currentY + (childHeight - (child.dimensions?.height || 0)) / 2,
+      })
+      
+      currentY += childHeight + verticalSpacing
+
+      // 递归计算子节点位置
+      const childPositions = calculateNodePositionsOptimized(
+        child,
+        nodes,
+        leftX - childWidth,
+        positions.get(child.id).y
+      )
+      childPositions.forEach((pos, id) => positions.set(id, pos))
+    })
+  }
+
+  // 计算右侧节点位置
+  if (rightNodes.length > 0) {
+    const rightHeights = rightNodes.map(child => calculateNodeHeightOptimized(child, nodes))
+    const rightTotalHeight = rightHeights.reduce((sum, height, index) => 
+      sum + height + (index < rightHeights.length - 1 ? verticalSpacing : 0), 0
+    )
+    
+    let currentY = startY - (rightTotalHeight / 2) + (node.dimensions?.height || 0) / 2
+    const rightX = parentX + nodeWidth + horizontalSpacing
+
+    rightNodes.forEach((child, index) => {
+      const childHeight = rightHeights[index]
+      
+      positions.set(child.id, {
+        x: rightX,
+        y: currentY + (childHeight - (child.dimensions?.height || 0)) / 2,
+      })
+      
+      currentY += childHeight + verticalSpacing
+
+      // 递归计算子节点位置
+      const childPositions = calculateNodePositionsOptimized(
+        child,
+        nodes,
+        rightX,
+        positions.get(child.id).y
+      )
+      childPositions.forEach((pos, id) => positions.set(id, pos))
+    })
+  }
 
   return positions
 }
@@ -464,35 +528,53 @@ const updateEdgesVisibility = () => {
   setEdges(updatedEdges)
 }
 
-// 计算新节点位置和更新兄弟节点位置
-const calculateNewNodePosition = (parentNode, siblings, nodes) => {
+// 添加hasParent计算属性
+const hasParent = computed(() => !!props.nodeData?.parentId)
+
+// 添加parentEdgeHandle计算属性
+const parentEdgeHandle = computed(() => {
+  if (!hasParent.value) return null
+  const edge = edges.value?.find(e => e.target === props.nodeId)
+  return edge?.sourceHandle
+})
+
+// 修改计算新节点位置的函数
+const calculateNewNodePosition = (parentNode, siblings, nodes, handle = 'right') => {
   const horizontalSpacing = 150
   const verticalSpacing = 20
-  const parentRightEdge = parentNode.position.x + (parentNode.dimensions?.width || getDefaultDimensions().width)
+  const parentWidth = parentNode.dimensions?.width || getDefaultDimensions().width
+  
+  // 根据handle决定x轴位置
+  const baseX = handle === 'right' 
+    ? parentNode.position.x + parentWidth + horizontalSpacing
+    : parentNode.position.x - horizontalSpacing - getDefaultDimensions().width
 
-  // 计算新节点的基础位置
-  const basePosition = {
-    x: parentRightEdge + horizontalSpacing,
-    y: parentNode.position.y,
-  }
+  // 获取同侧的兄弟节点
+  const sameSideSiblings = siblings.filter(sibling => {
+    const edge = edges.value.find(e => e.target === sibling.id)
+    return edge?.sourceHandle === handle
+  })
 
-  if (siblings.length === 0) {
+  if (sameSideSiblings.length === 0) {
     return {
-      newPosition: basePosition,
+      newPosition: {
+        x: baseX,
+        y: parentNode.position.y,
+      },
       siblingPositions: new Map(),
     }
   }
 
-  // 预先计算所有节点（包括新节点）的高度和位置
-  const siblingHeights = siblings.map((sibling) => calculateNodeHeightOptimized(sibling, nodes))
+  // 预先计算所有节点的高度和位置
+  const siblingHeights = sameSideSiblings.map((sibling) => calculateNodeHeightOptimized(sibling, nodes))
   const newNodeHeight = getDefaultDimensions().height
   const allHeights = [...siblingHeights, newNodeHeight]
 
-  // 计算总高度（包括间距）
+  // 计算总高度
   const totalHeight = allHeights.reduce((sum, height) => sum + height, 0)
     + (allHeights.length - 1) * verticalSpacing
 
-  // 计算起始Y坐标，使整体垂直居中
+  // 计算起始Y坐标
   const startY = parentNode.position.y - totalHeight / 2
     + (parentNode.dimensions?.height || getDefaultDimensions().height) / 2
 
@@ -501,10 +583,10 @@ const calculateNewNodePosition = (parentNode, siblings, nodes) => {
   let currentY = startY
 
   // 更新现有兄弟节点位置
-  siblings.forEach((sibling, index) => {
+  sameSideSiblings.forEach((sibling, index) => {
     const height = siblingHeights[index]
     updatedPositions.set(sibling.id, {
-      x: basePosition.x,
+      x: baseX,
       y: currentY + height / 2,
     })
     currentY += height + verticalSpacing
@@ -512,7 +594,7 @@ const calculateNewNodePosition = (parentNode, siblings, nodes) => {
 
   // 计算新节点的最终位置
   const newPosition = {
-    x: basePosition.x,
+    x: baseX,
     y: currentY + newNodeHeight / 2,
   }
 
@@ -522,30 +604,8 @@ const calculateNewNodePosition = (parentNode, siblings, nodes) => {
   }
 }
 
-// 计算边的颜色
-const calculateEdgeColor = (parentEdge, siblings, currentEdges) => {
-  let edgeColor = presetColors[0]
-  if (parentEdge?.data?.color) {
-    edgeColor = parentEdge.data.color
-  } else if (siblings.length > 0) {
-    const sourceEdges = currentEdges.filter((edge) => edge.source === props.nodeId)
-      .sort((a, b) => {
-        const nodeA = getNodes.value.find((node) => node.id === a.target)
-        const nodeB = getNodes.value.find((node) => node.id === b.target)
-        return (nodeB?.position.y || 0) - (nodeA?.position.y || 0)
-      })
-    if (sourceEdges[0]?.data?.color) {
-      const lastColorIndex = presetColors.findIndex((color) => color === sourceEdges[0].data.color)
-      if (lastColorIndex !== -1) {
-        edgeColor = presetColors[(lastColorIndex + 1) % presetColors.length]
-      }
-    }
-  }
-  return edgeColor
-}
-
-// 优化后的handleAddChildNode函数
-const handleAddChildNode = async () => {
+// 修改handleAddChildNode函数
+const handleAddChildNode = async (handle: string = 'right') => {
   try {
     const nodes = getNodes.value || []
     const parentNode = nodes.find((node) => node.id === props.nodeId)
@@ -564,7 +624,7 @@ const handleAddChildNode = async () => {
     const siblings = nodes.filter((node) => node.data?.parentId === props.nodeId)
     const currentEdges = edges.value || []
 
-    // 2. 计算最终位置
+    // 2. 计算最终位置，传入handle参数
     const {
       newPosition,
       siblingPositions,
@@ -572,13 +632,14 @@ const handleAddChildNode = async () => {
       parentNode,
       siblings,
       nodes,
+      handle,
     )
 
     // 3. 确定边的颜色
     const parentEdge = currentEdges.find((edge) => edge.target === props.nodeId)
     const edgeColor = calculateEdgeColor(parentEdge, siblings, currentEdges)
 
-    // 4. 创建新节点（使用计算好的最终位置）
+    // 4. 创建新节点
     const newNodeId = generateWhiteBoardNodeId()
     const newNode = {
       id: newNodeId,
@@ -588,7 +649,7 @@ const handleAddChildNode = async () => {
         parentId: parentNode.id,
         mindmap: true,
         isNew: true,
-        folded: false, // 新节点默认不折叠
+        folded: false,
       },
       position: newPosition,
       width: getDefaultDimensions().width,
@@ -598,7 +659,7 @@ const handleAddChildNode = async () => {
       selectable: true,
     }
 
-    // 先只添加新节点，不包含边
+    // 先只添加新节点
     const tempNodes = [...nodes, newNode]
 
     // 5. 更新所有节点位置
@@ -625,16 +686,16 @@ const handleAddChildNode = async () => {
       type: EN_CONSTANTS.EN_WHITE_BOARD_EDGE_TYPE_BASE,
       source: parentNode.id,
       target: newNodeId,
-      sourceHandle: 'right',
-      targetHandle: 'left',
+      sourceHandle: handle,
+      targetHandle: handle === 'right' ? 'left' : 'right',
       data: {
         label: '',
         edgeType: 'bezier',
         width: 2,
         style: 'solid',
         color: edgeColor,
-        markerEnd: undefined,
-        markerStart: undefined,
+        markerEnd: 'none',
+        markerStart: 'none',
       },
     }
     
@@ -652,7 +713,6 @@ const handleAddChildNode = async () => {
     await updateMindmapLayoutRecursively(props.nodeId)
   } catch (error) {
     console.error('Error creating new node:', error)
-    // 提示用户发生错误
     emit('showError', '创建新节点时发生错误，请重试。')
   }
 }
@@ -914,6 +974,31 @@ const toggleFoldSubtree = async () => {
     props.whiteBoardConfigData.boardOptions.edges = updatedEdges
   }
 }
+
+// 修改计算边颜色的函数
+const calculateEdgeColor = (parentEdge, siblings, currentEdges) => {
+  // 如果有父边的颜色，直接继承
+  if (parentEdge?.data?.color) {
+    return parentEdge.data.color
+  }
+
+  // 获取当前节点的所有子边（包括左右两侧）
+  const sourceEdges = currentEdges.filter((edge) => edge.source === props.nodeId)
+  
+  // 如果已经有子边，则基于最后一个子边的颜色选择下一个颜色
+  if (sourceEdges.length > 0) {
+    const lastEdge = sourceEdges[sourceEdges.length - 1]
+    if (lastEdge?.data?.color) {
+      const lastColorIndex = presetColors.findIndex((color) => color === lastEdge.data.color)
+      if (lastColorIndex !== -1) {
+        return presetColors[(lastColorIndex + 1) % presetColors.length]
+      }
+    }
+  }
+
+  // 如果是新的分支，使用第一个预设颜色
+  return presetColors[0]
+}
 </script>
 
 <style lang="scss" scoped>
@@ -943,22 +1028,29 @@ const toggleFoldSubtree = async () => {
 
   .add-child-button {
     position: absolute;
-    right: -16px;
     top: 50%;
     transform: translateY(-50%) scale(0.9);
     z-index: 10;
     opacity: 0;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &.left {
+      left: -16px;
+    }
+
+    &.right {
+      right: -16px;
+    }
   }
   
   .fold-children-button {
     position: absolute;
-    right: -16px;
-    bottom: 10px;
+    top: 50%;
     transform: translateY(-50%) scale(0.9);
     z-index: 10;
     opacity: 0;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    right: -48px;
   }
 
   .ProtyleToolbarArea {
@@ -1029,3 +1121,4 @@ const toggleFoldSubtree = async () => {
   transition: opacity 0.3s ease-out !important;
 }
 </style>
+
