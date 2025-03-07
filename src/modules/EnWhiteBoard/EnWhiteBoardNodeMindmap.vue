@@ -6,54 +6,75 @@
       ...nodeTypeClass,
     }"
   >
-    <!-- 思维导图模式下的添加子节点按钮 -->
+    <!-- 思维导图模式下的添加子节点按钮和折叠按钮 -->
     <div 
       v-if="!hasParent || parentEdgeHandle === 'left'"
-      class="add-child-button left"
-      @click.stop="handleAddChildNode('left')"
+      class="button-group left"
     >
-      <a-button
-        size="mini"
-        type="primary"
-        shape="circle"
+      <div
+        v-if="hasLeftChildren"
+        class="fold-children-button"
+        @click.stop="toggleFoldSubtree('left')"
       >
-        <template #icon>
-          <icon-plus />
-        </template>
-      </a-button>
+        <a-button
+          size="mini"
+          shape="circle"
+        >
+          <template #icon>
+            <icon-minus v-if="!isLeftFolded" />
+            <icon-plus v-else />
+          </template>
+        </a-button>
+      </div>
+      <div 
+        class="add-child-button"
+        @click.stop="handleAddChildNode('left')"
+      >
+        <a-button
+          size="mini"
+          type="primary"
+          shape="circle"
+        >
+          <template #icon>
+            <icon-plus />
+          </template>
+        </a-button>
+      </div>
     </div>
 
     <div 
       v-if="!hasParent || parentEdgeHandle === 'right'"
-      class="add-child-button right"
-      @click.stop="handleAddChildNode('right')"
+      class="button-group right"
     >
-      <a-button
-        size="mini"
-        type="primary"
-        shape="circle"
+      <div 
+        class="add-child-button"
+        @click.stop="handleAddChildNode('right')"
       >
-        <template #icon>
-          <icon-plus />
-        </template>
-      </a-button>
-    </div>
-
-    <!-- 折叠子树按钮 -->
-    <div 
-      v-if="hasChildren"
-      class="fold-children-button"
-      @click.stop="toggleFoldSubtree"
-    >
-      <a-button
-        size="mini"
-        shape="circle"
+        <a-button
+          size="mini"
+          type="primary"
+          shape="circle"
+        >
+          <template #icon>
+            <icon-plus />
+          </template>
+        </a-button>
+      </div>
+      <div
+        v-if="hasRightChildren"
+        class="fold-children-button"
+        @click.stop="toggleFoldSubtree('right')"
       >
-        <template #icon>
-          <icon-minus v-if="!isFolded" />
-          <icon-plus v-else />
-        </template>
-      </a-button>
+        <a-button
+          size="mini"
+          shape="circle"
+        >
+          <template #icon>
+            <icon-minus v-if="!isRightFolded" />
+            <icon-plus v-else />
+          </template>
+        </a-button>
+      </div>
     </div>
 
     <div class="main">
@@ -878,42 +899,80 @@ const getDescendantNodeIds = (nodeId, nodes) => {
   return result
 }
 
-// 实现折叠子树功能
-const toggleFoldSubtree = async () => {
-  // 更改折叠状态
-  isFolded.value = !isFolded.value
-  
-  // 更新节点数据
-  emit('updateNodeData', props.nodeId, { 
-    ...props.nodeData, 
-    folded: isFolded.value 
+// 添加左右侧折叠状态
+const isLeftFolded = ref(false)
+const isRightFolded = ref(false)
+
+// 添加左右侧子节点计算属性
+const leftChildNodes = computed(() => {
+  const nodes = getNodes.value || []
+  return nodes.filter((node) => {
+    if (!node.data?.parentId || node.data?.parentId !== props.nodeId) return false
+    const edge = edges.value?.find(e => e.target === node.id)
+    return edge?.sourceHandle === 'left'
   })
+})
+
+const rightChildNodes = computed(() => {
+  const nodes = getNodes.value || []
+  return nodes.filter((node) => {
+    if (!node.data?.parentId || node.data?.parentId !== props.nodeId) return false
+    const edge = edges.value?.find(e => e.target === node.id)
+    return edge?.sourceHandle === 'right'
+  })
+})
+
+const hasLeftChildren = computed(() => leftChildNodes.value.length > 0)
+const hasRightChildren = computed(() => rightChildNodes.value.length > 0)
+
+// 修改折叠子树功能
+const toggleFoldSubtree = async (side: 'left' | 'right') => {
+  // 根据侧边更新对应的折叠状态
+  if (side === 'left') {
+    isLeftFolded.value = !isLeftFolded.value
+  } else {
+    isRightFolded.value = !isRightFolded.value
+  }
   
   // 获取所有节点和边
   const nodes = getNodes.value || []
   const allEdges = edges.value || []
   
-  // 获取所有子孙节点ID
-  const descendantIds = getDescendantNodeIds(props.nodeId, nodes)
+  // 获取指定侧边的子孙节点ID
+  const descendantIds = new Set()
+  const collectDescendants = (nodeId) => {
+    const children = nodes.filter(n => {
+      if (n.data?.parentId !== nodeId) return false
+      const edge = allEdges.find(e => e.target === n.id)
+      return edge?.sourceHandle === side
+    })
+    
+    children.forEach(child => {
+      descendantIds.add(child.id)
+      collectDescendants(child.id)
+    })
+  }
   
-  // 根据折叠状态处理子节点和边的可见性
+  collectDescendants(props.nodeId)
+  
+  // 更新节点可见性
   const updatedNodes = nodes.map(node => {
     if (descendantIds.has(node.id)) {
       return {
         ...node,
-        hidden: isFolded.value,
+        hidden: side === 'left' ? isLeftFolded.value : isRightFolded.value,
         class: 'mindmap-node-fold-transition',
       }
     }
     return node
   })
   
-  // 处理边的可见性
+  // 更新边的可见性
   const updatedEdges = allEdges.map(edge => {
     if (descendantIds.has(edge.source) || descendantIds.has(edge.target)) {
       return {
         ...edge,
-        hidden: isFolded.value,
+        hidden: side === 'left' ? isLeftFolded.value : isRightFolded.value,
         class: 'mindmap-edge-fold-transition',
       }
     }
@@ -924,21 +983,11 @@ const toggleFoldSubtree = async () => {
   setNodes(updatedNodes)
   setEdges(updatedEdges)
   
-  // 先等待状态更新
+  // 等待状态更新
   await nextTick()
   
-  // 找到当前节点的父节点进行布局更新
-  const currentNode = nodes.find(n => n.id === props.nodeId)
-  if (currentNode?.data?.parentId) {
-    const parentNode = nodes.find(n => n.id === currentNode.data.parentId)
-    if (parentNode?.data?.mindmap) {
-      // 从父节点开始更新整个布局
-      await updateMindmapLayoutRecursively(parentNode.id)
-    }
-  } else {
-    // 如果是根节点，直接从当前节点更新布局
-    await updateMindmapLayoutRecursively(props.nodeId)
-  }
+  // 更新布局
+  await updateMindmapLayoutRecursively(props.nodeId)
   
   // 更新白板配置
   if (props.whiteBoardConfigData) {
@@ -987,42 +1036,46 @@ const calculateEdgeColor = (parentEdge, siblings, currentEdges) => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
 
+  .button-group {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+
+    &.left {
+      left: -32px;
+      flex-direction: row-reverse;
+    }
+
+    &.right {
+      right: -32px;
+    }
+
+    .add-child-button,
+    .fold-children-button {
+      transform: scale(0.9);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: auto;
+    }
+  }
+
   &:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     border-color: var(--b3-theme-primary);
 
-    .add-child-button,
-    .fold-children-button {
+    .button-group {
       opacity: 1;
-      transform: translateY(-50%) scale(1);
-    }
-  }
 
-  .add-child-button {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%) scale(0.9);
-    z-index: 10;
-    opacity: 0;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-    &.left {
-      left: -16px;
+      .add-child-button,
+      .fold-children-button {
+        transform: scale(1);
+      }
     }
-
-    &.right {
-      right: -16px;
-    }
-  }
-  
-  .fold-children-button {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%) scale(0.9);
-    z-index: 10;
-    opacity: 0;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    right: -48px;
   }
 
   .main {
