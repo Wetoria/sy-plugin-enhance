@@ -429,58 +429,6 @@ const calculateNewNodePosition = (parentNode, siblings, nodes) => {
   }
 }
 
-// 创建新节点和边
-const createNodeWithEdge = (parentNode, nodes, edges, options) => {
-  const {
-    blockId,
-    position,
-    edgeColor,
-  } = options
-
-  const newNodeId = generateWhiteBoardNodeId()
-  const newNode = {
-    id: newNodeId,
-    type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_PROTYLE,
-    data: {
-      blockId,
-      parentId: parentNode.id,
-      mindmap: true,
-      // 添加标记以跟踪节点创建状态
-      isNew: true,
-    },
-    position,
-    width: getDefaultDimensions().width,
-    height: getDefaultDimensions().height,
-    connectable: true,
-    draggable: true,
-    selectable: true,
-  }
-
-  const newEdge = {
-    id: generateWhiteBoardEdgeId(),
-    type: EN_CONSTANTS.EN_WHITE_BOARD_EDGE_TYPE_BASE,
-    source: parentNode.id,
-    target: newNodeId,
-    sourceHandle: 'right',
-    targetHandle: 'left',
-    data: {
-      label: '',
-      edgeType: 'bezier',
-      width: 2,
-      style: 'solid',
-      color: edgeColor,
-      markerEnd: undefined,
-      markerStart: undefined,
-    },
-  }
-
-  return {
-    nodes: [...nodes, newNode],
-    edges: [...edges, newEdge],
-    newNode,
-  }
-}
-
 // 计算边的颜色
 const calculateEdgeColor = (parentEdge, siblings, currentEdges) => {
   let edgeColor = presetColors[0]
@@ -533,23 +481,29 @@ const handleAddChildNode = async () => {
     const edgeColor = calculateEdgeColor(parentEdge, siblings, currentEdges)
 
     // 4. 创建新节点（使用计算好的最终位置）
-    const {
-      nodes: updatedNodes,
-      edges: updatedEdges,
-      newNode,
-    } = createNodeWithEdge(
-      parentNode,
-      nodes,
-      currentEdges,
-      {
+    const newNodeId = generateWhiteBoardNodeId()
+    const newNode = {
+      id: newNodeId,
+      type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_PROTYLE,
+      data: {
         blockId,
-        position: newPosition,
-        edgeColor,
+        parentId: parentNode.id,
+        mindmap: true,
+        isNew: true,
       },
-    )
+      position: newPosition,
+      width: getDefaultDimensions().width,
+      height: getDefaultDimensions().height,
+      connectable: true,
+      draggable: true,
+      selectable: true,
+    }
+
+    // 先只添加新节点，不包含边
+    const tempNodes = [...nodes, newNode]
 
     // 5. 更新所有节点位置
-    const finalNodes = updatedNodes.map((node) => {
+    const finalNodes = tempNodes.map((node) => {
       const newPos = siblingPositions.get(node.id)
       return newPos
         ? {
@@ -559,18 +513,42 @@ const handleAddChildNode = async () => {
         : node
     })
 
-    // 6. 批量更新状态
+    // 6. 批量更新节点状态
     await nextTick()
     setNodes(finalNodes)
+    
+    // 7. 等待节点渲染完成
+    await new Promise(resolve => setTimeout(resolve, 100))
+    
+    // 8. 创建并添加边
+    const newEdge = {
+      id: generateWhiteBoardEdgeId(),
+      type: EN_CONSTANTS.EN_WHITE_BOARD_EDGE_TYPE_BASE,
+      source: parentNode.id,
+      target: newNodeId,
+      sourceHandle: 'right',
+      targetHandle: 'left',
+      data: {
+        label: '',
+        edgeType: 'bezier',
+        width: 2,
+        style: 'solid',
+        color: edgeColor,
+        markerEnd: undefined,
+        markerStart: undefined,
+      },
+    }
+    
+    const updatedEdges = [...currentEdges, newEdge]
     setEdges(updatedEdges)
 
-    // 7. 同步更新配置
+    // 9. 同步更新配置
     if (props.whiteBoardConfigData) {
       props.whiteBoardConfigData.boardOptions.nodes = finalNodes
       props.whiteBoardConfigData.boardOptions.edges = updatedEdges
     }
 
-    // 8. 等待节点渲染完成后更新布局
+    // 10. 更新布局
     await waitForNodeDimensions([newNode])
     await updateMindmapLayoutRecursively(props.nodeId)
   } catch (error) {
@@ -625,6 +603,30 @@ const setupMindmapWatchers = () => {
     const oldMindmapIds = getMindmapNodeIds(oldNodes)
     const newMindmapIds = getMindmapNodeIds(newNodes)
 
+    // 检查当前节点是否移动了（作为根节点）
+    const currentNodeOld = oldNodes.find(n => n.id === props.nodeId)
+    const currentNodeNew = newNodes.find(n => n.id === props.nodeId)
+    
+    if (currentNodeOld && currentNodeNew && 
+        JSON.stringify(currentNodeOld.position) !== JSON.stringify(currentNodeNew.position)) {
+      // 计算位置偏移量
+      const offsetX = currentNodeNew.position.x - currentNodeOld.position.x
+      const offsetY = currentNodeNew.position.y - currentNodeOld.position.y
+      
+      // 检查是否是单纯的拖动（而非其他操作）
+      const isDragOnly = offsetX !== 0 || offsetY !== 0
+      
+      if (isDragOnly) {
+        // 对于根节点拖动，同步移动所有子节点而不是重新计算布局
+        const childNodeIds = Array.from(oldMindmapIds).filter(id => id !== props.nodeId)
+        if (childNodeIds.length > 0) {
+          // 同步移动所有子节点
+          syncMoveChildNodes(childNodeIds, offsetX, offsetY)
+          return // 跳过后续的布局更新
+        }
+      }
+    }
+
     // 检查相关节点是否有变化
     const hasChanges = oldMindmapIds.size !== newMindmapIds.size ||
       Array.from(oldMindmapIds).some(id => {
@@ -651,6 +653,33 @@ const setupMindmapWatchers = () => {
       await updateMindmapLayoutRecursively(props.nodeId)
     }
   }, { deep: true })
+}
+
+// 同步移动所有子节点
+const syncMoveChildNodes = (childNodeIds, offsetX, offsetY) => {
+  const nodes = getNodes.value
+  
+  // 过滤出所有需要移动的节点
+  const nodesToMove = nodes.filter(node => childNodeIds.includes(node.id))
+  
+  // 准备更新所有子节点的位置
+  const updatedNodes = nodes.map(node => {
+    if (childNodeIds.includes(node.id)) {
+      return {
+        ...node,
+        position: {
+          x: node.position.x + offsetX,
+          y: node.position.y + offsetY
+        },
+        // 添加过渡动画
+        class: 'mindmap-node-sync-move'
+      }
+    }
+    return node
+  })
+  
+  // 更新节点
+  setNodes(updatedNodes)
 }
 
 // 初始化监听器
@@ -769,5 +798,14 @@ const waitForNodeDimensions = (nodes, maxAttempts = 3) => {
       display: none;
     }
   }
+}
+
+// 添加同步移动动画样式
+:global(.mindmap-node-sync-move) {
+  transition: transform 0.2s ease-out !important;
+}
+
+:global(.mindmap-node-transition) {
+  transition: all 0.3s ease-out !important;
 }
 </style>
