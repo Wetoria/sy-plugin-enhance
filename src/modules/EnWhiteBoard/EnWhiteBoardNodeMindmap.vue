@@ -20,6 +20,23 @@
       </a-button>
     </div>
 
+    <!-- 折叠子树按钮 -->
+    <div 
+      v-if="hasChildren"
+      class="fold-children-button"
+      @click.stop="toggleFoldSubtree"
+    >
+      <a-button
+        size="mini"
+        shape="circle"
+      >
+        <template #icon>
+          <icon-minus v-if="!isFolded" />
+          <icon-plus v-else />
+        </template>
+      </a-button>
+    </div>
+
     <div class="ProtyleToolbarArea">
       <div class="infos">
         <span
@@ -87,6 +104,8 @@ import {
   IconArrowLeft,
   IconArrowRight,
   IconMindMapping,
+  IconMinus,
+  IconPlus,
 } from '@arco-design/web-vue/es/icon'
 import {
   Handle,
@@ -96,6 +115,7 @@ import {
 import {
   computed,
   nextTick,
+  ref,
   watch,
 } from 'vue'
 
@@ -104,7 +124,7 @@ const props = defineProps<{
   isCollapsed: boolean
   displayText: string
   isMergingToSuperBlock: boolean
-  nodeData: { nodeType: string, parentId?: string, mindmap?: boolean } // 更具体的类型
+  nodeData: { nodeType: string, parentId?: string, mindmap?: boolean, folded?: boolean } // 更新类型，增加folded属性
   whiteBoardConfigData?: any
 }>()
 
@@ -112,6 +132,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   toggleMindmap: []
   showError: [message: string]
+  updateNodeData: [nodeId: string, data: any] // 添加更新节点数据的emit
 }>()
 
 const {
@@ -187,14 +208,24 @@ const layoutCache = {
     const updatedNodes = new Map()
 
     try {
-      // 只处理思维导图节点
-      const mindmapNodes = nodes.filter(n => n.data?.mindmap)
+      // 只处理思维导图节点，且过滤掉隐藏节点
+      const mindmapNodes = nodes.filter(n => n.data?.mindmap && !n.hidden)
       const sortedNodes = Array.from(this.pendingUpdates)
         .map(id => mindmapNodes.find(n => n.id === id))
         .filter(Boolean)
         .sort((a, b) => getNodeDepth(a, mindmapNodes) - getNodeDepth(b, mindmapNodes))
 
-      for (const node of sortedNodes) {
+      // 首先处理折叠状态节点
+      const foldedNodes = sortedNodes.filter(node => node.data?.folded)
+      for (const node of foldedNodes) {
+        // 直接处理折叠节点，确保它们优先布局
+        const positions = calculateNodePositionsOptimized(node, mindmapNodes, node.position.x, node.position.y)
+        positions.forEach((pos, id) => updatedNodes.set(id, pos))
+      }
+      
+      // 然后处理其余节点
+      const normalNodes = sortedNodes.filter(node => !node.data?.folded)
+      for (const node of normalNodes) {
         const positions = calculateNodePositionsOptimized(node, mindmapNodes, node.position.x, node.position.y)
         positions.forEach((pos, id) => updatedNodes.set(id, pos))
       }
@@ -260,6 +291,13 @@ const calculateNodeHeightOptimized = (node, nodes) => {
   }
 
   const nodeHeight = node.dimensions?.height || getDefaultDimensions().height
+  
+  // 如果节点被折叠，则不考虑子节点高度
+  if (node.data?.folded) {
+    layoutCache.nodeHeights.set(node.id, nodeHeight)
+    return nodeHeight
+  }
+  
   // 只获取思维导图子节点
   const childNodes = nodes.filter((n) => n.data?.mindmap && n.data?.parentId === node.id)
 
@@ -290,8 +328,18 @@ const calculateNodePositionsOptimized = (node, nodes, parentX = 0, startY = 0) =
   const horizontalSpacing = 150
   const verticalSpacing = 20
 
-  // 只获取思维导图子节点
-  const childNodes = nodes.filter((n) => n.data?.mindmap && n.data?.parentId === node.id)
+  // 如果节点被折叠，则不计算子节点位置
+  if (node.data?.folded) {
+    return positions
+  }
+  
+  // 只获取思维导图子节点（仅考虑可见节点）
+  const childNodes = nodes.filter((n) => 
+    n.data?.mindmap && 
+    n.data?.parentId === node.id && 
+    !n.hidden // 跳过隐藏节点
+  )
+  
   if (childNodes.length === 0) return positions
 
   // 使用缓存的高度计算
@@ -346,13 +394,19 @@ const updateMindmapLayoutRecursively = (nodeId) => {
     if (!currentNode) return
     // 只处理思维导图节点
     if (currentNode.data?.mindmap) {
-      // 获取当前节点的所有子节点
-      const childNodes = nodes.filter((n) => n.data?.mindmap && n.data?.parentId === currentNode.id)
-      // 只有当节点有子节点时才添加到更新列表
-      if (childNodes.length > 0) {
+      // 获取当前节点的所有可见子节点（跳过隐藏节点或折叠节点的子节点）
+      const childNodes = nodes.filter((n) => {
+        return n.data?.mindmap && 
+               n.data?.parentId === currentNode.id && 
+               !n.hidden // 跳过隐藏节点
+      })
+      
+      // 只有当节点有可见子节点时才添加到更新列表
+      if (childNodes.length > 0 || currentNode.data?.folded) {
         nodesToUpdate.add(currentNode.id)
       }
     }
+    
     // 向上递归处理父节点
     if (currentNode.data?.parentId) {
       const parentNode = nodes.find((n) => n.id === currentNode.data.parentId)
@@ -369,6 +423,45 @@ const updateMindmapLayoutRecursively = (nodeId) => {
   // 将需要更新的节点添加到待更新队列
   nodesToUpdate.forEach((id) => layoutCache.pendingUpdates.add(id))
   layoutCache.scheduleBatchUpdate()
+  
+  // 确保边也被正确处理
+  updateEdgesVisibility()
+}
+
+// 添加边可见性更新函数
+const updateEdgesVisibility = () => {
+  const nodes = getNodes.value
+  const allEdges = edges.value || []
+  
+  // 查找所有隐藏的节点
+  const hiddenNodeIds = new Set()
+  nodes.forEach(node => {
+    if (node.hidden) {
+      hiddenNodeIds.add(node.id)
+    }
+  })
+  
+  // 更新边的可见性
+  const updatedEdges = allEdges.map(edge => {
+    const isSourceHidden = hiddenNodeIds.has(edge.source)
+    const isTargetHidden = hiddenNodeIds.has(edge.target)
+    
+    if (isSourceHidden || isTargetHidden) {
+      return {
+        ...edge, 
+        hidden: true,
+        class: 'mindmap-edge-fold-transition'
+      }
+    }
+    
+    return {
+      ...edge,
+      hidden: false,
+      class: 'mindmap-edge-fold-transition'
+    }
+  })
+  
+  setEdges(updatedEdges)
 }
 
 // 计算新节点位置和更新兄弟节点位置
@@ -461,6 +554,11 @@ const handleAddChildNode = async () => {
       return
     }
 
+    // 如果当前节点是折叠状态，先展开
+    if (isFolded.value) {
+      await toggleFoldSubtree()
+    }
+
     // 1. 获取所需数据
     const blockId = await getNewDailyNoteBlockId()
     const siblings = nodes.filter((node) => node.data?.parentId === props.nodeId)
@@ -490,6 +588,7 @@ const handleAddChildNode = async () => {
         parentId: parentNode.id,
         mindmap: true,
         isNew: true,
+        folded: false, // 新节点默认不折叠
       },
       position: newPosition,
       width: getDefaultDimensions().width,
@@ -592,6 +691,10 @@ const setupMindmapWatchers = () => {
         const node = nodes.find(n => n.id === nodeId)
         if (!node?.data?.mindmap) return
         result.add(nodeId)
+        
+        // 如果节点已折叠，则不遍历其子节点
+        if (node.data?.folded) return
+        
         nodes
           .filter(n => n.data?.mindmap && n.data?.parentId === nodeId)
           .forEach(child => traverse(child.id))
@@ -634,7 +737,8 @@ const setupMindmapWatchers = () => {
         const newNode = newNodes.find(n => n.id === id)
         return !newNode || 
           JSON.stringify(oldNode.position) !== JSON.stringify(newNode.position) ||
-          JSON.stringify(oldNode.dimensions) !== JSON.stringify(newNode.dimensions)
+          JSON.stringify(oldNode.dimensions) !== JSON.stringify(newNode.dimensions) ||
+          oldNode.data?.folded !== newNode.data?.folded // 添加折叠状态检查
       })
 
     if (hasChanges) {
@@ -714,6 +818,102 @@ const waitForNodeDimensions = (nodes, maxAttempts = 3) => {
     check()
   })
 }
+
+// 添加折叠功能的相关逻辑
+const isFolded = ref(props.nodeData?.folded || false)
+const hasChildren = computed(() => getChildNodes().length > 0)
+
+// 监听props中folded的变化
+watch(() => props.nodeData?.folded, (newVal) => {
+  if (newVal !== undefined) {
+    isFolded.value = newVal
+  }
+}, { immediate: true })
+
+// 获取所有子孙节点ID
+const getDescendantNodeIds = (nodeId, nodes) => {
+  const result = new Set()
+  
+  const collectDescendants = (currentNodeId) => {
+    const children = nodes.filter(n => n.data?.parentId === currentNodeId)
+    children.forEach(child => {
+      result.add(child.id)
+      collectDescendants(child.id)
+    })
+  }
+  
+  collectDescendants(nodeId)
+  return result
+}
+
+// 实现折叠子树功能
+const toggleFoldSubtree = async () => {
+  // 更改折叠状态
+  isFolded.value = !isFolded.value
+  
+  // 更新节点数据
+  emit('updateNodeData', props.nodeId, { 
+    ...props.nodeData, 
+    folded: isFolded.value 
+  })
+  
+  // 获取所有节点和边
+  const nodes = getNodes.value || []
+  const allEdges = edges.value || []
+  
+  // 获取所有子孙节点ID
+  const descendantIds = getDescendantNodeIds(props.nodeId, nodes)
+  
+  // 根据折叠状态处理子节点和边的可见性
+  const updatedNodes = nodes.map(node => {
+    if (descendantIds.has(node.id)) {
+      return {
+        ...node,
+        hidden: isFolded.value,
+        class: 'mindmap-node-fold-transition',
+      }
+    }
+    return node
+  })
+  
+  // 处理边的可见性
+  const updatedEdges = allEdges.map(edge => {
+    if (descendantIds.has(edge.source) || descendantIds.has(edge.target)) {
+      return {
+        ...edge,
+        hidden: isFolded.value,
+        class: 'mindmap-edge-fold-transition',
+      }
+    }
+    return edge
+  })
+  
+  // 更新节点和边
+  setNodes(updatedNodes)
+  setEdges(updatedEdges)
+  
+  // 先等待状态更新
+  await nextTick()
+  
+  // 找到当前节点的父节点进行布局更新
+  const currentNode = nodes.find(n => n.id === props.nodeId)
+  if (currentNode?.data?.parentId) {
+    const parentNode = nodes.find(n => n.id === currentNode.data.parentId)
+    if (parentNode?.data?.mindmap) {
+      // 从父节点开始更新整个布局
+      await updateMindmapLayoutRecursively(parentNode.id)
+    }
+  } else {
+    // 如果是根节点，直接从当前节点更新布局
+    await updateMindmapLayoutRecursively(props.nodeId)
+  }
+  
+  // 更新白板配置
+  if (props.whiteBoardConfigData) {
+    props.whiteBoardConfigData.boardOptions.nodes = updatedNodes
+    props.whiteBoardConfigData.boardOptions.edges = updatedEdges
+  }
+}
 </script>
 
 <style lang="scss" scoped>
@@ -734,7 +934,8 @@ const waitForNodeDimensions = (nodes, maxAttempts = 3) => {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     border-color: var(--b3-theme-primary);
 
-    .add-child-button {
+    .add-child-button,
+    .fold-children-button {
       opacity: 1;
       transform: translateY(-50%) scale(1);
     }
@@ -744,6 +945,16 @@ const waitForNodeDimensions = (nodes, maxAttempts = 3) => {
     position: absolute;
     right: -16px;
     top: 50%;
+    transform: translateY(-50%) scale(0.9);
+    z-index: 10;
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .fold-children-button {
+    position: absolute;
+    right: -16px;
+    bottom: 10px;
     transform: translateY(-50%) scale(0.9);
     z-index: 10;
     opacity: 0;
@@ -807,5 +1018,14 @@ const waitForNodeDimensions = (nodes, maxAttempts = 3) => {
 
 :global(.mindmap-node-transition) {
   transition: all 0.3s ease-out !important;
+}
+
+// 添加折叠/展开动画样式
+:global(.mindmap-node-fold-transition) {
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out !important;
+}
+
+:global(.mindmap-edge-fold-transition) {
+  transition: opacity 0.3s ease-out !important;
 }
 </style>
