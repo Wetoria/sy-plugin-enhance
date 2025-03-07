@@ -56,33 +56,6 @@
       </a-button>
     </div>
 
-    <div class="ProtyleToolbarArea">
-      <div class="infos">
-        <span
-          class="block-title"
-          :title="displayText"
-        >{{ displayText }}</span>
-      </div>
-
-      <div class="operations">
-        <a-spin v-if="isMergingToSuperBlock">
-          <template #icon>
-            <icon-sync />
-          </template>
-        </a-spin>
-        <a-button-group size="mini">
-          <a-button
-            class="active"
-            @click="toggleMindmap"
-          >
-            <template #icon>
-              <IconMindMapping />
-            </template>
-          </a-button>
-        </a-button-group>
-      </div>
-    </div>
-
     <div class="main">
       <slot></slot>
     </div>
@@ -122,7 +95,6 @@ import { EN_CONSTANTS } from '@/utils/Constants'
 import {
   IconArrowLeft,
   IconArrowRight,
-  IconMindMapping,
   IconMinus,
   IconPlus,
 } from '@arco-design/web-vue/es/icon'
@@ -1051,19 +1023,6 @@ const calculateEdgeColor = (parentEdge, siblings, currentEdges) => {
     opacity: 0;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     right: -48px;
-  }
-
-  .ProtyleToolbarArea {
-    width: 100%;
-    height: 36px;
-    flex-shrink: 0;
-    background-color: transparent;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    box-sizing: border-box;
-    padding: 8px 12px;
-    border-bottom: 1px solid var(--b3-border-color);
   }
 
   .main {
