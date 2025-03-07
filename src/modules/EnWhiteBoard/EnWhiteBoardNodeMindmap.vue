@@ -155,6 +155,7 @@ const layoutCache = {
   nodePositions: new Map(),
   pendingUpdates: new Set(),
   batchTimeout: null,
+  isProcessing: false,
 
   clear() {
     this.nodeHeights.clear()
@@ -164,62 +165,57 @@ const layoutCache = {
       clearTimeout(this.batchTimeout)
       this.batchTimeout = null
     }
+    this.isProcessing = false
   },
 
-  // 批量处理节点更新
+  // 优化批量处理调度
   scheduleBatchUpdate() {
-    if (this.batchTimeout) return
+    if (this.batchTimeout || this.isProcessing) return
 
     this.batchTimeout = setTimeout(() => {
-      this.processBatchUpdate()
-    }, 16) // 约一帧的时间
+      requestAnimationFrame(() => {
+        this.processBatchUpdate()
+      })
+    }, 32)
   },
 
   async processBatchUpdate() {
-    if (this.pendingUpdates.size === 0) return
+    if (this.pendingUpdates.size === 0 || this.isProcessing) return
 
+    this.isProcessing = true
     const nodes = getNodes.value
     const updatedNodes = new Map()
 
-    // 按层级排序节点以确保正确的更新顺序
-    const sortedNodes = Array.from(this.pendingUpdates)
-      .map((id) => nodes.find((n) => n.id === id))
-      .filter(Boolean)
-      .sort((a, b) => {
-        const aDepth = getNodeDepth(a, nodes)
-        const bDepth = getNodeDepth(b, nodes)
-        return aDepth - bDepth
-      })
+    try {
+      // 只处理思维导图节点
+      const mindmapNodes = nodes.filter(n => n.data?.mindmap)
+      const sortedNodes = Array.from(this.pendingUpdates)
+        .map(id => mindmapNodes.find(n => n.id === id))
+        .filter(Boolean)
+        .sort((a, b) => getNodeDepth(a, mindmapNodes) - getNodeDepth(b, mindmapNodes))
 
-    // 批量计算所有需要更新的节点位置
-    for (const node of sortedNodes) {
-      const positions = calculateNodePositionsOptimized(
-        node,
-        nodes,
-        node.position.x,
-        node.position.y,
-      )
-      positions.forEach((pos, id) => updatedNodes.set(id, pos))
+      for (const node of sortedNodes) {
+        const positions = calculateNodePositionsOptimized(node, mindmapNodes, node.position.x, node.position.y)
+        positions.forEach((pos, id) => updatedNodes.set(id, pos))
+      }
+
+      if (updatedNodes.size > 0) {
+        const finalNodes = nodes.map(node => {
+          const newPos = updatedNodes.get(node.id)
+          if (!newPos || !node.data?.mindmap) return node
+          return {
+            ...node,
+            position: newPos,
+            class: 'mindmap-node-transition',
+          }
+        })
+        setNodes(finalNodes)
+      }
+    } finally {
+      this.pendingUpdates.clear()
+      this.batchTimeout = null
+      this.isProcessing = false
     }
-
-    // 一次性更新所有节点位置
-    if (updatedNodes.size > 0) {
-      const finalNodes = nodes.map((node) => {
-        const newPos = updatedNodes.get(node.id)
-        return newPos
-          ? {
-              ...node,
-              position: newPos,
-              // 添加过渡动画类
-              class: 'mindmap-node-transition',
-            }
-          : node
-      })
-      setNodes(finalNodes)
-    }
-
-    this.pendingUpdates.clear()
-    this.batchTimeout = null
   },
 }
 
@@ -254,12 +250,18 @@ const getNodeDepth = (node, nodes, cache = new Map()) => {
 
 // 优化后的高度计算函数
 const calculateNodeHeightOptimized = (node, nodes) => {
+  // 如果不是思维导图节点，直接返回节点高度
+  if (!node.data?.mindmap) {
+    return node.dimensions?.height || getDefaultDimensions().height
+  }
+
   if (layoutCache.nodeHeights.has(node.id)) {
     return layoutCache.nodeHeights.get(node.id)
   }
 
   const nodeHeight = node.dimensions?.height || getDefaultDimensions().height
-  const childNodes = nodes.filter((n) => n.data?.parentId === node.id)
+  // 只获取思维导图子节点
+  const childNodes = nodes.filter((n) => n.data?.mindmap && n.data?.parentId === node.id)
 
   if (childNodes.length === 0) {
     layoutCache.nodeHeights.set(node.id, nodeHeight)
@@ -279,11 +281,17 @@ const calculateNodeHeightOptimized = (node, nodes) => {
 
 // 优化后的位置计算函数
 const calculateNodePositionsOptimized = (node, nodes, parentX = 0, startY = 0) => {
+  // 如果不是思维导图节点，直接返回空Map
+  if (!node.data?.mindmap) {
+    return new Map()
+  }
+
   const positions = new Map()
   const horizontalSpacing = 150
   const verticalSpacing = 20
 
-  const childNodes = nodes.filter((n) => n.data?.parentId === node.id)
+  // 只获取思维导图子节点
+  const childNodes = nodes.filter((n) => n.data?.mindmap && n.data?.parentId === node.id)
   if (childNodes.length === 0) return positions
 
   // 使用缓存的高度计算
@@ -322,6 +330,9 @@ const updateNodeLayout = (nodeId) => {
 
 // 优化后的递归布局函数
 const updateMindmapLayoutRecursively = (nodeId) => {
+  // 如果当前组件未挂载或已销毁，不执行更新
+  if (!props.nodeData?.mindmap) return
+
   const nodes = getNodes.value
   const node = nodes.find((n) => n.id === nodeId)
   if (!node || !node.position) return
@@ -329,21 +340,33 @@ const updateMindmapLayoutRecursively = (nodeId) => {
   // 清除旧的缓存
   layoutCache.clear()
 
-  // 收集需要更新的所有节点
+  // 只收集思维导图相关的节点
   const nodesToUpdate = new Set()
   const collectNodes = (currentNode) => {
     if (!currentNode) return
+    // 只处理思维导图节点
     if (currentNode.data?.mindmap) {
-      nodesToUpdate.add(currentNode.id)
+      // 获取当前节点的所有子节点
+      const childNodes = nodes.filter((n) => n.data?.mindmap && n.data?.parentId === currentNode.id)
+      // 只有当节点有子节点时才添加到更新列表
+      if (childNodes.length > 0) {
+        nodesToUpdate.add(currentNode.id)
+      }
     }
+    // 向上递归处理父节点
     if (currentNode.data?.parentId) {
       const parentNode = nodes.find((n) => n.id === currentNode.data.parentId)
-      collectNodes(parentNode)
+      if (parentNode?.data?.mindmap) {
+        collectNodes(parentNode)
+      }
     }
   }
   collectNodes(node)
 
-  // 将所有需要更新的节点添加到待更新队列
+  // 如果没有需要更新的节点，直接返回
+  if (nodesToUpdate.size === 0) return
+
+  // 将需要更新的节点添加到待更新队列
   nodesToUpdate.forEach((id) => layoutCache.pendingUpdates.add(id))
   layoutCache.scheduleBatchUpdate()
 }
@@ -422,6 +445,8 @@ const createNodeWithEdge = (parentNode, nodes, edges, options) => {
       blockId,
       parentId: parentNode.id,
       mindmap: true,
+      // 添加标记以跟踪节点创建状态
+      isNew: true,
     },
     position,
     width: getDefaultDimensions().width,
@@ -576,37 +601,71 @@ const toggleMindmap = () => {
   emit('toggleMindmap')
 }
 
-// 监听节点变化，处理删除等操作
-watch(() => getNodes.value, (newNodes, oldNodes) => {
-  if (!oldNodes) return
+// 优化监听器
+const setupMindmapWatchers = () => {
+  // 节点变化监听器
+  watch(() => getNodes.value, (newNodes, oldNodes) => {
+    if (!oldNodes || !props.nodeData?.mindmap) return
 
-  // 检查是否有节点被删除
-  const deletedNodes = oldNodes.filter((oldNode) =>
-    !newNodes.some((newNode) => newNode.id === oldNode.id),
-  )
-
-  // 如果有节点被删除，检查是否需要更新相关思维导图布局
-  if (deletedNodes.length > 0) {
-    deletedNodes.forEach((deletedNode) => {
-      if (deletedNode.data?.parentId) {
-        const parentNode = newNodes.find((node) => node.id === deletedNode.data.parentId)
-        if (parentNode?.data?.mindmap) {
-          updateMindmapLayoutRecursively(parentNode.id)
-        }
+    // 获取当前思维导图的所有相关节点ID
+    const getMindmapNodeIds = (nodes) => {
+      const result = new Set()
+      const traverse = (nodeId) => {
+        const node = nodes.find(n => n.id === nodeId)
+        if (!node?.data?.mindmap) return
+        result.add(nodeId)
+        nodes
+          .filter(n => n.data?.mindmap && n.data?.parentId === nodeId)
+          .forEach(child => traverse(child.id))
       }
-    })
-  }
-}, { deep: true })
+      traverse(props.nodeId)
+      return result
+    }
 
-// 添加子节点数量变化的监听器
-watch(() => getChildNodes(), async (newChildNodes, oldChildNodes) => {
-  if (!oldChildNodes) return
+    const oldMindmapIds = getMindmapNodeIds(oldNodes)
+    const newMindmapIds = getMindmapNodeIds(newNodes)
 
-  // 如果子节点数量发生变化，触发重新布局
-  if (newChildNodes.length !== oldChildNodes.length) {
-    await updateMindmapLayoutRecursively(props.nodeId)
-  }
-}, { deep: true })
+    // 检查相关节点是否有变化
+    const hasChanges = oldMindmapIds.size !== newMindmapIds.size ||
+      Array.from(oldMindmapIds).some(id => {
+        const oldNode = oldNodes.find(n => n.id === id)
+        const newNode = newNodes.find(n => n.id === id)
+        return !newNode || 
+          JSON.stringify(oldNode.position) !== JSON.stringify(newNode.position) ||
+          JSON.stringify(oldNode.dimensions) !== JSON.stringify(newNode.dimensions)
+      })
+
+    if (hasChanges) {
+      updateMindmapLayoutRecursively(props.nodeId)
+    }
+  }, { deep: true })
+
+  // 子节点变化监听器
+  watch(() => getChildNodes(), async (newChildNodes, oldChildNodes) => {
+    if (!oldChildNodes || !props.nodeData?.mindmap) return
+
+    const mindmapOldChildren = oldChildNodes.filter(node => node.data?.mindmap)
+    const mindmapNewChildren = newChildNodes.filter(node => node.data?.mindmap)
+
+    if (mindmapOldChildren.length !== mindmapNewChildren.length) {
+      await updateMindmapLayoutRecursively(props.nodeId)
+    }
+  }, { deep: true })
+}
+
+// 初始化监听器
+setupMindmapWatchers()
+
+// 获取节点的所有祖先节点
+const getNodeAncestors = (node, nodes, ancestors = []) => {
+  if (!node.data?.parentId) return ancestors
+  
+  const parent = nodes.find(n => n.id === node.data.parentId)
+  if (!parent) return ancestors
+  
+  ancestors.push(parent)
+  return getNodeAncestors(parent, nodes, ancestors)
+}
 
 // 添加优化后的等待节点尺寸函数
 const waitForNodeDimensions = (nodes, maxAttempts = 3) => {
