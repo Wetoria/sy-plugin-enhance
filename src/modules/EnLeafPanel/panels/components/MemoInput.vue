@@ -1,37 +1,39 @@
 <template>
-  <div class="memo-input-card">
-    <div class="memo-editor">
-      <EnProtyle
-        :block-id="blockId"
-        disableEnhance
-        @after="afterProtyleLoad"
-      />
-      <div
-        ref="protyleUtilAreaRef"
-        class="protyle-util-area"
-      ></div>
-      <div
-        v-if="isMergingToSuperBlock"
-        class="merging-indicator"
-      >
-        <svg class="rotating"><use xlink:href="#iconRefresh"></use></svg>
+  <div class="memo-input">
+    <div class="memo-input-card">
+      <div class="memo-editor">
+        <EnProtyle
+          :block-id="blockId"
+          disableEnhance
+          @after="afterProtyleLoad"
+        />
+        <div
+          ref="protyleUtilAreaRef"
+          class="protyle-util-area"
+        ></div>
+        <div
+          v-if="isMergingToSuperBlock"
+          class="merging-indicator"
+        >
+          <svg class="rotating"><use xlink:href="#iconRefresh"></use></svg>
+        </div>
       </div>
-    </div>
-    <div class="divider"></div>
-    <div class="memo-toolbar">
-      <button
-        class="b3-button b3-button--outline"
-        @click="handleSubmit"
-      >
-        {{ isEditing ? '更新' : '添加' }}
-      </button>
-      <button
-        v-if="isEditing"
-        class="b3-button b3-button--text"
-        @click="handleCancel"
-      >
-        取消
-      </button>
+      <div class="divider"></div>
+      <div class="memo-toolbar">
+        <button
+          class="b3-button b3-button--outline"
+          @click="handleSubmit"
+        >
+          {{ isEditing ? '更新' : '添加' }}
+        </button>
+        <button
+          v-if="isEditing"
+          class="b3-button b3-button--text"
+          @click="handleCancel"
+        >
+          取消
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -121,7 +123,7 @@ const handleSubmit = () => {
           const memo: Memo = {
             blockId: blockId.value,
             time: new Date().toLocaleString() + (props.isEditing ? ' (已编辑)' : ''),
-            hasTimestamp: false,
+            type: 'daily',
           }
           emit('submit', memo)
 
@@ -136,7 +138,7 @@ const handleSubmit = () => {
         const memo: Memo = {
           blockId: blockId.value,
           time: new Date().toLocaleString() + (props.isEditing ? ' (已编辑)' : ''),
-          hasTimestamp: false,
+          type: 'daily',
         }
         emit('submit', memo)
 
@@ -201,102 +203,108 @@ onBeforeUnmount(() => {
   padding: unset !important;
 }
 
-.en-user-memo .memo-input-card {
-  background: var(--b3-theme-background);
-  border-radius: var(--b3-border-radius);
-  padding: 0px;
+.en-user-memo .memo-input {
   height: 100%;
   display: flex;
   flex-direction: column;
 
-  .memo-editor {
-    position: relative;
-    flex: 1;
-    min-height: 0;
+  .memo-input-card {
+    background: var(--b3-theme-background);
+    border-radius: var(--b3-border-radius);
+    padding: 0px;
+    height: 100%;
     display: flex;
     flex-direction: column;
-    padding: 12px;
 
-    :deep(.EnProtyleContainer) {
+    .memo-editor {
+      position: relative;
       flex: 1;
       min-height: 0;
       display: flex;
       flex-direction: column;
+      padding: 12px 12px 12px 8px;
 
-      .protyle {
+      :deep(.EnProtyleContainer) {
         flex: 1;
         min-height: 0;
         display: flex;
         flex-direction: column;
 
-        .protyle-content {
+        .protyle {
           flex: 1;
           min-height: 0;
           display: flex;
           flex-direction: column;
 
-          .protyle-wysiwyg {
+          .protyle-content {
             flex: 1;
             min-height: 0;
-            padding: 8px !important;
+            display: flex;
+            flex-direction: column;
+
+            .protyle-wysiwyg {
+              flex: 1;
+              min-height: 0;
+              padding: 8px !important;
+            }
           }
         }
       }
     }
-  }
 
-  .protyle-util-area {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    pointer-events: none;
-    z-index: 1;
+    .protyle-util-area {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      pointer-events: none;
+      z-index: 1;
 
-    :deep(*) {
-      pointer-events: auto;
-    }
-  }
-
-  .divider {
-    height: 1px;
-    background-color: var(--b3-border-color);
-    opacity: 0.3;
-    margin: 8px 0;
-  }
-
-  .memo-toolbar {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-    padding: 0 8px;
-  }
-
-  .merging-indicator {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 2;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-
-    svg {
-      width: 100%;
-      height: 100%;
-      fill: var(--b3-theme-primary);
-      animation: rotating 1s linear infinite;
-    }
-
-    @keyframes rotating {
-      from {
-        transform: rotate(0deg);
+      :deep(*) {
+        pointer-events: auto;
       }
-      to {
-        transform: rotate(360deg);
+    }
+
+    .divider {
+      height: 1px;
+      background-color: var(--b3-border-color);
+      opacity: 0.3;
+      margin: 8px 0;
+    }
+
+    .memo-toolbar {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 0 8px;
+    }
+
+    .merging-indicator {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+
+      svg {
+        width: 100%;
+        height: 100%;
+        fill: var(--b3-theme-primary);
+        animation: rotating 1s linear infinite;
+      }
+
+      @keyframes rotating {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
       }
     }
   }

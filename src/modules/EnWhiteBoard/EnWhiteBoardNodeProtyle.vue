@@ -18,79 +18,16 @@
       @collapse="handleCollapse"
     />
   </NodeToolbar>
-  <div
-    ref="containerRef"
-    class="EnWhiteBoardNodeProtyleContainer"
-    :class="{
-      'variant-default': !nodeData.style?.variant || nodeData.style.variant === 'default',
-      'variant-card': nodeData.style?.variant === 'card',
-      'variant-note': nodeData.style?.variant === 'note',
-      'is-collapsed': isCollapsed,
-      'is-mindmap': isMindmapNode,
-      ...nodeTypeClass,
-    }"
-    :data-en-flow-node-id="flowNode.id"
-    :style="{
-      '--en-card-width': `${flowNode.dimensions.width}px`,
-      '--en-card-height': isCollapsed ? '30px' : `${flowNode.dimensions.height}px`,
-      'backgroundColor': nodeData.style?.backgroundColor,
-    }"
-  >
-    <template v-if="isMindmapNode">
-      <EnWhiteBoardNodeMindmap
-        :nodeId="flowNode.id"
-        :isCollapsed="isCollapsed"
-        :displayText="displayText"
-        :isMergingToSuperBlock="isMergingToSuperBlock"
-        :nodeData="nodeData"
-        :whiteBoardConfigData="embedWhiteBoardConfigData"
-        @toggleMindmap="handleToggleMindmap"
-      >
-        <div
-          ref="mainRef"
-          class="main EnWhiteBoardNodeProtyleMain"
-          :data-en-flow-node-id="flowNode.id"
-          @wheel.capture="captureWheel"
-          @mousedown.capture="captureMouseDown"
-          @click.capture="captureClick"
-        >
-          <template v-if="nodeData.blockId">
-            <EnProtyle
-              :block-id="nodeData.blockId"
-              disableEnhance
-              @after="afterProtyleLoad"
-            />
-            <Teleport
-              v-if="enWhiteBoardProtyleUtilAreaRef"
-              :to="enWhiteBoardProtyleUtilAreaRef"
-            >
-              <div
-                ref="protyleUtilAreaRef"
-                :data-en-whiteboard-node-protyle-util-area="flowNode.id"
-              >
-              </div>
-            </Teleport>
-          </template>
-        </div>
-      </EnWhiteBoardNodeMindmap>
-    </template>
-    <template v-else>
-      <div class="ProtyleToolbarArea">
-        <div class="infos">
-          <span
-            class="block-title"
-            :title="displayText"
-          >{{ displayText }}</span>
-        </div>
-
-        <div class="operations">
-          <a-spin v-if="isMergingToSuperBlock">
-            <template #icon>
-              <icon-sync />
-            </template>
-          </a-spin>
-        </div>
-      </div>
+  <template v-if="isMindmapNode">
+    <EnWhiteBoardNodeMindmap
+      :nodeId="flowNode.id"
+      :isCollapsed="isCollapsed"
+      :displayText="displayText"
+      :isMergingToSuperBlock="isMergingToSuperBlock"
+      :nodeData="nodeData"
+      :whiteBoardConfigData="embedWhiteBoardConfigData"
+      @toggleMindmap="handleToggleMindmap"
+    >
       <div
         ref="mainRef"
         class="main EnWhiteBoardNodeProtyleMain"
@@ -99,7 +36,6 @@
         @mousedown.capture="captureMouseDown"
         @click.capture="captureClick"
       >
-
         <template v-if="nodeData.blockId">
           <EnProtyle
             :block-id="nodeData.blockId"
@@ -114,34 +50,132 @@
               ref="protyleUtilAreaRef"
               :data-en-whiteboard-node-protyle-util-area="flowNode.id"
             >
-
             </div>
           </Teleport>
         </template>
       </div>
-
-      <NodeResizer
-        :min-width="100"
-        :min-height="36"
-        color="transparent"
-        @resize="onResize"
-      />
-
-      <!-- 只在非思维导图节点时显示所有连接点 -->
-      <Handle
-        v-for="position in ['top', 'right', 'bottom', 'left']"
-        :id="position"
-        :key="position"
-        class="Handle"
-        :class="[position.toLowerCase()]"
-        type="source"
-        :position="Position[position.charAt(0).toUpperCase() + position.slice(1)]"
+    </EnWhiteBoardNodeMindmap>
+  </template>
+  <template v-else-if="isTreeCardNode">
+    <EnWhiteBoardNodeTreeCard
+      :nodeId="flowNode.id"
+      :isCollapsed="isCollapsed"
+      :displayText="displayText"
+      :isMergingToSuperBlock="isMergingToSuperBlock"
+      :nodeData="nodeData"
+      :whiteBoardConfigData="embedWhiteBoardConfigData"
+      @toggleTreeCard="handleToggleTreeCard"
+    >
+      <div
+        ref="mainRef"
+        class="main EnWhiteBoardNodeProtyleMain"
+        :data-en-flow-node-id="flowNode.id"
+        @wheel.capture="captureWheel"
+        @mousedown.capture="captureMouseDown"
+        @click.capture="captureClick"
       >
-        <div class="HandleIcon">
-          <component :is="handleIcons[position]" />
-        </div>
-      </Handle>
-    </template>
+        <template v-if="nodeData.blockId">
+          <EnProtyle
+            :block-id="nodeData.blockId"
+            disableEnhance
+            @after="afterProtyleLoad"
+          />
+          <Teleport
+            v-if="enWhiteBoardProtyleUtilAreaRef"
+            :to="enWhiteBoardProtyleUtilAreaRef"
+          >
+            <div
+              ref="protyleUtilAreaRef"
+              :data-en-whiteboard-node-protyle-util-area="flowNode.id"
+            >
+            </div>
+          </Teleport>
+        </template>
+      </div>
+    </EnWhiteBoardNodeTreeCard>
+  </template>
+  <div
+    v-else
+    ref="containerRef"
+    class="EnWhiteBoardNodeProtyleContainer"
+    :class="{
+      'variant-default': !nodeData.style?.variant || nodeData.style.variant === 'default',
+      'variant-card': nodeData.style?.variant === 'card',
+      'variant-note': nodeData.style?.variant === 'note',
+      'is-collapsed': isCollapsed,
+      ...nodeTypeClass,
+    }"
+    :data-en-flow-node-id="flowNode.id"
+    :style="{
+      '--en-card-width': `${flowNode.dimensions.width}px`,
+      '--en-card-height': isCollapsed ? '30px' : `${flowNode.dimensions.height}px`,
+      'backgroundColor': nodeData.style?.backgroundColor,
+    }"
+  >
+    <div class="ProtyleToolbarArea">
+      <div class="infos">
+        <span
+          class="block-title"
+          :title="displayText"
+        >{{ displayText }}</span>
+      </div>
+
+      <div class="operations">
+        <a-spin v-if="isMergingToSuperBlock">
+          <template #icon>
+            <icon-sync />
+          </template>
+        </a-spin>
+      </div>
+    </div>
+    <div
+      ref="mainRef"
+      class="main EnWhiteBoardNodeProtyleMain"
+      :data-en-flow-node-id="flowNode.id"
+      @wheel.capture="captureWheel"
+      @mousedown.capture="captureMouseDown"
+      @click.capture="captureClick"
+    >
+      <template v-if="nodeData.blockId">
+        <EnProtyle
+          :block-id="nodeData.blockId"
+          disableEnhance
+          @after="afterProtyleLoad"
+        />
+        <Teleport
+          v-if="enWhiteBoardProtyleUtilAreaRef"
+          :to="enWhiteBoardProtyleUtilAreaRef"
+        >
+          <div
+            ref="protyleUtilAreaRef"
+            :data-en-whiteboard-node-protyle-util-area="flowNode.id"
+          >
+          </div>
+        </Teleport>
+      </template>
+    </div>
+
+    <NodeResizer
+      :min-width="100"
+      :min-height="36"
+      color="transparent"
+      @resize="onResize"
+    />
+
+    <!-- 只在非思维导图节点时显示所有连接点 -->
+    <Handle
+      v-for="position in ['top', 'right', 'bottom', 'left']"
+      :id="position"
+      :key="position"
+      class="Handle"
+      :class="[position.toLowerCase()]"
+      type="source"
+      :position="Position[position.charAt(0).toUpperCase() + position.slice(1)]"
+    >
+      <div class="HandleIcon">
+        <component :is="handleIcons[position]" />
+      </div>
+    </Handle>
   </div>
 </template>
 
@@ -188,6 +222,7 @@ import {
   watch,
 } from 'vue'
 import EnWhiteBoardNodeMindmap from './EnWhiteBoardNodeMindmap.vue'
+import EnWhiteBoardNodeTreeCard from './EnWhiteBoardNodeTreeCard.vue'
 import EnWhiteBoardToolBar from './EnWhiteBoardToolBar.vue'
 
 const props = defineProps<{
@@ -593,12 +628,44 @@ const {
   embedWhiteBoardConfigData,
 } = getWhiteBoardConfigRefById(props.whiteBoardId, props.nodeId)
 
+// 获取节点类型
+const nodeType = computed(() => {
+  return isMindmapNode.value ? 'EnWhiteBoardNodeMindmap' : 'EnWhiteBoardNodeProtyle'
+})
+
+// 更新节点类型
+const updateNodeType = () => {
+  if (!flowNode) return
+  
+  // 如果节点类型已经正确，则不需要更新
+  if (flowNode.type === nodeType.value) return
+  
+  // 更新节点类型
+  const nodes = getNodes.value || []
+  const newNodes = nodes.map((node) => {
+    if (node.id === flowNode.id) {
+      return {
+        ...node,
+        type: nodeType.value,
+      }
+    }
+    return node
+  })
+  setNodes(newNodes)
+}
+
+// 监听思维导图状态变化，更新节点类型
+watch(isMindmapNode, (newValue) => {
+  updateNodeType()
+}, { immediate: true })
+
 const handleToggleMindmap = () => {
   const nodes = getNodes.value || []
   const newNodes = nodes.map((node) => {
     if (node.id === flowNode.id) {
       return {
         ...node,
+        type: !isMindmapNode.value ? 'EnWhiteBoardNodeMindmap' : 'EnWhiteBoardNodeProtyle',
         data: {
           ...node.data,
           mindmap: !isMindmapNode.value,
@@ -608,6 +675,49 @@ const handleToggleMindmap = () => {
     return node
   })
   setNodes(newNodes)
+}
+
+// 添加TreeCard节点类型的判断
+const isTreeCardNode = computed(() => nodeData.value?.treecard === true)
+
+// 添加TreeCard节点的模板部分
+const handleToggleTreeCard = () => {
+  // 切换节点类型
+  const newNodes = getNodes.value.map((node) => {
+    if (node.id === flowNode.id) {
+      return {
+        ...node,
+        type: !isTreeCardNode.value ? EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_TREECARD : EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_PROTYLE,
+        data: {
+          ...node.data,
+          treecard: !isTreeCardNode.value,
+        },
+      }
+    }
+    return node
+  })
+  setNodes(newNodes)
+}
+
+// 节点类名
+const nodeClass = computed(() => {
+  return {
+    'is-selected': isSelected.value,
+    'is-collapsed': isCollapsed.value,
+    'is-mindmap': isMindmapNode.value,
+    'is-treecard': isTreeCardNode.value,
+  }
+})
+
+// 获取节点类型
+const getNodeType = () => {
+  if (isMindmapNode.value) {
+    return 'EnWhiteBoardNodeMindmap'
+  } else if (isTreeCardNode.value) {
+    return 'EnWhiteBoardNodeTreeCard'
+  } else {
+    return 'EnWhiteBoardNodeProtyle'
+  }
 }
 </script>
 
@@ -1009,6 +1119,23 @@ const handleToggleMindmap = () => {
   &.selected {
     .EnWhiteBoardNodeProtyleContainer {
       border-color: var(--b3-theme-primary-light);
+    }
+  }
+}
+
+.vue-flow__node-EnWhiteBoardNodeMindmap {
+  --en-whiteboard-mindmap-cursor: default;
+  
+  &.selected {
+    .EnWhiteBoardNodeMindmapContainer {
+      border-color: var(--b3-theme-primary);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  &.dragging {
+    .EnWhiteBoardNodeMindmapContainer {
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
     }
   }
 }
