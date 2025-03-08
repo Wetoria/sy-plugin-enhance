@@ -114,7 +114,7 @@
                 <a-doption value="gingko">
                   <div class="NodeTypeOption">
                     <icon-branch />
-                    <span>银杏编辑器</span>
+                    <span>树形卡片</span>
                   </div>
                 </a-doption>
               </template>
@@ -1177,6 +1177,8 @@ const onNodeTypeSelect = (type: string) => {
           ...node.data,
           nodeType: type,
           mindmap: type === 'mindmap', // 兼容现有的 mindmap 标记
+          treecard: type === 'gingko', // 添加对树形卡片的支持
+          class: type === 'gingko' ? 'treecard-node-transition' : '', // 添加过渡动画类
         },
       }
     }
@@ -1187,6 +1189,66 @@ const onNodeTypeSelect = (type: string) => {
   if (props.whiteBoardConfigData) {
     props.whiteBoardConfigData.boardOptions.nodes = newNodes
   }
+  
+  // 如果切换为树形卡片类型，需要更新布局
+  if (type === 'gingko') {
+    const currentNode = nodes.find(node => node.id === props.nodeId)
+    if (currentNode) {
+      // 延迟执行以确保节点类型已更新
+      setTimeout(() => {
+        updateTreeCardLayout(props.nodeId, nodes)
+      }, 50)
+    }
+  }
+}
+
+// 添加更新树形卡片布局的函数
+const updateTreeCardLayout = (nodeId, nodes) => {
+  const node = nodes.find(n => n.id === nodeId)
+  if (!node) return
+  
+  // 查找所有相关的树形卡片节点
+  const relatedNodes = new Set()
+  
+  // 向上查找父节点
+  const findParents = (currentId) => {
+    const current = nodes.find(n => n.id === currentId)
+    if (!current) return
+    
+    if (current.data?.parentId) {
+      const parent = nodes.find(n => n.id === current.data.parentId)
+      if (parent && parent.data?.treecard) {
+        relatedNodes.add(parent.id)
+        findParents(parent.id)
+      }
+    }
+  }
+  
+  // 向下查找子节点
+  const findChildren = (currentId) => {
+    const children = nodes.filter(n => n.data?.parentId === currentId)
+    children.forEach(child => {
+      if (child.data?.treecard) {
+        relatedNodes.add(child.id)
+        findChildren(child.id)
+      }
+    })
+  }
+  
+  // 收集所有相关节点
+  relatedNodes.add(nodeId)
+  findParents(nodeId)
+  findChildren(nodeId)
+  
+  // 更新所有相关节点的布局
+  // 使用自定义事件触发布局更新
+  Array.from(relatedNodes).forEach(id => {
+    // 触发自定义事件，让相应的组件处理布局更新
+    const event = new CustomEvent('update-treecard-layout', { 
+      detail: { nodeId: id } 
+    })
+    document.dispatchEvent(event)
+  })
 }
 
 const onAutoFitHeight = () => {

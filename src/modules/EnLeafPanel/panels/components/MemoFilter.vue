@@ -1,5 +1,5 @@
 <template>
-  <div class="memo-actions">
+  <div class="memo-actions" :class="{ 'memo-actions--vertical': isVertical }">
     <div class="action-group">
       <button
         class="filter-btn"
@@ -49,12 +49,27 @@ export type FilterType = 'daily' | 'whiteboard' | 'annotation'
 
 const props = defineProps<{
   modelValue?: FilterType
+  isVertical?: boolean
 }>()
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: FilterType | undefined): void
   (e: 'dailyNoteInfo', value: { dailyNotes: any[] }): void
 }>()
+
+// 切换筛选器
+const toggleFilter = (filter: FilterType) => {
+  // 无论是否选中当前过滤器，都先清空数据
+  emit('dailyNoteInfo', { dailyNotes: [] })
+  
+  if (props.modelValue === filter) {
+    // 如果已经选中，则取消选中
+    emit('update:modelValue', undefined)
+  } else {
+    // 否则选中
+    emit('update:modelValue', filter)
+  }
+}
 
 // 监听 props 变化
 watch(() => props.modelValue, async (newValue) => {
@@ -149,7 +164,8 @@ async function getDailyNotes() {
         C.root_id as doc_id,
         C.updated as block_time,
         D.date_value,
-        C.parent_id
+        C.parent_id,
+        C.type as block_type
       FROM blocks C
       JOIN daily_docs D ON C.root_id = D.doc_id
       WHERE
@@ -162,34 +178,41 @@ async function getDailyNotes() {
   const result = await request('/api/query/sql', data)
   console.log('Initial SQL result:', result)
 
-  // 处理每个块，获取其所有父块ID
+  // 创建一个映射来跟踪每个块的子块
+  const blockChildrenMap = new Map<string, string[]>()
+  
+  // 首先构建父子关系映射
+  result.forEach((item: any) => {
+    if (item.parent_id) {
+      if (!blockChildrenMap.has(item.parent_id)) {
+        blockChildrenMap.set(item.parent_id, [])
+      }
+      blockChildrenMap.get(item.parent_id)?.push(item.block_id)
+    }
+  })
+  
+  // 找出所有顶级块（直接在文档下的块）
+  const topLevelBlocks = result.filter((item: any) => {
+    // 检查父块是否为文档块
+    return !item.parent_id || item.parent_id === item.doc_id || 
+           result.findIndex((b: any) => b.block_id === item.parent_id) === -1
+  })
+  
+  console.log('Top level blocks:', topLevelBlocks.length)
+  
+  // 处理顶级块，获取其内容
   const processedResults = await Promise.all(
-    result.map(async (item: any) => {
-      const allParentIds = await getParentBlockIds(item.block_id, item.parent_id)
-      console.log('Block ID:', item.block_id, 'All parent IDs:', allParentIds)
-      // 使用最后一个ID（最顶层的父块ID）或原始ID
-      const finalBlockId = allParentIds[allParentIds.length - 1] || item.block_id
+    topLevelBlocks.map(async (item: any) => {
       return {
         ...item,
-        block_id: finalBlockId,
+        block_id: item.block_id,
         original_block_id: item.block_id,
-        all_parent_ids: allParentIds,
       }
-    }),
+    })
   )
-
-  // 对结果进行去重，确保每个最终的block_id只出现一次
-  const uniqueResults = processedResults.reduce((acc: any[], current: any) => {
-    const existingIndex = acc.findIndex((item) => item.block_id === current.block_id)
-    if (existingIndex === -1) {
-      // 如果这个block_id还没有出现过，添加到结果中
-      acc.push(current)
-    }
-    return acc
-  }, [])
-
-  console.log('Final processed results:', uniqueResults)
-  return uniqueResults
+  
+  console.log('Final processed results:', processedResults.length)
+  return processedResults
 }
 
 // 获取白板块
@@ -302,7 +325,8 @@ async function getWhiteboardNotes() {
 
 // 获取批注块
 async function getAnnotationNotes() {
-  const data = {
+  // 查询所有带有custom-en-comment-ref-id属性的批注块
+  const annotationData = {
     stmt: `
       SELECT
         B.id as block_id,
@@ -310,49 +334,82 @@ async function getAnnotationNotes() {
         B.root_id as doc_id,
         B.updated as block_time,
         B.parent_id,
-        D.hpath as doc_path
+        D.hpath as doc_path,
+        B.type as block_type,
+        B.markdown as block_markdown,
+        B.ial as block_ial
       FROM blocks B
       JOIN blocks D ON B.root_id = D.id
-      WHERE
-        B.type = 'widget'
-        AND B.content LIKE '%sy-enhance-annotation%'
+      WHERE B.ial LIKE '%custom-en-comment-ref-id%'
       ORDER BY B.updated DESC
+      LIMIT 100
     `,
   }
-  const result = await request('/api/query/sql', data)
-  console.log('Initial annotation SQL result:', result)
-  return result
-}
-
-const toggleFilter = async (type: FilterType) => {
-  if (props.modelValue === type) {
-    emit('update:modelValue', undefined)
-    // 清空信息
-    emit('dailyNoteInfo', { dailyNotes: [] })
-  } else {
-    emit('update:modelValue', type)
-    try {
-      let notes = []
-      if (type === 'daily') {
-        notes = await getDailyNotes() || []
-        console.log('Daily notes from database:', notes)
-      } else if (type === 'whiteboard') {
-        notes = await getWhiteboardNotes() || []
-        console.log('Whiteboard notes from plugin:', notes)
-      } else if (type === 'annotation') {
-        notes = await getAnnotationNotes() || []
-        console.log('Annotation notes from database:', notes)
+  
+  const annotationResult = await request('/api/query/sql', annotationData)
+  console.log('Annotation blocks with ref-id:', annotationResult)
+  
+  // 简化处理，直接使用批注块
+  const formattedResults = await Promise.all(annotationResult.map(async (item: any) => {
+    // 从block_time中提取时间，或者使用当前时间
+    let time = new Date().toISOString().replace('T', ' ').substring(0, 19)
+    
+    // 安全地处理block_time
+    if (item.block_time) {
+      try {
+        const timestamp = parseInt(item.block_time)
+        if (!isNaN(timestamp)) {
+          const date = new Date(timestamp)
+          if (!isNaN(date.getTime())) {
+            time = date.toISOString().replace('T', ' ').substring(0, 19)
+          }
+        }
+      } catch (err) {
+        console.error('Error parsing block_time:', err, item.block_time)
       }
-
-      // 发送信息
-      emit('dailyNoteInfo', {
-        dailyNotes: notes,
-      })
-    } catch (err) {
-      console.error(`Failed to get ${type} notes:`, err)
-      emit('dailyNoteInfo', { dailyNotes: [] })
     }
-  }
+    
+    // 尝试从IAL中提取引用ID
+    let refId = ''
+    if (item.block_ial) {
+      const refIdMatch = item.block_ial.match(/custom-en-comment-ref-id="([^"]*)"/)
+      if (refIdMatch && refIdMatch[1]) {
+        refId = refIdMatch[1]
+      }
+    }
+    
+    // 验证引用的块ID是否存在
+    let finalBlockId = item.block_id // 默认使用批注块ID
+    if (refId) {
+      // 检查引用的块是否存在
+      const checkData = {
+        stmt: `SELECT id FROM blocks WHERE id = '${refId}'`
+      }
+      try {
+        const checkResult = await request('/api/query/sql', checkData)
+        if (checkResult && checkResult.length > 0) {
+          finalBlockId = refId // 如果引用块存在，使用引用块ID
+        } else {
+          console.warn(`Referenced block ${refId} not found, using original block ID`)
+        }
+      } catch (err) {
+        console.error('Error checking referenced block:', err)
+      }
+    }
+    
+    return {
+      blockId: finalBlockId,
+      time: time,
+      type: 'annotation',
+      docId: item.doc_id,
+      docPath: item.doc_path || '未知文档',
+      blockType: item.block_type,
+      originalBlockId: item.block_id // 保存原始批注块ID
+    }
+  }))
+  
+  console.log('Simplified annotation results:', formattedResults)
+  return formattedResults
 }
 
 // 确保白板模块在组件挂载时初始化
@@ -373,55 +430,62 @@ onMounted(() => {
 <style lang="scss">
 .memo-actions {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 4px 8px 4px 0;
+  flex-wrap: wrap;
+  gap: 8px;
+  
+  &--vertical {
+    flex-direction: column;
+    
+    .action-group {
+      flex-direction: column;
+      width: 100%;
+      
+      .filter-btn {
+        width: 100%;
+        justify-content: flex-start;
+        text-align: left;
+        padding: 8px 12px;
+      }
+    }
+  }
 
   .action-group {
     display: flex;
-    gap: 4px;
+    gap: 8px;
+    flex-wrap: wrap;
   }
 
   .filter-btn {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: 4px;
-    padding: 8px 8px;
-    border: none;
-    background: transparent;
+    padding: 4px 8px;
     border-radius: var(--b3-border-radius);
-    color: var(--b3-theme-on-background);
-    font-size: 12px;
+    background-color: var(--b3-theme-surface);
+    border: 1px solid var(--b3-theme-surface-lighter);
     cursor: pointer;
-    transition: all 0.2s;
-    opacity: 0.68;
+    transition: all 0.2s ease;
+    font-size: 12px;
+    color: var(--b3-theme-on-surface);
 
     &:hover {
-      background-color: var(--b3-theme-primary-light);
-      opacity: 0.5;
+      background-color: var(--b3-theme-surface-lighter);
     }
 
     &.active {
-      background-color: var(--b3-theme-primary);
-      color: var(--b3-theme-on-primary);
-      opacity: 1;
+      background-color: var(--b3-theme-primary-lightest);
+      border-color: var(--b3-theme-primary-light);
+      color: var(--b3-theme-primary);
 
-      &:hover {
-        background-color: var(--b3-theme-primary);
-        opacity: 0.9;
+      .action-icon {
+        fill: var(--b3-theme-primary);
       }
     }
 
     .action-icon {
-      height: 14px;
       width: 14px;
-      fill: currentColor;
-      flex-shrink: 0;
-    }
-
-    .btn-text {
-      line-height: 1;
-      font-weight: 500;
+      height: 14px;
+      fill: var(--b3-theme-on-surface);
     }
   }
 }

@@ -369,194 +369,115 @@ watch(() => props.modelValue, (newValue) => {
 })
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 .memo-calendar {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
   border-radius: var(--b3-border-radius);
-  padding: 0px;
-
+  overflow: hidden;
+  background-color: var(--b3-theme-background);
+  
   .calendar-header {
+    flex-shrink: 0;
     display: flex;
+    align-items: center;
     justify-content: center;
-    margin-bottom: 8px;
-
+    padding: 8px;
+    border-bottom: 1px solid var(--b3-border-color);
+    
     .year-month-selector {
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 4px;
-      border-radius: var(--b3-border-radius);
-      background: var(--b3-theme-surface);
-
+      
       .nav-btn {
         display: flex;
         align-items: center;
         justify-content: center;
         width: 24px;
         height: 24px;
+        border-radius: 50%;
         cursor: pointer;
-        border-radius: var(--b3-border-radius);
-        color: var(--b3-theme-on-surface);
-        opacity: 0.68;
-
-        &:hover {
-          background: var(--b3-theme-background-light);
-          opacity: 1;
-        }
-
-        svg {
-          width: 14px;
-          height: 14px;
-        }
-      }
-
-      .current-date {
-        padding: 0 8px;
-        font-size: 14px;
-        cursor: pointer;
-        border-radius: var(--b3-border-radius);
-
-        &:hover {
-          background: var(--b3-theme-background-light);
-        }
-      }
-    }
-  }
-
-  .year-month-picker {
-    padding: 16px;
-    min-width: 240px;
-
-    .year-picker {
-      margin-bottom: 16px;
-
-      .year-input {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 4px;
-
-        :deep(.arco-input-number) {
-          width: 80px;
-        }
-
-        .year-label {
-          font-size: 14px;
-        }
-      }
-    }
-
-    .month-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-
-      .month-item {
-        padding: 6px;
-        text-align: center;
-        cursor: pointer;
-        border-radius: var(--b3-border-radius);
-        transition: all 0.2s;
-
-        &:hover {
-          background: var(--b3-theme-background-light);
-        }
-
-        &.active {
-          background: var(--b3-theme-primary);
-          color: var(--b3-theme-on-primary);
-        }
-      }
-    }
-  }
-
-  .calendar-body {
-    .calendar-weekdays {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      text-align: center;
-      margin-bottom: 4px;
-
-      .weekday {
-        padding: 4px;
-        font-size: 12px;
-        color: var(--b3-theme-on-surface);
-        opacity: 0.68;
-      }
-    }
-
-    .calendar-days {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 2px;
-      user-select: none;
-
-      .day {
-        position: relative;
-        padding: 4px;
-        text-align: center;
-        cursor: pointer;
-        border-radius: var(--b3-border-radius);
-        font-size: 12px;
-        transition: all 0.2s;
-
+        
         &:hover {
           background-color: var(--b3-theme-background-light);
         }
-
-        &.today {
-          border: 1px solid var(--b3-theme-primary);
-          color: var(--b3-theme-on-background);
-          font-weight: bold;
-
-          &.in-range {
-            border-color: transparent;
-          }
-
-          &.selected {
-            border-color: transparent;
-            color: var(--b3-theme-on-primary);
-          }
+        
+        svg {
+          width: 14px;
+          height: 14px;
+          fill: var(--b3-theme-on-background);
         }
-
-        &.in-range {
-          background-color: var(--b3-theme-primary-light);
-          opacity: 0.5;
-
-          &.other-month {
-            opacity: 0.2;
-          }
-
-          .memo-indicator {
-            background-color: var(--b3-theme-primary);
-          }
+      }
+      
+      .current-date {
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: var(--b3-border-radius);
+        
+        &:hover {
+          background-color: var(--b3-theme-background-light);
         }
-
-        &.selected {
-          background-color: var(--b3-theme-primary);
-          color: var(--b3-theme-on-primary);
-
-          &:hover {
-            background-color: var(--b3-theme-primary);
-            opacity: 0.9;
-          }
-
-          &.other-month {
-            opacity: 0.5;
-          }
-
-          .memo-indicator {
-            background-color: var(--b3-theme-on-primary);
-          }
+      }
+    }
+  }
+  
+  .calendar-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 8px;
+    
+    .calendar-weekdays {
+      flex-shrink: 0;
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      margin-bottom: 8px;
+      
+      .weekday {
+        text-align: center;
+        font-size: 12px;
+        color: var(--b3-theme-on-surface);
+        opacity: 0.7;
+        padding: 4px 0;
+      }
+    }
+    
+    .calendar-days {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      grid-template-rows: repeat(6, 1fr);
+      gap: 2px;
+      
+      .day {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        border-radius: var(--b3-border-radius);
+        cursor: pointer;
+        user-select: none;
+        
+        &:hover {
+          background-color: var(--b3-theme-background-light);
         }
-
+        
         &.other-month {
-          color: var(--b3-theme-on-surface);
-          opacity: 0.38;
+          opacity: 0.5;
         }
-
-        &.has-memos {
+        
+        &.today {
           font-weight: bold;
-
+          color: var(--b3-theme-primary);
+        }
+        
+        &.has-memos {
           .memo-indicator {
             position: absolute;
             bottom: 2px;
@@ -568,6 +489,61 @@ watch(() => props.modelValue, (newValue) => {
             background-color: var(--b3-theme-primary);
           }
         }
+        
+        &.selected {
+          background-color: var(--b3-theme-primary);
+          color: var(--b3-theme-on-primary);
+          
+          .memo-indicator {
+            background-color: var(--b3-theme-on-primary);
+          }
+        }
+        
+        &.in-range {
+          background-color: var(--b3-theme-primary-light);
+          color: var(--b3-theme-on-primary);
+        }
+      }
+    }
+  }
+}
+
+.year-month-picker {
+  padding: 16px;
+  width: 240px;
+  
+  .year-picker {
+    margin-bottom: 16px;
+    
+    .year-input {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      
+      .year-label {
+        font-size: 14px;
+      }
+    }
+  }
+  
+  .month-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    
+    .month-item {
+      text-align: center;
+      padding: 8px;
+      border-radius: var(--b3-border-radius);
+      cursor: pointer;
+      
+      &:hover {
+        background-color: var(--b3-theme-background-light);
+      }
+      
+      &.active {
+        background-color: var(--b3-theme-primary);
+        color: var(--b3-theme-on-primary);
       }
     }
   }

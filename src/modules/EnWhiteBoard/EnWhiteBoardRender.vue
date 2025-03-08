@@ -101,6 +101,33 @@
             @open-in-sidebar="handleOpenInSidebar"
           />
         </template>
+        <template #node-EnWhiteBoardNodeMindmap="node">
+          <EnWhiteBoardNodeProtyle
+            :whiteBoardId="props.data.whiteBoardId"
+            :nodeId="node.id"
+            :enWhiteBoardProtyleUtilAreaRef="EnWhiteBoardProtyleUtilAreaRef"
+            @open-in-sidebar="handleOpenInSidebar"
+          />
+        </template>
+        <template #node-EnWhiteBoardNodeTreeCard="node">
+          <EnWhiteBoardNodeTreeCard
+            :nodeId="node.id"
+            :isCollapsed="node.data?.isCollapsed || false"
+            :displayText="getNodeDisplayText(node)"
+            :isMergingToSuperBlock="node.data?.isMergingToSuperBlock || false"
+            :nodeData="node.data"
+            :whiteBoardConfigData="embedWhiteBoardConfigData"
+            @toggle-tree-card="handleToggleTreeCard(node)"
+            @show-error="showError"
+          >
+            <EnWhiteBoardNodeProtyle
+              :whiteBoardId="props.data.whiteBoardId"
+              :nodeId="node.id"
+              :enWhiteBoardProtyleUtilAreaRef="EnWhiteBoardProtyleUtilAreaRef"
+              @open-in-sidebar="handleOpenInSidebar"
+            />
+          </EnWhiteBoardNodeTreeCard>
+        </template>
         <template #node-EnWhiteBoardNodeFrame="node">
           <EnWhiteBoardNodeFrame
             :whiteBoardId="props.data.whiteBoardId"
@@ -446,6 +473,7 @@ import EnWhiteBoardContextMenu from './EnWhiteBoardContextMenu.vue'
 import EnWhiteBoardNodeProtyle from './EnWhiteBoardNodeProtyle.vue'
 import EnWhiteBoardSettings from './EnWhiteBoardSettings.vue'
 import EnWhiteBoardToolBar from './EnWhiteBoardToolBar.vue'
+import EnWhiteBoardNodeTreeCard from './EnWhiteBoardNodeTreeCard.vue'
 import '@vue-flow/minimap/dist/style.css'
 import '@vue-flow/controls/dist/style.css'
 
@@ -1273,6 +1301,55 @@ const targetProtyleUtilClassList = [
   'protyle-toolbar',
   'protyle-hint',
 ]
+
+// 添加获取节点显示文本的函数
+const getNodeDisplayText = (node) => {
+  // 尝试从节点数据中获取显示文本
+  if (node.data?.displayText) {
+    return node.data.displayText
+  }
+  
+  // 如果没有显示文本，尝试获取节点ID的简短版本
+  const blockId = node.data?.blockId
+  if (blockId) {
+    return blockId.substring(0, 8) + '...'
+  }
+  
+  // 默认返回节点ID的简短版本
+  return node.id.substring(0, 8) + '...'
+}
+
+// 添加处理树形卡片切换的函数
+const handleToggleTreeCard = (node) => {
+  // 切换节点的折叠状态
+  const nodes = getNodes.value
+  const updatedNodes = nodes.map((n) => {
+    if (n.id === node.id) {
+      return {
+        ...n,
+        data: {
+          ...n.data,
+          isCollapsed: !n.data?.isCollapsed,
+        },
+      }
+    }
+    return n
+  })
+  
+  // 使用Vue Flow的setNodes函数更新节点
+  setNodes(updatedNodes)
+  
+  // 更新配置数据
+  if (embedWhiteBoardConfigData.value) {
+    embedWhiteBoardConfigData.value.boardOptions.nodes = updatedNodes
+  }
+}
+
+// 添加显示错误的函数
+const showError = (message) => {
+  // 使用控制台显示错误
+  console.error(message)
+}
 </script>
 
 <style lang="scss" scoped>
