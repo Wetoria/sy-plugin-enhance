@@ -61,14 +61,16 @@ function getLastMouseClickPosition() {
 
 export function useMousePostion(props: {
   immediate?: boolean
-  onMouseMoveStart?: (event: Event) => void
-  onMouseMove?: (event: Event) => void
-  onMouseMoveEnd?: (event: Event) => void
-  onMouseUp?: (event: Event) => void
-  onMouseDown?: (event: Event) => void
+  wait?: number
+  onMouseMoveStart?: (event: MouseEvent) => void
+  onMouseMove?: (event: MouseEvent) => void
+  onMouseMoveEnd?: (event: MouseEvent) => void
+  onMouseUp?: (event: MouseEvent) => void
+  onMouseDown?: (event: MouseEvent) => void
 }) {
   const {
     immediate = true,
+    wait = 500,
     onMouseMove,
     onMouseUp,
     onMouseDown,
@@ -79,12 +81,12 @@ export function useMousePostion(props: {
   const eventBinded = ref(false)
 
   // 停止移动鼠标500ms后，触发结束事件
-  const mouseMoveEndInner = debounce((event: Event) => {
+  const mouseMoveEndInner = debounce((event: MouseEvent) => {
     mouseMoveFlag = false
     onMouseMoveEnd?.(event)
-  }, 500)
+  }, wait)
 
-  const onMouseMoveInner = (event: Event) => {
+  const onMouseMoveInner = (event: MouseEvent) => {
     if (!mouseMoveFlag) {
       onMouseMoveStart?.(event)
       mouseMoveFlag = true
@@ -94,11 +96,11 @@ export function useMousePostion(props: {
 
     mouseMoveEndInner(event)
   }
-  const onMouseUpInner = (event: Event) => {
+  const onMouseUpInner = (event: MouseEvent) => {
     recordMousePositionByMouseUp(event)
     onMouseUp?.(event)
   }
-  const onMouseDownInner = (event: Event) => {
+  const onMouseDownInner = (event: MouseEvent) => {
     onMouseDown?.(event)
   }
   const bindEvent = () => {

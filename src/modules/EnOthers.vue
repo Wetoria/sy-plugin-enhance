@@ -75,7 +75,22 @@
         />
       </template>
     </EnSettingsItem>
+
+    <EnSettingsItem>
+      <div>
+        启用分栏宽度调整滑杆
+      </div>
+      <template #desc>
+        <div>
+          是否启用分栏宽度调整滑杆。具体说明详见插件文档。
+        </div>
+      </template>
+      <template #opt>
+        <a-switch v-model="moduleOptions.enableSuperBlockWidthResizer" />
+      </template>
+    </EnSettingsItem>
   </EnSettingsTeleportModule>
+  <EnSuperBlockWidthResizer v-if="moduleOptions.enableSuperBlockWidthResizer" />
 </template>
 
 
@@ -87,6 +102,7 @@ import {
   watchConfigChanged,
   watchConfigEnableStatus,
 } from '@/modules/EnModuleControl/ModuleProvide'
+import EnSuperBlockWidthResizer from '@/modules/EnSuperBlockWidthResizer.vue'
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
 import {
   moduleEnableStatusSwitcher,
@@ -108,6 +124,8 @@ interface ISettingModuleOptions extends EnModule {
   enableImageDefaultWidth: boolean
   defaultImageWidth: number
   enableDailyNoteFirstBlockBg: boolean
+
+  enableSuperBlockWidthResizer: boolean
 }
 
 const {
@@ -125,6 +143,7 @@ const {
     enableImageDefaultWidth: false,
     defaultImageWidth: 50,
     enableDailyNoteFirstBlockBg: false,
+    enableSuperBlockWidthResizer: false,
   },
 })
 

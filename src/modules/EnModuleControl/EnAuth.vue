@@ -128,8 +128,11 @@ const server1 = 'https://server.wetoria.vip'
 const server2 = 'https://api.wetoria.vip'
 // IPV6 直连
 const server3 = 'http://wetoria.cn'
+// IPV6 直连 HTTPS
+const server4 = 'https://wetoria.cn'
 
 const serverList = [
+  server4,
   server3,
   server1,
   server2,
