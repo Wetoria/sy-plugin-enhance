@@ -934,8 +934,7 @@ const onDuplicateNode = () => {
 
 const onRemoveEdge = () => {
   if (props.edgeId) {
-    const newEdges = edges.value.filter((edge) => edge.id !== props.edgeId)
-    setEdges(newEdges)
+    emit('removeEdge', props.edgeId)
   }
 }
 
