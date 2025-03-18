@@ -114,6 +114,10 @@ type Props = (EdgeProps<EdgeData> | ConnectionLineProps) & BaseProps
 
 const props = defineProps<Props>()
 
+const emit = defineEmits<{
+  'remove-edge': [edgeId: string]
+}>()
+
 const markerEnd = 'url(#arrow)'
 
 const edgePathParams = computed(() => {
@@ -307,6 +311,9 @@ const cancelEdit = () => {
 
 const onRemoveEdge = () => {
   // 移除此处的删除逻辑，完全交由工具栏组件处理
+  if ('id' in props && props.id) {
+    emit('remove-edge', props.id)
+  }
 }
 
 const onEdgeClick = () => {

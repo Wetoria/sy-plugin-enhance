@@ -138,6 +138,7 @@
           <EnWhiteBoardEdgeBase
             v-bind="edge"
             :whiteBoardConfigData="embedWhiteBoardConfigData"
+            @remove-edge="handleRemoveEdge"
           />
         </template>
         <template #connection-line="connectionLineProps">
@@ -510,6 +511,8 @@ const {
   setEdges,
   addNodes,
   removeNodes,
+  removeEdges,
+  setNodes,
   viewport,
   onViewportChange,
   setCenter,
@@ -1349,6 +1352,20 @@ const handleToggleTreeCard = (node) => {
 const showError = (message) => {
   // 使用控制台显示错误
   console.error(message)
+}
+
+// 添加处理removeEdge事件的函数
+const handleRemoveEdge = (edgeId) => {
+  if (!edgeId) return
+  
+  // 使用Vue Flow提供的removeEdges函数删除边
+  const edgeToRemove = edges.value.find(edge => edge.id === edgeId)
+  if (edgeToRemove) {
+    removeEdges([edgeToRemove])
+    
+    // 确保数据层面也删除了边
+    embedWhiteBoardConfigData.value.boardOptions.edges = edges.value.filter(edge => edge.id !== edgeId)
+  }
 }
 </script>
 
