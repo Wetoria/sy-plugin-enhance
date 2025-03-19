@@ -43,6 +43,7 @@
       'is-dragging': isDragging,
       'can-drop': canDrop,
       'is-locked': isLocked,
+      'is-dragover': onDragover,
     }"
     :data-en-flow-node-id="flowNode.id"
     :style="{
@@ -56,6 +57,9 @@
     @mouseup="handleMouseUp"
     @contextmenu="handleContextMenu"
     @click="handleFrameClick"
+    @dragover="handleDragOver"
+    @dragleave="handleDragLeave"
+    @drop="handleDrop"
   >
     <div
       class="FrameToolbarArea"
@@ -324,6 +328,8 @@ const {
   viewport,
   addSelectedNodes,
   removeSelectedNodes,
+  onNodeDragStop,
+  onNodesChange,
 } = useVueFlow()
 
 const nodeData = computed(() => flowNode.data)
@@ -339,45 +345,174 @@ const isDragging = ref(false)
 const containedNodes = ref<VueFlowNode[]>([])
 const canDrop = ref(false)
 
-// 添加子节点管理
+// 修改子节点计算方法，确保只统计节点而不包括边
 const childNodes = computed(() => {
-  return getNodes.value.filter((node) => node.data?.parentId === flowNode.id)
+  // 只获取节点类型的子元素，排除边
+  return getNodes.value.filter((node) => {
+    // 过滤条件1: 必须是父节点ID匹配当前Frame
+    const isChild = node.data?.parentId === flowNode.id
+    
+    // 过滤条件2: 必须是节点，不是边
+    // 所有节点都有type属性，而边没有type属性或type值不同
+    const isNode = node.type && node.type.startsWith('EnWhiteBoardNode')
+    
+    // 同时满足这两个条件才算是子节点
+    return isChild && isNode
+  })
 })
 
-// 修改 isNodeInside 函数，允许Frame嵌套
-const isNodeInside = (node: VueFlowNode, ignoreParentId = false) => {
-  // 如果节点已经有父节点且不忽略父子关系，则不检查
-  if (!ignoreParentId && node.data?.parentId && node.data.parentId !== flowNode.id) return false
+// 添加拖拽放置处理
+const onDrop = ref(false)
+const onDragover = ref(false)
 
-  // 移除对Frame类型节点的排除，允许Frame嵌套
-  // if (node.type === EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME) return false
+// 添加拖拽事件处理函数
+const handleDragOver = (event: DragEvent) => {
+  event.preventDefault()
+  // 标记当前Frame可以接收拖拽
+  canDrop.value = true
+  onDragover.value = true
+}
 
-  // Frame的范围
-  const frameLeft = flowNode.position.x
-  const frameTop = flowNode.position.y
-  const frameWidth = (flowNode as any).dimensions?.width || 0
-  const frameHeight = (flowNode as any).dimensions?.height || 0
-  const frameRight = frameLeft + frameWidth
-  const frameBottom = frameTop + frameHeight
+const handleDragLeave = (event: DragEvent) => {
+  event.preventDefault()
+  // 取消标记
+  canDrop.value = false
+  onDragover.value = false
+}
 
-  // 节点的范围
-  const nodeLeft = node.position.x
-  const nodeTop = node.position.y
-  const nodeWidth = (node as any).dimensions?.width || (node as any).width || 0
-  const nodeHeight = (node as any).dimensions?.height || (node as any).height || 0
-  const nodeRight = nodeLeft + nodeWidth
-  const nodeBottom = nodeTop + nodeHeight
-
-  // 节点中心点必须在Frame内部，边缘不算（提高稳定性，避免边缘抖动）
-  const nodeCenterX = nodeLeft + nodeWidth / 2
-  const nodeCenterY = nodeTop + nodeHeight / 2
+// 修改Frame的onDrop处理函数，只要节点拖入Frame就建立父子关系
+const handleDrop = (event: DragEvent) => {
+  event.preventDefault()
+  event.stopPropagation()
+  onDrop.value = true
   
-  return (
-    nodeCenterX >= frameLeft && 
-    nodeCenterX <= frameRight && 
-    nodeCenterY >= frameTop && 
-    nodeCenterY <= frameBottom
-  )
+  try {
+    // 1. 从HTML5拖拽API获取节点ID
+    const draggedNodeId = event.dataTransfer?.getData('application/vueflow/node-id')
+    
+    // 2. 如果成功获取到ID，建立父子关系
+    if (draggedNodeId) {
+      const draggedNode = getNodes.value.find(node => node.id === draggedNodeId)
+      if (draggedNode) {
+        updateNodeParent(draggedNodeId, flowNode.id)
+        console.log(`节点 ${draggedNodeId} 已通过拖拽添加到Frame ${flowNode.id}`)
+      }
+    } 
+    // 3. 如果没有获取到ID，尝试查找当前正在拖拽的节点
+    else {
+      const draggingNodes = getNodes.value.filter(node => node.dragging)
+      draggingNodes.forEach(node => {
+        if (node.id !== flowNode.id) {
+          updateNodeParent(node.id, flowNode.id)
+          console.log(`节点 ${node.id} 已通过拖拽状态添加到Frame ${flowNode.id}`)
+        }
+      })
+    }
+  } catch (error) {
+    console.error('处理节点拖放时出错:', error)
+  }
+  
+  // 重置状态
+  canDrop.value = false
+  onDragover.value = false
+  onDrop.value = false
+}
+
+/**
+ * 检查节点是否在Frame内部
+ * @param {Object} node 要检查的节点
+ * @param {boolean} strictCheck 是否使用严格检查(true:完全边界检查,false:中心点检查)
+ * @return {boolean} 节点是否在Frame内
+ */
+const isNodeInside = (node, strictCheck = false) => {
+  if (!node || !node.position) return false
+  
+  // 获取Frame的边界
+  const frameX = flowNode.position.x
+  const frameY = flowNode.position.y
+  const frameWidth = typeof flowNode.width === 'number' ? flowNode.width : 0
+  const frameHeight = typeof flowNode.height === 'number' ? flowNode.height : 0
+  
+  if (frameWidth === 0 || frameHeight === 0) return false
+  
+  // 计算Frame的边界
+  const frameLeft = frameX
+  const frameRight = frameX + frameWidth
+  const frameTop = frameY
+  const frameBottom = frameY + frameHeight
+  
+  // 获取节点的尺寸
+  const nodeWidth = typeof node.width === 'number' ? node.width : 0
+  const nodeHeight = typeof node.height === 'number' ? node.height : 0
+  
+  // 节点的坐标
+  const nodeX = node.position.x
+  const nodeY = node.position.y
+  
+  // 节点的边界
+  const nodeLeft = nodeX
+  const nodeRight = nodeX + nodeWidth
+  const nodeTop = nodeY
+  const nodeBottom = nodeY + nodeHeight
+  
+  // 计算节点中心点
+  const nodeCenterX = nodeX + nodeWidth / 2
+  const nodeCenterY = nodeY + nodeHeight / 2
+  
+  // 对于Frame类型节点的特殊处理
+  if (node.type === EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME) {
+    if (strictCheck) {
+      // 计算重叠区域
+      const overlapLeft = Math.max(nodeLeft, frameLeft)
+      const overlapRight = Math.min(nodeRight, frameRight)
+      const overlapTop = Math.max(nodeTop, frameTop)
+      const overlapBottom = Math.min(nodeBottom, frameBottom)
+      
+      // 如果没有重叠，则返回false
+      if (overlapLeft >= overlapRight || overlapTop >= overlapBottom) return false
+      
+      // 计算重叠面积
+      const overlapArea = (overlapRight - overlapLeft) * (overlapBottom - overlapTop)
+      
+      // 计算节点面积
+      const nodeArea = nodeWidth * nodeHeight
+      
+      // 如果重叠面积超过节点面积的80%，则认为它在Frame内
+      return nodeArea > 0 ? (overlapArea >= nodeArea * 0.8) : false
+    } else {
+      // 使用中心点加部分边界检查
+      return (
+        nodeCenterX >= frameLeft &&
+        nodeCenterX <= frameRight &&
+        nodeCenterY >= frameTop &&
+        nodeCenterY <= frameBottom &&
+        // 至少有50%的边界在Frame内
+        (
+          (nodeLeft >= frameLeft || nodeRight >= frameRight) &&
+          (nodeTop >= frameTop || nodeBottom >= frameBottom)
+        )
+      )
+    }
+  }
+  
+  // 对于普通节点
+  if (strictCheck) {
+    // 严格检查要求节点完全在Frame内
+    return (
+      nodeLeft >= frameLeft &&
+      nodeRight <= frameRight &&
+      nodeTop >= frameTop &&
+      nodeBottom <= frameBottom
+    )
+  } else {
+    // 非严格检查只要求节点中心点在Frame内
+    return (
+      nodeCenterX >= frameLeft &&
+      nodeCenterX <= frameRight &&
+      nodeCenterY >= frameTop &&
+      nodeCenterY <= frameBottom
+    )
+  }
 }
 
 // 修改throttledCheck函数定义
@@ -414,107 +549,157 @@ const throttledCheck = () => {
   }
 }
 
-// 替换findContainingFrame函数，简化嵌套逻辑
-const findContainingFrame = (node: VueFlowNode) => {
-  // 如果已经有父节点，且不是当前拖动过程，则维持当前关系
-  if (!isDragging.value && node.data?.parentId) {
-    return node.data.parentId
-  }
-  
-  // 获取所有Frame节点(除了当前节点本身，但允许嵌套Frame)
-  const frameNodes = getNodes.value.filter(
-    (n) => n.type === EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME && 
-           n.id !== node.id
+/**
+ * 找出包含指定节点的最内层Frame
+ * @param {Object} targetNode 目标节点
+ * @return {string|null} 包含目标节点的最内层Frame的ID，如果没有则返回null
+ */
+const findContainingFrame = (targetNode) => {
+  // 如果节点没有位置属性，则无法确定包含关系
+  if (!targetNode.position) return null
+
+  // 获取所有Frame类型的节点
+  const allFrameNodes = getNodes.value.filter(
+    node => node.type === EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME && node.id !== targetNode.id
   )
   
-  if (frameNodes.length === 0) return null
+  // 如果没有其他Frame节点，则返回null
+  if (allFrameNodes.length === 0) return null
   
-  // 按面积从小到大排序，小面积的Frame优先（更可能是内层Frame）
-  const sortedFrames = [...frameNodes].sort((a, b) => {
-    const aArea = ((a as any).dimensions?.width || 0) * ((a as any).dimensions?.height || 0)
-    const bArea = ((b as any).dimensions?.width || 0) * ((b as any).dimensions?.height || 0)
-    return aArea - bArea
-  })
+  // 计算目标节点的中心点和边界
+  const targetWidth = typeof targetNode.width === 'number' ? targetNode.width : 0
+  const targetHeight = typeof targetNode.height === 'number' ? targetNode.height : 0
   
-  // 找到包含节点的最小Frame
-  for (const frame of sortedFrames) {
-    // 创建一个临时函数来检测节点是否在此Frame内
-    const isInside = (testNode: VueFlowNode) => {
-      const frameLeft = frame.position.x
-      const frameTop = frame.position.y
-      const frameWidth = (frame as any).dimensions?.width || 0
-      const frameHeight = (frame as any).dimensions?.height || 0
-      const frameRight = frameLeft + frameWidth
-      const frameBottom = frameTop + frameHeight
-
-      // 节点范围
-      const nodeLeft = testNode.position.x
-      const nodeTop = testNode.position.y
-      const nodeWidth = (testNode as any).dimensions?.width || (testNode as any).width || 0
-      const nodeHeight = (testNode as any).dimensions?.height || (testNode as any).height || 0
+  const targetNodeBounds = {
+    x: targetNode.position.x,
+    y: targetNode.position.y,
+    width: targetWidth,
+    height: targetHeight,
+    // 为了更精确，考虑所有边界
+    left: targetNode.position.x,
+    right: targetNode.position.x + targetWidth,
+    top: targetNode.position.y,
+    bottom: targetNode.position.y + targetHeight
+  }
+  
+  // 找出所有包含该节点的Frame
+  const containingFrames = allFrameNodes.filter(frameNode => {
+    // 排除没有尺寸信息的Frame
+    const frameWidth = typeof frameNode.width === 'number' ? frameNode.width : 0
+    const frameHeight = typeof frameNode.height === 'number' ? frameNode.height : 0
+    
+    if (frameWidth === 0 || frameHeight === 0) return false
+    
+    // 获取Frame的边界
+    const frameBounds = {
+      left: frameNode.position.x,
+      right: frameNode.position.x + frameWidth,
+      top: frameNode.position.y,
+      bottom: frameNode.position.y + frameHeight
+    }
+    
+    // 检查节点是否完全位于Frame内部
+    // 为Frame类型的节点，要求其80%的面积在内部
+    if (targetNode.type === EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME) {
+      // 计算重叠区域
+      const overlapLeft = Math.max(targetNodeBounds.left, frameBounds.left)
+      const overlapRight = Math.min(targetNodeBounds.right, frameBounds.right)
+      const overlapTop = Math.max(targetNodeBounds.top, frameBounds.top)
+      const overlapBottom = Math.min(targetNodeBounds.bottom, frameBounds.bottom)
       
-      // 使用节点中心点判断，提高稳定性
-      const nodeCenterX = nodeLeft + nodeWidth / 2
-      const nodeCenterY = nodeTop + nodeHeight / 2
-
+      // 如果没有重叠，则返回false
+      if (overlapLeft >= overlapRight || overlapTop >= overlapBottom) return false
+      
+      // 计算重叠面积
+      const overlapArea = (overlapRight - overlapLeft) * (overlapBottom - overlapTop)
+      // 计算目标节点面积
+      const targetArea = targetWidth * targetHeight
+      
+      
+      // 如果重叠面积超过目标节点面积的80%，则认为它在Frame内
+      return targetArea > 0 ? (overlapArea >= targetArea * 0.8) : false
+    } else {
+      // 对于普通节点，检查节点中心点和边界是否在Frame内
       return (
-        nodeCenterX >= frameLeft &&
-        nodeCenterX <= frameRight &&
-        nodeCenterY >= frameTop &&
-        nodeCenterY <= frameBottom
+        targetNodeBounds.left >= frameBounds.left &&
+        targetNodeBounds.right <= frameBounds.right &&
+        targetNodeBounds.top >= frameBounds.top &&
+        targetNodeBounds.bottom <= frameBounds.bottom
       )
     }
+  })
+  
+  // 如果没有包含该节点的Frame，则返回null
+  if (containingFrames.length === 0) return null
+  
+  // 按照面积从小到大排序，找出最内层的Frame
+  containingFrames.sort((a, b) => {
+    const aWidth = typeof a.width === 'number' ? a.width : 0
+    const aHeight = typeof a.height === 'number' ? a.height : 0
+    const bWidth = typeof b.width === 'number' ? b.width : 0
+    const bHeight = typeof b.height === 'number' ? b.height : 0
     
-    if (isInside(node)) {
-      return frame.id
-    }
-  }
+    const areaA = aWidth * aHeight
+    const areaB = bWidth * bHeight
+    return areaA - areaB
+  })
   
-  // 检查当前Frame是否包含节点
-  if (isNodeInside(node, true)) {
-    return flowNode.id
-  }
-  
-  return null
+  // 返回最内层Frame的ID
+  return containingFrames[0].id
 }
 
-// 简化并优化checkNodesInFrameBoundary函数
+/**
+ * 检查节点是否在Frame边界内
+ * 此函数用于确定其他节点与当前Frame的父子关系
+ */
 const checkNodesInFrameBoundary = () => {
-  // 如果Frame已锁定，不进行边界检测
-  if (isLocked.value) return
-  
-  // 如果正在拖动，延迟检测
-  if (isDragging.value) return
-  
-  // 移除对Frame类型的过滤，允许嵌套
-  const nodes = getNodes.value.filter(node => 
-    // 只过滤掉自身，允许其他Frame类型节点
-    node.id !== flowNode.id
+  // 获取所有节点，排除当前Frame及锁定的节点
+  const otherNodes = getNodes.value.filter(
+    node => node.id !== flowNode.id && !node.data?.locked
   )
   
-  // 处理当前Frame内的节点，减少不必要的关系变更
-  nodes.forEach((node) => {
-    // 检查节点是否在当前Frame内
-    const isInside = isNodeInside(node, false)
+  if (otherNodes.length === 0) return
+  
+  // 遍历检查每个节点
+  for (const node of otherNodes) {
+    // 对于Frame类型节点的特殊处理
+    if (node.type === EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME) {
+      // 检查该Frame是否在此Frame内
+      const isInside = isNodeInside(node, true)
+      
+      // 找到该Frame当前的父Frame(如果有)
+      const containingFrameId = findContainingFrame(node)
+      
+      // 如果视觉上在此Frame内，且当前不是其父节点，则设置父子关系
+      if (isInside && containingFrameId === flowNode.id && node.data?.parentId !== flowNode.id) {
+        console.log(`嵌套Frame ${node.id} 加入Frame ${flowNode.id}`)
+        updateNodeParent(node.id, flowNode.id)
+      }
+      // 如果视觉上不在此Frame内，但当前是其父节点，则移除父子关系
+      else if (!isInside && node.data?.parentId === flowNode.id) {
+        console.log(`嵌套Frame ${node.id} 离开Frame ${flowNode.id}`)
+        updateNodeParent(node.id, null)
+      }
+      continue // 处理完Frame类型后继续下一个节点
+    }
     
-    // 检查节点当前的父节点
-    const currentParentId = node.data?.parentId
+    // 普通节点处理
+    const isNodeInsideFrame = isNodeInside(node, true)
     
-    // 处理节点所属关系的变化
-    if (isInside && currentParentId !== flowNode.id) {
-      // 只有当节点确实在Frame内且尚未归属于此Frame时，才更新关系
-      // 添加视觉反馈
-      console.log(`节点 ${node.id} 已加入分组 ${flowNode.id}`)
+    // 找到该节点当前的父Frame(如果有)
+    const containingFrameId = findContainingFrame(node)
+    
+    // 如果节点在此Frame内，且当前不是其父节点
+    if (isNodeInsideFrame && containingFrameId === flowNode.id && node.data?.parentId !== flowNode.id) {
+      console.log(`节点 ${node.id} 加入Frame ${flowNode.id}`)
       updateNodeParent(node.id, flowNode.id)
-    } 
-    else if (!isInside && currentParentId === flowNode.id) {
-      // 只有当节点确实不在Frame内但仍归属于此Frame时，才移除关系
-      // 添加视觉反馈
-      console.log(`节点 ${node.id} 已离开分组 ${flowNode.id}`)
+    }
+    // 如果节点不在此Frame内，但当前是其父节点
+    else if (!isNodeInsideFrame && node.data?.parentId === flowNode.id) {
+      console.log(`节点 ${node.id} 离开Frame ${flowNode.id}`)
       updateNodeParent(node.id, null)
     }
-    // 其他情况保持不变，提高稳定性
-  })
+  }
 }
 
 // 修改鼠标事件处理函数，优化拖拽性能
@@ -606,15 +791,22 @@ const handleFrameDrag = (event: MouseEvent) => {
   }
   
   // 查找所有子节点（包括嵌套Frame及其子节点）
-  const getAllChildNodes = (parentId: string) => {
-    const directChildren = currentNodes.filter(node => node.data?.parentId === parentId)
+  const getAllChildNodes = (parentId: string, visitedIds = new Set<string>()) => {
+    // 添加当前节点ID到已访问集合，防止循环引用
+    visitedIds.add(parentId)
+    
+    const directChildren = currentNodes.filter(node => 
+      node.data?.parentId === parentId && !visitedIds.has(node.id)
+    )
     
     let allChildren = [...directChildren]
     
-    // 递归查找嵌套Frame的子节点
+    // 递归查找嵌套Frame的子节点，但避免重复处理已访问节点
     directChildren.forEach(child => {
-      if (child.type === EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME) {
-        const nestedChildren = getAllChildNodes(child.id)
+      if (child.type === EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME && !visitedIds.has(child.id)) {
+        // 创建一个新的visitedIds副本，以避免跨分支影响
+        const childVisitedIds = new Set(visitedIds)
+        const nestedChildren = getAllChildNodes(child.id, childVisitedIds)
         allChildren = [...allChildren, ...nestedChildren]
       }
     })
@@ -622,8 +814,8 @@ const handleFrameDrag = (event: MouseEvent) => {
     return allChildren
   }
   
-  // 获取所有子节点（包括嵌套Frame内的节点）
-  const allChildNodes = getAllChildNodes(flowNode.id)
+  // 获取所有子节点（包括嵌套Frame内的节点），传入空的visitedIds集合作为初始值
+  const allChildNodes = getAllChildNodes(flowNode.id, new Set<string>())
   
   // 更新所有子节点的位置
   const updatedChildNodes = allChildNodes.map(node => ({
@@ -638,23 +830,28 @@ const handleFrameDrag = (event: MouseEvent) => {
   const updatedNodes = [updatedFrameNode, ...updatedChildNodes]
   
   // 批量更新节点位置
-  setNodes(nodes => 
-    nodes.map(node => {
+  setNodes(nodes => {
+    const updatedNodeList = nodes.map(node => {
       const updatedNode = updatedNodes.find(n => n.id === node.id)
       return updatedNode || node
     })
-  )
+    
+    // 确保更新后Frame仍在底层
+    const frameNodes = updatedNodeList.filter(node => 
+      node.type === EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME
+    )
+    
+    const normalNodes = updatedNodeList.filter(node => 
+      node.type !== EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME
+    )
+    
+    return [...frameNodes, ...normalNodes]
+  })
 }
 
 // 修改handleMouseUp不再需要复杂处理，因为我们使用了全局的handleMouseUpGlobal
 const handleMouseUp = () => {
   // 这个函数保留但简化，主要逻辑已移至handleMouseUpGlobal
-}
-
-// 添加拖拽离开处理
-const handleDragLeave = (event: DragEvent) => {
-  event.preventDefault()
-  canDrop.value = false
 }
 
 // 添加右键菜单状态
@@ -827,11 +1024,8 @@ onMounted(() => {
     detectNodesInFrame()
     highlightPotentialNodes()
     
-    // 确保Frame的z-index始终为-1
-    const frameEl = document.querySelector(`[data-en-flow-node-id="${flowNode.id}"]`) as HTMLElement
-    if (frameEl) {
-      frameEl.style.zIndex = '-1'
-    }
+    // 确保Frame节点始终在底层
+    ensureFrameAtBottom()
   })
   
   // 初始化状态
@@ -840,22 +1034,34 @@ onMounted(() => {
   frameBorderColor.value = nodeData.value?.style?.borderColor || ''
   frameBorderStyle.value = nodeData.value?.style?.borderStyle || 'dashed'
   frameOpacity.value = nodeData.value?.style?.opacity || 0.3
-  
-  // 监听选中状态变化，确保z-index不变
-  watch(() => isSelected.value, (newVal) => {
-    nextTick(() => {
-      const frameEl = document.querySelector(`[data-en-flow-node-id="${flowNode.id}"]`) as HTMLElement
-      if (frameEl) {
-        frameEl.style.zIndex = '-1'
-      }
-    })
-  })
 })
 
-onBeforeUnmount(() => {
-  document.removeEventListener('click', handleGlobalClick)
-  document.removeEventListener('mouseup', throttledCheck)
-  clearPotentialNodesHighlight()
+// 添加函数确保Frame节点始终处于最底层 - 通过调整数组顺序
+const ensureFrameAtBottom = () => {
+  const nodes = getNodes.value
+  
+  // 分离Frame节点和普通节点
+  const frameNodes = nodes.filter(node => 
+    node.type === EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME
+  )
+  
+  const normalNodes = nodes.filter(node => 
+    node.type !== EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME
+  )
+  
+  // 重新排序：将Frame节点放在前面（数组开头），这样Vue Flow会先渲染Frame，后渲染普通节点
+  // 在SVG渲染中，后渲染的元素会显示在上方
+  if (frameNodes.length > 0 && normalNodes.length > 0) {
+    const newNodes = [...frameNodes, ...normalNodes]
+    setNodes(newNodes)
+  }
+}
+
+// 在各种关键场景下调用ensureFrameAtBottom
+// 监听节点数组变化，确保Frame始终在底层
+watch(() => getNodes.value.length, () => {
+  // 当节点数量变化时，确保Frame在底层
+  ensureFrameAtBottom()
 })
 
 // 处理全局点击事件
@@ -1449,6 +1655,61 @@ const addSelectedNodesToFrame = () => {
   setNodes(updatedNodes)
   closeContextMenu()
 }
+
+// 在setup阶段注册节点拖拽结束事件监听
+onNodeDragStop((params) => {
+  // 获取被拖拽的节点
+  const draggedNode = params.node
+  
+  // 排除当前Frame本身
+  if (draggedNode.id === flowNode.id) return
+  
+  // 检查节点是否位于当前Frame内
+  const isInside = isNodeInside(draggedNode, true)
+  
+  // 特殊处理Frame类型节点的嵌套关系
+  if (draggedNode.type === EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME) {
+    if (isInside && draggedNode.data?.parentId !== flowNode.id) {
+      // 查找所有包含该Frame的Frame
+      const containingFrameId = findContainingFrame(draggedNode)
+      
+      // 只有当当前Frame是最内层包含该Frame的Frame时，才建立关系
+      if (containingFrameId === flowNode.id) {
+        console.log(`嵌套Frame ${draggedNode.id} 已被拖入上层Frame ${flowNode.id}`)
+        updateNodeParent(draggedNode.id, flowNode.id)
+      }
+    } 
+    else if (!isInside && draggedNode.data?.parentId === flowNode.id) {
+      console.log(`嵌套Frame ${draggedNode.id} 已被拖出上层Frame ${flowNode.id}`)
+      updateNodeParent(draggedNode.id, null)
+    }
+  }
+  // 普通节点处理
+  else {
+    // 如果节点在Frame内且不是其子节点，则添加关系
+    if (isInside && draggedNode.data?.parentId !== flowNode.id) {
+      // 查找包含该节点的最内层Frame
+      const containingFrameId = findContainingFrame(draggedNode)
+      
+      if (containingFrameId === flowNode.id) {
+        console.log(`节点拖拽结束: ${draggedNode.id} 已被拖入Frame ${flowNode.id}`)
+        updateNodeParent(draggedNode.id, flowNode.id)
+      }
+    } 
+    // 如果节点是Frame的子节点但不在Frame内，则移除关系
+    else if (!isInside && draggedNode.data?.parentId === flowNode.id) {
+      console.log(`节点拖拽结束: ${draggedNode.id} 已被拖出Frame ${flowNode.id}`)
+      updateNodeParent(draggedNode.id, null)
+    }
+  }
+})
+
+// 添加回被错误移除的onBeforeUnmount钩子
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleGlobalClick)
+  document.removeEventListener('mouseup', throttledCheck)
+  clearPotentialNodesHighlight()
+})
 </script>
 
 <style lang="scss" scoped>
@@ -1466,7 +1727,7 @@ const addSelectedNodesToFrame = () => {
   background-color: color-mix(in srgb, var(--b3-theme-surface-light) 85%, transparent);
   backdrop-filter: blur(8px);
   cursor: move;
-  z-index: 0;
+  z-index: -1 !important;
 
   &:hover,
   &.is-selected {
@@ -1512,6 +1773,13 @@ const addSelectedNodesToFrame = () => {
     :deep(.vue-flow__resize-control) {
       display: none;
     }
+  }
+
+  &.is-dragover {
+    border-style: solid;
+    border-color: var(--b3-theme-primary);
+    box-shadow: 0 0 0 2px var(--b3-theme-primary-light);
+    background-color: color-mix(in srgb, var(--b3-theme-primary) 10%, var(--b3-theme-surface-light) 90%);
   }
 
   .EnWhiteBoardNodeFrameContainer {
@@ -1904,10 +2172,10 @@ const addSelectedNodesToFrame = () => {
 
 :deep(.vue-flow__node) {
   &.EnWhiteBoardNodeFrameContainer {
-    z-index: 0;
+    z-index: -1 !important;
     
     .EnWhiteBoardNodeFrameContainer {
-      z-index: 1;
+      z-index: -1 !important;
     }
   }
   
@@ -1918,7 +2186,7 @@ const addSelectedNodesToFrame = () => {
 
 :deep(.vue-flow__node.selected) {
   &.EnWhiteBoardNodeFrameContainer {
-    z-index: 2 !important;
+    z-index: -1 !important;
   }
 }
 </style>
