@@ -7,6 +7,41 @@
   >
     <EnSettingsItem mode="vertical">
       <div>
+        创建模式
+      </div>
+      <template #desc>
+        <div>
+          选择白板节点对应的思源块的创建位置：添加至目标块或追加至笔记本的日记中。
+        </div>
+        <div>
+          如果目标为容器块（比如文档、列表项、超级块），则会插入容器块的末尾。
+        </div>
+        <div>
+          如果目标非容器块（比如段落），则会插入目标块的后方。
+        </div>
+        <div v-if="moduleOptions.targetId">
+          已选择块：
+          <a-link
+            @click="openTargetDoc"
+          >
+            点击跳转至目标块
+          </a-link>
+        </div>
+      </template>
+      <template #opt>
+        <div class="EnNotebookSelector">
+          <EnBlockAppendModeSelector
+            v-model="moduleOptions.notebookId"
+            v-model:targetId="moduleOptions.targetId"
+            :notebookList="openedNotebookList"
+            :mode="whiteBoardMode"
+            :disabled="cannotEdit"
+          />
+        </div>
+      </template>
+    </EnSettingsItem>
+    <EnSettingsItem mode="vertical">
+      <div>
         白板后的最小高度
       </div>
       <template #opt>
@@ -178,6 +213,7 @@
 import { usePlugin } from '@/main'
 import {
   injectAuthStatus,
+  injectGlobalData,
   useModule,
 } from '@/modules/EnModuleControl/ModuleProvide'
 import {
@@ -192,8 +228,6 @@ import EnWhiteBoardRenderEmbed from '@/modules/EnWhiteBoard/EnWhiteBoardRenderEm
 import {
   debounce,
 } from '@/utils'
-
-
 import {
   EN_CONSTANTS,
   EN_MODULE_LIST,
@@ -212,6 +246,7 @@ import {
 import EnSettingsItem from '../../modules/Settings/EnSettingsItem.vue'
 import EnSettingsTeleportModule from '../../modules/Settings/EnSettingsTeleportModule.vue'
 import EnWhiteBoardEntrySlash from './EnWhiteBoardEntrySlash.vue'
+import EnBlockAppendModeSelector from '@/components/EnBlockAppendModeSelector.vue'
 
 const plugin = usePlugin()
 
@@ -248,6 +283,11 @@ const {
     cardHeightDefault: 185,
 
     backgroundVariant: 'dots',
+    
+    // 新增块创建模式配置
+    notebookId: '',
+    targetId: '',
+    autoSaveConfigByWindow: false,
   },
 })
 
@@ -341,6 +381,28 @@ watch(() => moduleOptions.value.backgroundVariant, (newVariant, oldVariant) => {
     }
   })
 })
+
+// 获取已打开的笔记本列表
+const globalData = injectGlobalData()
+const openedNotebookList = computed(() => globalData.value.openedNotebookList || [])
+const whiteBoardMode = computed<EnBlockAppendMode[]>(() => 
+  globalData.value.whiteBoardMode || (['All', 'targetBlock', 'targetDoc'] as EnBlockAppendMode[])
+)
+
+// 跳转到目标文档
+const openTargetDoc = () => {
+  if (moduleOptions.value.targetId) {
+    const app = window.siyuan?.ws?.app
+    if (app) {
+      app.openTab({
+        app,
+        doc: {
+          id: moduleOptions.value.targetId,
+        },
+      })
+    }
+  }
+}
 </script>
 
 <style lang="scss">

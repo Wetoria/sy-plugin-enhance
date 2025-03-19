@@ -76,6 +76,11 @@ export interface EnWhiteBoardSetting extends EnModule {
   cardHeightDefault: number
 
   backgroundVariant: 'dots' | 'lines' | 'none'
+  
+  // 节点块创建模式相关配置
+  notebookId: string
+  targetId: string
+  autoSaveConfigByWindow: boolean
 }
 export function useWhiteBoardModule() {
   return useModule<EnWhiteBoardSetting>(EN_MODULE_LIST.EN_WHITE_BOARD)

@@ -50,6 +50,7 @@ interface GlobalData {
 
   quickNoteMode: Array<EnBlockAppendMode>
   commentMode: Array<EnBlockAppendMode>
+  whiteBoardMode: Array<EnBlockAppendMode>
 
 }
 

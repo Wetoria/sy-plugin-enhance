@@ -85,9 +85,9 @@ const globalDataModule = useGlobalData<GlobalData>(EN_CONSTANTS.GLOBAL_DATA, {
     notebookList: [],
     openedNotebookList: [],
 
-    quickNoteMode: ['targetDoc', 'targetBlock'],
-    // commentMode: ['targetDoc', 'targetBlock', 'currentDoc'],
-    commentMode: [],
+    quickNoteMode: ['All', 'targetBlock', 'targetDoc'],
+    commentMode: ['All', 'targetBlock', 'targetDoc', 'currentDoc', 'currentBlock'],
+    whiteBoardMode: ['All', 'targetBlock', 'targetDoc'],
   },
   needSave: false,
 })
