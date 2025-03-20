@@ -73,7 +73,21 @@
       }"
     >
       <div class="infos">
-        <span class="frame-title">{{ nodeData.label || '未命名分组' }}</span>
+        <span 
+          class="frame-title" 
+          @dblclick.stop="onTitleDblClick"
+        >
+          <input
+            v-if="isEditingTitle"
+            ref="titleInputRef"
+            v-model="editingTitle"
+            class="frame-title-input"
+            @blur="finishTitleEdit"
+            @keydown.enter="finishTitleEdit"
+            @keydown.esc="isEditingTitle = false"
+          />
+          <span v-else>{{ nodeData.label || '未命名分组' }}</span>
+        </span>
         <span class="child-count">{{ childNodes.length }}</span>
         <span class="child-info" v-if="nodeData.childNodeIds && nodeData.childNodeIds.length > 0" title="嵌套节点ID列表">
           ({{ nodeData.childNodeIds.length }})
@@ -2254,46 +2268,61 @@ const updateFrameLabel = async (newLabel: string) => {
 // 在toolbar中添加标题编辑功能
 // 可以在现有的handleContextMenu函数中添加相关逻辑
 const editFrameLabel = async () => {
-  // 获取当前标题
-  const currentLabel = flowNode.data.label || '未命名分组'
-  
-  // 使用原生 prompt 对话框进行简单输入
-  const newLabel = prompt('请输入新标题', currentLabel)
-  
-  // 如果用户取消或输入为空，则不更新
-  if (!newLabel || newLabel === currentLabel) {
-    closeContextMenu()
-    return
-  }
-  
-  // 更新节点数据
-  const updatedNodes = getNodes.value.map(node => {
-    if (node.id === flowNode.id) {
-      return {
-        ...node,
-        data: {
-          ...node.data,
-          label: newLabel
-        }
-      }
-    }
-    return node
-  })
-  
-  setNodes(updatedNodes)
-  
-  // 如果有关联的思源块，同步更新思源块内容
-  if (flowNode.data.blockId) {
-    syncFrameContent()
-  }
-  
-  closeContextMenu()
+  // 直接触发双击事件
+  onTitleDblClick(new MouseEvent('dblclick'))
 }
 
 // 组件卸载时，移除事件监听
 onUnmounted(() => {
   enEventBus.off(EN_EVENT_BUS_KEYS.WHITEBOARD_SYNC_FRAME_CONTENT, undefined)
 })
+
+// Frame标题编辑相关变量和函数
+const isEditingTitle = ref(false)
+const editingTitle = ref('')
+const titleInputRef = ref<HTMLInputElement | null>(null)
+
+// 处理标题双击事件
+const onTitleDblClick = async (event: MouseEvent) => {
+  event.stopPropagation()
+  isEditingTitle.value = true
+  editingTitle.value = nodeData.value.label || '未命名分组'
+  
+  // 等待DOM更新后聚焦输入框
+  nextTick(() => {
+    titleInputRef.value?.focus()
+    titleInputRef.value?.select()
+  })
+}
+
+// 处理标题编辑完成
+const finishTitleEdit = () => {
+  const newLabel = editingTitle.value.trim()
+  if (newLabel && newLabel !== nodeData.value.label) {
+    // 更新节点数据
+    const nodes = getNodes.value
+    const newNodes = nodes.map((node) => {
+      if (node.id === flowNode.id) {
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            label: newLabel
+          }
+        }
+      }
+      return node
+    })
+    setNodes(newNodes)
+    
+    // 如果有关联的思源块，同步更新思源块内容
+    if (flowNode.data.blockId) {
+      syncFrameContent()
+    }
+  }
+  
+  isEditingTitle.value = false
+}
 </script>
 
 <style lang="scss" scoped>
@@ -2408,14 +2437,37 @@ onUnmounted(() => {
       gap: 8px;
 
       .frame-title {
-        color: var(--b3-theme-on-background);
         font-weight: 500;
+        font-size: 12px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        display: block;
-        line-height: 1.2;
-        transition: background-color 0.2s ease;
+        max-width: 150px;
+        color: var(--b3-theme-on-surface);
+        cursor: pointer;
+        
+        &:hover {
+          color: var(--b3-theme-primary);
+          text-decoration: underline;
+        }
+        
+        .frame-title-input {
+          width: 100%;
+          height: 100%;
+          font-size: 12px;
+          font-weight: 500;
+          padding: 0;
+          margin: 0;
+          border: none;
+          background: transparent;
+          color: var(--b3-theme-on-surface);
+          outline: none;
+          cursor: text;
+          
+          &:focus {
+            color: var(--b3-theme-primary);
+          }
+        }
       }
 
       .child-count {
