@@ -90,6 +90,8 @@ import {
 } from '@vue-flow/core'
 import { Notification } from '@arco-design/web-vue'
 import { computed } from 'vue'
+import { appendBlockInto } from '@/utils/Block'
+import { setBlockAttrs } from '@/api'
 
 const props = defineProps<{
   visible: boolean
@@ -159,47 +161,83 @@ const handleCreateNode = async () => {
 }
 
 // 创建新分组
-const handleCreateFrame = () => {
-  const position = project({
-    x: props.clickPosition.x,
-    y: props.clickPosition.y,
-  })
+const handleCreateFrame = async () => {
+  try {
+    const position = project({
+      x: props.clickPosition.x,
+      y: props.clickPosition.y,
+    })
 
-  // 生成唯一ID
-  const frameId = generateWhiteBoardNodeId()
+    // 生成唯一ID
+    const frameId = generateWhiteBoardNodeId()
 
-  // 定义Frame的尺寸
-  const frameWidth = 400;
-  const frameHeight = 300;
+    // 定义Frame的尺寸
+    const frameWidth = 400;
+    const frameHeight = 300;
+    
+    // 获取白板模块配置
+    const { notebookId, targetId } = moduleWhiteBoardOptions.value
+    
+    // 创建Frame的思源块
+    let blockId = ''
+    const frameName = '新分组'
+    
+    // 创建Frame的内容：标题块加列表块
+    const frameContent = `{{{row
+# ${frameName}
 
-  const newFrame = {
-    id: frameId,
-    type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME,
-    data: {
-      label: '新分组',
-      style: {
-        backgroundColor: 'var(--b3-theme-surface-light)',
+* 该分组中的节点将显示在这里
+}}}`
+    
+    if (notebookId && targetId) {
+      blockId = await appendBlockInto(notebookId, targetId, frameContent)
+    } else {
+      blockId = await getNewDailyNoteBlockId(frameContent)
+    }
+    
+    if (!blockId) {
+      console.error('创建Frame块失败')
+      return
+    }
+    
+    // 设置块属性
+    await setBlockAttrs(blockId, {
+      'custom-en-whiteboard-frame': 'true',
+      'custom-en-whiteboard-node-id': frameId,
+    })
+
+    const newFrame = {
+      id: frameId,
+      type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME,
+      data: {
+        blockId, // 保存思源块ID
+        label: frameName, // 保存标题
+        childNodeIds: [], // 初始化子节点ID列表
+        style: {
+          backgroundColor: 'var(--b3-theme-surface-light)',
+        },
       },
-      // 添加一个标记，表示此节点是由handleCreateFrame创建的
-      isInitialCreation: true,
-    },
-    position,
-    // 使用dimensions属性设置尺寸
-    dimensions: {
+      position,
+      // 使用dimensions属性设置尺寸
+      dimensions: {
+        width: frameWidth,
+        height: frameHeight,
+      },
+      // 同时也设置width和height属性以确保Vue Flow正确处理
       width: frameWidth,
       height: frameHeight,
-    },
-    // 同时也设置width和height属性以确保Vue Flow正确处理
-    width: frameWidth,
-    height: frameHeight,
-    connectable: true,
-    draggable: true,
-    selectable: true,
-  }
+      connectable: true,
+      draggable: true,
+      selectable: true,
+    }
 
-  // 添加节点
-  addNodes([newFrame])
-  emit('close')
+    // 添加节点
+    addNodes([newFrame])
+    emit('close')
+  } catch (error) {
+    console.error('创建Frame节点失败:', error)
+    emit('close')
+  }
 }
 
 // 创建思维导图节点

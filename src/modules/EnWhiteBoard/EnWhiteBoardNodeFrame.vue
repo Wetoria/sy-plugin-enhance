@@ -17,6 +17,9 @@
       @collapse="handleCollapse"
     />
     <div class="AdditionalToolbar" v-if="!isCollapsed">
+      <div class="ToolbarBtn" @click="editFrameLabel" :title="'编辑标题: ' + (nodeData.label || '未命名分组')">
+        <IconEdit />
+      </div>
       <div class="ToolbarBtn" @click="toggleLock" :class="{ 'active': isLocked }">
         <IconLock v-if="isLocked" />
         <IconUnlock v-else />
@@ -120,6 +123,13 @@
       <div class="MenuGroup">
         <div
           class="ContextMenuItem"
+          @click="editFrameLabel"
+        >
+          <IconEdit />
+          <span>编辑标题</span>
+        </div>
+        <div
+          class="ContextMenuItem"
           @click="createNodeInFrame"
         >
           <IconPlus />
@@ -151,77 +161,6 @@
           <IconLock v-if="isLocked" />
           <IconUnlock v-else />
           <span>{{ isLocked ? '解锁分组' : '锁定分组' }}</span>
-        </div>
-        <div class="ContextMenuItem" @click="duplicateFrame">
-          <IconCopy />
-          <span>复制分组</span>
-        </div>
-      </div>
-
-      <div class="MenuGroup">
-        <div class="ContextMenuItem" @click="bringForward">
-          <IconToTop />
-          <span>前移一层</span>
-        </div>
-        <div class="ContextMenuItem" @click="sendBackward">
-          <IconToBottom />
-          <span>后移一层</span>
-        </div>
-      </div>
-
-      <div class="MenuGroup">
-        <div class="ContextMenuItem" @click="showColorPicker = true">
-          <IconPalette />
-          <span>更改颜色</span>
-        </div>
-        <div v-if="showColorPicker" class="ColorPickerContainer">
-          <input type="color" v-model="frameColor" @change="updateFrameColor" />
-          <div class="BorderStylePicker">
-            <div class="ContextMenuItem" @click="updateFrameBorderStyle('solid')">
-              <span>实线边框</span>
-            </div>
-            <div class="ContextMenuItem" @click="updateFrameBorderStyle('dashed')">
-              <span>虚线边框</span>
-            </div>
-            <div class="ContextMenuItem" @click="updateFrameBorderStyle('dotted')">
-              <span>点状边框</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="MenuGroup" v-if="childNodes.length > 1">
-        <div class="ContextMenuItem" @click="alignChildNodes('left')">
-          <IconAlignLeft />
-          <span>左对齐</span>
-        </div>
-        <div class="ContextMenuItem" @click="alignChildNodes('center')">
-          <IconAlignCenter />
-          <span>居中对齐</span>
-        </div>
-        <div class="ContextMenuItem" @click="alignChildNodes('right')">
-          <IconAlignRight />
-          <span>右对齐</span>
-        </div>
-        <div class="ContextMenuItem" @click="alignChildNodes('top')">
-          <IconUp />
-          <span>顶部对齐</span>
-        </div>
-        <div class="ContextMenuItem" @click="alignChildNodes('middle')">
-          <IconMinus />
-          <span>垂直居中</span>
-        </div>
-        <div class="ContextMenuItem" @click="alignChildNodes('bottom')">
-          <IconDown />
-          <span>底部对齐</span>
-        </div>
-        <div class="ContextMenuItem" @click="distributeChildNodes('horizontal')">
-          <IconLeft />
-          <span>水平均分</span>
-        </div>
-        <div class="ContextMenuItem" @click="distributeChildNodes('vertical')">
-          <IconRight />
-          <span>垂直均分</span>
         </div>
       </div>
     </div>
@@ -288,6 +227,7 @@ import {
   IconDown,
   IconLeft,
   IconRight,
+  IconEdit,
 } from '@arco-design/web-vue/es/icon'
 import {
   Handle,
@@ -310,6 +250,11 @@ import {
   watch,
 } from 'vue'
 import EnWhiteBoardToolBar from './EnWhiteBoardToolBar.vue'
+
+// 导入创建块所需的函数
+import { appendBlockInto } from '@/utils/Block'
+import { useDailyNote, appendBlockIntoDailyNote, getAppendedDailyNoteBlockId } from '@/modules/DailyNote/DailyNote'
+import { setBlockAttrs, updateBlock } from '@/api'
 
 
 const handleIcons = {
@@ -389,6 +334,9 @@ const childNodes = computed(() => {
       // 更新节点列表（使用nextTick避免可能的循环更新）
       nextTick(() => {
         setNodes(updatedNodes)
+        
+        // 更新思源中的frame块内容，将子节点以引用的形式写入
+        syncFrameContent()
       })
     }
   } else if (flowNode.data.childNodeIds && flowNode.data.childNodeIds.length > 0) {
@@ -408,11 +356,145 @@ const childNodes = computed(() => {
     
     nextTick(() => {
       setNodes(updatedNodes)
+      
+      // 更新思源中的frame块内容，清空引用
+      syncFrameContent()
     })
   }
   
   return children
 })
+
+// 同步Frame内容到思源
+const syncFrameContent = async () => {
+  // 如果frame节点没有blockId，说明还没有创建对应的思源块
+  if (!flowNode.data.blockId) {
+    // 如果有子节点，创建一个思源块
+    if (childNodes.value.length > 0) {
+      createSiyuanBlock()
+    }
+    return
+  }
+  
+  try {
+    // 获取当前Frame标题
+    const frameLabel = flowNode.data.label || '未命名分组'
+    
+    // 创建超级块内容
+    let content = '{{{row\n'
+    
+    // 标题块
+    content += `# ${frameLabel}\n\n`
+    
+    // 列表块 - 使用列表形式呈现嵌套节点引用
+    if (childNodes.value.length > 0) {
+      // 为每个子节点创建一个列表项，使用块引用
+      childNodes.value.forEach(node => {
+        if (node.data.blockId) {
+          content += `* ((${node.data.blockId} "${node.data.label || '节点'}"))\n`
+        } else {
+          content += `* ${node.type.replace('EnWhiteBoardNode', '')}节点\n`
+        }
+      })
+    } else {
+      // 当没有子节点时，保留一个空的列表项占位
+      content += '* 该分组中的节点将显示在这里\n'
+    }
+    
+    // 关闭超级块
+    content += '}}}'
+    
+    // 更新思源块 - 使用正确的参数顺序
+    await updateBlock(
+      'markdown',
+      content,
+      flowNode.data.blockId
+    )
+    
+    console.log(`Frame "${frameLabel}" 内容已同步，包含${childNodes.value.length}个子节点`)
+  } catch (error) {
+    console.error('同步Frame内容失败:', error)
+  }
+}
+
+// 为Frame创建思源块，使用超级块的形式
+const createSiyuanBlock = async () => {
+  try {
+    // 获取白板配置
+    const { moduleOptions } = useWhiteBoardModule()
+    const notebookId = moduleOptions.value.notebookId
+    const targetId = moduleOptions.value.targetId
+    
+    // 获取当前Frame标题
+    const frameLabel = flowNode.data.label || '未命名分组'
+    
+    // 创建超级块内容
+    let content = '{{{row\n'
+    
+    // 标题块
+    content += `# ${frameLabel}\n\n`
+    
+    // 列表块 - 使用列表形式呈现嵌套节点引用
+    if (childNodes.value.length > 0) {
+      // 为每个子节点创建一个列表项，使用块引用
+      childNodes.value.forEach(node => {
+        if (node.data.blockId) {
+          content += `* ((${node.data.blockId} "${node.data.label || '节点'}"))\n`
+        } else {
+          content += `* ${node.type.replace('EnWhiteBoardNode', '')}节点\n`
+        }
+      })
+    } else {
+      // 当没有子节点时，保留一个空的列表项占位
+      content += '* 该分组中的节点将显示在这里\n'
+    }
+    
+    // 关闭超级块
+    content += '}}}'
+    
+    // 创建块
+    let blockId = ''
+    
+    if (notebookId && targetId) {
+      blockId = await appendBlockInto(notebookId, targetId, content)
+    } else {
+      const daily = useDailyNote()
+      const dailyNoteId = daily.moduleOptions.value.dailyNoteNotebookId
+      const res = await appendBlockIntoDailyNote('markdown', content, dailyNoteId)
+      blockId = getAppendedDailyNoteBlockId(res)
+    }
+    
+    if (!blockId) {
+      console.error('创建Frame块失败')
+      return
+    }
+    
+    // 设置块属性
+    await setBlockAttrs(blockId, {
+      'custom-en-whiteboard-frame': 'true',
+      'custom-en-whiteboard-node-id': flowNode.id,
+    })
+    
+    // 更新节点，添加blockId
+    const updatedNodes = getNodes.value.map(node => {
+      if (node.id === flowNode.id) {
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            blockId,
+          }
+        }
+      }
+      return node
+    })
+    
+    setNodes(updatedNodes)
+    
+  } catch (error) {
+    console.error('创建Frame块失败:', error)
+  }
+}
 
 // 添加拖拽放置处理
 const onDrop = ref(false)
@@ -1193,6 +1275,13 @@ const removeNodesFromFrame = () => {
   })
 
   setNodes(updatedNodes)
+  
+  // 调用同步方法更新思源块内容
+  // 确保在节点移除后同步更新引用
+  nextTick(() => {
+    syncFrameContent()
+  })
+  
   closeContextMenu()
 }
 
@@ -1689,6 +1778,27 @@ const updateNodeParent = (nodeId: string, parentId: string | null) => {
   
   // 批量更新节点状态
   setNodes(newNodes)
+  
+  // 如果是添加到当前Frame或从当前Frame移除，同步更新思源块内容
+  if (parentId === flowNode.id || oldParentId === flowNode.id) {
+    nextTick(() => {
+      syncFrameContent()
+    })
+  }
+  
+  // 如果是添加到其他Frame或从其他Frame移除，也需要同步那个Frame的内容
+  if ((parentId && parentId !== flowNode.id) || (oldParentId && oldParentId !== flowNode.id)) {
+    const otherFrameId = parentId || oldParentId
+    const otherFrame = nodes.find(node => node.id === otherFrameId)
+    if (otherFrame && otherFrame.data.blockId) {
+      // 这里需要同步其他Frame的内容
+      // 但由于我们不能直接调用其他Frame组件的方法
+      // 可以通过事件系统或其他方式触发更新
+      // 简单起见，这里可以发出一个事件，让其他组件监听并更新
+      console.log(`需要更新其他Frame(${otherFrameId})的内容`)
+      // 也可以直接触发该Frame节点的onNodesChange事件
+    }
+  }
 }
 
 // 添加isSelected和isMultipleSelected计算属性
@@ -1760,7 +1870,7 @@ const onResize = (resizeEvent) => {
   throttledCheck()
 }
 
-// 添加缺失的添加选中节点到Frame函数
+// 将节点添加到Frame
 const addSelectedNodesToFrame = () => {
   const selectedNodes = getSelectedNodes.value.filter(node => 
     node.id !== flowNode.id && !node.data?.parentId
@@ -1802,6 +1912,13 @@ const addSelectedNodesToFrame = () => {
   })
   
   setNodes(updatedNodes)
+  
+  // 调用同步方法更新思源块内容
+  // 确保在节点添加后同步更新引用
+  nextTick(() => {
+    syncFrameContent()
+  })
+  
   closeContextMenu()
 }
 
@@ -1864,6 +1981,242 @@ onBeforeUnmount(() => {
 const updateNodeData = () => {
   // 模拟数据更新，实际上我们已经通过UI更新了数据
   console.log("Frame data updated", flowNode.id);
+}
+
+// 在handleCreateFrame方法中创建思源块
+const handleCreateFrame = async () => {
+  try {
+    // 生成唯一ID
+    const frameId = generateWhiteBoardNodeId()
+    
+    // 获取白板模块配置
+    const { moduleOptions } = useWhiteBoardModule()
+    const { notebookId, targetId } = moduleOptions.value
+    
+    // 创建Frame的思源块
+    let blockId = ''
+    const frameName = '新分组' // 可以考虑随机生成或者根据日期命名
+    
+    // 创建一个标题块作为Frame的表示
+    const frameContent = `## ${frameName}\n\n这是一个白板分组，包含以下内容：`
+    
+    if (notebookId && targetId) {
+      blockId = await appendBlockInto(notebookId, targetId, frameContent)
+    } else {
+      blockId = await getNewDailyNoteBlockId(frameContent)
+    }
+    
+    if (!blockId) {
+      console.error('创建Frame块失败')
+      return
+    }
+    
+    // 设置块属性
+    await setBlockAttrs(blockId, {
+      'custom-en-whiteboard-frame': 'true',
+      'custom-en-whiteboard-node-id': frameId,
+    })
+    
+    // 定义位置和尺寸
+    const position = clickPosition.value
+    const frameWidth = 400
+    const frameHeight = 300
+    
+    // 创建Frame节点
+    const newFrame = {
+      id: frameId,
+      type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME,
+      data: {
+        blockId, // 保存思源块ID
+        label: frameName,
+        childNodeIds: [], // 初始化子节点ID列表
+        style: {
+          backgroundColor: 'var(--b3-theme-surface-light)',
+        },
+      },
+      position,
+      dimensions: {
+        width: frameWidth,
+        height: frameHeight,
+      },
+      width: frameWidth,
+      height: frameHeight,
+      connectable: true,
+      draggable: true,
+      selectable: true,
+    }
+    
+    // 添加到白板
+    addNodes([newFrame])
+    closeContextMenu()
+  } catch (error) {
+    console.error('创建Frame节点失败:', error)
+  }
+}
+
+// 更新Frame块内容，添加对子节点的引用
+const updateFrameBlockContent = async () => {
+  try {
+    // 确保当前frame节点有关联的思源块
+    if (!flowNode.data.blockId) {
+      // 如果没有关联块，则创建一个
+      await createFrameBlock()
+      return
+    }
+    
+    // 获取子节点列表
+    const children = childNodes.value
+    
+    // 准备Frame块内容
+    const frameLabel = flowNode.data.label || '未命名分组'
+    let content = `## ${frameLabel}\n\n这是一个白板分组，包含以下内容：\n\n`
+    
+    // 如果有子节点，添加引用列表
+    if (children.length > 0) {
+      // 创建引用列表
+      content += children.map(node => {
+        // 仅为具有blockId的节点创建引用
+        if (node.data.blockId) {
+          return `- ((${node.data.blockId} "${node.data.label || '节点'}"))`
+        }
+        return `- ${node.type.replace('EnWhiteBoardNode', '')}节点`
+      }).join('\n')
+    } else {
+      // 当没有子节点时，保留列表结构，但内容为空
+      content += '- '
+    }
+    
+    // 更新思源块内容，修正调用方式
+    await updateBlock(
+      'markdown',
+      content,
+      flowNode.data.blockId
+    )
+  } catch (error) {
+    console.error('更新Frame块内容失败:', error)
+  }
+}
+
+// 创建Frame关联的思源块
+const createFrameBlock = async () => {
+  try {
+    // 获取白板模块配置
+    const { moduleOptions } = useWhiteBoardModule()
+    const { notebookId, targetId } = moduleOptions.value
+    
+    // 准备Frame块内容
+    const frameLabel = flowNode.data.label || '未命名分组'
+    const content = `## ${frameLabel}\n\n这是一个白板分组，包含以下内容：\n\n- `
+    
+    // 创建思源块
+    let blockId = ''
+    
+    // 根据配置决定在哪里创建块
+    if (notebookId && targetId) {
+      blockId = await appendBlockInto(notebookId, targetId, content)
+    } else {
+      // 使用dailyNote模式创建块
+      const res = await appendBlockIntoDailyNote(
+        'markdown',
+        content,
+        useDailyNote().moduleOptions.value.dailyNoteNotebookId
+      )
+      blockId = getAppendedDailyNoteBlockId(res)
+    }
+    
+    if (!blockId) {
+      console.error('创建Frame块失败')
+      return
+    }
+    
+    // 设置块属性
+    await setBlockAttrs(blockId, {
+      'custom-en-whiteboard-frame': 'true',
+      'custom-en-whiteboard-node-id': flowNode.id,
+    })
+    
+    // 更新节点数据，添加blockId
+    const updatedNodes = getNodes.value.map(node => {
+      if (node.id === flowNode.id) {
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            blockId,
+          }
+        }
+      }
+      return node
+    })
+    
+    // 更新节点列表
+    setNodes(updatedNodes)
+  } catch (error) {
+    console.error('创建Frame关联块失败:', error)
+  }
+}
+
+// 添加标题更新方法，当Frame标题（label）改变时，同步更新思源块
+const updateFrameLabel = async (newLabel: string) => {
+  if (!flowNode.data.blockId) return
+  
+  // 更新节点数据
+  const updatedNodes = getNodes.value.map(node => {
+    if (node.id === flowNode.id) {
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          label: newLabel
+        }
+      }
+    }
+    return node
+  })
+  
+  setNodes(updatedNodes)
+  
+  // 同步更新思源块内容
+  await syncFrameContent()
+}
+
+// 在toolbar中添加标题编辑功能
+// 可以在现有的handleContextMenu函数中添加相关逻辑
+const editFrameLabel = async () => {
+  // 获取当前标题
+  const currentLabel = flowNode.data.label || '未命名分组'
+  
+  // 使用原生 prompt 对话框进行简单输入
+  const newLabel = prompt('请输入新标题', currentLabel)
+  
+  // 如果用户取消或输入为空，则不更新
+  if (!newLabel || newLabel === currentLabel) {
+    closeContextMenu()
+    return
+  }
+  
+  // 更新节点数据
+  const updatedNodes = getNodes.value.map(node => {
+    if (node.id === flowNode.id) {
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          label: newLabel
+        }
+      }
+    }
+    return node
+  })
+  
+  setNodes(updatedNodes)
+  
+  // 如果有关联的思源块，同步更新思源块内容
+  if (flowNode.data.blockId) {
+    syncFrameContent()
+  }
+  
+  closeContextMenu()
 }
 </script>
 
