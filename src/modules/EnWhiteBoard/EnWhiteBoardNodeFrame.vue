@@ -72,6 +72,9 @@
       <div class="infos">
         <span class="frame-title">{{ nodeData.label || '未命名分组' }}</span>
         <span class="child-count">{{ childNodes.length }}</span>
+        <span class="child-info" v-if="nodeData.childNodeIds && nodeData.childNodeIds.length > 0" title="嵌套节点ID列表">
+          ({{ nodeData.childNodeIds.length }})
+        </span>
       </div>
     </div>
 
@@ -349,7 +352,7 @@ const canDrop = ref(false)
 // 修改子节点计算方法，确保只统计节点而不包括边
 const childNodes = computed(() => {
   // 只获取节点类型的子元素，排除边
-  return getNodes.value.filter((node) => {
+  const children = getNodes.value.filter((node) => {
     // 过滤条件1: 必须是父节点ID匹配当前Frame
     const isChild = node.data?.parentId === flowNode.id
     
@@ -360,6 +363,55 @@ const childNodes = computed(() => {
     // 同时满足这两个条件才算是子节点
     return isChild && isNode
   })
+  
+  // 更新frame节点的childNodeIds字段
+  if (children.length > 0) {
+    const childNodeIds = children.map(node => node.id)
+    
+    // 检查是否需要更新frame节点数据
+    if (!flowNode.data.childNodeIds || 
+        JSON.stringify(flowNode.data.childNodeIds) !== JSON.stringify(childNodeIds)) {
+      
+      // 更新节点数据
+      const updatedNodes = getNodes.value.map(node => {
+        if (node.id === flowNode.id) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              childNodeIds
+            }
+          }
+        }
+        return node
+      })
+      
+      // 更新节点列表（使用nextTick避免可能的循环更新）
+      nextTick(() => {
+        setNodes(updatedNodes)
+      })
+    }
+  } else if (flowNode.data.childNodeIds && flowNode.data.childNodeIds.length > 0) {
+    // 如果没有子节点但childNodeIds不为空，则清空它
+    const updatedNodes = getNodes.value.map(node => {
+      if (node.id === flowNode.id) {
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            childNodeIds: []
+          }
+        }
+      }
+      return node
+    })
+    
+    nextTick(() => {
+      setNodes(updatedNodes)
+    })
+  }
+  
+  return children
 })
 
 // 添加拖拽放置处理
@@ -1103,7 +1155,20 @@ const removeNodesFromFrame = () => {
   const selectedNodes = getSelectedNodes.value
   if (selectedNodes.length === 0) return
 
+  // 获取当前frame的子节点ID列表
+  const currentChildNodeIds = flowNode.data.childNodeIds || []
+  // 获取要移除的节点ID列表
+  const nodeIdsToRemove = selectedNodes
+    .filter(node => node.data?.parentId === flowNode.id)
+    .map(node => node.id)
+  
+  if (nodeIdsToRemove.length === 0) return
+  
+  // 计算移除后的子节点ID列表
+  const updatedChildNodeIds = currentChildNodeIds.filter(id => !nodeIdsToRemove.includes(id))
+
   const updatedNodes = getNodes.value.map((node) => {
+    // 更新被移除的节点，移除其parentId属性
     if (selectedNodes.find((n) => n.id === node.id) && node.data?.parentId === flowNode.id) {
       const {
         parentId,
@@ -1112,6 +1177,16 @@ const removeNodesFromFrame = () => {
       return {
         ...node,
         data: restData,
+      }
+    }
+    // 更新当前frame节点的childNodeIds属性
+    else if (node.id === flowNode.id) {
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          childNodeIds: updatedChildNodeIds
+        }
       }
     }
     return node
@@ -1543,6 +1618,9 @@ const updateNodeParent = (nodeId: string, parentId: string | null) => {
 
   // 查找新的父节点
   const parentNode = parentId ? nodes.find(node => node.id === parentId) : null
+  // 查找旧的父节点
+  const oldParentId = targetNode.data?.parentId
+  const oldParentNode = oldParentId ? nodes.find(node => node.id === oldParentId) : null
 
   // 计算相对位置（如果有父节点）
   let newPosition = { ...targetNode.position }
@@ -1557,6 +1635,7 @@ const updateNodeParent = (nodeId: string, parentId: string | null) => {
 
   // 更新节点状态
   const newNodes = nodes.map((node) => {
+    // 更新目标节点
     if (node.id === nodeId) {
       const newData = { ...node.data }
       
@@ -1577,6 +1656,32 @@ const updateNodeParent = (nodeId: string, parentId: string | null) => {
         ...node,
         data: newData,
         position: newPosition
+      }
+    }
+    // 更新新父节点的childNodeIds
+    else if (node.id === parentId) {
+      const currentChildNodeIds = node.data?.childNodeIds || []
+      // 添加新的子节点ID（如果不存在）
+      if (!currentChildNodeIds.includes(nodeId)) {
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            childNodeIds: [...currentChildNodeIds, nodeId]
+          }
+        }
+      }
+    }
+    // 更新旧父节点的childNodeIds
+    else if (oldParentNode && node.id === oldParentId) {
+      const currentChildNodeIds = node.data?.childNodeIds || []
+      // 从旧父节点的childNodeIds中移除此节点ID
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          childNodeIds: currentChildNodeIds.filter(id => id !== nodeId)
+        }
       }
     }
     return node
@@ -1663,8 +1768,17 @@ const addSelectedNodesToFrame = () => {
   
   if (selectedNodes.length === 0) return
 
-  // 更新节点的parentId
+  // 获取当前frame的子节点ID列表
+  const currentChildNodeIds = flowNode.data.childNodeIds || []
+  // 获取要添加的节点ID列表
+  const nodeIdsToAdd = selectedNodes.map(node => node.id)
+  
+  // 计算添加后的子节点ID列表（去重）
+  const updatedChildNodeIds = [...new Set([...currentChildNodeIds, ...nodeIdsToAdd])]
+
+  // 更新节点的parentId和当前frame的childNodeIds
   const updatedNodes = getNodes.value.map((node) => {
+    // 更新被添加的节点，设置其parentId属性
     if (selectedNodes.some(n => n.id === node.id)) {
       return {
         ...node,
@@ -1672,6 +1786,16 @@ const addSelectedNodesToFrame = () => {
           ...node.data,
           parentId: flowNode.id,
         },
+      }
+    }
+    // 更新当前frame节点的childNodeIds属性
+    else if (node.id === flowNode.id) {
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          childNodeIds: updatedChildNodeIds
+        }
       }
     }
     return node

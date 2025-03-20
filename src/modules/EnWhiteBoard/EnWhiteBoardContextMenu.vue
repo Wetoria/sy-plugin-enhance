@@ -62,6 +62,18 @@
         <span>居中视图</span>
       </div>
     </div>
+    <div
+      v-if="isFrame && flowNode.data?.childNodeIds && flowNode.data.childNodeIds.length > 0"
+      class="MenuGroup"
+    >
+      <div
+        class="ContextMenuItem"
+        @click="showNestedNodes"
+      >
+        <IconList />
+        <span>查看嵌套节点 ({{ flowNode.data.childNodeIds.length }})</span>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -76,8 +88,8 @@ import { EN_CONSTANTS } from '@/utils/Constants'
 import {
   useVueFlow,
 } from '@vue-flow/core'
-
-
+import { Notification } from '@arco-design/web-vue'
+import { computed } from 'vue'
 
 const props = defineProps<{
   visible: boolean
@@ -89,6 +101,7 @@ const props = defineProps<{
     x: number
     y: number
   }
+  nodeId: string
 }>()
 
 const emit = defineEmits<{
@@ -104,11 +117,20 @@ const {
   setEdges,
   edges,
   project,
+  getNodes,
 } = useVueFlow()
 
 const {
   moduleOptions: moduleWhiteBoardOptions,
 } = useWhiteBoardModule()
+
+const flowNode = computed(() => {
+  return getNodes.value.find(n => n.id === props.nodeId)
+})
+
+const isFrame = computed(() => {
+  return flowNode.value && flowNode.value.type === EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME
+})
 
 // 创建新节点
 const handleCreateNode = async () => {
@@ -343,6 +365,32 @@ const handleFitView = () => {
 const handleCenterView = () => {
   setCenter(0, 0, { duration: 800 })
   emit('close')
+}
+
+// 关闭上下文菜单
+const closeContextMenu = () => {
+  emit('close')
+}
+
+const showNestedNodes = () => {
+  if (!flowNode.value?.data?.childNodeIds || flowNode.value.data.childNodeIds.length === 0) return
+  
+  const nestedNodeIds = flowNode.value.data.childNodeIds
+  const nodeInfos = nestedNodeIds.map(id => {
+    const node = getNodes.value.find(n => n.id === id)
+    return node ? 
+      `${id.substring(0, 8)}... (${node.type.replace('EnWhiteBoardNode', '')})` : 
+      `${id.substring(0, 8)}... (未找到)`
+  })
+  
+  // 通过系统通知显示嵌套节点信息
+  Notification.info({
+    title: `Frame "${flowNode.value.data?.label || '未命名分组'}" 嵌套节点列表`,
+    content: nodeInfos.join('<br>'),
+    duration: 5000,
+  })
+  
+  closeContextMenu()
 }
 </script>
 

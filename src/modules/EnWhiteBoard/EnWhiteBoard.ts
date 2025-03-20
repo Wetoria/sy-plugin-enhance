@@ -114,6 +114,10 @@ export interface EnWhiteBoardNodeData {
     // 节点背景色
     backgroundColor?: string
   }
+  // 父节点ID
+  parentId?: string
+  // 子节点ID列表，用于frame节点存储嵌套的节点
+  childNodeIds?: string[]
 }
 
 export interface EnWhiteBoardEdgeData {
