@@ -206,7 +206,8 @@ import {
   useWhiteBoardModule,
 } from '@/modules/EnWhiteBoard/EnWhiteBoard'
 
-import { EN_CONSTANTS } from '@/utils/Constants'
+import { EN_CONSTANTS, EN_EVENT_BUS_KEYS } from '@/utils/Constants'
+import { enEventBus } from '@/utils/EnEventBus'
 import {
   IconArrowDown,
   IconArrowLeft,
@@ -248,6 +249,7 @@ import {
   onMounted,
   ref,
   watch,
+  onUnmounted,
 } from 'vue'
 import EnWhiteBoardToolBar from './EnWhiteBoardToolBar.vue'
 
@@ -1193,6 +1195,14 @@ onMounted(() => {
   setTimeout(() => {
     updateNodeData()
   }, 100)
+
+  // 监听同步Frame内容的事件
+  enEventBus.on(EN_EVENT_BUS_KEYS.WHITEBOARD_SYNC_FRAME_CONTENT, (frameId) => {
+    // 如果是当前Frame，执行同步
+    if (frameId === flowNode.id) {
+      syncFrameContent()
+    }
+  })
 })
 
 // 添加函数确保Frame节点始终处于最底层 - 通过调整数组顺序
@@ -1711,6 +1721,14 @@ const updateNodeParent = (nodeId: string, parentId: string | null) => {
   const oldParentId = targetNode.data?.parentId
   const oldParentNode = oldParentId ? nodes.find(node => node.id === oldParentId) : null
 
+  // 检查旧父节点是否是一个Frame，并且只有当前节点作为子节点
+  let isRemovingLastNodeFromOldFrame = false
+  if (oldParentNode && oldParentNode.type === EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME) {
+    const oldParentChildNodeIds = oldParentNode.data?.childNodeIds || []
+    // 如果只有这一个子节点，且即将被移除
+    isRemovingLastNodeFromOldFrame = oldParentChildNodeIds.length === 1 && oldParentChildNodeIds[0] === nodeId
+  }
+
   // 计算相对位置（如果有父节点）
   let newPosition = { ...targetNode.position }
   if (parentNode) {
@@ -1779,26 +1797,79 @@ const updateNodeParent = (nodeId: string, parentId: string | null) => {
   // 批量更新节点状态
   setNodes(newNodes)
   
+  // 保存需要同步更新的Frame ID列表
+  const framesToSync = new Set<string>()
+  
   // 如果是添加到当前Frame或从当前Frame移除，同步更新思源块内容
   if (parentId === flowNode.id || oldParentId === flowNode.id) {
-    nextTick(() => {
-      syncFrameContent()
-    })
+    framesToSync.add(flowNode.id)
   }
   
   // 如果是添加到其他Frame或从其他Frame移除，也需要同步那个Frame的内容
   if ((parentId && parentId !== flowNode.id) || (oldParentId && oldParentId !== flowNode.id)) {
     const otherFrameId = parentId || oldParentId
-    const otherFrame = nodes.find(node => node.id === otherFrameId)
-    if (otherFrame && otherFrame.data.blockId) {
-      // 这里需要同步其他Frame的内容
-      // 但由于我们不能直接调用其他Frame组件的方法
-      // 可以通过事件系统或其他方式触发更新
-      // 简单起见，这里可以发出一个事件，让其他组件监听并更新
-      console.log(`需要更新其他Frame(${otherFrameId})的内容`)
-      // 也可以直接触发该Frame节点的onNodesChange事件
+    if (otherFrameId) {
+      framesToSync.add(otherFrameId)
     }
   }
+  
+  // 如果是移除最后一个节点，确保旧Frame的内容也更新为空列表
+  if (isRemovingLastNodeFromOldFrame && oldParentId) {
+    framesToSync.add(oldParentId)
+  }
+
+  // 查找所有需要同步的父Frame
+  const findParentFrames = (frameId: string) => {
+    const frame = nodes.find(node => node.id === frameId)
+    if (!frame || frame.type !== EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME) return
+    
+    const parentFrameId = frame.data?.parentId
+    if (parentFrameId) {
+      framesToSync.add(parentFrameId)
+      findParentFrames(parentFrameId)
+    }
+  }
+  
+  // 查找所有需要同步的子Frame
+  const findChildFrames = (frameId: string) => {
+    const frame = nodes.find(node => node.id === frameId)
+    if (!frame || frame.type !== EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME) return
+    
+    const childNodeIds = frame.data?.childNodeIds || []
+    childNodeIds.forEach(childId => {
+      const childNode = nodes.find(node => node.id === childId)
+      if (childNode?.type === EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME) {
+        framesToSync.add(childId)
+        findChildFrames(childId)
+      }
+    })
+  }
+  
+  // 为新旧Frame查找所有需要同步的父Frame和子Frame
+  if (parentId) {
+    findParentFrames(parentId)
+    findChildFrames(parentId)
+  }
+  if (oldParentId) {
+    findParentFrames(oldParentId)
+    findChildFrames(oldParentId)
+  }
+  
+  // 在下一个tick同步所有需要更新的Frame
+  nextTick(() => {
+    // 如果当前Frame需要同步，直接调用
+    if (framesToSync.has(flowNode.id)) {
+      syncFrameContent()
+    }
+    
+    // 对其他需要同步的Frame，发出事件通知
+    framesToSync.forEach(frameId => {
+      if (frameId !== flowNode.id) {
+        // 发出全局事件，通知其他Frame组件更新
+        enEventBus.emit(EN_EVENT_BUS_KEYS.WHITEBOARD_SYNC_FRAME_CONTENT, frameId)
+      }
+    })
+  })
 }
 
 // 添加isSelected和isMultipleSelected计算属性
@@ -2218,6 +2289,11 @@ const editFrameLabel = async () => {
   
   closeContextMenu()
 }
+
+// 组件卸载时，移除事件监听
+onUnmounted(() => {
+  enEventBus.off(EN_EVENT_BUS_KEYS.WHITEBOARD_SYNC_FRAME_CONTENT, undefined)
+})
 </script>
 
 <style lang="scss" scoped>

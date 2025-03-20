@@ -14,6 +14,7 @@ export interface EventBusType {
   [EN_EVENT_BUS_KEYS.LIFELOG_OPEN_GRAPH_MODAL]: {
     dateList: string[]
   }
+  [EN_EVENT_BUS_KEYS.WHITEBOARD_SYNC_FRAME_CONTENT]: string // 需要同步内容的frame节点ID
 }
 
 // 导出类型化的 eventBus
