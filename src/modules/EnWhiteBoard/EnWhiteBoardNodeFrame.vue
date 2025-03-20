@@ -2244,3 +2244,30 @@ const updateNodeData = () => {
 }
 </style>
 
+<style lang="scss">
+/* 全局样式：确保Frame节点即使在选中状态下z-index也保持为-1 */
+.vue-flow__node.vue-flow__node-EnWhiteBoardNodeFrame {
+  z-index: -1 !important;
+  
+  &.selected {
+    z-index: -1 !important;
+  }
+  
+  &.nopan {
+    z-index: -1 !important;
+  }
+  
+  &.dragging {
+    z-index: -1 !important;
+  }
+  
+  &.draggable {
+    z-index: -1 !important;
+  }
+  
+  &.selectable {
+    z-index: -1 !important;
+  }
+}
+</style>
+
