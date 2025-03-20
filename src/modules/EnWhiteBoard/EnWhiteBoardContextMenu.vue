@@ -143,14 +143,19 @@ const handleCreateFrame = () => {
     y: props.clickPosition.y,
   })
 
+  // 生成唯一ID
+  const frameId = generateWhiteBoardNodeId()
+
   const newFrame = {
-    id: generateWhiteBoardNodeId(),
+    id: frameId,
     type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME,
     data: {
       label: '新分组',
       style: {
         backgroundColor: 'var(--b3-theme-surface-light)',
       },
+      // 添加一个标记，表示此节点是由handleCreateFrame创建的
+      isInitialCreation: true,
     },
     position,
     dimensions: {
@@ -162,6 +167,7 @@ const handleCreateFrame = () => {
     selectable: true,
   }
 
+  // 添加节点
   addNodes([newFrame])
   emit('close')
 }

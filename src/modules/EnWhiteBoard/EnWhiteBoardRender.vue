@@ -818,12 +818,41 @@ onNodesChange((changes) => {
 
   changes.forEach((change) => {
     if (change.type === 'add') {
-      // 确保节点数组已初始化
-      if (!embedWhiteBoardConfigData.value.boardOptions.nodes) {
-        embedWhiteBoardConfigData.value.boardOptions.nodes = []
+      // 检查节点是否为Frame且是初始创建
+      const isFrameInitialCreation = 
+        change.item.type === EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME && 
+        change.item.data?.isInitialCreation === true;
+      
+      // 如果是初始创建的Frame，移除isInitialCreation标记
+      if (isFrameInitialCreation) {
+        // 移除标记，防止后续处理重复
+        if (change.item.data) {
+          delete change.item.data.isInitialCreation;
+        }
+        
+        // 确保节点数组已初始化
+        if (!embedWhiteBoardConfigData.value.boardOptions.nodes) {
+          embedWhiteBoardConfigData.value.boardOptions.nodes = []
+        }
+        
+        // 检查是否已存在相同ID的节点，防止重复添加
+        const existingNodeIndex = embedWhiteBoardConfigData.value.boardOptions.nodes.findIndex(
+          node => node.id === change.item.id
+        );
+        
+        if (existingNodeIndex === -1) {
+          // 如果不存在才添加
+          embedWhiteBoardConfigData.value.boardOptions.nodes.push(change.item);
+        }
+      } else {
+        // 对于非Frame节点或非初始创建的Frame节点，正常处理
+        // 确保节点数组已初始化
+        if (!embedWhiteBoardConfigData.value.boardOptions.nodes) {
+          embedWhiteBoardConfigData.value.boardOptions.nodes = []
+        }
+        // 添加新节点
+        embedWhiteBoardConfigData.value.boardOptions.nodes.push(change.item)
       }
-      // 添加新节点
-      embedWhiteBoardConfigData.value.boardOptions.nodes.push(change.item)
     }
     if (change.type !== 'add') {
       const targetNode = nodes.value.find((node) => node.id === (change as Exclude<NodeChange, NodeAddChange>).id)
