@@ -146,6 +146,10 @@ const handleCreateFrame = () => {
   // 生成唯一ID
   const frameId = generateWhiteBoardNodeId()
 
+  // 定义Frame的尺寸
+  const frameWidth = 400;
+  const frameHeight = 300;
+
   const newFrame = {
     id: frameId,
     type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME,
@@ -158,10 +162,14 @@ const handleCreateFrame = () => {
       isInitialCreation: true,
     },
     position,
+    // 使用dimensions属性设置尺寸
     dimensions: {
-      width: 400,
-      height: 300,
+      width: frameWidth,
+      height: frameHeight,
     },
+    // 同时也设置width和height属性以确保Vue Flow正确处理
+    width: frameWidth,
+    height: frameHeight,
     connectable: true,
     draggable: true,
     selectable: true,

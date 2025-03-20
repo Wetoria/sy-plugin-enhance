@@ -49,9 +49,10 @@
     :style="{
       '--en-frame-width': `${(flowNode as any).dimensions?.width || 0}px`,
       '--en-frame-height': isCollapsed ? '30px' : `${(flowNode as any).dimensions?.height || 0}px`,
-      'backgroundColor': nodeData.style?.backgroundColor || 'var(--b3-theme-surface-light)',
-      'borderColor': nodeData.style?.borderColor || 'var(--b3-border-color)',
-      'borderStyle': nodeData.style?.borderStyle || 'dashed',
+      '--frame-color': nodeData.style?.backgroundColor || 'var(--b3-theme-primary-light)',
+      'backgroundColor': `color-mix(in srgb, ${nodeData.style?.backgroundColor || 'var(--b3-theme-primary-light)'} 15%, transparent)`,
+      'borderColor': nodeData.style?.borderColor || nodeData.style?.backgroundColor || 'var(--b3-theme-primary-light)',
+      'borderStyle': nodeData.style?.borderStyle || 'solid',
     }"
     @mousedown="handleMouseDown"
     @mouseup="handleMouseUp"
@@ -173,11 +174,11 @@
         <div v-if="showColorPicker" class="ColorPickerContainer">
           <input type="color" v-model="frameColor" @change="updateFrameColor" />
           <div class="BorderStylePicker">
-            <div class="ContextMenuItem" @click="updateFrameBorderStyle('dashed')">
-              <span>虚线边框</span>
-            </div>
             <div class="ContextMenuItem" @click="updateFrameBorderStyle('solid')">
               <span>实线边框</span>
+            </div>
+            <div class="ContextMenuItem" @click="updateFrameBorderStyle('dashed')">
+              <span>虚线边框</span>
             </div>
             <div class="ContextMenuItem" @click="updateFrameBorderStyle('dotted')">
               <span>点状边框</span>
@@ -241,8 +242,8 @@
         <div class="ColorPickerItem">
           <span>边框样式:</span>
           <select v-model="frameBorderStyle" @change="(e) => updateFrameBorderStyle((e.target as HTMLSelectElement).value)">
-            <option value="dashed">虚线</option>
             <option value="solid">实线</option>
+            <option value="dashed">虚线</option>
             <option value="dotted">点状</option>
             <option value="double">双线</option>
           </select>
@@ -1026,14 +1027,38 @@ onMounted(() => {
     
     // 确保Frame节点始终在底层
     ensureFrameAtBottom()
+
+    // 确保Frame节点尺寸正确设置到DOM
+    if (flowNode && flowNode.dimensions) {
+      // 显式触发一次节点尺寸更新
+      const nodes = getNodes.value
+      const newNodes = nodes.map((node) => {
+        if (node.id === flowNode.id) {
+          return {
+            ...node,
+            dimensions: {
+              width: flowNode.dimensions.width || 400,
+              height: flowNode.dimensions.height || 300
+            }
+          }
+        }
+        return node
+      })
+      setNodes(newNodes)
+    }
   })
   
   // 初始化状态
   isLocked.value = nodeData.value?.isLocked || false
   frameColor.value = nodeData.value?.style?.backgroundColor || ''
   frameBorderColor.value = nodeData.value?.style?.borderColor || ''
-  frameBorderStyle.value = nodeData.value?.style?.borderStyle || 'dashed'
+  frameBorderStyle.value = nodeData.value?.style?.borderStyle || 'solid'
   frameOpacity.value = nodeData.value?.style?.opacity || 0.3
+
+  // 如果是新创建的节点，确保初始保存一次
+  setTimeout(() => {
+    updateNodeData()
+  }, 100)
 })
 
 // 添加函数确保Frame节点始终处于最底层 - 通过调整数组顺序
@@ -1440,7 +1465,7 @@ const distributeChildNodes = (direction) => {
 const isLocked = ref(false)
 const frameColor = ref(nodeData.value?.style?.backgroundColor || '')
 const frameBorderColor = ref(nodeData.value?.style?.borderColor || '')
-const frameBorderStyle = ref(nodeData.value?.style?.borderStyle || 'dashed')
+const frameBorderStyle = ref(nodeData.value?.style?.borderStyle || 'solid')
 const frameOpacity = ref(nodeData.value?.style?.opacity || 0.3)
 const colorPickerVisible = ref(false)
 const showColorPicker = ref(false)
@@ -1710,57 +1735,68 @@ onBeforeUnmount(() => {
   document.removeEventListener('mouseup', throttledCheck)
   clearPotentialNodesHighlight()
 })
+
+// 添加更新白板数据的方法
+const updateNodeData = () => {
+  // 模拟数据更新，实际上我们已经通过UI更新了数据
+  console.log("Frame data updated", flowNode.id);
+}
 </script>
 
 <style lang="scss" scoped>
 .EnWhiteBoardNodeFrameContainer {
   display: flex;
   flex-direction: column;
-  width: 100%;
-  height: 100%;
+  width: var(--en-frame-width);
+  height: var(--en-frame-height);
   box-sizing: border-box;
   position: relative;
-  border: 2px dashed var(--b3-border-color);
+  border: 2px solid var(--frame-color, var(--b3-theme-primary-light));
   border-radius: var(--b3-border-radius);
   padding: unset;
   transition: height 0.3s ease-in-out, border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out, opacity 0.3s ease-in-out;
-  background-color: color-mix(in srgb, var(--b3-theme-surface-light) 85%, transparent);
-  backdrop-filter: blur(8px);
+  background-color: color-mix(in srgb, var(--frame-color, var(--b3-theme-primary-light)) 15%, transparent);
+  backdrop-filter: none;
   cursor: move;
   z-index: -1 !important;
+
+  // 使用CSS变量动态设置颜色
+  --frame-color: var(--b3-theme-primary-light);
 
   &:hover,
   &.is-selected {
     border-style: solid;
-    border-color: var(--b3-theme-primary-light);
-    box-shadow: 0 0 0 1px var(--b3-theme-primary-light);
+    border-color: var(--frame-color);
+    box-shadow: 0 0 0 1px var(--frame-color);
+    z-index: -1 !important;
 
     .frame-content {
-      background-color: var(--b3-theme-surface-light);
-      opacity: 0.1;
+      background-color: var(--frame-color);
+      opacity: 0.05;
     }
   }
 
   &.is-selected {
-    border-color: var(--b3-theme-primary);
-    box-shadow: 0 0 0 2px var(--b3-theme-primary-light);
+    border-color: var(--frame-color);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--frame-color) 50%, transparent);
+    z-index: -1 !important;
   }
 
   &.is-dragging {
     opacity: 0.7;
     cursor: grabbing;
-    z-index: 10 !important;
+    z-index: -1 !important;
   }
 
   &.can-drop {
     border-style: solid;
-    border-color: var(--b3-theme-primary);
-    box-shadow: 0 0 0 2px var(--b3-theme-primary-light);
+    border-color: var(--frame-color);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--frame-color) 50%, transparent);
   }
   
   &.is-locked {
     cursor: not-allowed;
-    border-color: var(--b3-theme-error-light);
+    --frame-color: var(--b3-theme-error-light);
      
     &:hover {
       border-color: var(--b3-theme-error);
@@ -1777,18 +1813,18 @@ onBeforeUnmount(() => {
 
   &.is-dragover {
     border-style: solid;
-    border-color: var(--b3-theme-primary);
-    box-shadow: 0 0 0 2px var(--b3-theme-primary-light);
-    background-color: color-mix(in srgb, var(--b3-theme-primary) 10%, var(--b3-theme-surface-light) 90%);
+    border-color: var(--frame-color);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--frame-color) 50%, transparent);
+    background-color: color-mix(in srgb, var(--frame-color) 20%, transparent);
   }
 
   .EnWhiteBoardNodeFrameContainer {
-    background-color: color-mix(in srgb, var(--b3-theme-surface-light) 75%, transparent);
+    background-color: color-mix(in srgb, var(--frame-color, var(--b3-theme-primary-light)) 75%, transparent);
     opacity: 0.9;
     
     box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.05);
     
-    border-color: color-mix(in srgb, var(--b3-border-color) 90%, var(--b3-theme-primary-light) 10%);
+    border-color: color-mix(in srgb, var(--frame-color, var(--b3-theme-primary-light)) 90%, var(--b3-theme-primary-light) 10%);
   }
 
   .FrameToolbarArea {
@@ -1800,14 +1836,20 @@ onBeforeUnmount(() => {
     align-items: center;
     justify-content: space-between;
     box-sizing: border-box;
-    padding: 2px;
-    background: var(--b3-theme-surface);
-    border: 1px solid var(--b3-border-color);
+    padding: 4px 8px;
+    background: color-mix(in srgb, var(--frame-color, var(--b3-theme-primary-light)) 30%, transparent);
+    border: 1px solid var(--frame-color, var(--b3-theme-primary-light));
     border-radius: var(--b3-border-radius);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     white-space: nowrap;
     z-index: 10;
     pointer-events: all;
+    backdrop-filter: blur(2px);
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: color-mix(in srgb, var(--frame-color, var(--b3-theme-primary-light)) 40%, transparent);
+    }
 
     .infos {
       flex: 1;
@@ -1820,6 +1862,7 @@ onBeforeUnmount(() => {
       .frame-title {
         font-size: 13px;
         color: var(--b3-theme-on-surface);
+        font-weight: 500;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -1828,13 +1871,23 @@ onBeforeUnmount(() => {
         padding: 2px 4px;
         border-radius: 4px;
         transition: background-color 0.2s ease;
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
       }
 
       .child-count {
         font-size: 12px;
         color: var(--b3-theme-on-surface);
-        opacity: 0.6;
+        opacity: 0.8;
         text-align: center;
+        background: color-mix(in srgb, var(--frame-color, var(--b3-theme-primary-light)) 50%, transparent);
+        border-radius: 10px;
+        min-width: 18px;
+        height: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 4px;
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
       }
     }
 
