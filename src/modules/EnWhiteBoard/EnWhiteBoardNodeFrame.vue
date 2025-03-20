@@ -1830,63 +1830,50 @@ const updateNodeData = () => {
   .FrameToolbarArea {
     position: absolute;
     top: -4px;
-    left: 0;
+    left: -2px;
     height: 30px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     box-sizing: border-box;
-    padding: 4px 8px;
-    background: color-mix(in srgb, var(--frame-color, var(--b3-border-color)) 30%, transparent);
+    padding: 4px 8px 4px 8px;
+    background: var(--frame-color, var(--b3-border-color));
     border: 2px solid var(--frame-color, var(--b3-border-color));
     border-radius: var(--b3-border-radius);
     white-space: nowrap;
     z-index: 10;
     pointer-events: all;
-    backdrop-filter: blur(2px);
     transition: all 0.2s ease;
 
     &:hover {
-      background: color-mix(in srgb, var(--frame-color, var(--b3-border-color)) 40%, transparent);
+      background: var(--frame-color, var(--b3-border-color));
     }
 
     .infos {
       flex: 1;
       overflow: hidden;
-      margin-right: var(--en-gap);
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 8px;
 
       .frame-title {
-        font-size: 13px;
-        color: var(--b3-theme-on-surface);
+        color: var(--b3-theme-on-background);
         font-weight: 500;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
         display: block;
         line-height: 1.2;
-        padding: 2px 4px;
-        border-radius: 4px;
         transition: background-color 0.2s ease;
-        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
       }
 
       .child-count {
-        font-size: 12px;
-        color: var(--b3-theme-on-surface);
-        opacity: 0.8;
+        color: var(--b3-theme-on-background);
         text-align: center;
-        background: color-mix(in srgb, var(--frame-color, var(--b3-border-color)) 50%, transparent);
-        border-radius: 10px;
-        min-width: 18px;
         height: 18px;
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 0 4px;
-        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
       }
     }
 
@@ -1948,6 +1935,8 @@ const updateNodeData = () => {
     .FrameToolbarArea {
       border-bottom: none;
       border-radius: var(--b3-border-radius);
+      left: -2px;
+      padding: 4px 8px 4px 10px;
     }
   }
 
