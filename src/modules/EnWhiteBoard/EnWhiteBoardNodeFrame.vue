@@ -49,9 +49,9 @@
     :style="{
       '--en-frame-width': `${(flowNode as any).dimensions?.width || 0}px`,
       '--en-frame-height': isCollapsed ? '30px' : `${(flowNode as any).dimensions?.height || 0}px`,
-      '--frame-color': nodeData.style?.backgroundColor || 'var(--b3-theme-primary-light)',
-      'backgroundColor': `color-mix(in srgb, ${nodeData.style?.backgroundColor || 'var(--b3-theme-primary-light)'} 15%, transparent)`,
-      'borderColor': nodeData.style?.borderColor || nodeData.style?.backgroundColor || 'var(--b3-theme-primary-light)',
+      '--frame-color': nodeData.style?.backgroundColor || 'var(--b3-border-color)',
+      'backgroundColor': `color-mix(in srgb, ${nodeData.style?.backgroundColor || 'var(--b3-border-color)'} 15%, transparent)`,
+      'borderColor': nodeData.style?.borderColor || nodeData.style?.backgroundColor || 'var(--b3-border-color)',
       'borderStyle': nodeData.style?.borderStyle || 'solid',
     }"
     @mousedown="handleMouseDown"
@@ -1751,17 +1751,17 @@ const updateNodeData = () => {
   height: var(--en-frame-height);
   box-sizing: border-box;
   position: relative;
-  border: 2px solid var(--frame-color, var(--b3-theme-primary-light));
+  border: 2px solid var(--frame-color, var(--b3-border-color));
   border-radius: var(--b3-border-radius);
   padding: unset;
   transition: height 0.3s ease-in-out, border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out, opacity 0.3s ease-in-out;
-  background-color: color-mix(in srgb, var(--frame-color, var(--b3-theme-primary-light)) 15%, transparent);
+  background-color: color-mix(in srgb, var(--frame-color, var(--b3-border-color)) 15%, transparent);
   backdrop-filter: none;
   cursor: move;
   z-index: -1 !important;
 
   // 使用CSS变量动态设置颜色
-  --frame-color: var(--b3-theme-primary-light);
+  --frame-color: var(--b3-border-color);
 
   &:hover,
   &.is-selected {
@@ -1819,12 +1819,12 @@ const updateNodeData = () => {
   }
 
   .EnWhiteBoardNodeFrameContainer {
-    background-color: color-mix(in srgb, var(--frame-color, var(--b3-theme-primary-light)) 75%, transparent);
+    background-color: color-mix(in srgb, var(--frame-color, var(--b3-border-color)) 75%, transparent);
     opacity: 0.9;
     
     box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.05);
     
-    border-color: color-mix(in srgb, var(--frame-color, var(--b3-theme-primary-light)) 90%, var(--b3-theme-primary-light) 10%);
+    border-color: color-mix(in srgb, var(--frame-color, var(--b3-border-color)) 90%, var(--b3-border-color) 10%);
   }
 
   .FrameToolbarArea {
@@ -1837,10 +1837,9 @@ const updateNodeData = () => {
     justify-content: space-between;
     box-sizing: border-box;
     padding: 4px 8px;
-    background: color-mix(in srgb, var(--frame-color, var(--b3-theme-primary-light)) 30%, transparent);
-    border: 1px solid var(--frame-color, var(--b3-theme-primary-light));
+    background: color-mix(in srgb, var(--frame-color, var(--b3-border-color)) 30%, transparent);
+    border: 2px solid var(--frame-color, var(--b3-border-color));
     border-radius: var(--b3-border-radius);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     white-space: nowrap;
     z-index: 10;
     pointer-events: all;
@@ -1848,7 +1847,7 @@ const updateNodeData = () => {
     transition: all 0.2s ease;
 
     &:hover {
-      background: color-mix(in srgb, var(--frame-color, var(--b3-theme-primary-light)) 40%, transparent);
+      background: color-mix(in srgb, var(--frame-color, var(--b3-border-color)) 40%, transparent);
     }
 
     .infos {
@@ -1879,7 +1878,7 @@ const updateNodeData = () => {
         color: var(--b3-theme-on-surface);
         opacity: 0.8;
         text-align: center;
-        background: color-mix(in srgb, var(--frame-color, var(--b3-theme-primary-light)) 50%, transparent);
+        background: color-mix(in srgb, var(--frame-color, var(--b3-border-color)) 50%, transparent);
         border-radius: 10px;
         min-width: 18px;
         height: 18px;
@@ -1908,7 +1907,7 @@ const updateNodeData = () => {
 
         &:hover {
           color: var(--b3-theme-primary);
-          background-color: var(--b3-theme-primary-light);
+          background-color: var(--b3-border-color);
         }
       }
     }
@@ -1957,14 +1956,14 @@ const updateNodeData = () => {
     height: 21px;
     z-index: 10;
     opacity: 0;
-    border-color: var(--b3-theme-primary-light);
+    border-color: var(--b3-border-color);
     background-color: var(--b3-theme-background);
-    color: var(--b3-theme-primary-light);
+    color: var(--b3-border-color);
     transition: opacity 0.2s ease, background-color 0.2s ease;
     cursor: crosshair;
 
     &:hover {
-      background-color: var(--b3-theme-primary-light);
+      background-color: var(--b3-border-color);
       color: var(--b3-theme-on-primary);
       opacity: 1;
     }
@@ -1994,7 +1993,7 @@ const updateNodeData = () => {
 
   :deep(.vue-flow__resize-control) {
     &.handle {
-      background-color: var(--b3-theme-primary-light);
+      background-color: var(--b3-border-color);
       border: 2px solid var(--b3-theme-background);
       box-shadow: 0 0 0 1px var(--b3-theme-primary);
       opacity: 0;
@@ -2007,7 +2006,7 @@ const updateNodeData = () => {
     }
 
     &.line {
-      background-color: var(--b3-theme-primary-light);
+      background-color: var(--b3-border-color);
       opacity: 0;
       transition: opacity 0.2s ease;
 
@@ -2018,7 +2017,7 @@ const updateNodeData = () => {
   }
 
   :deep(.potential-frame-child) {
-    outline: 2px dashed var(--b3-theme-primary-light) !important;
+    outline: 2px dashed var(--b3-border-color) !important;
     outline-offset: 4px !important;
     transition: outline 0.2s ease;
   }
@@ -2099,7 +2098,7 @@ const updateNodeData = () => {
     
     &.active {
       color: var(--b3-theme-primary);
-      background-color: var(--b3-theme-primary-light);
+      background-color: var(--b3-border-color);
     }
     
     &.color-picker {
