@@ -1754,7 +1754,6 @@ const updateNodeData = () => {
   border: 2px solid var(--frame-color, var(--b3-border-color));
   border-radius: var(--b3-border-radius);
   padding: unset;
-  transition: height 0.3s ease-in-out, border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out, opacity 0.3s ease-in-out;
   background-color: color-mix(in srgb, var(--frame-color, var(--b3-border-color)) 15%, transparent);
   backdrop-filter: none;
   cursor: move;
@@ -1783,7 +1782,6 @@ const updateNodeData = () => {
   }
 
   &.is-dragging {
-    opacity: 0.7;
     cursor: grabbing;
     z-index: -1 !important;
   }
@@ -1907,10 +1905,6 @@ const updateNodeData = () => {
     padding: var(--en-gap);
     min-height: 100px;
     cursor: default;
-
-    background-image:
-      linear-gradient(to right, var(--b3-border-color) 1px, transparent 1px),
-      linear-gradient(to bottom, var(--b3-border-color) 1px, transparent 1px);
     background-size: 20px 20px;
     background-color: transparent;
     opacity: 0.1;
