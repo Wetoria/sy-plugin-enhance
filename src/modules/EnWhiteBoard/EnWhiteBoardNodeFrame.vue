@@ -853,7 +853,10 @@ const checkNodesInFrameBoundary = () => {
   }
 }
 
-// 修改鼠标事件处理函数，优化拖拽性能
+// 添加一个缓存变量用于存储拖拽过程中的子节点ID
+const dragChildNodesCache = ref<string[]>([])
+
+// 修改鼠标按下事件处理函数，在拖拽开始时预先获取所有子节点
 const handleMouseDown = (event: MouseEvent) => {
   // 如果已锁定，则不允许拖动
   if (isLocked.value) {
@@ -884,11 +887,65 @@ const handleMouseDown = (event: MouseEvent) => {
   // 设置拖拽状态
   isDragging.value = true
   
+  // 在拖拽开始时获取所有需要移动的子节点ID（包括嵌套节点）
+  getAllChildNodeIds()
+  
   // 添加拖拽期间的鼠标移动监听
   document.addEventListener('mousemove', handleFrameDrag)
   
   // 设置鼠标抬起时的事件处理
   document.addEventListener('mouseup', handleMouseUpGlobal)
+}
+
+// 添加获取所有子节点ID的函数，仅在拖拽开始时调用一次
+const getAllChildNodeIds = () => {
+  // 清空缓存
+  dragChildNodesCache.value = []
+  
+  // 获取所有节点
+  const nodes = getNodes.value
+  // 获取当前节点的直接子节点ID列表
+  const directChildIds = flowNode.data.childNodeIds || []
+  
+  // 使用一个Set来存储所有子节点ID，避免重复
+  const allChildIds = new Set<string>()
+  
+  // 递归获取所有子节点ID的函数
+  const collectChildIds = (parentIds: string[]) => {
+    // 如果没有子节点，直接返回
+    if (parentIds.length === 0) return
+    
+    // 将直接子节点ID添加到结果集合中
+    parentIds.forEach(id => allChildIds.add(id))
+    
+    // 查找子节点中的Frame节点
+    const childFrames = nodes.filter(node => 
+      parentIds.includes(node.id) && 
+      node.type === EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME
+    )
+    
+    // 收集所有子Frame的子节点ID
+    const nextLevelChildIds: string[] = []
+    childFrames.forEach(frame => {
+      const frameChildIds = frame.data.childNodeIds || []
+      frameChildIds.forEach(id => {
+        if (!allChildIds.has(id)) {
+          nextLevelChildIds.push(id)
+        }
+      })
+    })
+    
+    // 递归处理下一级子节点
+    if (nextLevelChildIds.length > 0) {
+      collectChildIds(nextLevelChildIds)
+    }
+  }
+  
+  // 开始递归处理
+  collectChildIds(directChildIds)
+  
+  // 将Set转换为数组
+  dragChildNodesCache.value = Array.from(allChildIds)
 }
 
 // 修改全局鼠标抬起事件处理
@@ -903,13 +960,16 @@ const handleMouseUpGlobal = (event: MouseEvent) => {
   // 结束拖拽状态
   isDragging.value = false
   
+  // 清空子节点缓存
+  dragChildNodesCache.value = []
+  
   // 延迟执行边界检测，避免卡顿
   setTimeout(() => {
     checkNodesInFrameBoundary()
   }, 100)
 }
 
-// 修改拖拽处理函数，支持嵌套Frame的拖拽
+// 修改拖拽处理函数，使用缓存的子节点数据
 const handleFrameDrag = (event: MouseEvent) => {
   if (!isDragging.value) return
   
@@ -942,36 +1002,13 @@ const handleFrameDrag = (event: MouseEvent) => {
     }
   }
   
-  // 恢复优化后的递归获取所有子节点逻辑
-  const getAllChildNodes = (parentId: string, visitedIds = new Set<string>()) => {
-    // 防止循环引用
-    if (visitedIds.has(parentId)) return []
-    visitedIds.add(parentId)
-    
-    // 获取直接子节点
-    const directChildren = currentNodes.filter(node => 
-      node.data?.parentId === parentId
-    )
-    
-    // 初始化结果集合
-    let allChildren = [...directChildren]
-    
-    // 对于每个直接子节点，如果是Frame，则递归获取其子节点
-    for (const child of directChildren) {
-      if (child.type === EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME) {
-        const nestedChildren = getAllChildNodes(child.id, visitedIds)
-        allChildren = [...allChildren, ...nestedChildren]
-      }
-    }
-    
-    return allChildren
-  }
-  
-  // 使用Set存储已访问节点ID，避免重复处理
-  const allChildNodes = getAllChildNodes(flowNode.id, new Set<string>())
+  // 使用缓存的子节点ID获取所有需要更新的子节点
+  const childNodesToUpdate = currentNodes.filter(node => 
+    dragChildNodesCache.value.includes(node.id)
+  )
   
   // 更新所有子节点的位置
-  const updatedChildNodes = allChildNodes.map(node => ({
+  const updatedChildNodes = childNodesToUpdate.map(node => ({
     ...node,
     position: {
       x: node.position.x + dx,
@@ -979,9 +1016,9 @@ const handleFrameDrag = (event: MouseEvent) => {
     }
   }))
   
-  // 优化性能：仅更新变化的节点
+  // 优化性能：合并所有需要更新的节点
   const nodesToUpdate = [updatedFrameNode, ...updatedChildNodes]
-  const nodeIdsToUpdate = new Set(nodesToUpdate.map(node => node.id))
+  const nodeIdsToUpdate = new Set([flowNode.id, ...dragChildNodesCache.value])
   
   // 批量更新节点位置
   setNodes(nodes => 
