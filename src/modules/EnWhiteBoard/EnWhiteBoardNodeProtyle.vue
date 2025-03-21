@@ -195,6 +195,7 @@ import {
   useSiyuanDatabaseIndexCommit,
   useSiyuanEventTransactions,
 } from '@/utils/EventBusHooks'
+import { EN_CONSTANTS } from '@/utils/Constants'
 import {
   IconArrowDown,
   IconArrowLeft,
@@ -514,13 +515,27 @@ const handleCollapse = () => {
   const nodes = getNodes.value
   const newNodes = nodes.map((node) => {
     if (node.id === flowNode.id) {
-      return {
-        ...node,
-        data: {
-          ...node.data,
-          isCollapsed: isCollapsed.value,
-        },
-        height: isCollapsed.value ? 30 : (node.data.originalHeight || node.dimensions.height), // 更新高度
+      // 折叠前保存原始高度
+      if (!isCollapsed.value) {
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            isCollapsed: isCollapsed.value,
+          },
+          height: node.data.originalHeight || node.dimensions.height, // 使用保存的原始高度
+        }
+      } else {
+        // 折叠时保存当前高度为原始高度
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            isCollapsed: isCollapsed.value,
+            originalHeight: node.dimensions.height, // 保存当前高度为原始高度
+          },
+          height: 30, // 折叠时固定高度为30px
+        }
       }
     }
     return node
