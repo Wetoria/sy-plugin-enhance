@@ -108,7 +108,7 @@
     :data-en-flow-node-id="flowNode.id"
     :style="{
       '--en-card-width': `${flowNode.dimensions.width}px`,
-      '--en-card-height': isCollapsed ? '30px' : `${flowNode.dimensions.height}px`,
+      '--en-card-height': `${flowNode.height}px`,
       'backgroundColor': nodeData.style?.backgroundColor,
     }"
   >
@@ -432,7 +432,40 @@ onMounted(() => {
     removeNodeCreatedByOther(event)
     mergeTopLevelBlocksIntoSuperBlock()
   })
+  
+  // 初始化折叠状态
   isCollapsed.value = flowNode.data?.isCollapsed || false
+  
+  // 确保节点高度数据正确
+  const nodes = getNodes.value
+  const newNodes = nodes.map((node) => {
+    if (node.id === flowNode.id) {
+      // 如果是折叠状态，设置高度为30px
+      if (isCollapsed.value && node.height !== 30) {
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            originalHeight: node.height || 200, // 保存当前高度
+          },
+          height: 30, // 设置折叠时的高度
+          style: { ...node.style, height: '30px' }
+        }
+      } 
+      // 如果是展开状态，确保保存了原始高度
+      else if (!isCollapsed.value && !node.data.originalHeight) {
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            originalHeight: node.height || 200, // 保存当前高度作为原始高度
+          }
+        }
+      }
+    }
+    return node
+  })
+  setNodes(newNodes)
 })
 
 onBeforeUnmount(() => {
@@ -442,7 +475,31 @@ onBeforeUnmount(() => {
 })
 
 const onResize = (event: OnResize) => {
-  console.log('onResize', event)
+  // 只有在非折叠状态下才更新originalHeight
+  if (!isCollapsed.value) {
+    // 延迟执行以确保节点高度已更新
+    setTimeout(() => {
+      // 获取最新的节点状态
+      const nodes = getNodes.value;
+      const currentNode = nodes.find(node => node.id === flowNode.id);
+      
+      if (currentNode) {
+        const newNodes = nodes.map((node) => {
+          if (node.id === flowNode.id) {
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                originalHeight: currentNode.height, // 保存调整后的高度
+              },
+            };
+          }
+          return node;
+        });
+        setNodes(newNodes);
+      }
+    }, 10); // 短暂延迟确保获取的是调整后的高度
+  }
 }
 
 const handleRemoveNode = () => {
@@ -513,50 +570,58 @@ const handleCollapse = () => {
 
   // 更新节点数据
   const nodes = getNodes.value
-  const newNodes = nodes.map((node) => {
-    if (node.id === flowNode.id) {
-      // 折叠前保存原始高度
-      if (!isCollapsed.value) {
-        return {
-          ...node,
-          data: {
-            ...node.data,
-            isCollapsed: isCollapsed.value,
-          },
-          height: node.data.originalHeight || node.dimensions.height, // 使用保存的原始高度
-        }
-      } else {
-        // 折叠时保存当前高度为原始高度
-        return {
-          ...node,
-          data: {
-            ...node.data,
-            isCollapsed: isCollapsed.value,
-            originalHeight: node.dimensions.height, // 保存当前高度为原始高度
-          },
-          height: 30, // 折叠时固定高度为30px
-        }
-      }
+  const currentNode = nodes.find(node => node.id === flowNode.id);
+  
+  if (!currentNode) return;
+  
+  // 确保节点尺寸数据是最新的
+  const updatedNode = {
+    ...currentNode,
+    data: {
+      ...currentNode.data,
+      isCollapsed: isCollapsed.value,
     }
-    return node
-  })
-  setNodes(newNodes)
+  };
+  
+  // 根据折叠状态设置高度
+  if (isCollapsed.value) {
+    // 折叠：保存当前高度并设置为30px
+    updatedNode.data.originalHeight = currentNode.height;
+    updatedNode.height = 30;
+    updatedNode.style = { ...updatedNode.style, height: '30px' };
+  } else {
+    // 展开：恢复到原始高度
+    const originalHeight = currentNode.data.originalHeight || 200;
+    updatedNode.height = originalHeight;
+    updatedNode.style = { ...updatedNode.style, height: `${originalHeight}px` };
+  }
+  
+  // 更新节点
+  const newNodes = nodes.map(node => 
+    node.id === flowNode.id ? updatedNode : node
+  );
+  
+  setNodes(newNodes);
 
   // 更新连线位置
-  const edgesToUpdate = getEdges.value.filter((edge) => edge.source === flowNode.id || edge.target === flowNode.id)
+  const edgesToUpdate = getEdges.value.filter((edge) => 
+    edge.source === flowNode.id || edge.target === flowNode.id
+  );
+  
   const updatedEdges = edgesToUpdate.map((edge) => {
     return {
       ...edge,
       source: edge.source,
       target: edge.target,
       // 根据新位置更新连线
-      sourceX: flowNode.position.x + (isCollapsed.value ? 0 : nodeData.value.dimensions.width),
+      sourceX: flowNode.position.x + (isCollapsed.value ? 0 : flowNode.dimensions.width),
       sourceY: flowNode.position.y,
       targetX: edge.targetNode.position.x,
       targetY: edge.targetNode.position.y,
     }
-  })
-  setEdges(updatedEdges)
+  });
+  
+  setEdges(updatedEdges);
 }
 
 // 修改块信息状态
@@ -1060,19 +1125,12 @@ const getNodeType = () => {
   }
 
   &.is-collapsed {
-    height: 30px !important;
-    min-height: 30px !important;
     transition: height 0.3s ease-in-out;
-
-    .main {
-      display: none;
-    }
 
     .ProtyleToolbarArea {
       border-bottom: none;
       border-radius: var(--b3-border-radius);
       background-color: var(--b3-theme-surface);
-      height: 100%;
     }
 
     .Handle,
@@ -1086,12 +1144,6 @@ const getNodeType = () => {
 
     &.variant-card {
       box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    &.variant-note {
-      &::before {
-        display: none;
-      }
     }
   }
 }
