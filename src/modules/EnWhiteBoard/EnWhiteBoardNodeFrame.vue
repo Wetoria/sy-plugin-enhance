@@ -913,14 +913,15 @@ const handleMouseUpGlobal = (event: MouseEvent) => {
 const handleFrameDrag = (event: MouseEvent) => {
   if (!isDragging.value) return
   
-  // 计算位移
-  const dx = event.clientX - dragStartPos.value.x
-  const dy = event.clientY - dragStartPos.value.y
+  // 计算位移，并根据视口缩放进行调整
+  const scale = viewport.value?.zoom || 1
+  const dx = (event.clientX - dragStartPos.value.x) / scale
+  const dy = (event.clientY - dragStartPos.value.y) / scale
   
-  // 达到一定阈值才触发移动（避免微小移动导致的性能消耗）
-  if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return
+  // 只有完全没有移动时才跳过更新
+  if (dx === 0 && dy === 0) return
 
-  // 更新起始位置
+  // 更新起始位置，记录本次鼠标位置
   dragStartPos.value = {
     x: event.clientX,
     y: event.clientY
@@ -932,7 +933,7 @@ const handleFrameDrag = (event: MouseEvent) => {
   
   if (!frameNode) return
   
-  // 更新Frame位置
+  // 使用更新后的位移计算新位置
   const updatedFrameNode = {
     ...frameNode,
     position: {
@@ -941,31 +942,32 @@ const handleFrameDrag = (event: MouseEvent) => {
     }
   }
   
-  // 查找所有子节点（包括嵌套Frame及其子节点）
+  // 恢复优化后的递归获取所有子节点逻辑
   const getAllChildNodes = (parentId: string, visitedIds = new Set<string>()) => {
-    // 添加当前节点ID到已访问集合，防止循环引用
+    // 防止循环引用
+    if (visitedIds.has(parentId)) return []
     visitedIds.add(parentId)
     
+    // 获取直接子节点
     const directChildren = currentNodes.filter(node => 
-      node.data?.parentId === parentId && !visitedIds.has(node.id)
+      node.data?.parentId === parentId
     )
     
+    // 初始化结果集合
     let allChildren = [...directChildren]
     
-    // 递归查找嵌套Frame的子节点，但避免重复处理已访问节点
-    directChildren.forEach(child => {
-      if (child.type === EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME && !visitedIds.has(child.id)) {
-        // 创建一个新的visitedIds副本，以避免跨分支影响
-        const childVisitedIds = new Set(visitedIds)
-        const nestedChildren = getAllChildNodes(child.id, childVisitedIds)
+    // 对于每个直接子节点，如果是Frame，则递归获取其子节点
+    for (const child of directChildren) {
+      if (child.type === EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME) {
+        const nestedChildren = getAllChildNodes(child.id, visitedIds)
         allChildren = [...allChildren, ...nestedChildren]
       }
-    })
+    }
     
     return allChildren
   }
   
-  // 获取所有子节点（包括嵌套Frame内的节点），传入空的visitedIds集合作为初始值
+  // 使用Set存储已访问节点ID，避免重复处理
   const allChildNodes = getAllChildNodes(flowNode.id, new Set<string>())
   
   // 更新所有子节点的位置
@@ -977,27 +979,22 @@ const handleFrameDrag = (event: MouseEvent) => {
     }
   }))
   
-  // 合并更新
-  const updatedNodes = [updatedFrameNode, ...updatedChildNodes]
+  // 优化性能：仅更新变化的节点
+  const nodesToUpdate = [updatedFrameNode, ...updatedChildNodes]
+  const nodeIdsToUpdate = new Set(nodesToUpdate.map(node => node.id))
   
   // 批量更新节点位置
-  setNodes(nodes => {
-    const updatedNodeList = nodes.map(node => {
-      const updatedNode = updatedNodes.find(n => n.id === node.id)
-      return updatedNode || node
-    })
-    
-    // 确保更新后Frame仍在底层
-    const frameNodes = updatedNodeList.filter(node => 
-      node.type === EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME
+  setNodes(nodes => 
+    nodes.map(node => 
+      nodeIdsToUpdate.has(node.id) 
+        ? nodesToUpdate.find(n => n.id === node.id) || node 
+        : node
     )
-    
-    const normalNodes = updatedNodeList.filter(node => 
-      node.type !== EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME
-    )
-    
-    return [...frameNodes, ...normalNodes]
-  })
+  )
+  
+  // 防止事件冒泡和默认行为
+  event.stopPropagation()
+  event.preventDefault()
 }
 
 // 修改handleMouseUp不再需要复杂处理，因为我们使用了全局的handleMouseUpGlobal
