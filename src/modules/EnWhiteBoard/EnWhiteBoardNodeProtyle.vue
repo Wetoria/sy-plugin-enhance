@@ -608,20 +608,32 @@ const handleCollapse = () => {
     edge.source === flowNode.id || edge.target === flowNode.id
   );
   
-  const updatedEdges = edgesToUpdate.map((edge) => {
-    return {
-      ...edge,
-      source: edge.source,
-      target: edge.target,
-      // 根据新位置更新连线
-      sourceX: flowNode.position.x + (isCollapsed.value ? 0 : flowNode.dimensions.width),
-      sourceY: flowNode.position.y,
-      targetX: edge.targetNode.position.x,
-      targetY: edge.targetNode.position.y,
+  // 获取所有边
+  const allEdges = getEdges.value;
+  
+  // 创建一个新的边数组，保留未修改的边
+  const updatedAllEdges = allEdges.map(edge => {
+    // 如果是需要更新的边，则更新它
+    if (edge.source === flowNode.id || edge.target === flowNode.id) {
+      return {
+        ...edge,
+        source: edge.source,
+        target: edge.target,
+        // 根据新位置更新连线
+        sourceX: edge.source === flowNode.id ? 
+          flowNode.position.x + (isCollapsed.value ? 0 : flowNode.dimensions.width) : 
+          edge.sourceX,
+        sourceY: edge.source === flowNode.id ? flowNode.position.y : edge.sourceY,
+        targetX: edge.target === flowNode.id ? flowNode.position.x : edge.targetX,
+        targetY: edge.target === flowNode.id ? flowNode.position.y : edge.targetY,
+      };
     }
+    // 否则保留原边
+    return edge;
   });
   
-  setEdges(updatedEdges);
+  // 更新所有边
+  setEdges(updatedAllEdges);
 }
 
 // 修改块信息状态
