@@ -58,68 +58,28 @@
               </template>
             </a-button>
           </a-tooltip>
-          <a-tooltip content="节点外观">
-            <a-dropdown
-              trigger="click"
-              @select="onNodeStyleSelect"
-            >
-              <a-button>
+          
+          <!-- Frame节点特有的按钮，只在nodeType为frame时显示 -->
+          <template v-if="nodeType === 'frame'">
+            <a-tooltip :content="'编辑标题: ' + (nodeData?.label || '未命名分组')">
+              <a-button @click="onEditFrameLabel">
                 <template #icon>
-                  <icon-skin />
+                  <icon-edit />
                 </template>
               </a-button>
-              <template #content>
-                <a-doption value="default">
-                  <div class="NodeStyleOption">
-                    <span>默认样式</span>
-                  </div>
-                </a-doption>
-                <a-doption value="inherit">
-                  <div class="NodeStyleOption">
-                    <span>继承原样式</span>
-                  </div>
-                </a-doption>
-              </template>
-            </a-dropdown>
-          </a-tooltip>
-          <a-tooltip content="节点类型">
-            <a-dropdown
-              trigger="click"
-              @select="onNodeTypeSelect"
-            >
-              <a-button>
+            </a-tooltip>
+            
+            <a-tooltip :content="isLocked ? '解锁分组' : '锁定分组'">
+              <a-button @click="onToggleLock" :class="{ 'active': isLocked }">
                 <template #icon>
-                  <icon-apps />
+                  <icon-lock v-if="isLocked" />
+                  <icon-unlock v-else />
                 </template>
               </a-button>
-              <template #content>
-                <a-doption value="protyle">
-                  <div class="NodeTypeOption">
-                    <icon-edit />
-                    <span>普通节点</span>
-                  </div>
-                </a-doption>
-                <a-doption value="mindmap">
-                  <div class="NodeTypeOption">
-                    <icon-mind-mapping />
-                    <span>思维导图</span>
-                  </div>
-                </a-doption>
-                <a-doption value="text">
-                  <div class="NodeTypeOption">
-                    <icon-file />
-                    <span>文本节点</span>
-                  </div>
-                </a-doption>
-                <a-doption value="gingko">
-                  <div class="NodeTypeOption">
-                    <icon-branch />
-                    <span>树形卡片</span>
-                  </div>
-                </a-doption>
-              </template>
-            </a-dropdown>
-          </a-tooltip>
+            </a-tooltip>
+          </template>
+          
+          <!-- 节点颜色按钮（所有节点类型通用） -->
           <a-tooltip content="节点颜色">
             <a-dropdown trigger="click">
               <a-button>
@@ -128,20 +88,11 @@
                 </template>
               </a-button>
               <template #content>
-                <div class="EdgeColorPicker">
+                <div class="NodeColorPicker">
                   <div class="ColorRow">
                     <div
-                      class="ColorItem is-clear"
-                      :style="{
-                        backgroundColor: 'var(--b3-theme-surface)',
-                        border: '1px solid var(--b3-border-color)',
-                      }"
-                      @click="onNodeColorChange('clear')"
-                    >
-                      <icon-close />
-                    </div>
-                    <div
                       v-for="color in [
+                        'default',
                         'var(--b3-font-background1)',
                         'var(--b3-font-background2)',
                         'var(--b3-font-background3)',
@@ -151,11 +102,12 @@
                       ]"
                       :key="color"
                       class="ColorItem"
+                      :class="{ 'is-default': color === 'default' }"
                       :style="{
-                        backgroundColor: color,
+                        backgroundColor: color === 'default' ? 'var(--b3-theme-surface)' : color,
                         border: '1px solid var(--b3-border-color)',
                       }"
-                      @click="onNodeColorChange(color)"
+                      @click="onNodeColorChange(color === 'default' ? 'clear' : color)"
                     />
                   </div>
                   <div class="ColorRow">
@@ -182,6 +134,73 @@
               </template>
             </a-dropdown>
           </a-tooltip>
+          
+          <!-- 其他普通节点专用按钮 -->
+          <template v-if="nodeType !== 'frame'">
+            <a-tooltip content="节点外观">
+              <a-dropdown
+                trigger="click"
+                @select="onNodeStyleSelect"
+              >
+                <a-button>
+                  <template #icon>
+                    <icon-skin />
+                  </template>
+                </a-button>
+                <template #content>
+                  <a-doption value="default">
+                    <div class="NodeStyleOption">
+                      <span>默认样式</span>
+                    </div>
+                  </a-doption>
+                  <a-doption value="inherit">
+                    <div class="NodeStyleOption">
+                      <span>继承原样式</span>
+                    </div>
+                  </a-doption>
+                </template>
+              </a-dropdown>
+            </a-tooltip>
+            <a-tooltip content="节点类型">
+              <a-dropdown
+                trigger="click"
+                @select="onNodeTypeSelect"
+              >
+                <a-button>
+                  <template #icon>
+                    <icon-apps />
+                  </template>
+                </a-button>
+                <template #content>
+                  <a-doption value="protyle">
+                    <div class="NodeTypeOption">
+                      <icon-edit />
+                      <span>普通节点</span>
+                    </div>
+                  </a-doption>
+                  <a-doption value="mindmap">
+                    <div class="NodeTypeOption">
+                      <icon-mind-mapping />
+                      <span>思维导图</span>
+                    </div>
+                  </a-doption>
+                  <a-doption value="text">
+                    <div class="NodeTypeOption">
+                      <icon-file />
+                      <span>文本节点</span>
+                    </div>
+                  </a-doption>
+                  <a-doption value="gingko">
+                    <div class="NodeTypeOption">
+                      <icon-branch />
+                      <span>树形卡片</span>
+                    </div>
+                  </a-doption>
+                </template>
+              </a-dropdown>
+            </a-tooltip>
+          </template>
+          
           <a-tooltip content="自动适配高度">
             <a-button @click="onAutoFitHeight">
               <template #icon>
@@ -853,6 +872,7 @@ import {
   ref,
   watch,
 } from 'vue'
+import { EN_CONSTANTS } from '@/utils/Constants'
 
 const props = defineProps<{
   showBasicControls?: boolean
@@ -873,6 +893,8 @@ const emit = defineEmits<{
   removeEdge: [edgeId: string]
   openInSidebar: [nodeId: string]
   collapse: []
+  editFrameLabel: [nodeId: string]
+  toggleLock: [nodeId: string]
 }>()
 
 const {
@@ -1127,6 +1149,8 @@ const onNodeColorChange = (color: string) => {
   const nodes = getNodes.value
   const newNodes = nodes.map((node) => {
     if (node.id === props.nodeId) {
+      // 检查是否为Frame节点
+      const isFrame = node.type === EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME
       const newData = {
         ...node.data,
         style: {
@@ -1138,6 +1162,11 @@ const onNodeColorChange = (color: string) => {
         delete newData.style.backgroundColor
       } else {
         newData.style.backgroundColor = color
+        
+        // 如果是Frame节点，同时更新边框颜色
+        if (isFrame) {
+          newData.style.borderColor = color
+        }
       }
 
       return {
@@ -1305,6 +1334,28 @@ const onAutoFitHeight = () => {
   } else {
     console.log('未找到节点元素，检查选择器和节点 ID')
   }
+}
+
+// 添加Frame节点相关的属性
+const nodeType = computed(() => {
+  const node = getNodes.value.find((n) => n.id === props.nodeId)
+  return node?.type === EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME ? 'frame' : 'normal'
+})
+
+// Frame节点的锁定状态
+const isLocked = computed(() => {
+  const node = getNodes.value.find((n) => n.id === props.nodeId)
+  return node?.data?.isLocked || false
+})
+
+// Frame节点编辑标题方法
+const onEditFrameLabel = () => {
+  emit('editFrameLabel', props.nodeId)
+}
+
+// Frame节点锁定/解锁方法
+const onToggleLock = () => {
+  emit('toggleLock', props.nodeId)
 }
 </script>
 

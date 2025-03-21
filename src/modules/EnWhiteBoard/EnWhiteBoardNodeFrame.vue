@@ -15,26 +15,9 @@
       @remove-node="handleRemoveNode"
       @duplicate-node="handleDuplicateNode"
       @collapse="handleCollapse"
+      @edit-frame-label="editFrameLabel"
+      @toggle-lock="toggleLock"
     />
-    <div class="AdditionalToolbar" v-if="!isCollapsed">
-      <div class="ToolbarBtn" @click="editFrameLabel" :title="'编辑标题: ' + (nodeData.label || '未命名分组')">
-        <IconEdit />
-      </div>
-      <div class="ToolbarBtn" @click="toggleLock" :class="{ 'active': isLocked }">
-        <IconLock v-if="isLocked" />
-        <IconUnlock v-else />
-      </div>
-      <div class="ToolbarBtn" @click="bringForward">
-        <IconToTop />
-      </div>
-      <div class="ToolbarBtn" @click="sendBackward">
-        <IconToBottom />
-      </div>
-      <div class="ToolbarBtn color-picker">
-        <input type="color" v-model="frameColor" @change="updateFrameColor" />
-        <IconPalette />
-      </div>
-    </div>
   </NodeToolbar>
 
   <div
@@ -175,38 +158,6 @@
           <IconLock v-if="isLocked" />
           <IconUnlock v-else />
           <span>{{ isLocked ? '解锁分组' : '锁定分组' }}</span>
-        </div>
-      </div>
-    </div>
-  </Teleport>
-
-  <Teleport to="body">
-    <div v-if="colorPickerVisible" class="ColorPickerModal">
-      <div class="ColorPickerHeader">
-        <span>自定义分组样式</span>
-        <div class="CloseBtn" @click="colorPickerVisible = false">✕</div>
-      </div>
-      <div class="ColorPickerContent">
-        <div class="ColorPickerItem">
-          <span>背景颜色:</span>
-          <input type="color" v-model="frameColor" @change="updateFrameColor" />
-        </div>
-        <div class="ColorPickerItem">
-          <span>边框颜色:</span>
-          <input type="color" v-model="frameBorderColor" @change="updateFrameBorderColor" />
-        </div>
-        <div class="ColorPickerItem">
-          <span>边框样式:</span>
-          <select v-model="frameBorderStyle" @change="(e) => updateFrameBorderStyle((e.target as HTMLSelectElement).value)">
-            <option value="solid">实线</option>
-            <option value="dashed">虚线</option>
-            <option value="dotted">点状</option>
-            <option value="double">双线</option>
-          </select>
-        </div>
-        <div class="ColorPickerItem">
-          <span>透明度:</span>
-          <input type="range" min="0" max="1" step="0.1" v-model="frameOpacity" @change="updateFrameOpacity" />
         </div>
       </div>
     </div>
@@ -1504,37 +1455,6 @@ const updateFrameOpacity = () => {
     return node
   })
   setNodes(newNodes)
-}
-
-// 层级调整函数
-const bringForward = () => {
-  // 将节点在数组中的位置向后移，提高z-index
-  const nodes = getNodes.value
-  const index = nodes.findIndex((node) => node.id === flowNode.id)
-  
-  if (index < nodes.length - 1) {
-    const newNodes = [...nodes]
-    const temp = newNodes[index]
-    newNodes[index] = newNodes[index + 1]
-    newNodes[index + 1] = temp
-    setNodes(newNodes)
-  }
-  closeContextMenu()
-}
-
-const sendBackward = () => {
-  // 将节点在数组中的位置向前移，降低z-index
-  const nodes = getNodes.value
-  const index = nodes.findIndex((node) => node.id === flowNode.id)
-  
-  if (index > 0) {
-    const newNodes = [...nodes]
-    const temp = newNodes[index]
-    newNodes[index] = newNodes[index - 1]
-    newNodes[index - 1] = temp
-    setNodes(newNodes)
-  }
-  closeContextMenu()
 }
 
 // 对齐函数
