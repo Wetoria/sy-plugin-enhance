@@ -355,14 +355,6 @@
     >
       <template #SiderTopButtonGroupBefore>
         <slot name="SiderRightTopButtonGroupBefore" />
-        <!-- 添加钉固按钮 -->
-        <a-tooltip v-if="embedWhiteBoardConfigData.boardOptions.selectedNodeId" :content="isSidebarPinned ? '取消钉固' : '钉固内容'">
-          <a-button :class="{ 'active': isSidebarPinned }" @click="toggleSidebarPin">
-            <template #icon>
-              <icon-pushpin />
-            </template>
-          </a-button>
-        </a-tooltip>
       </template>
       <template #SiderTopButtonGroupAfter>
         <slot name="SiderRightTopButtonGroupAfter" />
@@ -370,8 +362,18 @@
 
       <template v-if="embedWhiteBoardConfigData.boardOptions.selectedNodeId">
         <div class="sidebar-header">
-          <div class="sidebar-title">
-            {{ sidebarInfo.title || sidebarInfo.name || sidebarInfo.alias || sidebarInfo.docName || '未命名块' }}
+          <div class="sidebar-title-row">
+            <div class="sidebar-title">
+              {{ sidebarInfo.title || sidebarInfo.name || sidebarInfo.alias || sidebarInfo.docName || '未命名块' }}
+            </div>
+            <!-- 钉固按钮 -->
+            <a-tooltip :content="isSidebarPinned ? '取消钉固' : '钉固内容'">
+              <a-button class="sidebar-pin-button" :class="{ 'active': isSidebarPinned }" @click="toggleSidebarPin">
+                <template #icon>
+                  <icon-pushpin />
+                </template>
+              </a-button>
+            </a-tooltip>
           </div>
           <div
             v-if="sidebarInfo.docName"
@@ -1673,11 +1675,45 @@ const handleRemoveEdge = (edgeId) => {
   border-bottom: 1px solid var(--b3-border-color);
   margin-bottom: var(--en-gap);
 
-  .sidebar-title {
-    font-size: 14px;
-    font-weight: bold;
-    color: var(--b3-theme-on-background);
+  .sidebar-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
     margin-bottom: 4px;
+
+    .sidebar-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: var(--b3-theme-on-background);
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .sidebar-pin-button {
+      background-color: var(--b3-theme-background);
+      border: none;
+      padding: 0;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+      flex-shrink: 0;
+
+      &:hover {
+        background-color: var(--b3-theme-surface);
+      }
+
+      &.active {
+        background-color: var(--b3-theme-primary);
+        color: var(--b3-theme-on-primary);
+
+        &:hover {
+          background-color: var(--b3-theme-primary-light);
+        }
+      }
+    }
   }
 
   .sidebar-doc-name {
