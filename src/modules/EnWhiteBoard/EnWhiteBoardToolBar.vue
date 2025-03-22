@@ -1298,23 +1298,6 @@ const longPressCompleted = ref(false); // 长按是否已完成
 const nodeOriginalHeights = ref(new Map()); // 存储节点原始高度
 const _isAutoHeightEnabled = ref(false); // 内部状态，用于同步到节点
 
-// 根据当前节点状态初始化自动高度状态
-watch(() => props.nodeId, (nodeId) => {
-  if (nodeId) {
-    const node = getNodes.value.find(node => node.id === nodeId);
-    _isAutoHeightEnabled.value = node?.data?.isAutoHeight || false;
-    
-    // 如果节点已启用自动高度，启动观察器
-    if (_isAutoHeightEnabled.value) {
-      setupAutoHeightObserver();
-    }
-  } else {
-    // 如果节点ID为空，重置状态
-    _isAutoHeightEnabled.value = false;
-    disconnectAutoHeightObserver();
-  }
-}, { immediate: true });
-
 // MutationObserver相关变量
 let contentObserver = null;
 
@@ -1381,16 +1364,25 @@ const adjustNodeHeight = () => {
     // 然后更新Vue Flow节点数据
     const newNodes = nodes.map((node) => {
       if (node.id === props.nodeId) {
-        // 构建新的样式对象
+        // 构建新的样式对象 - 仅在自动高度模式下添加transition
         const newStyle = typeof node.style === 'object' 
-          ? { ...node.style, height: `${newHeight}px`, transition: 'height 0.2s ease-out' } 
-          : { height: `${newHeight}px`, transition: 'height 0.2s ease-out' };
+          ? { 
+              ...node.style, 
+              height: `${newHeight}px`, 
+              // 只有在自动高度模式下才添加过渡效果
+              ..._isAutoHeightEnabled.value ? { transition: 'height 0.2s ease-out' } : {}
+            } 
+          : { 
+              height: `${newHeight}px`, 
+              ..._isAutoHeightEnabled.value ? { transition: 'height 0.2s ease-out' } : {}
+            };
           
         return {
           ...node,
           data: {
             ...node.data,
-            isAutoHeight: _isAutoHeightEnabled.value // 设置自动高度标志
+            // 保持当前的自动高度状态，单次调整不改变这个标志
+            isAutoHeight: _isAutoHeightEnabled.value
           },
           style: newStyle
         };
@@ -1501,6 +1493,20 @@ const restoreOriginalHeight = () => {
   }
 }
 
+// 切换自动高度状态
+const toggleAutoHeight = () => {
+  _isAutoHeightEnabled.value = !_isAutoHeightEnabled.value;
+  
+  // 如果启用了自动高度，设置MutationObserver监听内容变化
+  if (_isAutoHeightEnabled.value) {
+    setupAutoHeightObserver();
+  } else {
+    disconnectAutoHeightObserver();
+    // 恢复为原始高度
+    restoreOriginalHeight();
+  }
+}
+
 // 清除长按状态
 const clearLongPress = () => {
   // 如果长按已完成且仍在长按状态，触发开关切换
@@ -1508,7 +1514,7 @@ const clearLongPress = () => {
     // 切换自动高度状态
     toggleAutoHeight();
   } else if (isLongPressing.value && !longPressCompleted.value) {
-    // 如果是短按，执行一次高度调整
+    // 如果是短按，执行一次高度调整，但不改变自动高度状态
     adjustNodeHeight();
   }
   
@@ -1540,25 +1546,28 @@ const startLongPress = () => {
   }, longPressDuration);
 }
 
-// 切换自动高度状态
-const toggleAutoHeight = () => {
-  _isAutoHeightEnabled.value = !_isAutoHeightEnabled.value;
-  
-  // 如果启用了自动高度，设置MutationObserver监听内容变化
-  if (_isAutoHeightEnabled.value) {
-    setupAutoHeightObserver();
-  } else {
-    disconnectAutoHeightObserver();
-    // 恢复为原始高度
-    restoreOriginalHeight();
-  }
-}
-
 // 自动适配高度函数 - 现在只处理单击情况
 const onAutoFitHeight = () => {
   // 忽略事件处理，真正的逻辑由 mousedown/up 或 touchstart/end 事件处理
   // 这里什么也不做，因为Vue会自动触发这个点击事件
 }
+
+// 根据当前节点状态初始化自动高度状态
+watch(() => props.nodeId, (nodeId) => {
+  if (nodeId) {
+    const node = getNodes.value.find(node => node.id === nodeId);
+    _isAutoHeightEnabled.value = node?.data?.isAutoHeight || false;
+    
+    // 如果节点已启用自动高度，启动观察器
+    if (_isAutoHeightEnabled.value) {
+      setupAutoHeightObserver();
+    }
+  } else {
+    // 如果节点ID为空，重置状态
+    _isAutoHeightEnabled.value = false;
+    disconnectAutoHeightObserver();
+  }
+}, { immediate: true });
 
 // 处理节点折叠状态的变化
 watch(() => nodeData.value?.isCollapsed, (newCollapsed) => {
@@ -1582,15 +1591,36 @@ watch(() => {
   const node = getNodes.value.find(n => n.id === props.nodeId);
   return node?.resizing;
 }, (isResizing) => {
-  // 如果节点在手动调整大小，断开自动高度观察器
+  // 如果节点在手动调整大小
   if (isResizing) {
+    // 断开自动高度观察器（如果启用了自动高度）
     if (_isAutoHeightEnabled.value) {
-      // 临时禁用自动高度，但保持状态标志不变
       disconnectAutoHeightObserver();
     }
-  } else if (!isResizing && _isAutoHeightEnabled.value) {
-    // 当手动调整结束且自动高度功能开启时，重新启用观察器
-    setupAutoHeightObserver();
+    
+    // 移除过渡效果以提供更好的拖拽体验
+    const nodeElement = document.querySelector(`[data-en-flow-node-id='${props.nodeId}']`);
+    if (nodeElement) {
+      const htmlElement = nodeElement as HTMLElement;
+      if (htmlElement && htmlElement.style.transition) {
+        htmlElement.style.transition = 'none';
+      }
+    }
+  } else if (!isResizing) {
+    // 当手动调整结束
+    if (_isAutoHeightEnabled.value) {
+      // 如果自动高度功能开启，重新启用观察器
+      setupAutoHeightObserver();
+    } else {
+      // 如果不是自动高度模式，保存新的高度
+      const nodes = getNodes.value;
+      const currentNode = nodes.find(node => node.id === props.nodeId);
+      
+      // 更新原始高度记录，这样用户可以在自动高度和手动高度之间切换
+      if (currentNode) {
+        nodeOriginalHeights.value.set(props.nodeId, currentNode.height);
+      }
+    }
   }
 }, { immediate: true });
 
