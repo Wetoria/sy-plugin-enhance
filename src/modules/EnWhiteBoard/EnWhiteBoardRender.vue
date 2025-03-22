@@ -8,6 +8,7 @@
       :embedBlockOptions="embedBlockOptions"
       :embedWhiteBoardConfigData="embedWhiteBoardConfigData"
       pos="Left"
+      @view-mode-change="handleViewModeChange"
     >
       <template #SiderTopButtonGroupBefore>
         <slot name="SiderLeftTopButtonGroupBefore" />
@@ -30,6 +31,7 @@
       <!-- {{ data.whiteBoardId }} - {{ data.nodeId }} -->
       <div class="EnWhiteBoardControlArea EnWhiteBoardControlArea__Left">
         <EnWhiteBoardToolBar
+          v-if="currentViewMode === 'whiteboard'"
           class="MainToolBar"
           :show-basic-controls="true"
           :show-extra-controls="true"
@@ -56,7 +58,7 @@
       <div class="EnWhiteBoardControlArea EnWhiteBoardControlArea__Right">
       </div>
       <VueFlow
-        v-if="embedWhiteBoardConfigData.loaded"
+        v-if="embedWhiteBoardConfigData.loaded && currentViewMode === 'whiteboard'"
         v-model:nodes="nodes"
         v-model:edges="edges"
         :defaultViewport="embedWhiteBoardConfigData.boardOptions.viewport"
@@ -334,6 +336,11 @@
           @nodeClick="onNodeMinimapClick"
         />
       </VueFlow>
+      
+      <LineageView
+        v-if="currentViewMode === 'lineage'"
+        :nodeId="props.data.nodeId"
+      />
       <div
         ref="EnWhiteBoardProtyleUtilAreaRef"
         class="EnWhiteBoardProtyleUtilArea"
@@ -481,6 +488,7 @@ import EnWhiteBoardToolBar from './EnWhiteBoardToolBar.vue'
 import EnWhiteBoardNodeTreeCard from './EnWhiteBoardNodeTreeCard.vue'
 import '@vue-flow/minimap/dist/style.css'
 import '@vue-flow/controls/dist/style.css'
+import LineageView from '../Lineage/LineageView.vue'
 
 const props = defineProps<{
   data: EnWhiteBoardBlockDomTarget
@@ -1432,6 +1440,14 @@ const handleRemoveEdge = (edgeId) => {
     // 确保数据层面也删除了边
     embedWhiteBoardConfigData.value.boardOptions.edges = edges.value.filter(edge => edge.id !== edgeId)
   }
+}
+
+// 添加视图模式状态
+const currentViewMode = ref<'whiteboard' | 'lineage'>('whiteboard')
+
+// 处理视图模式切换
+const handleViewModeChange = (event: CustomEvent) => {
+  currentViewMode.value = event.detail.mode
 }
 </script>
 

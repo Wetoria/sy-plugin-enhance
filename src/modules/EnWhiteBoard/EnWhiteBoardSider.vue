@@ -18,6 +18,11 @@
         class="ButtonGroup"
       >
         <slot name="SiderTopButtonGroupBefore" />
+        <template v-if="pos === 'Left'">
+          <a-button @click="toggleViewMode">
+            <SyIcon :name="viewModeIcon" />
+          </a-button>
+        </template>
         <slot name="SiderTopButtonGroupAfter" />
       </a-button-group>
     </div>
@@ -151,7 +156,7 @@ const changeSiderShown = () => {
 }
 
 const resizePost = computed(() => {
-  const map = {
+  const map: Record<string, 'top' | 'bottom' | 'left' | 'right'> = {
     Right: 'left',
     Left: 'right',
   }
@@ -176,6 +181,17 @@ const resetBackgroundToGlobal = () => {
   props.embedWhiteBoardConfigData.boardOptions.backgroundVariant = moduleWhiteBoardOptions.value.backgroundVariant
 }
 
+const viewMode = ref<'whiteboard' | 'lineage'>('whiteboard')
+const viewModeIcon = computed(() => viewMode.value === 'whiteboard' ? 'iconGraph' : 'iconMindmap')
+
+const toggleViewMode = () => {
+  viewMode.value = viewMode.value === 'whiteboard' ? 'lineage' : 'whiteboard'
+  
+  const event = new CustomEvent('view-mode-change', { 
+    detail: { mode: viewMode.value } 
+  })
+  EnWhiteBoardSiderRef.value?.dispatchEvent(event)
+}
 </script>
 
 <style lang="scss" scoped>
