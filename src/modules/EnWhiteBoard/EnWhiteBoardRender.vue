@@ -355,6 +355,14 @@
     >
       <template #SiderTopButtonGroupBefore>
         <slot name="SiderRightTopButtonGroupBefore" />
+        <!-- 添加钉固按钮 -->
+        <a-tooltip v-if="embedWhiteBoardConfigData.boardOptions.selectedNodeId" :content="isSidebarPinned ? '取消钉固' : '钉固内容'">
+          <a-button :class="{ 'active': isSidebarPinned }" @click="toggleSidebarPin">
+            <template #icon>
+              <icon-pushpin />
+            </template>
+          </a-button>
+        </a-tooltip>
       </template>
       <template #SiderTopButtonGroupAfter>
         <slot name="SiderRightTopButtonGroupAfter" />
@@ -649,7 +657,32 @@ const editNewProtyleCard = (target: HTMLElement) => {
   lastEditProtyleCardElementRef.value = target
 }
 
-const onNodeClick = ({ event }) => {
+// 在script部分添加钉固状态变量
+const isSidebarPinned = ref(false)
+
+// 处理侧边栏钉固状态切换
+const toggleSidebarPin = () => {
+  isSidebarPinned.value = !isSidebarPinned.value
+}
+
+// 处理节点选择的通用方法
+const handleNodeSelection = (nodeId: string) => {
+  if (!nodeId) return
+  
+  // 如果侧边栏已打开且未钉固，自动在侧边栏显示该节点
+  if (embedBlockOptions.value.SiderRightShow && !isSidebarPinned.value) {
+    const targetNode = findNode(nodeId)
+    if (targetNode && targetNode.data?.blockId) {
+      const info = {
+        title: getNodeDisplayText(targetNode),
+      }
+      handleOpenInSidebar(targetNode.id, targetNode.data.blockId, info)
+    }
+  }
+}
+
+// 修改onNodeClick函数
+const onNodeClick = ({ node, event }) => {
   console.log('onNodeClick', event)
   const mainElement = event.target.closest('.EnWhiteBoardNodeProtyleMain')
   if (!mainElement) {
@@ -660,8 +693,12 @@ const onNodeClick = ({ event }) => {
   }
 
   editNewProtyleCard(mainElement)
+  
+  // 使用通用方法处理节点选择
+  if (node?.id) {
+    handleNodeSelection(node.id)
+  }
 }
-
 
 const onConnectStart = (event) => {
   console.log('onConnectStart', event)
@@ -963,6 +1000,9 @@ const onNodeMinimapClick = (event: NodeMouseEvent) => {
   const y = Number(targetNode.position.y) + (Number(targetNode.height) || 0) / 2
 
   setCenter(x, y, { duration: 800 })
+  
+  // 使用通用方法处理节点选择
+  handleNodeSelection(targetNode.id)
 }
 
 const onEdgeDoubleClick = (event) => {
@@ -1520,6 +1560,16 @@ const handleRemoveEdge = (edgeId) => {
 
     &:hover {
       background-color: var(--b3-theme-surface);
+    }
+    
+    // 添加钉固按钮激活样式
+    &.active {
+      background-color: var(--b3-theme-primary);
+      color: var(--b3-theme-on-primary);
+      
+      &:hover {
+        background-color: var(--b3-theme-primary-light);
+      }
     }
   }
 
