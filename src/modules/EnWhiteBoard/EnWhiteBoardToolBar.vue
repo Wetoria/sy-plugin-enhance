@@ -1293,6 +1293,8 @@ const updateTreeCardLayout = (nodeId, nodes) => {
 // 添加长按相关的状态变量
 const longPressTimer = ref(null);
 const longPressDuration = 800; // 长按触发时间（毫秒）
+const isLongPressing = ref(false); // 是否正在长按
+const longPressCompleted = ref(false); // 长按是否已完成
 const nodeOriginalHeights = ref(new Map()); // 存储节点原始高度
 const _isAutoHeightEnabled = ref(false); // 内部状态，用于同步到节点
 
@@ -1499,52 +1501,63 @@ const restoreOriginalHeight = () => {
   }
 }
 
-// 清除长按定时器
+// 清除长按状态
 const clearLongPress = () => {
-  if (longPressTimer.value && longPressTimer.value !== 'completed') {
+  // 如果长按已完成且仍在长按状态，触发开关切换
+  if (isLongPressing.value && longPressCompleted.value) {
+    // 切换自动高度状态
+    toggleAutoHeight();
+  } else if (isLongPressing.value && !longPressCompleted.value) {
+    // 如果是短按，执行一次高度调整
+    adjustNodeHeight();
+  }
+  
+  // 重置长按状态
+  if (longPressTimer.value) {
     clearTimeout(longPressTimer.value);
-  }
-  // 只有当不是完成状态时重置为null
-  if (longPressTimer.value !== 'completed') {
     longPressTimer.value = null;
-  } else {
-    // 如果是完成状态，在下一个事件循环重置，这样可以确保点击事件正确触发
-    setTimeout(() => {
-      longPressTimer.value = null;
-    }, 0);
   }
+  isLongPressing.value = false;
+  longPressCompleted.value = false;
 }
 
 // 长按开始
 const startLongPress = () => {
-  clearLongPress(); // 先清除可能存在的定时器
+  // 先清除可能存在的定时器
+  if (longPressTimer.value) {
+    clearTimeout(longPressTimer.value);
+    longPressTimer.value = null;
+  }
   
+  // 设置长按状态
+  isLongPressing.value = true;
+  longPressCompleted.value = false;
+  
+  // 设置长按定时器
   longPressTimer.value = setTimeout(() => {
-    // 标记为长按完成
-    longPressTimer.value = 'completed';
-    // 触发自动高度切换
-    onAutoFitHeight();
+    // 标记长按已完成
+    longPressCompleted.value = true;
   }, longPressDuration);
 }
 
-// 重构自动适配高度函数
-const onAutoFitHeight = () => {
-  // 如果是由长按触发的，则切换自动高度调整功能
-  if (longPressTimer.value === 'completed') {
-    _isAutoHeightEnabled.value = !_isAutoHeightEnabled.value;
-    
-    // 如果启用了自动高度，设置MutationObserver监听内容变化
-    if (_isAutoHeightEnabled.value) {
-      setupAutoHeightObserver();
-    } else {
-      disconnectAutoHeightObserver();
-      // 恢复为原始高度
-      restoreOriginalHeight();
-    }
+// 切换自动高度状态
+const toggleAutoHeight = () => {
+  _isAutoHeightEnabled.value = !_isAutoHeightEnabled.value;
+  
+  // 如果启用了自动高度，设置MutationObserver监听内容变化
+  if (_isAutoHeightEnabled.value) {
+    setupAutoHeightObserver();
   } else {
-    // 单击则执行一次高度调整
-    adjustNodeHeight();
+    disconnectAutoHeightObserver();
+    // 恢复为原始高度
+    restoreOriginalHeight();
   }
+}
+
+// 自动适配高度函数 - 现在只处理单击情况
+const onAutoFitHeight = () => {
+  // 忽略事件处理，真正的逻辑由 mousedown/up 或 touchstart/end 事件处理
+  // 这里什么也不做，因为Vue会自动触发这个点击事件
 }
 
 // 处理节点折叠状态的变化
@@ -1559,6 +1572,25 @@ watch(() => nodeData.value?.isCollapsed, (newCollapsed) => {
     setTimeout(() => {
       setupAutoHeightObserver();
     }, 50);
+  }
+}, { immediate: true });
+
+// 监听节点是否在手动调整大小
+watch(() => {
+  // 找到当前节点
+  if (!props.nodeId) return false;
+  const node = getNodes.value.find(n => n.id === props.nodeId);
+  return node?.resizing;
+}, (isResizing) => {
+  // 如果节点在手动调整大小，断开自动高度观察器
+  if (isResizing) {
+    if (_isAutoHeightEnabled.value) {
+      // 临时禁用自动高度，但保持状态标志不变
+      disconnectAutoHeightObserver();
+    }
+  } else if (!isResizing && _isAutoHeightEnabled.value) {
+    // 当手动调整结束且自动高度功能开启时，重新启用观察器
+    setupAutoHeightObserver();
   }
 }, { immediate: true });
 
