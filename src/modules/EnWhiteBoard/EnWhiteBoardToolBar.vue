@@ -1354,14 +1354,14 @@ const adjustNodeHeight = () => {
       // 添加过渡效果并设置高度
       const htmlElement = nodeElement as HTMLElement;
       if (htmlElement) {
-        if (!htmlElement.style.transition) {
+        if (_isAutoHeightEnabled.value && !htmlElement.style.transition) {
           htmlElement.style.transition = 'height 0.2s ease-out';
         }
         htmlElement.style.height = `${newHeight}px`;
       }
     }
     
-    // 然后更新Vue Flow节点数据
+    // 然后直接更新Vue Flow节点数据，取消延迟
     const newNodes = nodes.map((node) => {
       if (node.id === props.nodeId) {
         // 构建新的样式对象 - 仅在自动高度模式下添加transition
@@ -1384,19 +1384,19 @@ const adjustNodeHeight = () => {
             // 保持当前的自动高度状态，单次调整不改变这个标志
             isAutoHeight: _isAutoHeightEnabled.value
           },
-          style: newStyle
+          style: newStyle,
+          // 直接更新节点高度属性，确保Vue Flow内部状态同步
+          height: newHeight
         };
       }
       return node;
     });
     
-    // 短暂延迟以允许DOM变化先应用
-    setTimeout(() => {
-      setNodes(newNodes);
-      if (props.whiteBoardConfigData) {
-        props.whiteBoardConfigData.boardOptions.nodes = newNodes;
-      }
-    }, 0);
+    // 立即更新节点数据，不使用延迟
+    setNodes(newNodes);
+    if (props.whiteBoardConfigData) {
+      props.whiteBoardConfigData.boardOptions.nodes = newNodes;
+    }
   }
 }
 
@@ -1477,19 +1477,19 @@ const restoreOriginalHeight = () => {
             ...node.data,
             isAutoHeight: false // 关闭自动高度标志
           },
-          style: newStyle
+          style: newStyle,
+          // 直接更新节点高度属性
+          height: originalHeight
         };
       }
       return node;
     });
     
-    // 短暂延迟以允许DOM变化先应用
-    setTimeout(() => {
-      setNodes(newNodes);
-      if (props.whiteBoardConfigData) {
-        props.whiteBoardConfigData.boardOptions.nodes = newNodes;
-      }
-    }, 0);
+    // 立即更新节点数据，不使用延迟
+    setNodes(newNodes);
+    if (props.whiteBoardConfigData) {
+      props.whiteBoardConfigData.boardOptions.nodes = newNodes;
+    }
   }
 }
 
@@ -1612,17 +1612,101 @@ watch(() => {
       // 如果自动高度功能开启，重新启用观察器
       setupAutoHeightObserver();
     } else {
-      // 如果不是自动高度模式，保存新的高度
+      // 如果不是自动高度模式，立即同步DOM高度和节点数据
       const nodes = getNodes.value;
       const currentNode = nodes.find(node => node.id === props.nodeId);
       
-      // 更新原始高度记录，这样用户可以在自动高度和手动高度之间切换
       if (currentNode) {
-        nodeOriginalHeights.value.set(props.nodeId, currentNode.height);
+        // 获取当前节点的高度
+        const currentHeight = currentNode.height;
+        
+        // 立即同步DOM高度
+        const nodeElement = document.querySelector(`[data-en-flow-node-id='${props.nodeId}']`);
+        if (nodeElement) {
+          const htmlElement = nodeElement as HTMLElement;
+          htmlElement.style.height = `${currentHeight}px`;
+        }
+        
+        // 更新原始高度记录
+        nodeOriginalHeights.value.set(props.nodeId, currentHeight);
+        
+        // 确保节点数据中的style.height与实际高度一致
+        if (currentNode.style?.height !== `${currentHeight}px`) {
+          const newNodes = nodes.map((node) => {
+            if (node.id === props.nodeId) {
+              const newStyle = typeof node.style === 'object'
+                ? { ...node.style, height: `${currentHeight}px` }
+                : { height: `${currentHeight}px` };
+                
+              return {
+                ...node,
+                style: newStyle
+              };
+            }
+            return node;
+          });
+          
+          // 立即更新节点数据
+          setNodes(newNodes);
+          if (props.whiteBoardConfigData) {
+            props.whiteBoardConfigData.boardOptions.nodes = newNodes;
+          }
+        }
       }
     }
   }
 }, { immediate: true });
+
+// 监听节点高度变化，保持DOM同步
+watch(() => {
+  if (!props.nodeId) return null;
+  const node = getNodes.value.find(n => n.id === props.nodeId);
+  return {
+    height: node?.height,
+    styleHeight: node?.style?.height,
+    resizing: node?.resizing
+  };
+}, (newState) => {
+  if (!newState || !newState.height || !props.nodeId) return;
+  
+  // 只要高度改变且不在调整大小状态，就立即同步DOM
+  const node = getNodes.value.find(n => n.id === props.nodeId);
+  if (node && !node.resizing) {
+    const nodeElement = document.querySelector(`[data-en-flow-node-id='${props.nodeId}']`);
+    if (nodeElement) {
+      const htmlElement = nodeElement as HTMLElement;
+      
+      // 确保DOM高度与节点高度同步
+      const heightStr = `${newState.height}px`;
+      if (htmlElement && htmlElement.style.height !== heightStr) {
+        htmlElement.style.height = heightStr;
+      }
+      
+      // 如果样式高度与节点高度不一致，也更新样式高度
+      if (node.style?.height !== heightStr) {
+        const newNodes = getNodes.value.map((n) => {
+          if (n.id === props.nodeId) {
+            const newStyle = typeof n.style === 'object'
+              ? { ...n.style, height: heightStr }
+              : { height: heightStr };
+              
+            return {
+              ...n,
+              style: newStyle
+            };
+          }
+          return n;
+        });
+        
+        // 立即更新节点数据
+        setNodes(newNodes);
+        if (props.whiteBoardConfigData) {
+          props.whiteBoardConfigData.boardOptions.nodes = newNodes;
+        }
+      }
+    }
+  }
+}, { immediate: true, deep: true });
 
 // 组件卸载时清理
 onBeforeUnmount(() => {
