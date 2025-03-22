@@ -396,13 +396,6 @@
 
       <template #SiderBottomButtonGroupBefore>
         <slot name="SiderRightBottomButtonGroupBefore" />
-        <a-tooltip content="设置">
-          <a-button @click="() => embedWhiteBoardConfigData.boardOptions.selectedNodeId = undefined">
-            <template #icon>
-              <icon-settings />
-            </template>
-          </a-button>
-        </a-tooltip>
       </template>
       <template #SiderBottomButtonGroupAfter>
         <slot name="SiderRightBottomButtonGroupAfter" />
@@ -415,6 +408,7 @@
         :visible="contextMenuVisible"
         :position="contextMenuPosition"
         :click-position="initialClickPosition"
+        :nodeId="contextMenuNodeId || ''"
         @close="closeContextMenu"
       />
     </Teleport>
@@ -761,16 +755,11 @@ const onTouchStart = (event: TouchEvent) => {
   lastTouchY.value = y
 }
 
-// 添加上下文菜单相关的状态
+// 添加上下文菜单相关状态
 const contextMenuVisible = ref(false)
-const contextMenuPosition = ref({
-  x: 0,
-  y: 0,
-})
-const initialClickPosition = ref({
-  x: 0,
-  y: 0,
-})
+const contextMenuPosition = ref({ x: 0, y: 0 })
+const initialClickPosition = ref({ x: 0, y: 0 })
+const contextMenuNodeId = ref('')
 
 // 处理画布右键点击
 const onPaneContextMenu = (event: MouseEvent) => {
@@ -783,6 +772,7 @@ const onPaneContextMenu = (event: MouseEvent) => {
     x: event.offsetX,
     y: event.offsetY,
   }
+  contextMenuNodeId.value = ''
   contextMenuVisible.value = true
 }
 
