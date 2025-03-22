@@ -1364,12 +1364,25 @@ const adjustNodeHeight = () => {
 
   // 只有当高度真的发生变化时才更新
   if (!currentStyleHeight || currentHeightValue !== newHeight) {
+    // 首先直接更新DOM元素样式以实现即时反馈
+    if (nodeElement) {
+      // 添加过渡效果并设置高度
+      const htmlElement = nodeElement as HTMLElement;
+      if (htmlElement) {
+        if (!htmlElement.style.transition) {
+          htmlElement.style.transition = 'height 0.2s ease-out';
+        }
+        htmlElement.style.height = `${newHeight}px`;
+      }
+    }
+    
+    // 然后更新Vue Flow节点数据
     const newNodes = nodes.map((node) => {
       if (node.id === props.nodeId) {
         // 构建新的样式对象
         const newStyle = typeof node.style === 'object' 
-          ? { ...node.style, height: `${newHeight}px` } 
-          : { height: `${newHeight}px` };
+          ? { ...node.style, height: `${newHeight}px`, transition: 'height 0.2s ease-out' } 
+          : { height: `${newHeight}px`, transition: 'height 0.2s ease-out' };
           
         return {
           ...node,
@@ -1383,10 +1396,13 @@ const adjustNodeHeight = () => {
       return node;
     });
     
-    setNodes(newNodes);
-    if (props.whiteBoardConfigData) {
-      props.whiteBoardConfigData.boardOptions.nodes = newNodes;
-    }
+    // 短暂延迟以允许DOM变化先应用
+    setTimeout(() => {
+      setNodes(newNodes);
+      if (props.whiteBoardConfigData) {
+        props.whiteBoardConfigData.boardOptions.nodes = newNodes;
+      }
+    }, 0);
   }
 }
 
@@ -1403,10 +1419,16 @@ const setupAutoHeightObserver = () => {
   const wysiwygElement = nodeElement.querySelector('.protyle-wysiwyg.protyle-wysiwyg--attr');
   if (!wysiwygElement) return;
   
+  // 添加平滑过渡效果
+  const htmlElement = nodeElement as HTMLElement;
+  if (htmlElement && !htmlElement.style.transition) {
+    htmlElement.style.transition = 'height 0.2s ease-out';
+  }
+  
   // 创建一个新的MutationObserver
   contentObserver = new MutationObserver(debounce(() => {
     adjustNodeHeight();
-  }, 200));
+  }, 50)); // 减少防抖延迟，提高响应速度
   
   // 配置观察选项
   const config = { 
@@ -1435,12 +1457,25 @@ const restoreOriginalHeight = () => {
   if (nodeOriginalHeights.value.has(props.nodeId)) {
     const originalHeight = nodeOriginalHeights.value.get(props.nodeId);
     
+    // 首先直接更新DOM以立即反馈
+    const nodeElement = document.querySelector(`[data-en-flow-node-id='${props.nodeId}']`);
+    if (nodeElement) {
+      // 确保有过渡效果
+      const htmlElement = nodeElement as HTMLElement;
+      if (htmlElement) {
+        if (!htmlElement.style.transition) {
+          htmlElement.style.transition = 'height 0.2s ease-out';
+        }
+        htmlElement.style.height = `${originalHeight}px`;
+      }
+    }
+    
     const newNodes = nodes.map((node) => {
       if (node.id === props.nodeId) {
-        // 构建新的样式对象
+        // 构建新的样式对象，包含过渡效果
         const newStyle = typeof node.style === 'object' 
-          ? { ...node.style, height: `${originalHeight}px` } 
-          : { height: `${originalHeight}px` };
+          ? { ...node.style, height: `${originalHeight}px`, transition: 'height 0.2s ease-out' } 
+          : { height: `${originalHeight}px`, transition: 'height 0.2s ease-out' };
           
         return {
           ...node,
@@ -1454,10 +1489,13 @@ const restoreOriginalHeight = () => {
       return node;
     });
     
-    setNodes(newNodes);
-    if (props.whiteBoardConfigData) {
-      props.whiteBoardConfigData.boardOptions.nodes = newNodes;
-    }
+    // 短暂延迟以允许DOM变化先应用
+    setTimeout(() => {
+      setNodes(newNodes);
+      if (props.whiteBoardConfigData) {
+        props.whiteBoardConfigData.boardOptions.nodes = newNodes;
+      }
+    }, 0);
   }
 }
 
