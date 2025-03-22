@@ -1264,9 +1264,14 @@ const handleOpenInSidebar = (nodeId: string, blockId: string, info: any) => {
     ...info,
   }
 
-  // 打开右侧栏
-  embedBlockOptions.value.SiderRightShow = true
-  embedBlockOptions.value.SiderRightWidth = moduleWhiteBoardOptions.value.siderRightWidthDefault
+  // 打开右侧栏（只在侧边栏未显示时设置默认宽度）
+  if (!embedBlockOptions.value.SiderRightShow) {
+    embedBlockOptions.value.SiderRightShow = true
+    embedBlockOptions.value.SiderRightWidth = moduleWhiteBoardOptions.value.siderRightWidthDefault
+  } else {
+    // 如果侧边栏已经显示，只需确保其显示状态是开启的
+    embedBlockOptions.value.SiderRightShow = true
+  }
 
   // 存储当前选中的节点信息
   embedWhiteBoardConfigData.value.boardOptions.selectedNodeId = nodeId
