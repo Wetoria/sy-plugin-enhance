@@ -201,7 +201,7 @@
             </a-tooltip>
           </template>
           
-          <a-tooltip :content="isAutoHeightEnabled ? '关闭自动高度' : '自动适配高度'">
+          <a-tooltip :content="_isAutoHeightEnabled ? '关闭自动高度' : '自动适配高度'">
             <a-button 
               @click="onAutoFitHeight"
               @mousedown="startLongPress"
@@ -210,7 +210,7 @@
               @touchstart.prevent="startLongPress"
               @touchend.prevent="clearLongPress"
               @touchcancel.prevent="clearLongPress"
-              :class="{'active-button': isAutoHeightEnabled}"
+              :class="{'active-button': _isAutoHeightEnabled}"
             >
               <template #icon>
                 <IconExpand />
@@ -1291,10 +1291,27 @@ const updateTreeCardLayout = (nodeId, nodes) => {
 }
 
 // 添加长按相关的状态变量
-const isAutoHeightEnabled = ref(false);
 const longPressTimer = ref(null);
 const longPressDuration = 800; // 长按触发时间（毫秒）
 const nodeOriginalHeights = ref(new Map()); // 存储节点原始高度
+const _isAutoHeightEnabled = ref(false); // 内部状态，用于同步到节点
+
+// 根据当前节点状态初始化自动高度状态
+watch(() => props.nodeId, (nodeId) => {
+  if (nodeId) {
+    const node = getNodes.value.find(node => node.id === nodeId);
+    _isAutoHeightEnabled.value = node?.data?.isAutoHeight || false;
+    
+    // 如果节点已启用自动高度，启动观察器
+    if (_isAutoHeightEnabled.value) {
+      setupAutoHeightObserver();
+    }
+  } else {
+    // 如果节点ID为空，重置状态
+    _isAutoHeightEnabled.value = false;
+    disconnectAutoHeightObserver();
+  }
+}, { immediate: true });
 
 // MutationObserver相关变量
 let contentObserver = null;
@@ -1358,7 +1375,7 @@ const adjustNodeHeight = () => {
           ...node,
           data: {
             ...node.data,
-            isAutoHeight: isAutoHeightEnabled.value // 设置自动高度标志
+            isAutoHeight: _isAutoHeightEnabled.value // 设置自动高度标志
           },
           style: newStyle
         };
@@ -1476,10 +1493,10 @@ const startLongPress = () => {
 const onAutoFitHeight = () => {
   // 如果是由长按触发的，则切换自动高度调整功能
   if (longPressTimer.value === 'completed') {
-    isAutoHeightEnabled.value = !isAutoHeightEnabled.value;
+    _isAutoHeightEnabled.value = !_isAutoHeightEnabled.value;
     
     // 如果启用了自动高度，设置MutationObserver监听内容变化
-    if (isAutoHeightEnabled.value) {
+    if (_isAutoHeightEnabled.value) {
       setupAutoHeightObserver();
     } else {
       disconnectAutoHeightObserver();
@@ -1496,10 +1513,10 @@ const onAutoFitHeight = () => {
 watch(() => nodeData.value?.isCollapsed, (newCollapsed) => {
   if (newCollapsed) {
     // 当节点被折叠时，断开观察器
-    if (isAutoHeightEnabled.value) {
+    if (_isAutoHeightEnabled.value) {
       disconnectAutoHeightObserver();
     }
-  } else if (!newCollapsed && isAutoHeightEnabled.value) {
+  } else if (!newCollapsed && _isAutoHeightEnabled.value) {
     // 当节点被展开且启用了自动高度，重新设置观察器
     setTimeout(() => {
       setupAutoHeightObserver();
