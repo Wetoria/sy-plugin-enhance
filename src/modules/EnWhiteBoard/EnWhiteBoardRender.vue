@@ -340,6 +340,9 @@
       <LineageView
         v-if="currentViewMode === 'lineage'"
         :nodeId="props.data.nodeId"
+        :backgroundVariant="backgroundVariant"
+        :whiteBoardNodes="nodes"
+        class="EnLineageContainer"
       />
       <div
         ref="EnWhiteBoardProtyleUtilAreaRef"
@@ -1516,8 +1519,27 @@ const handleViewModeChange = (event: CustomEvent) => {
   }
 
   .EnWhiteBoardContentContainer {
-    flex: 1;
     position: relative;
+    flex: 1;
+    overflow: hidden;
+    
+    .EnLineageContainer {
+      height: 100%;
+      width: 100%;
+      position: absolute;
+      z-index: 1;
+      
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: -1;
+        background-color: var(--b3-theme-background);
+      }
+    }
   }
 
   .EnWhiteBoardControlArea {
