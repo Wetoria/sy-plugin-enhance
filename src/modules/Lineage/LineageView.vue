@@ -32,6 +32,24 @@
             <div class="LineageCellContent">
               <div class="CellTitle">{{ getCellTitle(cell) }}</div>
               <div class="CellType">{{ getCellType(cell) }}</div>
+              
+              <!-- 新增思源块内容渲染区域 -->
+              <div 
+                v-if="cell.data?.blockId" 
+                class="CellBlockContent"
+                :class="{ 'is-expanded': expandedCellIds.includes(cell.id) }"
+              >
+                <div v-if="expandedCellIds.includes(cell.id)" class="ProtyleWrapper">
+                  <EnProtyle 
+                    :block-id="cell.data.blockId" 
+                    disableEnhance
+                    @after="protyle => handleProtyleLoaded(protyle, cell.id)"
+                  />
+                </div>
+                <div class="BlockExpandButton" @click.stop="toggleCellExpand(cell.id)">
+                  {{ expandedCellIds.includes(cell.id) ? '收起' : '展开' }}
+                </div>
+              </div>
             </div>
           </div>
           <div class="ColPadding"></div>
@@ -43,12 +61,33 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { EN_CONSTANTS } from '@/utils/Constants';
+import EnProtyle from '@/components/EnProtyle.vue';
 
 const props = defineProps<{
   nodeId: string
   backgroundVariant?: 'dots' | 'lines' | 'none'
   whiteBoardNodes?: any[]
 }>()
+
+// 存储已展开的单元格ID
+const expandedCellIds = ref<string[]>([]);
+
+// 切换单元格内容展开/收起状态
+const toggleCellExpand = (cellId: string) => {
+  const index = expandedCellIds.value.indexOf(cellId);
+  if (index === -1) {
+    expandedCellIds.value.push(cellId);
+  } else {
+    expandedCellIds.value.splice(index, 1);
+  }
+};
+
+// 处理EnProtyle加载完成后的回调
+const handleProtyleLoaded = (protyle, cellId) => {
+  // 可以在这里处理EnProtyle加载后的逻辑
+  // 例如：调整高度、添加特殊样式等
+  console.log('Protyle loaded for cell:', cellId);
+};
 
 // 转换白板节点到血统图数据结构
 const processedLineageData = computed(() => {
@@ -287,6 +326,19 @@ watch(() => props.whiteBoardNodes, () => {
   parentIdList.value = [];
   slideIdList.value = [];
   childrenIdList.value = [];
+  
+  // 清理已展开的节点状态 - 只保留在新节点列表中仍然存在的节点
+  if (props.whiteBoardNodes && props.whiteBoardNodes.length > 0) {
+    const existingNodeIds = props.whiteBoardNodes.map(node => node.id);
+    expandedCellIds.value = expandedCellIds.value.filter(id => 
+      existingNodeIds.includes(id)
+    );
+  } else {
+    // 如果没有节点了，清空展开状态
+    expandedCellIds.value = [];
+  }
+  
+  // 重置当前选中的节点
   currentCellId.value = '';
   
   // 如果有数据，自动选中第一个节点
@@ -394,6 +446,34 @@ const recursiveScrollByCell = (node, colIndex) => {
     scrollToCellById(id)
   })
   scrollToCellById(currentCellId.value)
+  
+  // 如果节点有blockId，自动展开该节点的内容
+  if (node.data?.blockId) {
+    // 先收起所有其他展开的节点
+    expandedCellIds.value = expandedCellIds.value.filter(id => 
+      id === node.id || !isNodeVisible(id)
+    );
+    
+    // 如果当前节点没有展开，则展开它
+    if (!expandedCellIds.value.includes(node.id)) {
+      expandedCellIds.value.push(node.id);
+      
+      // 给渲染一些时间后再次滚动到位置
+      setTimeout(() => {
+        scrollToCellById(currentCellId.value);
+      }, 100);
+    }
+  }
+}
+
+// 检查节点是否在当前视图中可见
+const isNodeVisible = (nodeId) => {
+  return [
+    currentCellId.value,
+    ...parentIdList.value,
+    ...slideIdList.value,
+    ...childrenIdList.value
+  ].includes(nodeId);
 }
 
 const scrollToCellById = (id: string) => {
@@ -523,19 +603,111 @@ onMounted(() => {
             font-weight: bold;
             margin-bottom: 8px;
             word-break: break-all;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
           }
           
           .CellType {
             font-size: 12px;
             color: var(--b3-theme-on-surface);
+            margin-bottom: 6px;
+            opacity: 0.8;
+          }
+          
+          .CellBlockContent {
+            margin-top: 10px;
+            transform-origin: top center;
+            transition: all 0.3s ease;
+            
+            &.is-expanded {
+              animation: fadeIn 0.3s ease-in-out;
+            }
           }
         }
       }
     }
   }
 }
+
+// 添加淡入动画效果
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 </style>
 
 <style lang="scss">
-
+// LineageView 中思源块内容的样式
+.CellBlockContent {
+  margin-top: 12px;
+  border-top: 1px solid var(--b3-border-color);
+  position: relative;
+  
+  .ProtyleWrapper {
+    margin-top: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+    background-color: var(--b3-theme-background);
+    border-radius: 4px;
+    
+    &::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background-color: var(--b3-scroll-color);
+    }
+    
+    &:hover::-webkit-scrollbar-thumb {
+      background-color: var(--b3-scroll-hover-color);
+    }
+    
+    :deep(.protyle) {
+      min-height: 0 !important;
+      
+      .protyle-wysiwyg {
+        padding: 8px !important;
+        padding-bottom: 16px !important;
+        min-height: 0 !important;
+      }
+      
+      .protyle-content {
+        padding-bottom: 0;
+      }
+    }
+  }
+  
+  .BlockExpandButton {
+    cursor: pointer;
+    user-select: none;
+    font-size: 12px;
+    color: var(--b3-theme-primary);
+    text-align: center;
+    padding: 4px 0;
+    margin-top: 4px;
+    
+    &:hover {
+      color: var(--b3-theme-on-primary);
+      background-color: var(--b3-theme-primary-light);
+      border-radius: 4px;
+    }
+  }
+  
+  // 展开状态特殊样式
+  &.is-expanded {
+    .BlockExpandButton {
+      border-top: 1px solid var(--b3-border-color);
+    }
+  }
+}
 </style>
