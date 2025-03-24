@@ -109,10 +109,14 @@
     :style="{
       '--en-card-width': `${flowNode.dimensions.width}px`,
       '--en-card-height': `${flowNode.height}px`,
-      'backgroundColor': nodeData.style?.backgroundColor,
+      '--node-color': nodeData.style?.backgroundColor || 'var(--b3-border-color)',
+      'backgroundColor': nodeData.style?.backgroundColor ? 
+        `color-mix(in srgb, var(--b3-theme-background) 95%, ${nodeData.style.backgroundColor})` : 
+        undefined,
+      'borderColor': nodeData.style?.backgroundColor || 'var(--b3-border-color)',
     }"
   >
-    <div class="ProtyleToolbarArea">
+    <div v-if="isCollapsed" class="ProtyleToolbarArea">
       <div class="infos">
         <span
           class="block-title"
@@ -448,7 +452,7 @@ onMounted(() => {
             ...node.data,
             originalHeight: node.height || 200, // 保存当前高度
           },
-          height: 30, // 设置折叠时的高度
+          height: 30, // 折叠时固定高度为30px
           style: { ...node.style, height: '30px' }
         }
       } 
@@ -484,6 +488,7 @@ const onResize = (event: OnResize) => {
       const currentNode = nodes.find(node => node.id === flowNode.id);
       
       if (currentNode) {
+        // 保存内容区域的高度，不包括工具栏高度
         const newNodes = nodes.map((node) => {
           if (node.id === flowNode.id) {
             return {
@@ -590,7 +595,7 @@ const handleCollapse = () => {
     updatedNode.height = 30;
     updatedNode.style = { ...updatedNode.style, height: '30px' };
   } else {
-    // 展开：恢复到原始高度
+    // 展开：恢复到原始高度 (不再需要考虑ToolbarArea的高度)
     const originalHeight = currentNode.data.originalHeight || 200;
     updatedNode.height = originalHeight;
     updatedNode.style = { ...updatedNode.style, height: `${originalHeight}px` };
@@ -825,7 +830,7 @@ const getNodeType = () => {
 
   position: relative;
   --en-whiteboard-node-protyle-border-width: 2px;
-  border: var(--en-whiteboard-node-protyle-border-width) solid var(--b3-border-color);
+  border: var(--en-whiteboard-node-protyle-border-width) solid var(--node-color, var(--b3-border-color));
   border-radius: var(--en-whiteboard-card-radius);
 
   padding: unset;
@@ -838,7 +843,7 @@ const getNodeType = () => {
     overflow: hidden;
 
     &:not(.nodrag) {
-      opacity: 0.7;
+      opacity: 1;
 
       :deep(.protyle-wysiwyg) {
         cursor: var(--en-whiteboard-card-cursor);
@@ -1073,9 +1078,9 @@ const getNodeType = () => {
     height: 21px;
     z-index: -1;
     opacity: 0;
-    border-color: var(--b3-theme-primary-light);
+    border-color: var(--node-color, var(--b3-theme-primary-light));
     background-color: var(--b3-theme-background);
-    color: var(--b3-theme-primary-light);
+    color: var(--node-color, var(--b3-theme-primary-light));
     position: absolute;
 
     &:hover {
@@ -1107,7 +1112,7 @@ const getNodeType = () => {
   }
 
   &.variant-default {
-    border: var(--en-whiteboard-node-protyle-border-width) solid var(--b3-border-color);
+    border: var(--en-whiteboard-node-protyle-border-width) solid var(--node-color, var(--b3-border-color));
     border-radius: var(--en-whiteboard-card-radius);
   }
 
@@ -1151,7 +1156,7 @@ const getNodeType = () => {
     }
 
     &.variant-default {
-      border: 1px solid var(--b3-border-color);
+      border: 1px solid var(--node-color, var(--b3-border-color));
     }
 
     &.variant-card {
@@ -1197,7 +1202,7 @@ const getNodeType = () => {
 
   &.selected {
     .EnWhiteBoardNodeProtyleContainer {
-      border-color: var(--b3-theme-primary-light);
+      border-color: var(--node-color, var(--b3-theme-primary-light));
     }
   }
 }
@@ -1217,5 +1222,9 @@ const getNodeType = () => {
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
     }
   }
+}
+
+.EnProtyleContainer > .protyle {
+  background-color: inherit;
 }
 </style>
