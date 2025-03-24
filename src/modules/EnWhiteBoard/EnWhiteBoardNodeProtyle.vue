@@ -1147,7 +1147,7 @@ const getNodeType = () => {
     .ProtyleToolbarArea {
       border-bottom: none;
       border-radius: var(--b3-border-radius);
-      background-color: var(--b3-theme-surface);
+      background-color: color-mix(in srgb, var(--b3-theme-surface) 65%, var(--node-color, var(--b3-border-color)));
     }
 
     .Handle,
