@@ -15,9 +15,16 @@
       @remove-node="handleRemoveNode"
       @duplicate-node="handleDuplicateNode"
       @open-in-sidebar="handleOpenInSidebar"
-      @collapse="handleCollapse"
+      @collapse="collapseRef?.toggleCollapse()"
     />
   </NodeToolbar>
+  <EnWhiteBoardNodeCollapse
+    ref="collapseRef"
+    :nodeId="flowNode.id"
+    :initialCollapsed="flowNode.data?.isCollapsed || false"
+    :whiteBoardConfigData="embedWhiteBoardConfigData"
+    @update:isCollapsed="(val) => isCollapsed = val"
+  />
   <template v-if="isMindmapNode">
     <EnWhiteBoardNodeMindmap
       :nodeId="flowNode.id"
@@ -229,6 +236,7 @@ import {
 import EnWhiteBoardNodeMindmap from './EnWhiteBoardNodeMindmap.vue'
 import EnWhiteBoardNodeTreeCard from './EnWhiteBoardNodeTreeCard.vue'
 import EnWhiteBoardToolBar from './EnWhiteBoardToolBar.vue'
+import EnWhiteBoardNodeCollapse from './components/EnWhiteBoardNodeCollapse.vue'
 
 const props = defineProps<{
   enWhiteBoardProtyleUtilAreaRef: HTMLElement
@@ -436,40 +444,6 @@ onMounted(() => {
     removeNodeCreatedByOther(event)
     mergeTopLevelBlocksIntoSuperBlock()
   })
-  
-  // 初始化折叠状态
-  isCollapsed.value = flowNode.data?.isCollapsed || false
-  
-  // 确保节点高度数据正确
-  const nodes = getNodes.value
-  const newNodes = nodes.map((node) => {
-    if (node.id === flowNode.id) {
-      // 如果是折叠状态，设置高度为30px
-      if (isCollapsed.value && node.height !== 30) {
-        return {
-          ...node,
-          data: {
-            ...node.data,
-            originalHeight: node.height || 200, // 保存当前高度
-          },
-          height: 30, // 折叠时固定高度为30px
-          style: { ...node.style, height: '30px' }
-        }
-      } 
-      // 如果是展开状态，确保保存了原始高度
-      else if (!isCollapsed.value && !node.data.originalHeight) {
-        return {
-          ...node,
-          data: {
-            ...node.data,
-            originalHeight: node.height || 200, // 保存当前高度作为原始高度
-          }
-        }
-      }
-    }
-    return node
-  })
-  setNodes(newNodes)
 })
 
 onBeforeUnmount(() => {
@@ -479,32 +453,29 @@ onBeforeUnmount(() => {
 })
 
 const onResize = (event: OnResize) => {
-  // 只有在非折叠状态下才更新originalHeight
-  if (!isCollapsed.value) {
-    // 延迟执行以确保节点高度已更新
-    setTimeout(() => {
-      // 获取最新的节点状态
-      const nodes = getNodes.value;
-      const currentNode = nodes.find(node => node.id === flowNode.id);
-      
-      if (currentNode) {
-        // 保存内容区域的高度，不包括工具栏高度
-        const newNodes = nodes.map((node) => {
-          if (node.id === flowNode.id) {
-            return {
-              ...node,
-              data: {
-                ...node.data,
-                originalHeight: currentNode.height, // 保存调整后的高度
-              },
-            };
-          }
-          return node;
-        });
-        setNodes(newNodes);
-      }
-    }, 10); // 短暂延迟确保获取的是调整后的高度
-  }
+  // 延迟执行以确保节点高度已更新
+  setTimeout(() => {
+    // 获取最新的节点状态
+    const nodes = getNodes.value;
+    const currentNode = nodes.find(node => node.id === flowNode.id);
+    
+    if (currentNode) {
+      // 保存内容区域的高度，不包括工具栏高度
+      const newNodes = nodes.map((node) => {
+        if (node.id === flowNode.id) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              originalHeight: currentNode.height, // 保存调整后的高度
+            },
+          };
+        }
+        return node;
+      });
+      setNodes(newNodes);
+    }
+  }, 10); // 短暂延迟确保获取的是调整后的高度
 }
 
 const handleRemoveNode = () => {
@@ -570,76 +541,8 @@ const handleOpenInSidebar = () => {
 
 const isCollapsed = ref(false)
 
-const handleCollapse = () => {
-  isCollapsed.value = !isCollapsed.value
-
-  // 更新节点数据
-  const nodes = getNodes.value
-  const currentNode = nodes.find(node => node.id === flowNode.id);
-  
-  if (!currentNode) return;
-  
-  // 确保节点尺寸数据是最新的
-  const updatedNode = {
-    ...currentNode,
-    data: {
-      ...currentNode.data,
-      isCollapsed: isCollapsed.value,
-    }
-  };
-  
-  // 根据折叠状态设置高度
-  if (isCollapsed.value) {
-    // 折叠：保存当前高度并设置为30px
-    updatedNode.data.originalHeight = currentNode.height;
-    updatedNode.height = 30;
-    updatedNode.style = { ...updatedNode.style, height: '30px' };
-  } else {
-    // 展开：恢复到原始高度 (不再需要考虑ToolbarArea的高度)
-    const originalHeight = currentNode.data.originalHeight || 200;
-    updatedNode.height = originalHeight;
-    updatedNode.style = { ...updatedNode.style, height: `${originalHeight}px` };
-  }
-  
-  // 更新节点
-  const newNodes = nodes.map(node => 
-    node.id === flowNode.id ? updatedNode : node
-  );
-  
-  setNodes(newNodes);
-
-  // 更新连线位置
-  const edgesToUpdate = getEdges.value.filter((edge) => 
-    edge.source === flowNode.id || edge.target === flowNode.id
-  );
-  
-  // 获取所有边
-  const allEdges = getEdges.value;
-  
-  // 创建一个新的边数组，保留未修改的边
-  const updatedAllEdges = allEdges.map(edge => {
-    // 如果是需要更新的边，则更新它
-    if (edge.source === flowNode.id || edge.target === flowNode.id) {
-      return {
-        ...edge,
-        source: edge.source,
-        target: edge.target,
-        // 根据新位置更新连线
-        sourceX: edge.source === flowNode.id ? 
-          flowNode.position.x + (isCollapsed.value ? 0 : flowNode.dimensions.width) : 
-          edge.sourceX,
-        sourceY: edge.source === flowNode.id ? flowNode.position.y : edge.sourceY,
-        targetX: edge.target === flowNode.id ? flowNode.position.x : edge.targetX,
-        targetY: edge.target === flowNode.id ? flowNode.position.y : edge.targetY,
-      };
-    }
-    // 否则保留原边
-    return edge;
-  });
-  
-  // 更新所有边
-  setEdges(updatedAllEdges);
-}
+// 引用折叠组件实例
+const collapseRef = ref()
 
 // 修改块信息状态
 const blockInfo = ref({
@@ -1142,7 +1045,14 @@ const getNodeType = () => {
   }
 
   &.is-collapsed {
-    transition: height 0.3s ease-in-out;
+    transition: all 0.3s ease-in-out;
+    height: var(--en-card-height) !important; 
+    min-height: var(--en-card-height) !important;
+    max-height: var(--en-card-height) !important;
+
+    .main {
+      display: none;
+    }
 
     .ProtyleToolbarArea {
       border-bottom: none;

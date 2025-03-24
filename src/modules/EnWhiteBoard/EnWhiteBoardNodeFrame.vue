@@ -14,11 +14,19 @@
       :style="{ transform: 'translateY(-8px)' }"
       @remove-node="handleRemoveNode"
       @duplicate-node="handleDuplicateNode"
-      @collapse="handleCollapse"
+      @collapse="collapseRef?.toggleCollapse()"
       @edit-frame-label="editFrameLabel"
       @toggle-lock="toggleLock"
     />
   </NodeToolbar>
+
+  <!-- 引入折叠组件 -->
+  <EnWhiteBoardNodeCollapse
+    ref="collapseRef"
+    :nodeId="flowNode.id"
+    :initialCollapsed="flowNode.data?.isCollapsed || false"
+    @update:isCollapsed="(val) => isCollapsed = val"
+  />
 
   <div
     ref="containerRef"
@@ -34,7 +42,7 @@
     :data-en-flow-node-id="flowNode.id"
     :style="{
       '--en-frame-width': `${(flowNode as any).dimensions?.width || 0}px`,
-      '--en-frame-height': isCollapsed ? '30px' : `${(flowNode as any).dimensions?.height || 0}px`,
+      '--en-frame-height': `${(flowNode as any).dimensions?.height || (flowNode as any).height || 0}px`,
       '--frame-color': nodeData.style?.backgroundColor || 'var(--b3-border-color)',
       'backgroundColor': `color-mix(in srgb, ${nodeData.style?.backgroundColor || 'var(--b3-border-color)'} 15%, transparent)`,
       'borderColor': nodeData.style?.borderColor || nodeData.style?.backgroundColor || 'var(--b3-border-color)',
@@ -222,6 +230,7 @@ import EnWhiteBoardToolBar from './EnWhiteBoardToolBar.vue'
 import { appendBlockInto } from '@/utils/Block'
 import { useDailyNote, appendBlockIntoDailyNote, getAppendedDailyNoteBlockId } from '@/modules/DailyNote/DailyNote'
 import { setBlockAttrs, updateBlock } from '@/api'
+import EnWhiteBoardNodeCollapse from './components/EnWhiteBoardNodeCollapse.vue'
 
 
 const handleIcons = {
@@ -251,6 +260,10 @@ const {
 const nodeData = computed(() => flowNode.data)
 const containerRef = ref<HTMLDivElement | null>(null)
 
+// 引用折叠组件实例
+const collapseRef = ref()
+
+// 使用ref绑定折叠状态，这个变量仍然需要，但由折叠组件通过事件更新
 const isCollapsed = ref(false)
 
 const dragStartPos = ref({
@@ -1881,11 +1894,6 @@ const handleDuplicateNode = () => {
   duplicateFrame()
 }
 
-const handleCollapse = () => {
-  // 切换折叠状态
-  isCollapsed.value = !isCollapsed.value
-}
-
 // 修复OnResize类型
 // 添加缺失的onResize处理
 const onResize = (resizeEvent) => {
@@ -2470,8 +2478,10 @@ const finishTitleEdit = () => {
   }
 
   &.is-collapsed {
-    height: 30px !important;
-    min-height: 30px !important;
+    height: var(--en-frame-height, 30px) !important; 
+    min-height: var(--en-frame-height, 30px) !important;
+    max-height: var(--en-frame-height, 30px) !important;
+    transition: all 0.3s ease-in-out;
 
     .frame-content {
       display: none;

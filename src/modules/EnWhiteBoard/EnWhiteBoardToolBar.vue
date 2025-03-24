@@ -1569,21 +1569,6 @@ watch(() => props.nodeId, (nodeId) => {
   }
 }, { immediate: true });
 
-// 处理节点折叠状态的变化
-watch(() => nodeData.value?.isCollapsed, (newCollapsed) => {
-  if (newCollapsed) {
-    // 当节点被折叠时，断开观察器
-    if (_isAutoHeightEnabled.value) {
-      disconnectAutoHeightObserver();
-    }
-  } else if (!newCollapsed && _isAutoHeightEnabled.value) {
-    // 当节点被展开且启用了自动高度，重新设置观察器
-    setTimeout(() => {
-      setupAutoHeightObserver();
-    }, 50);
-  }
-}, { immediate: true });
-
 // 监听节点是否在手动调整大小
 watch(() => {
   // 找到当前节点

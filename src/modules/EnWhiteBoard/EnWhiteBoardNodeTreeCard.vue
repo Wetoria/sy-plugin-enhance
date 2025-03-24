@@ -76,6 +76,8 @@ import {
   watch,
   onMounted,
   onUnmounted,
+  ref,
+  toRefs,
 } from 'vue'
 
 const props = defineProps<{
@@ -743,16 +745,16 @@ onMounted(() => {
     }
   }
   
-  const handleScrollToNode = (event) => {
+  const handleScrollToNode = (event: any) => {
     const { nodeId, relatedNodes } = event.detail
     
     // 如果当前节点是目标节点，或者是目标节点的父节点或子节点，需要滚动到可见区域
     if (nodeId === props.nodeId || 
-        relatedNodes.parents.some(p => p.id === props.nodeId) ||
-        relatedNodes.children.some(c => c.id === props.nodeId)) {
+        relatedNodes.parents.some((p: any) => p.id === props.nodeId) ||
+        relatedNodes.children.some((c: any) => c.id === props.nodeId)) {
       
       // 获取节点DOM元素
-      const nodeElement = document.querySelector(`[data-en-flow-node-id='${props.nodeId}']`)
+      const nodeElement = document.querySelector(`[data-en-flow-node-id='${props.nodeId}']`) as HTMLElement
       if (!nodeElement) return
       
       // 计算滚动位置
@@ -761,23 +763,23 @@ onMounted(() => {
       if (nodeId === props.nodeId) {
         // 当前节点是目标节点，居中显示
         scrollTop = nodeElement.offsetTop - (window.innerHeight / 2) + (nodeElement.offsetHeight / 2)
-      } else if (relatedNodes.parents.some(p => p.id === props.nodeId)) {
+      } else if (relatedNodes.parents.some((p: any) => p.id === props.nodeId)) {
         // 当前节点是目标节点的父节点，与根节点对齐
         const rootNode = relatedNodes.parents[0] || relatedNodes.current
-        const rootElement = document.querySelector(`[data-en-flow-node-id='${rootNode.id}']`)
+        const rootElement = document.querySelector(`[data-en-flow-node-id='${rootNode.id}']`) as HTMLElement
         if (rootElement) {
           scrollTop = nodeElement.offsetTop - rootElement.offsetTop
         }
-      } else if (relatedNodes.children.some(c => c.id === props.nodeId)) {
+      } else if (relatedNodes.children.some((c: any) => c.id === props.nodeId)) {
         // 当前节点是目标节点的子节点，与目标节点对齐
-        const targetElement = document.querySelector(`[data-en-flow-node-id='${nodeId}']`)
+        const targetElement = document.querySelector(`[data-en-flow-node-id='${nodeId}']`) as HTMLElement
         if (targetElement) {
           scrollTop = nodeElement.offsetTop - targetElement.offsetTop
         }
       }
       
       // 执行滚动
-      const container = nodeElement.closest('.vue-flow__transformationpane')
+      const container = nodeElement.closest('.vue-flow__transformationpane') as HTMLElement
       if (container) {
         container.scrollTop = scrollTop
       }
@@ -798,6 +800,9 @@ onMounted(() => {
 const handleNodeClick = () => {
   scrollToNode(props.nodeId)
 }
+
+// 折叠状态直接使用props.isCollapsed
+const { isCollapsed } = toRefs(props)
 </script>
 
 <style lang="scss" scoped>
