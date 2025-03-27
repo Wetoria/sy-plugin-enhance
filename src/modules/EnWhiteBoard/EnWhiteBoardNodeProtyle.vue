@@ -175,6 +175,7 @@
       :min-width="100"
       :min-height="36"
       color="transparent"
+      :disable-style-updates="true"
       @resize="onResize"
     />
 
@@ -459,29 +460,35 @@ onBeforeUnmount(() => {
 })
 
 const onResize = (event: OnResize) => {
-  // 延迟执行以确保节点高度已更新
-  setTimeout(() => {
-    // 获取最新的节点状态
-    const nodes = getNodes.value;
-    const currentNode = nodes.find(node => node.id === flowNode.id);
-    
-    if (currentNode) {
-      // 保存内容区域的高度，不包括工具栏高度
-      const newNodes = nodes.map((node) => {
-        if (node.id === flowNode.id) {
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              originalHeight: currentNode.height, // 保存调整后的高度
-            },
-          };
-        }
-        return node;
-      });
-      setNodes(newNodes);
-    }
-  }, 10); // 短暂延迟确保获取的是调整后的高度
+  // 立即更新DOM元素样式以实现实时视觉反馈
+  const nodeElement = document.querySelector(`[data-en-flow-node-id='${flowNode.id}']`)
+  if (nodeElement) {
+    const htmlElement = nodeElement as HTMLElement
+    htmlElement.style.transition = 'none'
+    htmlElement.style.width = `${event.args?.[0]?.width || flowNode.dimensions?.width}px`
+    htmlElement.style.height = `${event.args?.[0]?.height || flowNode.dimensions?.height}px`
+  }
+  
+  // 直接更新节点数据，不使用延迟
+  const nodes = getNodes.value;
+  const currentNode = nodes.find(node => node.id === flowNode.id);
+  
+  if (currentNode) {
+    // 保存内容区域的高度，不包括工具栏高度
+    const newNodes = nodes.map((node) => {
+      if (node.id === flowNode.id) {
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            originalHeight: event.args?.[0]?.height || currentNode.height, // 保存调整后的高度
+          },
+        };
+      }
+      return node;
+    });
+    setNodes(newNodes);
+  }
 }
 
 const handleRemoveNode = () => {

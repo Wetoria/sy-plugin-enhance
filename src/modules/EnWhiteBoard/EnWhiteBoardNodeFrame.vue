@@ -104,6 +104,7 @@
       :min-width="200"
       :min-height="100"
       color="transparent"
+      :disable-style-updates="true"
       @resize="onResize"
     />
 
@@ -1905,6 +1906,15 @@ const handleDuplicateNode = () => {
 // 修复OnResize类型
 // 添加缺失的onResize处理
 const onResize = (resizeEvent) => {
+  // 立即更新DOM元素样式以实现实时视觉反馈
+  const nodeElement = document.querySelector(`[data-en-flow-node-id='${flowNode.id}']`)
+  if (nodeElement) {
+    const htmlElement = nodeElement as HTMLElement
+    htmlElement.style.transition = 'none'
+    htmlElement.style.width = `${resizeEvent.width}px`
+    htmlElement.style.height = `${resizeEvent.height}px`
+  }
+  
   // 更新节点尺寸
   const nodes = getNodes.value
   const newNodes = nodes.map((node) => {
