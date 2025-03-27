@@ -6,6 +6,14 @@
       'is-edge-toolbar': isEdgeToolbar,
     }"
   >
+    <!-- 使用EnWhiteBoardNodeFit组件 -->
+    <EnWhiteBoardNodeFit
+      v-if="nodeId"
+      ref="nodeFitRef"
+      :nodeId="nodeId"
+      :whiteBoardConfigData="whiteBoardConfigData"
+    />
+
     <!-- 基础工具栏 -->
     <template v-if="!isNodeToolbar && !isEdgeToolbar">
       <div class="ToolBarContent">
@@ -201,7 +209,7 @@
             </a-tooltip>
           </template>
           
-          <a-tooltip :content="_isAutoHeightEnabled ? '关闭自动高度' : '自动适配高度'">
+          <a-tooltip :content="isAutoHeightEnabled ? '关闭自动高度' : '自动适配高度'">
             <a-button 
               @click="onAutoFitHeight"
               @mousedown="startLongPress"
@@ -210,7 +218,7 @@
               @touchstart.prevent="startLongPress"
               @touchend.prevent="clearLongPress"
               @touchcancel.prevent="clearLongPress"
-              :class="{'active-button': _isAutoHeightEnabled}"
+              :class="{'active-button': isAutoHeightEnabled}"
             >
               <template #icon>
                 <IconExpand />
@@ -884,6 +892,7 @@ import {
 } from 'vue'
 import { EN_CONSTANTS } from '@/utils/Constants'
 import { debounce } from '@/utils'
+import EnWhiteBoardNodeFit from './components/EnWhiteBoardNodeFit.vue'
 
 const props = defineProps<{
   showBasicControls?: boolean
@@ -1291,259 +1300,56 @@ const updateTreeCardLayout = (nodeId, nodes) => {
 }
 
 // 添加长按相关的状态变量
-const longPressTimer = ref(null);
-const longPressDuration = 800; // 长按触发时间（毫秒）
-const isLongPressing = ref(false); // 是否正在长按
-const longPressCompleted = ref(false); // 长按是否已完成
-const nodeOriginalHeights = ref(new Map()); // 存储节点原始高度
-const _isAutoHeightEnabled = ref(false); // 内部状态，用于同步到节点
+const longPressTimer = ref(null)
+const longPressDuration = 800 // 长按触发时间（毫秒）
+const isLongPressing = ref(false) // 是否正在长按
+const longPressCompleted = ref(false) // 长按是否已完成
 
-// MutationObserver相关变量
-let contentObserver = null;
+// 引用节点高度适配组件
+const nodeFitRef = ref(null)
 
-// 断开自动高度观察器
-const disconnectAutoHeightObserver = () => {
-  if (contentObserver) {
-    contentObserver.disconnect();
-    contentObserver = null;
-  }
-}
-
-// 调整节点高度的核心函数
-const adjustNodeHeight = () => {
-  if (!props.nodeId) return;
-  
-  const nodeElement = document.querySelector(`[data-en-flow-node-id='${props.nodeId}']`);
-  if (!nodeElement) return;
-  
-  const wysiwygElement = nodeElement.querySelector('.protyle-wysiwyg.protyle-wysiwyg--attr');
-  if (!wysiwygElement) return;
-  
-  // 获取当前节点
-  const nodes = getNodes.value;
-  const currentNode = nodes.find(node => node.id === props.nodeId);
-  if (!currentNode) return;
-  
-  // 保存原始高度（如果还没保存）
-  if (!nodeOriginalHeights.value.has(props.nodeId)) {
-    nodeOriginalHeights.value.set(props.nodeId, currentNode.height);
-  }
-  
-  // 计算总高度
-  const toolbarHeight = 30; // ProtyleToolbarArea 高度
-  const bottomPadding = 16; // 编辑器底部内边距
-  const borderWidth = 4; // 上下边框宽度总和
-  const contentHeight = wysiwygElement.scrollHeight; // 内容实际高度
-
-  // 计算节点需要的总高度
-  const newHeight = toolbarHeight + contentHeight + bottomPadding + borderWidth;
-
-  // 获取当前样式中的高度（如果有）
-  const currentStyleHeight = currentNode.style && typeof currentNode.style === 'object' 
-    ? currentNode.style.height 
-    : null;
-    
-  const currentHeightValue = currentStyleHeight 
-    ? parseInt(currentStyleHeight.toString().replace('px', '')) 
-    : 0;
-
-  // 只有当高度真的发生变化时才更新
-  if (!currentStyleHeight || currentHeightValue !== newHeight) {
-    // 首先直接更新DOM元素样式以实现即时反馈
-    if (nodeElement) {
-      // 添加过渡效果并设置高度
-      const htmlElement = nodeElement as HTMLElement;
-      if (htmlElement) {
-        if (_isAutoHeightEnabled.value && !htmlElement.style.transition) {
-          htmlElement.style.transition = 'height 0.2s ease-out';
-        }
-        htmlElement.style.height = `${newHeight}px`;
-      }
-    }
-    
-    // 然后直接更新Vue Flow节点数据，取消延迟
-    const newNodes = nodes.map((node) => {
-      if (node.id === props.nodeId) {
-        // 构建新的样式对象 - 仅在自动高度模式下添加transition
-        const newStyle = typeof node.style === 'object' 
-          ? { 
-              ...node.style, 
-              height: `${newHeight}px`, 
-              // 只有在自动高度模式下才添加过渡效果
-              ..._isAutoHeightEnabled.value ? { transition: 'height 0.2s ease-out' } : {}
-            } 
-          : { 
-              height: `${newHeight}px`, 
-              ..._isAutoHeightEnabled.value ? { transition: 'height 0.2s ease-out' } : {}
-            };
-          
-        return {
-          ...node,
-          data: {
-            ...node.data,
-            // 保持当前的自动高度状态，单次调整不改变这个标志
-            isAutoHeight: _isAutoHeightEnabled.value
-          },
-          style: newStyle,
-          // 直接更新节点高度属性，确保Vue Flow内部状态同步
-          height: newHeight
-        };
-      }
-      return node;
-    });
-    
-    // 立即更新节点数据，不使用延迟
-    setNodes(newNodes);
-    if (props.whiteBoardConfigData) {
-      props.whiteBoardConfigData.boardOptions.nodes = newNodes;
-    }
-  }
-}
-
-// 设置自动高度观察器
-const setupAutoHeightObserver = () => {
-  // 先移除可能存在的观察器
-  disconnectAutoHeightObserver();
-  
-  if (!props.nodeId) return;
-  
-  const nodeElement = document.querySelector(`[data-en-flow-node-id='${props.nodeId}']`);
-  if (!nodeElement) return;
-  
-  const wysiwygElement = nodeElement.querySelector('.protyle-wysiwyg.protyle-wysiwyg--attr');
-  if (!wysiwygElement) return;
-  
-  // 添加平滑过渡效果
-  const htmlElement = nodeElement as HTMLElement;
-  if (htmlElement && !htmlElement.style.transition) {
-    htmlElement.style.transition = 'height 0.2s ease-out';
-  }
-  
-  // 创建一个新的MutationObserver
-  contentObserver = new MutationObserver(debounce(() => {
-    adjustNodeHeight();
-  }, 50)); // 减少防抖延迟，提高响应速度
-  
-  // 配置观察选项
-  const config = { 
-    childList: true, 
-    subtree: true, 
-    characterData: true,
-    attributes: true 
-  };
-  
-  // 开始观察
-  contentObserver.observe(wysiwygElement, config);
-  
-  // 立即执行一次高度调整
-  adjustNodeHeight();
-}
-
-// 恢复原始高度
-const restoreOriginalHeight = () => {
-  if (!props.nodeId) return;
-  
-  const nodes = getNodes.value;
-  const currentNode = nodes.find(node => node.id === props.nodeId);
-  if (!currentNode) return;
-  
-  // 如果有保存的原始高度，恢复它
-  if (nodeOriginalHeights.value.has(props.nodeId)) {
-    const originalHeight = nodeOriginalHeights.value.get(props.nodeId);
-    
-    // 首先直接更新DOM以立即反馈
-    const nodeElement = document.querySelector(`[data-en-flow-node-id='${props.nodeId}']`);
-    if (nodeElement) {
-      // 确保有过渡效果
-      const htmlElement = nodeElement as HTMLElement;
-      if (htmlElement) {
-        if (!htmlElement.style.transition) {
-          htmlElement.style.transition = 'height 0.2s ease-out';
-        }
-        htmlElement.style.height = `${originalHeight}px`;
-      }
-    }
-    
-    const newNodes = nodes.map((node) => {
-      if (node.id === props.nodeId) {
-        // 构建新的样式对象，包含过渡效果
-        const newStyle = typeof node.style === 'object' 
-          ? { ...node.style, height: `${originalHeight}px`, transition: 'height 0.2s ease-out' } 
-          : { height: `${originalHeight}px`, transition: 'height 0.2s ease-out' };
-          
-        return {
-          ...node,
-          data: {
-            ...node.data,
-            isAutoHeight: false // 关闭自动高度标志
-          },
-          style: newStyle,
-          // 直接更新节点高度属性
-          height: originalHeight
-        };
-      }
-      return node;
-    });
-    
-    // 立即更新节点数据，不使用延迟
-    setNodes(newNodes);
-    if (props.whiteBoardConfigData) {
-      props.whiteBoardConfigData.boardOptions.nodes = newNodes;
-    }
-  }
-}
-
-// 切换自动高度状态
-const toggleAutoHeight = () => {
-  _isAutoHeightEnabled.value = !_isAutoHeightEnabled.value;
-  
-  // 如果启用了自动高度，设置MutationObserver监听内容变化
-  if (_isAutoHeightEnabled.value) {
-    setupAutoHeightObserver();
-  } else {
-    disconnectAutoHeightObserver();
-    // 恢复为原始高度
-    restoreOriginalHeight();
-  }
-}
+// 自动高度状态改为使用nodeFit组件的状态
+const isAutoHeightEnabled = computed(() => {
+  return nodeFitRef.value?.isAutoHeightEnabled?.value || false
+})
 
 // 清除长按状态
 const clearLongPress = () => {
   // 如果长按已完成且仍在长按状态，触发开关切换
   if (isLongPressing.value && longPressCompleted.value) {
     // 切换自动高度状态
-    toggleAutoHeight();
+    nodeFitRef.value?.toggleAutoHeight()
   } else if (isLongPressing.value && !longPressCompleted.value) {
     // 如果是短按，执行一次高度调整，但不改变自动高度状态
-    adjustNodeHeight();
+    nodeFitRef.value?.adjustNodeHeight()
   }
   
   // 重置长按状态
   if (longPressTimer.value) {
-    clearTimeout(longPressTimer.value);
-    longPressTimer.value = null;
+    clearTimeout(longPressTimer.value)
+    longPressTimer.value = null
   }
-  isLongPressing.value = false;
-  longPressCompleted.value = false;
+  isLongPressing.value = false
+  longPressCompleted.value = false
 }
 
 // 长按开始
 const startLongPress = () => {
   // 先清除可能存在的定时器
   if (longPressTimer.value) {
-    clearTimeout(longPressTimer.value);
-    longPressTimer.value = null;
+    clearTimeout(longPressTimer.value)
+    longPressTimer.value = null
   }
   
   // 设置长按状态
-  isLongPressing.value = true;
-  longPressCompleted.value = false;
+  isLongPressing.value = true
+  longPressCompleted.value = false
   
   // 设置长按定时器
   longPressTimer.value = setTimeout(() => {
     // 标记长按已完成
-    longPressCompleted.value = true;
-  }, longPressDuration);
+    longPressCompleted.value = true
+  }, longPressDuration)
 }
 
 // 自动适配高度函数 - 现在只处理单击情况
@@ -1552,151 +1358,14 @@ const onAutoFitHeight = () => {
   // 这里什么也不做，因为Vue会自动触发这个点击事件
 }
 
-// 根据当前节点状态初始化自动高度状态
-watch(() => props.nodeId, (nodeId) => {
-  if (nodeId) {
-    const node = getNodes.value.find(node => node.id === nodeId);
-    _isAutoHeightEnabled.value = node?.data?.isAutoHeight || false;
-    
-    // 如果节点已启用自动高度，启动观察器
-    if (_isAutoHeightEnabled.value) {
-      setupAutoHeightObserver();
-    }
-  } else {
-    // 如果节点ID为空，重置状态
-    _isAutoHeightEnabled.value = false;
-    disconnectAutoHeightObserver();
-  }
-}, { immediate: true });
-
-// 监听节点是否在手动调整大小
-watch(() => {
-  // 找到当前节点
-  if (!props.nodeId) return false;
-  const node = getNodes.value.find(n => n.id === props.nodeId);
-  return node?.resizing;
-}, (isResizing) => {
-  // 如果节点在手动调整大小
-  if (isResizing) {
-    // 断开自动高度观察器（如果启用了自动高度）
-    if (_isAutoHeightEnabled.value) {
-      disconnectAutoHeightObserver();
-    }
-    
-    // 移除过渡效果以提供更好的拖拽体验
-    const nodeElement = document.querySelector(`[data-en-flow-node-id='${props.nodeId}']`);
-    if (nodeElement) {
-      const htmlElement = nodeElement as HTMLElement;
-      if (htmlElement && htmlElement.style.transition) {
-        htmlElement.style.transition = 'none';
-      }
-    }
-  } else if (!isResizing) {
-    // 当手动调整结束
-    if (_isAutoHeightEnabled.value) {
-      // 如果自动高度功能开启，重新启用观察器
-      setupAutoHeightObserver();
-    } else {
-      // 如果不是自动高度模式，立即同步DOM高度和节点数据
-      const nodes = getNodes.value;
-      const currentNode = nodes.find(node => node.id === props.nodeId);
-      
-      if (currentNode) {
-        // 获取当前节点的高度
-        const currentHeight = currentNode.height;
-        
-        // 立即同步DOM高度
-        const nodeElement = document.querySelector(`[data-en-flow-node-id='${props.nodeId}']`);
-        if (nodeElement) {
-          const htmlElement = nodeElement as HTMLElement;
-          htmlElement.style.height = `${currentHeight}px`;
-        }
-        
-        // 更新原始高度记录
-        nodeOriginalHeights.value.set(props.nodeId, currentHeight);
-        
-        // 确保节点数据中的style.height与实际高度一致
-        if (currentNode.style?.height !== `${currentHeight}px`) {
-          const newNodes = nodes.map((node) => {
-            if (node.id === props.nodeId) {
-              const newStyle = typeof node.style === 'object'
-                ? { ...node.style, height: `${currentHeight}px` }
-                : { height: `${currentHeight}px` };
-                
-              return {
-                ...node,
-                style: newStyle
-              };
-            }
-            return node;
-          });
-          
-          // 立即更新节点数据
-          setNodes(newNodes);
-          if (props.whiteBoardConfigData) {
-            props.whiteBoardConfigData.boardOptions.nodes = newNodes;
-          }
-        }
-      }
-    }
-  }
-}, { immediate: true });
-
-// 监听节点高度变化，保持DOM同步
-watch(() => {
-  if (!props.nodeId) return null;
-  const node = getNodes.value.find(n => n.id === props.nodeId);
-  return {
-    height: node?.height,
-    styleHeight: node?.style?.height,
-    resizing: node?.resizing
-  };
-}, (newState) => {
-  if (!newState || !newState.height || !props.nodeId) return;
-  
-  // 只要高度改变且不在调整大小状态，就立即同步DOM
-  const node = getNodes.value.find(n => n.id === props.nodeId);
-  if (node && !node.resizing) {
-    const nodeElement = document.querySelector(`[data-en-flow-node-id='${props.nodeId}']`);
-    if (nodeElement) {
-      const htmlElement = nodeElement as HTMLElement;
-      
-      // 确保DOM高度与节点高度同步
-      const heightStr = `${newState.height}px`;
-      if (htmlElement && htmlElement.style.height !== heightStr) {
-        htmlElement.style.height = heightStr;
-      }
-      
-      // 如果样式高度与节点高度不一致，也更新样式高度
-      if (node.style?.height !== heightStr) {
-        const newNodes = getNodes.value.map((n) => {
-          if (n.id === props.nodeId) {
-            const newStyle = typeof n.style === 'object'
-              ? { ...n.style, height: heightStr }
-              : { height: heightStr };
-              
-            return {
-              ...n,
-              style: newStyle
-            };
-          }
-          return n;
-        });
-        
-        // 立即更新节点数据
-        setNodes(newNodes);
-        if (props.whiteBoardConfigData) {
-          props.whiteBoardConfigData.boardOptions.nodes = newNodes;
-        }
-      }
-    }
-  }
-}, { immediate: true, deep: true });
-
 // 组件卸载时清理
 onBeforeUnmount(() => {
-  disconnectAutoHeightObserver();
-});
+  // 清理长按定时器
+  if (longPressTimer.value) {
+    clearTimeout(longPressTimer.value)
+    longPressTimer.value = null
+  }
+})
 
 // 添加Frame节点相关的属性
 const nodeType = computed(() => {

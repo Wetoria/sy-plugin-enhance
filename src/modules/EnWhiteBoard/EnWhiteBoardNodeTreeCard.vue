@@ -8,6 +8,13 @@
     :data-depth="nodeDepth"
     @click="handleNodeClick"
   >
+    <!-- 添加EnWhiteBoardNodeFit组件 -->
+    <EnWhiteBoardNodeFit
+      :nodeId="nodeId"
+      :whiteBoardConfigData="whiteBoardConfigData"
+      @height-changed="onHeightChanged"
+    />
+
     <!-- 树形卡片模式下的添加子节点按钮 -->
     <div class="add-child-button">
       <a-button
@@ -79,6 +86,9 @@ import {
   ref,
   toRefs,
 } from 'vue'
+
+// 添加EnWhiteBoardNodeFit组件的导入
+import EnWhiteBoardNodeFit from './components/EnWhiteBoardNodeFit.vue'
 
 const props = defineProps<{
   nodeId: string
@@ -803,6 +813,18 @@ const handleNodeClick = () => {
 
 // 折叠状态直接使用props.isCollapsed
 const { isCollapsed } = toRefs(props)
+
+// 添加高度变化处理函数
+const onHeightChanged = (height: number) => {
+  // 树形卡片节点高度变化时，需要重新计算布局
+  console.log('树形卡片节点高度已更新:', height)
+  
+  // 清除布局缓存，确保下次使用新的高度计算
+  layoutUtils.clearCache()
+  
+  // 如果有更新布局的事件或方法，可以在这里调用
+  // ...
+}
 </script>
 
 <style lang="scss" scoped>

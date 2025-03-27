@@ -56,6 +56,12 @@
     @dragleave="handleDragLeave"
     @drop="handleDrop"
   >
+    <!-- 添加EnWhiteBoardNodeFit组件 -->
+    <EnWhiteBoardNodeFit
+      :nodeId="flowNode.id"
+      @height-changed="onHeightChanged"
+    />
+    
     <div
       class="FrameToolbarArea"
       :style="{
@@ -232,6 +238,8 @@ import { useDailyNote, appendBlockIntoDailyNote, getAppendedDailyNoteBlockId } f
 import { setBlockAttrs, updateBlock } from '@/api'
 import EnWhiteBoardNodeCollapse from './components/EnWhiteBoardNodeCollapse.vue'
 
+// 添加EnWhiteBoardNodeFit组件的导入
+import EnWhiteBoardNodeFit from './components/EnWhiteBoardNodeFit.vue'
 
 const handleIcons = {
   top: IconArrowUp,
@@ -2284,6 +2292,12 @@ const finishTitleEdit = () => {
   }
   
   isEditingTitle.value = false
+}
+
+// 添加高度变化处理函数
+const onHeightChanged = (height: number) => {
+  // 在这里可以添加额外的处理逻辑
+  console.log('Frame节点高度已更新:', height)
 }
 </script>
 

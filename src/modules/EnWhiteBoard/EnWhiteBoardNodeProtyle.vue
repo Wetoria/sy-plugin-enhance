@@ -123,6 +123,11 @@
       'borderColor': nodeData.style?.backgroundColor || 'var(--b3-border-color)',
     }"
   >
+    <EnWhiteBoardNodeFit
+      :nodeId="flowNode.id"
+      :whiteBoardConfigData="embedWhiteBoardConfigData"
+      @height-changed="onHeightChanged"
+    />
     <div v-if="isCollapsed" class="ProtyleToolbarArea">
       <div class="infos">
         <span
@@ -237,6 +242,7 @@ import EnWhiteBoardNodeMindmap from './EnWhiteBoardNodeMindmap.vue'
 import EnWhiteBoardNodeTreeCard from './EnWhiteBoardNodeTreeCard.vue'
 import EnWhiteBoardToolBar from './EnWhiteBoardToolBar.vue'
 import EnWhiteBoardNodeCollapse from './components/EnWhiteBoardNodeCollapse.vue'
+import EnWhiteBoardNodeFit from './components/EnWhiteBoardNodeFit.vue'
 
 const props = defineProps<{
   enWhiteBoardProtyleUtilAreaRef: HTMLElement
@@ -719,6 +725,13 @@ const getNodeType = () => {
     return 'EnWhiteBoardNodeProtyle'
   }
 }
+
+// 添加高度变化处理函数
+const onHeightChanged = (height: number) => {
+  // 这里可以添加额外的处理逻辑，例如在高度变化时更新其他组件
+  // 或者触发事件等
+  console.log('节点高度已更新:', height)
+}
 </script>
 
 <style lang="scss" scoped>
@@ -1098,6 +1111,11 @@ const getNodeType = () => {
 
   .EnWhiteBoardNodeProtyleContainer {
     transition: box-shadow 0.3s ease;
+  }
+
+  /* 确保在白板环境中protyle-content没有底部padding */
+  .protyle-content {
+    padding-bottom: 0 !important;
   }
 
   &.dragging {
