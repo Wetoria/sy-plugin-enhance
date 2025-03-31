@@ -367,24 +367,12 @@ const captureClick = (event: MouseEvent) => {
 
 const mainRef = ref<HTMLDivElement | null>(null)
 
-let offTransactionEvent = null
-const bindNodeIdToEnNode = () => {
-  if (!cardProtyleRef.value) {
-    return
-  }
-  const firstNode = cardProtyleRef.value.protyle.element?.querySelector(`[data-node-id]`) as HTMLElement
-  if (!firstNode) {
-    return
-  }
-  const nodeId = firstNode.dataset.nodeId
-  if (!nodeId) {
-    return
-  }
-
-  nodeData.value.blockId = nodeId
-}
-
 const removeNodeCreatedByOther = (event) => {
+  // 仅在启用了自动合并超级块功能时执行此操作
+  if (!whiteBoardModuleOptions.value.autoMergeToSuperBlock) {
+    return
+  }
+
   const {
     detail,
   } = event
@@ -393,6 +381,8 @@ const removeNodeCreatedByOther = (event) => {
     data,
   } = detail
   const currentProtyleId = cardProtyleRef.value?.protyle.id
+  if (!currentProtyleId) return
+
   data.forEach((item) => {
     const {
       doOperations = [],
@@ -407,49 +397,270 @@ const removeNodeCreatedByOther = (event) => {
 
       if (isCreate && isCreateByOther) {
         let timer = null
+        let attempts = 0
+        const maxAttempts = 10 // 限制尝试次数
+        
         timer = setInterval(() => {
+          attempts++
           const wysiwygElement = cardProtyleRef.value?.protyle.wysiwyg.element
+          if (!wysiwygElement) {
+            clearInterval(timer)
+            return
+          }
+          
           const firstLevelChildren = wysiwygElement?.children
           const targetElement = Array.from(firstLevelChildren).find((child: HTMLElement) => {
             const childNodeId = child.dataset.nodeId
             return childNodeId && childNodeId === opId
           })
+          
           if (targetElement) {
             targetElement.remove()
             clearInterval(timer)
+          } else if (attempts >= maxAttempts) {
+            // 达到最大尝试次数，停止尝试
+            clearInterval(timer)
           }
-        }, 0)
+        }, 50) // 增加间隔时间，减少性能消耗
       }
     })
   })
 }
 
 const isMergingToSuperBlock = ref(false)
+const mergeAttemptsCount = ref(0)
+const maxMergeAttempts = 3 // 最大合并尝试次数
+let mergeTimer = null
+
 const mergeTopLevelBlocksIntoSuperBlock = debounce(() => {
   if (!whiteBoardModuleOptions.value.autoMergeToSuperBlock) {
     return
   }
 
-  const children = Array.from(cardProtyleRef.value?.protyle.wysiwyg.element?.children || [])
-  // 如果只有一个子元素，则不进行合并
-  if (children.length <= 1) {
+  // 如果已经在进行合并，则跳过
+  if (isMergingToSuperBlock.value) {
     return
   }
 
-  const protyleIns = cardProtyleRef.value?.protyle.getInstance()
-  isMergingToSuperBlock.value = true
-  protyleIns.turnIntoOneTransaction(children, 'BlocksMergeSuperBlock', 'row')
-  const off = useSiyuanDatabaseIndexCommit(debounce(async () => {
-    off()
+  // 检查是否有有效的protyle实例和元素
+  if (!cardProtyleRef.value?.protyle?.wysiwyg?.element) {
+    return
+  }
+
+  const children = Array.from(cardProtyleRef.value.protyle.wysiwyg.element.children || [])
+  // 如果只有一个子元素，则不进行合并
+  if (children.length <= 1) {
+    mergeAttemptsCount.value = 0 // 重置尝试计数
+    return
+  }
+
+  // 检查子元素是否都是有效的块
+  const validChildren = children.filter((child: HTMLElement) => 
+    child.dataset && child.dataset.nodeId && 
+    !child.classList.contains('protyle-action')
+  )
+  
+  if (validChildren.length <= 1) {
+    return
+  }
+
+  try {
+    const protyleIns = cardProtyleRef.value?.protyle.getInstance()
+    if (!protyleIns || !protyleIns.turnIntoOneTransaction) {
+      console.warn('无法获取有效的protyle实例或turnIntoOneTransaction方法')
+      return
+    }
+
+    isMergingToSuperBlock.value = true
+    mergeAttemptsCount.value++
+
+    // 更新节点状态，反映合并中状态
+    updateNodeMergingStatus(true)
+    
+    // 执行合并操作
+    protyleIns.turnIntoOneTransaction(validChildren, 'BlocksMergeSuperBlock', 'row')
+    
+    // 使用事务完成监听
+    const off = useSiyuanDatabaseIndexCommit(debounce(async () => {
+      off()
+      // 延迟一段时间后再检查合并结果
+      setTimeout(() => {
+        // 检查合并结果
+        checkMergeResult()
+      }, 200)
+    }, 50))
+    
+    // 设置安全超时，防止事务完成回调不触发的情况
+    clearTimeout(mergeTimer)
+    mergeTimer = setTimeout(() => {
+      if (isMergingToSuperBlock.value) {
+        console.warn('合并超级块操作超时，恢复状态')
+        isMergingToSuperBlock.value = false
+        updateNodeMergingStatus(false)
+      }
+    }, 3000) // 3秒超时保护
+  } catch (error) {
+    console.error('合并超级块时出错:', error)
     isMergingToSuperBlock.value = false
-  }, 20))
+    updateNodeMergingStatus(false)
+  }
 }, whiteBoardModuleOptions.value.autoMergeToSuperBlockDelay * 1000)
 
+// 检查合并结果
+const checkMergeResult = () => {
+  if (!cardProtyleRef.value?.protyle?.wysiwyg?.element) {
+    isMergingToSuperBlock.value = false
+    updateNodeMergingStatus(false)
+    return
+  }
+
+  const children = Array.from(cardProtyleRef.value.protyle.wysiwyg.element.children || [])
+  const superBlock = children.find((child: HTMLElement) => 
+    child.dataset && child.dataset.type === 'NodeSuperBlock'
+  )
+
+  if (superBlock) {
+    // 合并成功
+    console.log('成功合并为超级块')
+    // 绑定新的块ID
+    bindNodeIdToEnNode()
+    isMergingToSuperBlock.value = false
+    updateNodeMergingStatus(false)
+    mergeAttemptsCount.value = 0 // 重置尝试计数
+  } else if (mergeAttemptsCount.value < maxMergeAttempts) {
+    // 合并失败但未达到最大尝试次数，重试
+    console.warn(`合并超级块失败，尝试重新合并 (${mergeAttemptsCount.value}/${maxMergeAttempts})`)
+    setTimeout(() => {
+      mergeTopLevelBlocksIntoSuperBlock()
+    }, 500)
+  } else {
+    // 达到最大尝试次数，放弃合并
+    console.error('多次尝试合并超级块失败，放弃操作')
+    isMergingToSuperBlock.value = false
+    updateNodeMergingStatus(false)
+    mergeAttemptsCount.value = 0 // 重置尝试计数
+  }
+}
+
+// 更新节点的合并状态
+const updateNodeMergingStatus = (merging: boolean) => {
+  // 更新当前节点的数据
+  const nodes = getNodes.value
+  const updatedNodes = nodes.map((node) => {
+    if (node.id === flowNode.id) {
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          isMergingToSuperBlock: merging
+        }
+      }
+    }
+    return node
+  })
+  setNodes(updatedNodes)
+}
+
+// 检查块ID有效性
+const checkBlockIdValidity = debounce(async () => {
+  if (!nodeData.value.blockId) return
+  
+  try {
+    // 使用思源API检查块是否存在
+    const response = await request('/api/block/getBlockInfo', {
+      id: nodeData.value.blockId
+    })
+    
+    // 如果块不存在，标记为无效
+    if (response.code === -1 || !response.data) {
+      console.warn(`块ID无效: ${nodeData.value.blockId}，尝试恢复`)
+      handleInvalidBlockId()
+    }
+  } catch (error) {
+    console.error('检查块ID有效性时出错:', error)
+  }
+}, 5000)
+
+// 处理无效的块ID
+const handleInvalidBlockId = async () => {
+  // 方案1: 尝试在节点中创建新的块
+  try {
+    const protyleIns = cardProtyleRef.value?.protyle.getInstance()
+    if (!protyleIns) return
+    
+    // 创建一个新的段落块
+    protyleIns.insert('\n', 'paragraph')
+    
+    // 稍后重新绑定ID
+    setTimeout(() => {
+      bindNodeIdToEnNode()
+    }, 200)
+  } catch (error) {
+    console.error('创建新块时出错:', error)
+  }
+}
+
+// 加强版的bindNodeIdToEnNode函数
+const bindNodeIdToEnNode = () => {
+  if (!cardProtyleRef.value) {
+    return
+  }
+  
+  const wysiwygElement = cardProtyleRef.value.protyle.wysiwyg.element
+  if (!wysiwygElement) return
+  
+  // 查找第一个有效的块
+  const firstNode = wysiwygElement.querySelector(`[data-node-id]`) as HTMLElement
+  if (!firstNode) {
+    return
+  }
+  
+  const nodeId = firstNode.dataset.nodeId
+  if (!nodeId) {
+    return
+  }
+
+  // 检查新旧ID是否不同
+  if (nodeData.value.blockId !== nodeId) {
+    console.log(`更新节点块ID: ${nodeData.value.blockId} -> ${nodeId}`)
+    nodeData.value.blockId = nodeId
+    
+    // 更新节点数据
+    const nodes = getNodes.value
+    const updatedNodes = nodes.map((node) => {
+      if (node.id === flowNode.id) {
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            blockId: nodeId
+          }
+        }
+      }
+      return node
+    })
+    setNodes(updatedNodes)
+  }
+}
+
+// 改进的事务监听函数
+let offTransactionEvent = null
 onMounted(() => {
+  // 初始检查块ID有效性
+  checkBlockIdValidity()
+  
+  // 监听事务
   offTransactionEvent = useSiyuanEventTransactions((event) => {
     bindNodeIdToEnNode()
     removeNodeCreatedByOther(event)
-    mergeTopLevelBlocksIntoSuperBlock()
+    
+    // 仅当未处于合并状态时才触发合并操作
+    if (!isMergingToSuperBlock.value) {
+      mergeTopLevelBlocksIntoSuperBlock()
+    }
+    
+    // 定期检查块ID有效性
+    checkBlockIdValidity()
   })
 })
 
@@ -457,6 +668,7 @@ onBeforeUnmount(() => {
   if (offTransactionEvent) {
     offTransactionEvent()
   }
+  clearTimeout(mergeTimer)
 })
 
 const onResize = (event: OnResize) => {
@@ -465,8 +677,8 @@ const onResize = (event: OnResize) => {
   if (nodeElement) {
     const htmlElement = nodeElement as HTMLElement
     htmlElement.style.transition = 'none'
-    htmlElement.style.width = `${event.args?.[0]?.width || flowNode.dimensions?.width}px`
-    htmlElement.style.height = `${event.args?.[0]?.height || flowNode.dimensions?.height}px`
+    htmlElement.style.width = `${flowNode.dimensions?.width}px`
+    htmlElement.style.height = `${flowNode.height}px`
   }
   
   // 直接更新节点数据，不使用延迟
@@ -481,7 +693,7 @@ const onResize = (event: OnResize) => {
           ...node,
           data: {
             ...node.data,
-            originalHeight: event.args?.[0]?.height || currentNode.height, // 保存调整后的高度
+            originalHeight: currentNode.height, // 保存调整后的高度
           },
         };
       }

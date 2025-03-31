@@ -81,6 +81,13 @@ export interface EnWhiteBoardSetting extends EnModule {
   notebookId: string
   targetId: string
   autoSaveConfigByWindow: boolean
+
+  // 边默认配置
+  edgeTypeDefault: 'smoothstep' | 'step' | 'straight' | 'bezier'  // 边类型
+  edgeWidthDefault: '1' | '2' | '3'                              // 边粗细
+  edgeStyleDefault: 'solid' | 'dashed' | 'dotted'                // 边样式
+  edgeMarkerStartDefault: '' | 'circle-solid' | 'line' | 'circle-hollow' | 'arrow-start'  // 起点箭头
+  edgeMarkerEndDefault: '' | 'circle-solid' | 'line' | 'circle-hollow' | 'arrow'          // 终点箭头
 }
 export function useWhiteBoardModule() {
   return useModule<EnWhiteBoardSetting>(EN_MODULE_LIST.EN_WHITE_BOARD)

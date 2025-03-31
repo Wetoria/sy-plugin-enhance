@@ -76,6 +76,8 @@
         :multiSelectionKeyCode="['Control']"
         :deleteKeyCode="['Delete', 'Backspace']"
         :selectionOnDrag="true"
+        :connectionLineType="defaultEdgeType"
+        :connectionLineStyle="defaultConnectionLineStyle"
         @nodeDragStart="onMoveStart"
         @nodeDrag="onMove"
         @nodeDragStop="onMoveEnd"
@@ -471,6 +473,7 @@ import {
   pointToRendererPoint,
   useVueFlow,
   VueFlow,
+  ConnectionLineType,
 } from '@vue-flow/core'
 import { MiniMap } from '@vue-flow/minimap'
 
@@ -492,6 +495,10 @@ import EnWhiteBoardNodeTreeCard from './EnWhiteBoardNodeTreeCard.vue'
 import '@vue-flow/minimap/dist/style.css'
 import '@vue-flow/controls/dist/style.css'
 import LineageView from '../Lineage/LineageView.vue'
+import { appendBlockInto } from '@/utils/Block'
+import {
+  ConnectionMode,
+} from '@vue-flow/core'
 
 const props = defineProps<{
   data: EnWhiteBoardBlockDomTarget
@@ -743,7 +750,29 @@ const createNewNode = (x: number, y: number) => {
     x,
     y,
   }, viewport.value)
-  getNewDailyNoteBlockId().then((blockId) => {
+  
+  // 获取模块配置
+  const { moduleOptions: moduleWhiteBoardOptions } = useWhiteBoardModule()
+  const { notebookId, targetId } = moduleWhiteBoardOptions.value
+  
+  // 异步创建节点
+  const createNodeAsync = async () => {
+    // 根据配置决定创建位置
+    let blockId = ''
+    
+    if (notebookId && targetId) {
+      // 使用目标块模式
+      blockId = await appendBlockInto(notebookId, targetId, '')
+    } else {
+      // 使用日记模式
+      blockId = await getNewDailyNoteBlockId()
+    }
+    
+    if (!blockId) {
+      console.error('创建节点失败')
+      return
+    }
+    
     const newEnFlowNodeId = generateWhiteBoardNodeId()
     const newNode = {
       id: newEnFlowNodeId,
@@ -781,7 +810,10 @@ const createNewNode = (x: number, y: number) => {
         }
       },
     )
-  })
+  }
+  
+  // 执行创建
+  createNodeAsync()
 }
 
 // 添加触摸事件处理函数
@@ -949,7 +981,9 @@ onEdgesChange((changes) => {
 
 
 const onConnect = (event) => {
-  const newEdge: Edge = {
+  // 使用全局默认配置创建新边
+  const newEdge = {
+    ...event,
     id: generateWhiteBoardEdgeId(),
     type: EN_CONSTANTS.EN_WHITE_BOARD_EDGE_TYPE_BASE,
     source: event.source,
@@ -961,21 +995,24 @@ const onConnect = (event) => {
     focusable: true,
     selectable: true,
     data: {
-      label: '',
-      edgeType: 'smoothstep', // 连线类型
-      width: 1, // 线条粗细
-      style: 'solid', // 线条样式
-      animation: 'none', // 动画类型
-      color: 'var(--b3-theme-on-surface)', // 线条颜色
-      markerEnd: 'arrow', // 默认终点箭头
-      markerStart: '', // 默认无起点箭头
+      // 使用全局配置的边默认设置
+      edgeType: moduleWhiteBoardOptions.value.edgeTypeDefault,
+      width: moduleWhiteBoardOptions.value.edgeWidthDefault,
+      style: moduleWhiteBoardOptions.value.edgeStyleDefault,
+      markerStart: moduleWhiteBoardOptions.value.edgeMarkerStartDefault,
+      markerEnd: moduleWhiteBoardOptions.value.edgeMarkerEndDefault,
+      whiteBoardConfigData: embedWhiteBoardConfigData.value,
     },
   }
+  
   // 使用 setEdges 更新边的状态
   const newEdges = [...edges.value, newEdge]
   setEdges(newEdges)
-  // 同步更新配置数据
-  embedWhiteBoardConfigData.value.boardOptions.edges = newEdges
+  
+  // 更新配置
+  if (embedWhiteBoardConfigData.value) {
+    embedWhiteBoardConfigData.value.boardOptions.edges = newEdges
+  }
 }
 
 onEdgeUpdate(({
@@ -1452,6 +1489,32 @@ const currentViewMode = ref<'whiteboard' | 'lineage'>('whiteboard')
 const handleViewModeChange = (event: CustomEvent) => {
   currentViewMode.value = event.detail.mode
 }
+
+// 从全局设置中获取连接线类型
+const defaultEdgeType = computed(() => {
+  return moduleWhiteBoardOptions.value.edgeTypeDefault as ConnectionLineType
+})
+
+// 当用户拖动创建新连线时的预览连线样式
+const defaultConnectionLineStyle = computed(() => {
+  // 基于全局设置创建样式对象
+  const previewWidth = moduleWhiteBoardOptions.value.edgeWidthDefault || '2'
+  const previewStyle = moduleWhiteBoardOptions.value.edgeStyleDefault || 'solid'
+  
+  // 计算预览连线的虚线/点线间距
+  let dashArray
+  if (previewStyle === 'dashed') {
+    dashArray = `${Number(previewWidth) * 5},${Number(previewWidth) * 5}`
+  } else if (previewStyle === 'dotted') {
+    dashArray = `${Number(previewWidth)},${Number(previewWidth) * 2}`
+  }
+  
+  return {
+    strokeWidth: Number(previewWidth),
+    stroke: 'var(--b3-theme-on-surface)',
+    strokeDasharray: dashArray,
+  }
+})
 </script>
 
 <style lang="scss" scoped>

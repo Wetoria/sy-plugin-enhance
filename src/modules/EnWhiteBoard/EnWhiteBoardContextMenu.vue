@@ -141,7 +141,25 @@ const handleCreateNode = async () => {
     y: props.clickPosition.y,
   })
 
-  const blockId = await getNewDailyNoteBlockId()
+  // 获取白板模块配置
+  const { notebookId, targetId } = moduleWhiteBoardOptions.value
+  
+  // 根据配置创建节点
+  let blockId = ''
+  
+  if (notebookId && targetId) {
+    // 使用目标块模式
+    blockId = await appendBlockInto(notebookId, targetId, '')
+  } else {
+    // 使用日记模式
+    blockId = await getNewDailyNoteBlockId()
+  }
+  
+  if (!blockId) {
+    console.error('创建节点失败')
+    return
+  }
+
   const newNode = {
     id: generateWhiteBoardNodeId(),
     type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_PROTYLE,

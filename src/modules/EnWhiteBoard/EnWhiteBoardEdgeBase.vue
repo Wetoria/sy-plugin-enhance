@@ -90,6 +90,7 @@ import {
   watch,
 } from 'vue'
 import EnWhiteBoardToolBar from './EnWhiteBoardToolBar.vue'
+import { useWhiteBoardModule } from './EnWhiteBoard'
 
 interface EdgeData {
   label?: string
@@ -342,14 +343,33 @@ const edgeStyle = computed(() => {
   // 只有当源节点和目标节点都是思维导图节点时才添加过渡动画
   const isMindmapEdge = props.sourceNode?.data?.mindmap && props.targetNode?.data?.mindmap
 
-  // 如果是预览连线,使用默认样式
+  // 如果是预览连线,使用全局配置的边样式
   if (!('id' in props)) {
+    // 获取全局配置
+    const { moduleOptions } = useWhiteBoardModule()
+    // 获取预览连线的边粗细
+    const previewWidth = moduleOptions.value.edgeWidthDefault || '2'
+    // 获取预览连线的边样式
+    const previewStyle = moduleOptions.value.edgeStyleDefault || 'solid'
+    // 获取预览连线的终点箭头
+    const previewMarkerEnd = moduleOptions.value.edgeMarkerEndDefault || 'arrow'
+    // 获取预览连线的起点箭头
+    const previewMarkerStart = moduleOptions.value.edgeMarkerStartDefault || ''
+    
+    // 计算预览连线的虚线/点线间距
+    let previewDashArray
+    if (previewStyle === 'dashed') {
+      previewDashArray = `${Number(previewWidth) * 5},${Number(previewWidth) * 5}`
+    } else if (previewStyle === 'dotted') {
+      previewDashArray = `${Number(previewWidth)},${Number(previewWidth) * 2}`
+    }
+    
     return {
-      strokeWidth: 1,
+      strokeWidth: Number(previewWidth),
       stroke: 'var(--b3-theme-on-surface)',
-      strokeDasharray: undefined,
-      markerEnd: 'url(#arrow)',
-      markerStart: undefined,
+      strokeDasharray: previewDashArray,
+      markerEnd: previewMarkerEnd ? `url(#${previewMarkerEnd})` : undefined,
+      markerStart: previewMarkerStart ? `url(#${previewMarkerStart})` : undefined,
       transition: 'none',
     }
   }

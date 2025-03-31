@@ -34,6 +34,156 @@
         </div>
       </div>
     </div>
+
+    <!-- 边类型设置 -->
+    <div class="SettingsItem">
+      <div class="ItemTitle">
+        连接线类型
+      </div>
+      <div class="ItemDesc">
+        选择白板中连接线的默认类型
+      </div>
+      <div class="ItemOpt">
+        <a-select
+          :model-value="moduleWhiteBoardOptions.edgeTypeDefault"
+          placeholder="请选择连接线类型"
+          @change="updateEdgeType"
+        >
+          <a-option value="smoothstep">
+            平滑阶梯
+          </a-option>
+          <a-option value="step">
+            阶梯
+          </a-option>
+          <a-option value="straight">
+            直线
+          </a-option>
+          <a-option value="bezier">
+            贝塞尔曲线
+          </a-option>
+        </a-select>
+      </div>
+    </div>
+
+    <!-- 边粗细设置 -->
+    <div class="SettingsItem">
+      <div class="ItemTitle">
+        连接线粗细
+      </div>
+      <div class="ItemDesc">
+        选择白板中连接线的默认粗细
+      </div>
+      <div class="ItemOpt">
+        <a-select
+          :model-value="moduleWhiteBoardOptions.edgeWidthDefault"
+          placeholder="请选择连接线粗细"
+          @change="updateEdgeWidth"
+        >
+          <a-option value="1">
+            细
+          </a-option>
+          <a-option value="2">
+            中
+          </a-option>
+          <a-option value="3">
+            粗
+          </a-option>
+        </a-select>
+      </div>
+    </div>
+
+    <!-- 边样式设置 -->
+    <div class="SettingsItem">
+      <div class="ItemTitle">
+        连接线样式
+      </div>
+      <div class="ItemDesc">
+        选择白板中连接线的默认样式
+      </div>
+      <div class="ItemOpt">
+        <a-select
+          :model-value="moduleWhiteBoardOptions.edgeStyleDefault"
+          placeholder="请选择连接线样式"
+          @change="updateEdgeStyle"
+        >
+          <a-option value="solid">
+            实线
+          </a-option>
+          <a-option value="dashed">
+            虚线
+          </a-option>
+          <a-option value="dotted">
+            点线
+          </a-option>
+        </a-select>
+      </div>
+    </div>
+
+    <!-- 起点箭头设置 -->
+    <div class="SettingsItem">
+      <div class="ItemTitle">
+        连接线起点箭头
+      </div>
+      <div class="ItemDesc">
+        选择白板中连接线的默认起点箭头
+      </div>
+      <div class="ItemOpt">
+        <a-select
+          :model-value="moduleWhiteBoardOptions.edgeMarkerStartDefault"
+          placeholder="请选择起点箭头"
+          @change="updateEdgeMarkerStart"
+        >
+          <a-option value="">
+            无
+          </a-option>
+          <a-option value="circle-solid">
+            实心圆点
+          </a-option>
+          <a-option value="line">
+            横线
+          </a-option>
+          <a-option value="circle-hollow">
+            空心圆点
+          </a-option>
+          <a-option value="arrow-start">
+            箭头
+          </a-option>
+        </a-select>
+      </div>
+    </div>
+
+    <!-- 终点箭头设置 -->
+    <div class="SettingsItem">
+      <div class="ItemTitle">
+        连接线终点箭头
+      </div>
+      <div class="ItemDesc">
+        选择白板中连接线的默认终点箭头
+      </div>
+      <div class="ItemOpt">
+        <a-select
+          :model-value="moduleWhiteBoardOptions.edgeMarkerEndDefault"
+          placeholder="请选择终点箭头"
+          @change="updateEdgeMarkerEnd"
+        >
+          <a-option value="">
+            无
+          </a-option>
+          <a-option value="circle-solid">
+            实心圆点
+          </a-option>
+          <a-option value="line">
+            横线
+          </a-option>
+          <a-option value="circle-hollow">
+            空心圆点
+          </a-option>
+          <a-option value="arrow">
+            箭头
+          </a-option>
+        </a-select>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -59,6 +209,31 @@ const resetBackgroundToGlobal = () => {
 const updateBackgroundVariant = (value: 'dots' | 'lines' | 'none') => {
   embedWhiteBoardConfigData.value.boardOptions.useCustomBackground = true
   embedWhiteBoardConfigData.value.boardOptions.backgroundVariant = value
+}
+
+// 更新边类型
+const updateEdgeType = (value: 'smoothstep' | 'step' | 'straight' | 'bezier') => {
+  moduleWhiteBoardOptions.value.edgeTypeDefault = value
+}
+
+// 更新边粗细
+const updateEdgeWidth = (value: '1' | '2' | '3') => {
+  moduleWhiteBoardOptions.value.edgeWidthDefault = value
+}
+
+// 更新边样式
+const updateEdgeStyle = (value: 'solid' | 'dashed' | 'dotted') => {
+  moduleWhiteBoardOptions.value.edgeStyleDefault = value
+}
+
+// 更新起点箭头
+const updateEdgeMarkerStart = (value: '' | 'circle-solid' | 'line' | 'circle-hollow' | 'arrow-start') => {
+  moduleWhiteBoardOptions.value.edgeMarkerStartDefault = value
+}
+
+// 更新终点箭头
+const updateEdgeMarkerEnd = (value: '' | 'circle-solid' | 'line' | 'circle-hollow' | 'arrow') => {
+  moduleWhiteBoardOptions.value.edgeMarkerEndDefault = value
 }
 </script>
 
