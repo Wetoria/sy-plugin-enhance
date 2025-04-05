@@ -39,7 +39,7 @@
         重置为默认
       </a-button>
       <div
-        v-if="!hasAuth"
+        v-if="needAuthMask && !hasAuth"
         class="mask"
       >
         <a-button
@@ -80,10 +80,14 @@ const props = defineProps<{
   module: EnSettingModule<EnModule>
   always?: boolean
   withoutReset?: boolean
+
+  noAuthMask?: boolean
   authLevel?: number | string
 }>()
 
 const emit = defineEmits(['moduleEnabled', 'moduleDisabled'])
+
+const needAuthMask = computed(() => !props.noAuthMask)
 
 const {
   computedLevel,
