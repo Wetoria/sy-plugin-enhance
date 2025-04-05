@@ -28,7 +28,9 @@ interface GlobalModule extends EnSettings {}
 
 
 interface IProtyleObserverItem {
+  // 插件内部标识，用于 v-for 的 key
   enLoopKey: string
+
   protyleBlockId: string
   protyleEl: HTMLElement
   protyleContentEl: HTMLElement
@@ -37,6 +39,7 @@ interface IProtyleObserverItem {
   isEditorProtyle: boolean
   isInDialog: boolean
   dialogEl: HTMLElement | null
+
   isDailyNote: boolean
   dailyNoteValues: {
     [key: string]: string
@@ -201,13 +204,14 @@ interface EnModuleParagraphBlock extends EnModule {
 interface EnModuleComment extends EnModule {
   notebookId: string
   targetId: string
-  // TODO
-  // autoSaveConfigByWindow: boolean
 
   enableCommentStyle: boolean
+  commentStyle: 'dotted' | 'dashed' | 'solid' | 'double' | 'wavy' | 'highlight'
+  commentUnderlineWidth: number
+  commentUnderlineColor: string
 
-  customStyleBlock: string
-  customStyleInline: string
+  customCommentStructure: string
+  commentWrapMode: 'NodeList' | 'NodeSuperBlock'
 }
 
 

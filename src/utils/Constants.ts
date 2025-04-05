@@ -27,6 +27,10 @@ export enum EN_CONSTANTS {
 
   COMMENT = 'EnComment',
   COMMENT_DISPLAY = '批注',
+  COMMENT_ENABLE_BTN = 'En_Comment_EnableBtn',
+  COMMENT_ENABLE_BTN_DISPLAY = '开关评论按钮',
+  COMMENT_CURRENT_CONTENT = 'En_Comment',
+  COMMENT_CURRENT_CONTENT_DISPLAY = '评论当前选中内容(<a class="enCommentUsageLinkBtn" href="https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse#share-ZMuedaqblocvljxlmFbcHFKcnPd" target="_blank">使用说明</a>)',
 
 
   CMD_KEY_EN_OPEN_QUICK_NOTE = 'En_OpenQuickNote',
@@ -122,6 +126,9 @@ export enum EN_CONSTANTS {
 
 export enum EN_COMMAND_KEYS {
   EN_PLUGIN_SWITCH = EN_CONSTANTS.EN_PLUGIN_SWITCH,
+
+  EN_COMMENT_CURRENT_CONTENT = EN_CONSTANTS.COMMENT_CURRENT_CONTENT,
+  EN_COMMENT_ENABLE_BTN = EN_CONSTANTS.COMMENT_ENABLE_BTN,
 
   EN_LIFELOG_OPEN_GRAPH_MODAL = EN_CONSTANTS.LIFELOG_OPEN_GRAPH_MODAL,
 

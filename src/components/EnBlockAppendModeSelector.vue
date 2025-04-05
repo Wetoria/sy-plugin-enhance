@@ -120,7 +120,14 @@ const usedModeList = computed(() => {
   if (props.mode?.includes('All')) {
     return modeList
   } else {
-    return modeList.filter((item) => props.mode?.includes(item.id as any))
+    const result = []
+    props.mode?.forEach((mode) => {
+      const target = modeList.find((item) => item.id === mode)
+      if (target) {
+        result.push(target)
+      }
+    })
+    return result
   }
 })
 
