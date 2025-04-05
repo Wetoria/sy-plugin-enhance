@@ -33,11 +33,8 @@ import EnWindow, { isInWindow } from '@/modules/EnWindow.vue'
 import { debounce } from '@/utils'
 import { addCommand } from '@/utils/Commands'
 import { queryAllByDom } from '@/utils/DOM'
-import { SyFrontendTypes } from '@/utils/Siyuan'
 import {
-  convertSiyuanLinkIntoNormal,
   EnVideoAndAudioUrlParams,
-  isTargetPluginType,
   URL_TYPE_MAP,
   urlSchemeCreator,
 } from '@/utils/url'
@@ -57,6 +54,8 @@ const plugin = usePlugin()
 let currentSiyuanNode: HTMLElement = null
 
 let currentTarget: HTMLVideoElement | HTMLAudioElement = null
+
+const isTargetSiyuanNode = (type) => ['NodeVideo', 'NodeAudio'].includes(type)
 
 const toggleCurrentNodeClass = (node, status) => {
   if (!node) return
@@ -133,48 +132,8 @@ const recordVideoAndAudio = (video: HTMLVideoElement | HTMLAudioElement) => {
   recordVideoOrAudioRef(video)
 }
 
-const desktopTypes = [SyFrontendTypes.desktop, SyFrontendTypes['desktop-window']]
 const waitKey = 'enWaitToSetTime'
 let waitToSetTime = localStorage.getItem(waitKey)
-const envLinkClickHandler = (href, event) => {
-  event.preventDefault()
-  event.stopPropagation()
-
-  const {
-    bid,
-    time,
-  } = getEVAParamsByUrl(href)
-  if (plugin.isElectron) {
-    localStorage.setItem(waitKey, JSON.stringify({
-      bid,
-      time,
-    }))
-    const winRef = enWinRef.value
-    if (winRef?.isVisible()) {
-      winRef?.hideWindow()
-    }
-    winRef?.openWindow()
-  } else {
-    // imp 增加网页版弹窗效果
-    jumpToBlock(href)
-  }
-}
-const hackLink = (link: HTMLSpanElement) => {
-  const href = convertSiyuanLinkIntoNormal(link.dataset.href)
-
-  // IMP 如果其他地方用了这个地址，也会被拦截，需要进一步判断是不是音视频的链接
-  const isEVALink = isTargetPluginType(href, URL_TYPE_MAP.VideoAndAudio)
-  if (isEVALink) {
-    if (link.dataset.enBindLinkClick) {
-      return
-    }
-    link.addEventListener('click', (event) => {
-      const target = event.target as HTMLSpanElement
-      envLinkClickHandler(convertSiyuanLinkIntoNormal(target.dataset.href), event)
-    })
-    link.dataset.enBindLinkClick = 'true'
-  }
-}
 
 const handler = () => {
   const videos = queryAllByDom(document.body, `video`)
@@ -185,11 +144,6 @@ const handler = () => {
   })
   audios.forEach((item) => {
     recordVideoAndAudio(item as HTMLAudioElement)
-  })
-
-  const links = queryAllByDom(document.body, `span[data-type="a"]`) as HTMLLinkElement[]
-  links.forEach((link) => {
-    hackLink(link)
   })
 }
 
@@ -265,7 +219,6 @@ const pinOrUnpinVideo = (pin) => {
   }
 }
 
-const isTargetSiyuanNode = (type) => ['NodeVideo', 'NodeAudio'].includes(type)
 
 const onOpenContextMenu = ({ detail }) => {
   const plugin = usePlugin()
