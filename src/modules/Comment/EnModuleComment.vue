@@ -12,15 +12,7 @@
       </div>
       <template #desc>
         <div>
-          选择批注创建内容的模式：添加至目标块、当前块、或追加至笔记本的日记中。
-        </div>
-        <div>
-          <a-typography-text type="warning">
-            注：修改本设置会更新批注窗口中的配置。
-          </a-typography-text>
-        </div>
-        <div>
-          窗口中的配置独立于该设置。你随时可以在窗口中更改成你想要的模式。
+          选择批注创建内容的模式：添加至目标块、当前块(文档)、或追加至笔记本的日记中。
         </div>
         <div v-if="moduleOptions.targetId">
           已选择文档：
@@ -42,20 +34,72 @@
         </div>
       </template>
     </EnSettingsItem>
-    <!-- TODO -->
-    <!-- <EnSettingsItem>
+    <EnSettingsItem mode="vertical">
       <div>
-        同步窗口中的配置
+        批注包裹模式
       </div>
-      <template #desc>
-        <div>
-          如果未开启该选项，修改窗口中的配置仅用作临时更改，重启思源/插件后，会恢复为上方的配置。
+      <template #opt>
+        <div class="EnCommentStyleSelector">
+          <a-radio-group
+            v-model="moduleOptions.commentWrapMode"
+          >
+            <a-radio value="NodeList">列表</a-radio>
+            <a-radio value="NodeSuperBlock">超级块</a-radio>
+          </a-radio-group>
         </div>
       </template>
-      <template #opt>
-        <a-switch v-model="moduleOptions.autoSaveConfigByWindow" />
-      </template>
-    </EnSettingsItem> -->
+    </EnSettingsItem>
+    <EnSettingsItem
+      mode="manual"
+    >
+      <div
+        class="flexColumn"
+        style="width: 100%;"
+        @mousemove.capture="cancelSettingMouseMoveEvent"
+        @mousedown.capture="cancelSettingMouseMoveEvent"
+      >
+        <div
+          class="settingTitle"
+        >
+          自定义批注结构
+        </div>
+        <div>
+          批注结构说明：
+        </div>
+        <div>
+          ${comment}
+        </div>
+        <div>
+          如果需要立即可以输入，请在第一行插入该变量。
+        </div>
+        <div>
+          ${ref}、${ref|text}、${ref|link}
+        </div>
+        <div>
+          锚文本链接。用英文|分割。
+        </div>
+        <div>
+          ${ref} - 动态锚文本。跟随目标块原文变化。
+        </div>
+        <div>
+          ${ref|text} - 静态锚文本。使用目标块的原文纯文本。
+        </div>
+        <div>
+          ${ref|link} - 静态锚文本。显示为|后面的文本(如：link)。可指定任意文本，比如: ${ref|*} 则是显示为 *。
+        </div>
+        <div>
+          ${quote} - 摘录的原文，Markdown 格式。会用引述块进行包裹。
+        </div>
+        <div>
+          当同时存在 ${ref|text} 和 ${quote}，行内评论或评论单独一个块时（text 等于 quote），将不会生成原文摘录，而是显示为 ${ref|text}。
+        </div>
+        <div class="EnCommentStructureEditor">
+          <a-textarea
+            v-model="moduleOptions.customCommentStructure"
+          />
+        </div>
+      </div>
+    </EnSettingsItem>
 
     <EnSettingsItem>
       <div>
@@ -71,68 +115,62 @@
       </template>
     </EnSettingsItem>
 
-    <EnSettingsItem>
+    <EnSettingsItem mode="vertical">
       <div>
-        默认配置
+        批注效果
       </div>
-      <template #desc>
-        <div>
-          :root {<br>
-          &nbsp;&nbsp;--en-comment-background-color: var(--b3-font-color11, #65b84d);<br>
-          &nbsp;&nbsp;--en-comment-underline-color: var(--b3-card-success-color, rgb(183, 223, 185));<br>
-          &nbsp;&nbsp;--en-comment-line-underline-color: var(--en-comment-underline-color);<br>
-          &nbsp;&nbsp;--en-comment-style: underline;<br>
-          &nbsp;&nbsp;--en-comment-underline-width: 2px;<br>
-
-          &nbsp;&nbsp;--en-comment-text-shadow: 0px -5px 24px var(--en-comment-background-color);<br>
-          }
-        </div>
-        <div>
-          下方配置中，在最外侧使用 <code>& {}</code>，即代表评论的目标块（可参考默认配置）
+      <template #opt>
+        <div class="EnCommentStyleSelector">
+          <a-select
+            v-model="moduleOptions.commentStyle"
+            placeholder="选择批注样式"
+          >
+            <a-option
+              v-for="mode of commentStyleOptions"
+              :key="mode.value"
+              :value="mode.value"
+              :label="mode.label"
+            >
+            </a-option>
+          </a-select>
         </div>
       </template>
     </EnSettingsItem>
-    <EnSettingsItem
-      mode="manual"
-    >
-      <div
-        class="flexColumn"
-        style="width: 100%;"
-        @mousemove.capture="cancelSettingMouseMoveEvent"
-        @mousedown.capture="cancelSettingMouseMoveEvent"
-      >
+    <EnSettingsItem mode="vertical">
+      <div>
+        批注样式
+      </div>
+      <template #desc>
         <div
-          class="settingTitle"
+          :style="
+            moduleOptions.commentStyle === 'highlight' ? {
+              display: 'inline',
+              boxDecorationBreak: 'clone',
+              backgroundColor: moduleOptions.commentUnderlineColor,
+            } : {
+              textDecorationLine: 'underline',
+              textDecorationStyle: moduleOptions.commentStyle,
+              textDecorationColor: moduleOptions.commentUnderlineColor,
+              textDecorationThickness: `${moduleOptions.commentUnderlineWidth}px`,
+            }
+          "
         >
-          自定义样式（块）
+          批注样式效果预览
         </div>
-        <div>
-          <a-textarea
-            v-model="moduleOptions.customStyleBlock"
+      </template>
+      <template #opt>
+        <div class="EnCommentStyleSlider">
+          <a-slider
+            v-model="moduleOptions.commentUnderlineWidth"
+            :min="1"
+            :max="8"
+          />
+          <EnColorPicker
+            v-model="moduleOptions.commentUnderlineColor"
+            type="color"
           />
         </div>
-      </div>
-    </EnSettingsItem>
-    <EnSettingsItem
-      mode="manual"
-    >
-      <div
-        class="flexColumn"
-        style="width: 100%;"
-        @mousemove.capture="cancelSettingMouseMoveEvent"
-        @mousedown.capture="cancelSettingMouseMoveEvent"
-      >
-        <div
-          class="settingTitle"
-        >
-          自定义样式（行内）
-        </div>
-        <div>
-          <a-textarea
-            v-model="moduleOptions.customStyleInline"
-          />
-        </div>
-      </div>
+      </template>
     </EnSettingsItem>
   </EnSettingsTeleportModule>
   <template v-if="enableComment">
@@ -143,13 +181,14 @@
       <EnCommentDesktop v-if="!plugin.isMobile" />
       <EnCommentMobile v-else />
 
-      <EnCommentHistory />
+      <!-- <EnCommentHistory /> -->
     </EnCommentDataProvider>
   </template>
 </template>
 
 <script setup lang="ts">
 import EnBlockAppendModeSelector from '@/components/EnBlockAppendModeSelector.vue'
+import EnColorPicker from '@/components/EnColorPicker.vue'
 import { usePlugin } from '@/main'
 import {
   provideCommentOptions,
@@ -157,7 +196,7 @@ import {
 
 import EnCommentDataProvider from '@/modules/Comment/EnCommentDataProvider.vue'
 import EnCommentDesktop from '@/modules/Comment/EnCommentDesktop.vue'
-import EnCommentHistory from '@/modules/Comment/EnCommentHistory.vue'
+// import EnCommentHistory from '@/modules/Comment/EnCommentHistory.vue'
 import EnCommentMobile from '@/modules/Comment/EnCommentMobile.vue'
 import EnCommentStyle from '@/modules/Comment/EnCommentStyle.vue'
 import {
@@ -212,62 +251,47 @@ const {
 
     notebookId: '',
     targetId: '',
-    // TODO
-    // autoSaveConfigByWindow: false,
 
     enableCommentStyle: true,
+    commentStyle: 'solid',
+    commentUnderlineWidth: 2,
+    commentUnderlineColor: '#65b84d',
 
-    customStyleBlock: `& {
-  &[data-type="NodeParagraph"],
-  &[data-type="NodeHeading"],
-  [data-type="NodeParagraph"],
-  [data-type="NodeHeading"] {
-    & > div:first-child {
-      text-decoration: var(--en-comment-style);
-      text-decoration-color: var(--en-comment-underline-color);
-      text-decoration-thickness: var(--en-comment-underline-width);
-      text-shadow: var(--en-comment-text-shadow);
 
-      & * {
-        text-decoration: var(--en-comment-style);
-        text-decoration-color: var(--en-comment-underline-color);
-        text-decoration-thickness: var(--en-comment-underline-width);
-        text-shadow: var(--en-comment-text-shadow);
-      }
-
-      img {
-        border: var(--en-comment-underline-width) solid var(--en-comment-underline-color);
-      }
-    }
-  }
-
-  [data-type="NodeWidget"],
-  [data-type="NodeBlockQueryEmbed"],
-  [data-type="NodeHTMLBlock"],
-  [data-type="NodeCodeBlock"],
-  [data-type="NodeVideo"] video,
-  [data-type="NodeAudio"] audio,
-  [data-type="NodeIFrame"] {
-    border: var(--en-comment-underline-width) solid var(--en-comment-underline-color);
-  }
-}`,
-    customStyleInline: `& {
-  text-decoration: var(--en-comment-style);
-  text-decoration-color: var(--en-comment-line-underline-color);
-  text-decoration-thickness: var(--en-comment-underline-width);
-  text-shadow: var(--en-comment-text-shadow);
-
-  & * {
-    text-decoration: var(--en-comment-style);
-    text-decoration-color: var(--en-comment-line-underline-color);
-    text-decoration-thickness: var(--en-comment-underline-width);
-    text-shadow: var(--en-comment-text-shadow);
-  }
-}`,
+    commentWrapMode: 'NodeList',
+    customCommentStructure: '',
   },
 })
 
 provideCommentOptions(moduleOptions)
+
+
+const commentStyleOptions = [
+  {
+    value: 'solid',
+    label: '实线',
+  },
+  {
+    value: 'double',
+    label: '双实线',
+  },
+  {
+    value: 'dotted',
+    label: '点线',
+  },
+  {
+    value: 'dashed',
+    label: '虚线',
+  },
+  {
+    value: 'wavy',
+    label: '波浪线',
+  },
+  {
+    value: 'highlight',
+    label: '高亮',
+  },
+]
 
 const cancelSettingMouseMoveEvent = (e: MouseEvent) => {
   e.stopImmediatePropagation()
@@ -290,17 +314,24 @@ const openTargetDoc = () => {
   align-items: center;
   height: 28px;
 }
+
+.EnCommentStyleSlider,
+.EnCommentStyleSelector {
+  min-width: 134px;
+}
+
+.EnCommentStyleSlider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.EnCommentStructureEditor {
+  :deep(.arco-textarea) {
+    min-height: 90px;
+  }
+}
 </style>
 
 <style lang="scss">
-:root {
-  --en-comment-background-color: var(--b3-font-color11, #65b84d);
-  --en-comment-underline-color: var(--b3-card-success-color, rgb(183, 223, 185));
-  // --en-comment-line-underline-color: var(--b3-theme-success, #65b84d);
-  --en-comment-line-underline-color: var(--en-comment-underline-color);
-  --en-comment-style: underline;
-  --en-comment-underline-width: 2px;
-
-  --en-comment-text-shadow: 0px -5px 24px var(--en-comment-background-color);
-}
 </style>

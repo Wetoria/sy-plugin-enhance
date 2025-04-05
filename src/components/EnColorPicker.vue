@@ -28,7 +28,9 @@ const props = defineProps<{
 }>()
 
 
-const modelValue = defineModel()
+const modelValue = defineModel<string>({
+  required: true,
+})
 const colorList = ref([])
 const bgColorList = ref([])
 

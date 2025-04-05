@@ -34,12 +34,94 @@ watchEffect(() => {
     const nodeId = getNodeIdByCommentId(i)
     return `[data-node-id="${nodeId}"][${EN_COMMENT_KEYS.commentIdInAttribute}~="${i}"]`
   })
+
+  const isHighlight = commentOptions.value.commentStyle === 'highlight'
+  const borderStyle = commentOptions.value.commentStyle === 'wavy' ? 'dashed' : commentOptions.value.commentStyle
+
+  if (isHighlight) {
+    styleDomRef.value.textContent = `
+      ${lineSelectorList.join(', ')} {
+        background-color: ${commentOptions.value.commentUnderlineColor};
+        box-decoration-break: clone;
+
+        & * {
+          background-color: ${commentOptions.value.commentUnderlineColor};
+          box-decoration-break: clone;
+        }
+      }
+      ${blockSelectorList.join(', ')} {
+        &[data-type="NodeParagraph"],
+        &[data-type="NodeHeading"],
+        [data-type="NodeParagraph"],
+        [data-type="NodeHeading"] {
+          & > div:first-child {
+            background-color: ${commentOptions.value.commentUnderlineColor};
+            box-decoration-break: clone;
+          }
+        }
+
+        [data-type="NodeWidget"],
+        [data-type="NodeBlockQueryEmbed"],
+        [data-type="NodeHTMLBlock"],
+        [data-type="NodeCodeBlock"],
+        [data-type="NodeVideo"] video,
+        [data-type="NodeAudio"] audio,
+        [data-type="NodeIFrame"] {
+          background-color: ${commentOptions.value.commentUnderlineColor};
+          box-decoration-break: clone;
+        }
+      }
+    `
+
+    return
+  }
   styleDomRef.value.textContent = `
     ${lineSelectorList.join(', ')} {
-      ${commentOptions.value.customStyleInline}
+      text-decoration-line: underline;
+      text-decoration-style: ${commentOptions.value.commentStyle};
+      text-decoration-color: ${commentOptions.value.commentUnderlineColor};
+      text-decoration-thickness: ${commentOptions.value.commentUnderlineWidth}px;
+
+      & * {
+        text-decoration-line: underline;
+        text-decoration-style: ${commentOptions.value.commentStyle};
+        text-decoration-color: ${commentOptions.value.commentUnderlineColor};
+        text-decoration-thickness: ${commentOptions.value.commentUnderlineWidth}px;
+      }
     }
     ${blockSelectorList.join(', ')} {
-      ${commentOptions.value.customStyleBlock}
+      &[data-type="NodeParagraph"],
+      &[data-type="NodeHeading"],
+      [data-type="NodeParagraph"],
+      [data-type="NodeHeading"] {
+        & > div:first-child {
+          text-decoration-line: underline;
+          text-decoration-style: ${commentOptions.value.commentStyle};
+          text-decoration-color: ${commentOptions.value.commentUnderlineColor};
+          text-decoration-thickness: ${commentOptions.value.commentUnderlineWidth}px;
+
+          & * {
+            text-decoration-line: underline;
+            text-decoration-style: ${commentOptions.value.commentStyle};
+            text-decoration-color: ${commentOptions.value.commentUnderlineColor};
+            text-decoration-thickness: ${commentOptions.value.commentUnderlineWidth}px;
+          }
+
+          img {
+            border: ${commentOptions.value.commentUnderlineWidth}px ${borderStyle} ${commentOptions.value.commentUnderlineColor};
+          }
+        }
+      }
+
+      [data-type="NodeWidget"],
+      [data-type="NodeBlockQueryEmbed"],
+      [data-type="NodeHTMLBlock"],
+      [data-type="NodeCodeBlock"],
+      [data-type="NodeVideo"] video,
+      [data-type="NodeAudio"] audio,
+      [data-type="NodeIFrame"] {
+        border: ${commentOptions.value.commentUnderlineWidth}px ${borderStyle} ${commentOptions.value.commentUnderlineColor};
+      }
     }
   `
 })

@@ -14,26 +14,29 @@
           class="row flexAlignCenter"
           style="width: 100%;"
         >
-          <template v-if="!selectedCommentIdList.length">
-            <div class="flexAlignCenter">
-              添加评论
-            </div>
-            <a-divider direction="vertical" />
-            <div class="flexAlignCenter">
-              日记笔记本：
-            </div>
-            <div>
-              <EnNotebookSelector
-                v-model="moduleOptions.notebookId"
-                :notebook-list="openedNotebookList"
-              />
-            </div>
-          </template>
-          <template v-else>
-            <div class="flexAlignCenter">
-              历史评论
-            </div>
-          </template>
+          <div>
+            <EnBlockAppendModeSelector
+              v-model="selectedNotebookId"
+              v-model:targetId="targetId"
+              :notebookList="openedNotebookList"
+              :mode="globalData.commentMode"
+              showPrompt
+              showTips
+            >
+              <template
+                v-if="isConfigValid"
+                #tipIcon
+              >
+                <icon-check-circle style="color: rgb(var(--success-6))" />
+              </template>
+              <template #prompt>
+                <div class="flexAlignCenter">
+                  添加评论
+                </div>
+                <a-divider direction="vertical" />
+              </template>
+            </EnBlockAppendModeSelector>
+          </div>
         </div>
       </template>
       <div
@@ -51,26 +54,6 @@
             @after-render="onAfterRender"
           />
         </a-spin>
-
-        <div class="enCommentContainerContentHistoryCommentList">
-          <template v-if="selectedCommentIdList.length > 0">
-            <!-- <a-divider orientation="left">历史评论</a-divider> -->
-            <div class="historyCommentList">
-              <div
-                v-for="item of selectedCommentIdList"
-                :key="item.commentBlockId"
-              >
-                <EnProtyle
-                  :blockId="item.commentBlockId"
-                  :options="{
-                    action: [],
-                  }"
-                  disableEnhance
-                />
-              </div>
-            </div>
-          </template>
-        </div>
       </div>
     </a-modal>
     <a-button
@@ -99,11 +82,10 @@ import {
   setBlockAttrs,
   sql,
 } from '@/api'
-import EnNotebookSelector from '@/components/EnNotebookSelector.vue'
+import EnBlockAppendModeSelector from '@/components/EnBlockAppendModeSelector.vue'
 import EnProtyle from '@/components/EnProtyle.vue'
 import {
-  getNodeIdByCommentId,
-  injectCommentIdList,
+  getCommentIdByNodeId,
 } from '@/modules/Comment/Comment'
 import {
   appendBlockIntoDailyNote,
@@ -114,10 +96,14 @@ import {
 } from '@/modules/EnModuleControl/ModuleProvide'
 import {
   debounce,
-  generateShortUUID,
 } from '@/utils'
-import { addCommand } from '@/utils/Commands'
+import { isAppendDailyNoteMode } from '@/utils/Block'
 import {
+  addCommandInModule,
+} from '@/utils/Commands'
+import {
+  EN_COMMAND_KEYS,
+  EN_CONSTANTS,
   EN_MODULE_LIST,
 } from '@/utils/Constants'
 import {
@@ -153,14 +139,44 @@ const currentProtyle = useCurrentProtyle()
 const globalData = injectGlobalData()
 const openedNotebookList = computed(() => globalData.value.openedNotebookList)
 
-// 是否默认新增一个输入的行
-const defaultInserNewLine = true
-
 
 const {
   moduleOptions,
 } = useModule<EnModuleComment>(EN_MODULE_LIST.COMMENT)
 const dailyNoteNotebookId = computed(() => moduleOptions.value.notebookId)
+const selectedNotebookId = ref(moduleOptions.value.notebookId)
+const targetId = ref(moduleOptions.value.targetId)
+watch(() => moduleOptions.value.notebookId, () => {
+  selectedNotebookId.value = moduleOptions.value.notebookId
+})
+watch(() => moduleOptions.value.targetId, () => {
+  targetId.value = moduleOptions.value.targetId
+})
+const isConfigValid = computed(() => {
+  return isAppendDailyNoteMode(selectedNotebookId.value) || targetId.value
+})
+
+
+
+// #region 注册 selectionchange 事件
+
+const selectionCopy = ref<Record<string, any>>({})
+const watchSelectionChange = () => {
+  selectionCopy.value = getSelectionCopy()
+}
+
+onMounted(() => {
+  document.addEventListener('selectionchange', watchSelectionChange)
+})
+onBeforeUnmount(() => {
+  document.removeEventListener('selectionchange', watchSelectionChange)
+})
+
+// #endregion 注册 selectionchange 事件
+
+
+
+
 
 
 const messageFlag = ref(null)
@@ -180,13 +196,16 @@ const onAfterRender = (protyle: Protyle) => {
   protyle.protyle.contentElement.classList.toggle('EnDisableProtyleEnhance', true)
   const flag = setInterval(() => {
     const target = protyle.protyle.contentElement.querySelector(`[data-node-id="${currentBlockId.value}"]`)
+
     if (target) {
       clearInterval(flag)
 
       // eslint-disable-next-line ts/no-use-before-define
       adjustCommentModal()
 
-      protyle.focusBlock(target, false)
+
+      protyle.focusBlock(target, true)
+
       // eslint-disable-next-line ts/no-use-before-define
       isCommenting.value = false
       stopMessage()
@@ -266,18 +285,7 @@ const adjustCommentModal = () => {
 
 // #region 评论的业务逻辑相关
 
-// 根据 nodeId 生成 commentId
-const getCommentIdByNodeId = (nodeId: string) => {
-  const shortUUID = generateShortUUID()
-  return `en-comment-id-${nodeId}-${shortUUID}`
-}
 
-// 根据 nodeId 和文本创建评论
-const commentByNodeIdAndText = async (nodeId: string, text: string) => {
-  const commentId = getCommentIdByNodeId(nodeId)
-  await commentByCommentIdAndText(commentId, text)
-  return commentId
-}
 
 const lastCommentParams = ref({
   commentId: '',
@@ -341,8 +349,155 @@ const createCommentIntoDailyNote = async (commentId: string, text: string) => {
     stopMessage()
   }
 }
+
+const commentByConfig = async (config: {
+  commentId: string
+  nodeId: string
+  blockContent: string
+  blockMarkdown: string
+}) => {
+  const {
+    commentId,
+    nodeId,
+    blockContent,
+    blockMarkdown,
+  } = config
+  const wrapMode = moduleOptions.value.commentWrapMode
+  const isNodeListMode = wrapMode === 'NodeList'
+  const structure = moduleOptions.value.customCommentStructure
+
+  const createParser = (config = {}) => {
+    const options = {
+      startTag: '${',
+      endTag: '}',
+      paramSeparator: '|',
+      argSeparator: ',',
+      ...config
+    };
+
+    const parse = (text) => {
+      const regex = new RegExp(
+        `\\${options.startTag}([^${options.endTag}]+)\\${options.endTag}`,
+        'g'
+      );
+
+      return Array.from(text.matchAll(regex)).map((match: RegExpMatchArray) => {
+        const [full, content] = match;
+        const [type, ...paramParts] = content.split(options.paramSeparator);
+        const params = paramParts.join(options.paramSeparator)
+          .split(options.argSeparator)
+          .map(p => p.trim());
+
+        return {
+          type: type.trim(),
+          params,
+          full,
+          index: match.index
+        };
+      });
+    };
+
+    const replace = (text, handlers) => {
+      return text.replace(
+        new RegExp(`\\${options.startTag}([^${options.endTag}]+)\\${options.endTag}`, 'g'),
+        (match, content) => {
+          const [type, ...paramParts] = content.split(options.paramSeparator);
+          const params = paramParts.join(options.paramSeparator)
+            .split(options.argSeparator)
+            .map(p => p.trim());
+
+          const handler = handlers[type.trim()];
+          return handler ? handler(...params) : match;
+        }
+      );
+    };
+
+    return { parse, replace };
+  };
+
+  // 使用示例
+  const parser = createParser();
+
+  const parsed = parser.parse(structure)
+
+  const cleanInvisibleCharacters = (text) => {
+    return text
+      // 零宽字符
+      .replace(/[\u200B-\u200F\uFEFF]/g, '')
+      // 控制字符
+      .replace(/[\u0000-\u001F\u007F-\u009F]/g, '')
+      // 连接符
+      .replace(/[\u200C\u200D]/g, '')
+      // 变异选择器
+      .replace(/[\uFE00-\uFE0F]/g, '')
+      // 组合字符
+      .replace(/[\u0300-\u036F]/g, '')
+      // 空格
+      .replace(/\s+/g, ' ')
+      // 其他不可见字符
+      .replace(/[\u2000-\u200F\u2028-\u202F\u205F-\u206F]/g, '')
+      // 修饰符
+      .replace(/[\uDB40-\uDB43][\uDC00-\uDFFF]/g, '');
+  };
+
+  // 定义处理器
+  const handlers = {
+    ref: (value) => {
+      let result = blockContent
+      if (!value) {
+        return `((${nodeId} ''))`
+      } else if (value === 'text') {
+        result = blockContent
+      } else {
+        result = value
+      }
+
+      result = result.replace(/"/g, '\\"').replace(/\)/g, '\\)')
+      return `((${nodeId} "${result}"))`
+    },
+    comment: () => `&ZeroWidthSpace;`,
+    quote: () => {
+      const lines = blockMarkdown.replace(/^\{\{\{row(\s*)*/, '').replace(/(\s*)*\}\}\}$/, '').trim().split('\n')
+      let newMarkdown = lines.map((line) => {
+        return `> ${line}`
+      }).join('\n')
+
+
+      const refParsed = parsed.find((i) => i.type === 'ref')
+      const refValue = refParsed?.params[0]
+      if (!refParsed || !refValue) {
+        return newMarkdown
+      }
+
+      if (refValue === 'text' && cleanInvisibleCharacters(blockContent) === cleanInvisibleCharacters(blockMarkdown)) {
+        return ''
+      }
+      return newMarkdown
+    }
+  };
+
+
+  let result = parser.replace(structure, handlers);
+
+  if (isNodeListMode) {
+    const temp = result.split('\n')
+    result = temp.map((i) => {
+      return i
+    }).join('\n\n    ')
+    result = `- ${result}`.replace(/\n\n    >/g, '\n    >')
+  } else {
+    const temp = result.split('\n')
+    result = temp.map((i) => {
+      return i
+    }).join('\n\n')
+    result = `{{{row\n${result}`.replace(/\n\n>/g, '\n>')
+  }
+
+  return commentByCommentIdAndText(commentId, result)
+}
+
 const commentByCommentIdAndText = async (commentId: string, text: string) => {
-  const mdText = `- ${text}${defaultInserNewLine ? '\n\n    &ZeroWidthSpace;' : ''}`
+  const mdText = text
   await createCommentIntoDailyNote(commentId, mdText)
 }
 
@@ -358,7 +513,6 @@ watchEffect(() => {
 const isCommenting = ref(false)
 const startComment = async () => {
   isCommenting.value = true
-  selectedCommentIdList.value = []
 
   const protyle = currentProtyle.value
   const selectedNodes = Array.from(protyle.contentElement.querySelectorAll('.protyle-wysiwyg--select'))
@@ -419,21 +573,6 @@ const startComment = async () => {
   }
 }
 
-// #region 注册 selectionchange 事件
-
-const selectionCopy = ref<Record<string, any>>({})
-const watchSelectionChange = () => {
-  selectionCopy.value = getSelectionCopy()
-}
-
-onMounted(() => {
-  document.addEventListener('selectionchange', watchSelectionChange)
-})
-onBeforeUnmount(() => {
-  document.removeEventListener('selectionchange', watchSelectionChange)
-})
-
-// #endregion 注册 selectionchange 事件
 
 // #endregion 评论的业务逻辑相关
 
@@ -486,21 +625,6 @@ const commentForSingleBlockByNodeId = async (nodeId: string, adjustTarget: HTMLE
     return
   }
 
-  const lines = blockMarkdown.replace(/^\{\{\{row(\s*)*/, '').replace(/(\s*)*\}\}\}$/, '').split('\n')
-  let newMarkdown = ''
-  lines.forEach((line) => {
-    newMarkdown += `${line}\n    > `
-  })
-  const unblankLines = lines.filter((i) => i.trim())
-  const isBiggerThan3Lines = unblankLines.length > 3
-
-  // @ts-expect-error window.siyuan?.config
-  const blockRefDynamicAnchorTextMaxLen = window.siyuan?.config.editor.blockRefDynamicAnchorTextMaxLen || 96
-  const splicedContent = blockContent.length > blockRefDynamicAnchorTextMaxLen
-    ? `${blockContent.slice(0, blockRefDynamicAnchorTextMaxLen)}...`
-    : blockContent
-  const finalMd = `((${nodeId} "${splicedContent}"))\n    > 原文内容${isBiggerThan3Lines ? '(已折叠)' : ''}\n    > ${newMarkdown}\n    {: style="" fold="${isBiggerThan3Lines ? '1' : '0'}" }`
-
   const blockAttrs = await getBlockAttrs(nodeId)
   const currentBlockCommentIdAttr = blockAttrs['custom-en-comment-id']
   let currentBlockCommentIdList = currentBlockCommentIdAttr ? currentBlockCommentIdAttr.split(' ') : []
@@ -515,7 +639,13 @@ const commentForSingleBlockByNodeId = async (nodeId: string, adjustTarget: HTMLE
     'custom-en-comment-id': currentBlockCommentIdList.join(' '),
   })
 
-  await commentByCommentIdAndText(currentBlockCommentId, finalMd)
+
+  await commentByConfig({
+    commentId: currentBlockCommentId,
+    nodeId,
+    blockContent,
+    blockMarkdown,
+  })
 
   if (adjustTarget) {
     recordAdjustCommentModalTargetElement(adjustTarget)
@@ -581,7 +711,13 @@ const commentForInlineText = async () => {
 
   const enCommentId = sameId || getCommentIdByNodeId(nodeId)
 
-  await commentByCommentIdAndText(enCommentId, `((${nodeId} "${selectText}"))`)
+  await commentByConfig({
+    commentId: enCommentId,
+    nodeId,
+    blockContent: selectText,
+    blockMarkdown: selectText,
+  })
+  // await commentByCommentIdAndText(enCommentId, `((${nodeId} "${selectText}"))`)
   // 清理临时标记
 
   // 清理非子节点的标记（比如复制出来的情况）
@@ -632,6 +768,22 @@ const isInCommentButton = (target: HTMLElement) => {
   return targetIsInnerOf(target, (i) => i.classList.contains('enCommentButton'))
 }
 
+const readyToHideCommentButtonFlag = ref(null)
+const stopReadyToHideCommentButton = () => {
+  if (readyToHideCommentButtonFlag.value) {
+    clearTimeout(readyToHideCommentButtonFlag.value)
+    readyToHideCommentButtonFlag.value = null
+  }
+}
+
+// 鼠标按下时，如果不在评论按钮上，则隐藏评论按钮
+const watchMouseDown = (event: Event) => {
+  stopReadyToHideCommentButton()
+  if (!isInCommentButton(event.target as HTMLElement)) {
+    hideCommentButton()
+  }
+}
+
 // 点击以后，显示评论按钮
 const watchMouseUp = debounce((event: Event) => {
   if (doNotShowCommentButton) {
@@ -654,28 +806,16 @@ const watchMouseUp = debounce((event: Event) => {
     // 延时获取鼠标当前位置，防止鼠标移动过快，导致位置获取不准确
     stopReadyToHideCommentButton()
     commentButtonPosition.value = {
+      // eslint-disable-next-line ts/no-use-before-define
       x: getCurrentMousePosition().clientX + 10,
+      // eslint-disable-next-line ts/no-use-before-define
       y: getCurrentMousePosition().clientY - 14,
     }
     showCommentButton()
   }, 200)
 }, 200)
 
-// 鼠标按下时，如果不在评论按钮上，则隐藏评论按钮
-const watchMouseDown = (event: Event) => {
-  stopReadyToHideCommentButton()
-  if (!isInCommentButton(event.target as HTMLElement)) {
-    hideCommentButton()
-  }
-}
 
-const readyToHideCommentButtonFlag = ref(null)
-const stopReadyToHideCommentButton = () => {
-  if (readyToHideCommentButtonFlag.value) {
-    clearTimeout(readyToHideCommentButtonFlag.value)
-    readyToHideCommentButtonFlag.value = null
-  }
-}
 const {
   eventBinded,
   bindEvent,
@@ -694,16 +834,18 @@ const {
   },
 })
 
-addCommand({
-  langKey: 'En_Comment_EnableBtn',
-  langText: '开关评论按钮',
+addCommandInModule({
+  langKey: EN_COMMAND_KEYS.EN_COMMENT_ENABLE_BTN,
+  langText: EN_CONSTANTS.COMMENT_ENABLE_BTN_DISPLAY,
   hotkey: '',
   callback: () => {
     if (eventBinded.value) {
       hideCommentButton()
       unbindEvent()
+      showMessage('叶归｜批注功能已关闭', 1000)
     } else {
       bindEvent()
+      showMessage('叶归｜批注功能已开启', 1000)
     }
   },
 })
@@ -721,9 +863,9 @@ const onMouseEnterCommentButton = () => {
 
 // #region 插件快捷键相关
 
-addCommand({
-  langKey: 'En_Comment',
-  langText: '评论当前选中内容(<a class="enCommentUsageLinkBtn" href="https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse#share-ZMuedaqblocvljxlmFbcHFKcnPd" target="_blank">使用说明</a>)',
+addCommandInModule({
+  langKey: EN_COMMAND_KEYS.EN_COMMENT_CURRENT_CONTENT,
+  langText: EN_CONSTANTS.COMMENT_CURRENT_CONTENT_DISPLAY,
   hotkey: '',
   editorCallback: () => {
     if (popoverVisible.value) {
@@ -733,6 +875,7 @@ addCommand({
     }
   },
 })
+
 const onClickCommentUsageLinkBtn = (event: MouseEvent) => {
   const target = event.target as HTMLElement
   if (target.classList.contains('enCommentUsageLinkBtn')) {
@@ -748,117 +891,6 @@ onBeforeUnmount(() => {
 
 // #endregion 插件快捷键相关
 
-
-
-const commentIdList = injectCommentIdList()
-
-// #region 点击评论，显示历史评论列表
-
-const selectedCommentIdList = ref<Array<{
-  // 评论的目标块中的 id
-  commentId: string
-  // 评论的目标思源块 id
-  commentForNodeId: string
-
-  // 写下评论的块 id：列表（旧版）、列表项（新版）
-  commentBlockId: string
-}>>([])
-const isCommentNode = (target: HTMLElement) => {
-  return target?.getAttribute('custom-en-comment-id') || target?.dataset?.type?.includes('en-comment-id')
-}
-const isCancelShowCommentListDom = (target: HTMLElement) => {
-  return target.classList.contains('enCancelShowCommentListDom')
-}
-const onClickComment = async (event: MouseEvent) => {
-  let target = event.target as HTMLElement
-
-  const allCommentNodes = []
-  while (target) {
-    if (isCancelShowCommentListDom(target)) {
-      return
-    }
-    if (isCommentNode(target)) {
-      allCommentNodes.push(target)
-    }
-    target = target.parentElement
-  }
-
-  if (!allCommentNodes.length) {
-    return
-  }
-
-  const allCommentIdForCommentNodes: Array<{
-    commentId: string
-    commentForNodeId: string
-    commentBlockId?: string
-  }> = []
-  allCommentNodes.forEach((node) => {
-    const customAttrCommentId = node.getAttribute('custom-en-comment-id')
-
-    if (!customAttrCommentId) {
-      const commentIdListInDataType = node.dataset.type.split(' ').filter((i) => i.startsWith('en-comment-id-'))
-      commentIdListInDataType.forEach((id) => {
-        const nodeId = getNodeIdByCommentId(id)
-        allCommentIdForCommentNodes.push({
-          commentId: id,
-          commentForNodeId: nodeId,
-        })
-      })
-      return
-    }
-    const commentIdList = customAttrCommentId.split(' ')
-    commentIdList.forEach((id) => {
-      const nodeId = getNodeIdByCommentId(id)
-      allCommentIdForCommentNodes.push({
-        commentId: id,
-        commentForNodeId: nodeId,
-      })
-    })
-  })
-
-  const idListWhichHasComment = []
-  allCommentIdForCommentNodes.forEach((id) => {
-    if (commentIdList.value.includes(id.commentId) && !idListWhichHasComment.find((i) => i.commentId === id.commentId && i.commentForNodeId === id.commentForNodeId)) {
-      idListWhichHasComment.push(id)
-    }
-  })
-
-  if (!idListWhichHasComment.length) {
-    return
-  }
-
-  const firstHasCommentId = idListWhichHasComment[0].commentId
-  const firstHasCommentInlineNode = document.querySelector(`[data-type~="${firstHasCommentId}"]`)
-  const firstHasCommentNode = document.querySelector(`[custom-en-comment-id~="${firstHasCommentId}"]`)
-  const firstCommentDom = firstHasCommentInlineNode || firstHasCommentNode
-
-  // doNotShowCommentButton = true
-
-  const queryCommentBlockIdSql = `select * from attributes where name = 'custom-en-comment-ref-id' and value in ('${idListWhichHasComment.map((i) => i.commentId).join("','")}')`
-  const commentBlockIdRes = await sql(queryCommentBlockIdSql)
-
-  selectedCommentIdList.value = []
-  idListWhichHasComment.forEach((id) => {
-    const commentBlockId = commentBlockIdRes.find((i) => i.value === id.commentId)?.block_id
-    if (commentBlockId) {
-      id.commentBlockId = commentBlockId
-      selectedCommentIdList.value.push(id)
-    }
-  })
-
-  popoverVisible.value = true
-  currentBlockId.value = ''
-  recordAdjustCommentModalTargetElement(firstCommentDom as HTMLElement)
-  adjustCommentModal()
-}
-onMounted(() => {
-  document.addEventListener('click', onClickComment, true)
-})
-onBeforeUnmount(() => {
-  document.removeEventListener('click', onClickComment, true)
-})
-
-// #endregion 点击评论，显示历史评论列表
 
 
 </script>

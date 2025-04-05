@@ -372,7 +372,7 @@ const onAfterRender = (protyle: Protyle) => {
     if (target) {
       clearInterval(flag)
 
-      protyle.focusBlock(target, false)
+      protyle.focusBlock(target, true)
       isCommenting.value = false
       stopMessage()
     }
@@ -486,8 +486,156 @@ const createCommentIntoDailyNote = async (commentId: string, text: string) => {
     stopMessage()
   }
 }
+
+
+const commentByConfig = async (config: {
+  commentId: string
+  nodeId: string
+  blockContent: string
+  blockMarkdown: string
+}) => {
+  const {
+    commentId,
+    nodeId,
+    blockContent,
+    blockMarkdown,
+  } = config
+  const wrapMode = moduleOptions.value.commentWrapMode
+  const isNodeListMode = wrapMode === 'NodeList'
+  const structure = moduleOptions.value.customCommentStructure
+
+  const createParser = (config = {}) => {
+    const options = {
+      startTag: '${',
+      endTag: '}',
+      paramSeparator: '|',
+      argSeparator: ',',
+      ...config
+    };
+
+    const parse = (text) => {
+      const regex = new RegExp(
+        `\\${options.startTag}([^${options.endTag}]+)\\${options.endTag}`,
+        'g'
+      );
+
+      return Array.from(text.matchAll(regex)).map((match: RegExpMatchArray) => {
+        const [full, content] = match;
+        const [type, ...paramParts] = content.split(options.paramSeparator);
+        const params = paramParts.join(options.paramSeparator)
+          .split(options.argSeparator)
+          .map(p => p.trim());
+
+        return {
+          type: type.trim(),
+          params,
+          full,
+          index: match.index
+        };
+      });
+    };
+
+    const replace = (text, handlers) => {
+      return text.replace(
+        new RegExp(`\\${options.startTag}([^${options.endTag}]+)\\${options.endTag}`, 'g'),
+        (match, content) => {
+          const [type, ...paramParts] = content.split(options.paramSeparator);
+          const params = paramParts.join(options.paramSeparator)
+            .split(options.argSeparator)
+            .map(p => p.trim());
+
+          const handler = handlers[type.trim()];
+          return handler ? handler(...params) : match;
+        }
+      );
+    };
+
+    return { parse, replace };
+  };
+
+  // 使用示例
+  const parser = createParser();
+
+  const parsed = parser.parse(structure)
+
+  const cleanInvisibleCharacters = (text) => {
+    return text
+      // 零宽字符
+      .replace(/[\u200B-\u200F\uFEFF]/g, '')
+      // 控制字符
+      .replace(/[\u0000-\u001F\u007F-\u009F]/g, '')
+      // 连接符
+      .replace(/[\u200C\u200D]/g, '')
+      // 变异选择器
+      .replace(/[\uFE00-\uFE0F]/g, '')
+      // 组合字符
+      .replace(/[\u0300-\u036F]/g, '')
+      // 空格
+      .replace(/\s+/g, ' ')
+      // 其他不可见字符
+      .replace(/[\u2000-\u200F\u2028-\u202F\u205F-\u206F]/g, '')
+      // 修饰符
+      .replace(/[\uDB40-\uDB43][\uDC00-\uDFFF]/g, '');
+  };
+
+  // 定义处理器
+  const handlers = {
+    ref: (value) => {
+      let result = blockContent
+      if (!value) {
+        return `((${nodeId} ''))`
+      } else if (value === 'text') {
+        result = blockContent
+      } else {
+        result = value
+      }
+
+      result = result.replace(/"/g, '\\"').replace(/\)/g, '\\)')
+      return `((${nodeId} "${result}"))`
+    },
+    comment: () => `&ZeroWidthSpace;`,
+    quote: () => {
+      const lines = blockMarkdown.replace(/^\{\{\{row(\s*)*/, '').replace(/(\s*)*\}\}\}$/, '').trim().split('\n')
+      let newMarkdown = lines.map((line) => {
+        return `> ${line}`
+      }).join('\n')
+
+
+      const refParsed = parsed.find((i) => i.type === 'ref')
+      const refValue = refParsed?.params[0]
+      if (!refParsed || !refValue) {
+        return newMarkdown
+      }
+
+      if (refValue === 'text' && cleanInvisibleCharacters(blockContent) === cleanInvisibleCharacters(blockMarkdown)) {
+        return ''
+      }
+      return newMarkdown
+    }
+  };
+
+
+  let result = parser.replace(structure, handlers);
+
+  if (isNodeListMode) {
+    const temp = result.split('\n')
+    result = temp.map((i) => {
+      return i
+    }).join('\n\n    ')
+    result = `- ${result}`.replace(/\n\n    >/g, '\n    >')
+  } else {
+    const temp = result.split('\n')
+    result = temp.map((i) => {
+      return i
+    }).join('\n\n')
+    result = `{{{row\n${result}`.replace(/\n\n>/g, '\n>')
+  }
+
+  return commentByCommentIdAndText(commentId, result)
+}
+
 const commentByCommentIdAndText = async (commentId: string, text: string) => {
-  const mdText = `- ${text}${defaultInserNewLine ? '\n\n    &ZeroWidthSpace;' : ''}`
+  const mdText = text
   await createCommentIntoDailyNote(commentId, mdText)
 }
 
@@ -630,21 +778,6 @@ const commentForSingleBlockByNodeId = async (nodeId: string, adjustTarget: HTMLE
     return
   }
 
-  const lines = blockMarkdown.replace(/^\{\{\{row(\s*)*/, '').replace(/(\s*)*\}\}\}$/, '').split('\n')
-  let newMarkdown = ''
-  lines.forEach((line) => {
-    newMarkdown += `${line}\n    > `
-  })
-  const unblankLines = lines.filter((i) => i.trim())
-  const isBiggerThan3Lines = unblankLines.length > 3
-
-  // @ts-expect-error window.siyuan?.config
-  const blockRefDynamicAnchorTextMaxLen = window.siyuan?.config.editor.blockRefDynamicAnchorTextMaxLen || 96
-  const splicedContent = blockContent.length > blockRefDynamicAnchorTextMaxLen
-    ? `${blockContent.slice(0, blockRefDynamicAnchorTextMaxLen)}...`
-    : blockContent
-  const finalMd = `((${nodeId} "${splicedContent}"))\n    > 原文内容${isBiggerThan3Lines ? '(已折叠)' : ''}\n    > ${newMarkdown}\n    {: style="" fold="${isBiggerThan3Lines ? '1' : '0'}" }`
-
   const blockAttrs = await getBlockAttrs(nodeId)
   const currentBlockCommentIdAttr = blockAttrs['custom-en-comment-id']
   let currentBlockCommentIdList = currentBlockCommentIdAttr ? currentBlockCommentIdAttr.split(' ') : []
@@ -659,7 +792,14 @@ const commentForSingleBlockByNodeId = async (nodeId: string, adjustTarget: HTMLE
     'custom-en-comment-id': currentBlockCommentIdList.join(' '),
   })
 
-  await commentByCommentIdAndText(currentBlockCommentId, finalMd)
+
+  await commentByConfig({
+    commentId: currentBlockCommentId,
+    nodeId,
+    blockContent,
+    blockMarkdown,
+  })
+  // await commentByCommentIdAndText(currentBlockCommentId, finalMd)
 }
 
 const commentForInlineText = async () => {
@@ -716,7 +856,13 @@ const commentForInlineText = async () => {
 
   const enCommentId = sameId || getCommentIdByNodeId(nodeId)
 
-  await commentByCommentIdAndText(enCommentId, `((${nodeId} "${selectText}"))`)
+  await commentByConfig({
+    commentId: enCommentId,
+    nodeId,
+    blockContent: selectText,
+    blockMarkdown: selectText,
+  })
+  // await commentByCommentIdAndText(enCommentId, `((${nodeId} "${selectText}"))`)
   // 清理临时标记
 
   // 清理非子节点的标记（比如复制出来的情况）

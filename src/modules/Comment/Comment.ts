@@ -1,3 +1,4 @@
+import { generateShortUUID } from '@/utils'
 import { EN_PROVIDE_KEYS } from '@/utils/Constants'
 import {
   inject,
@@ -36,4 +37,10 @@ export const getNodeIdByCommentId = (commentId: string) => {
   temp.pop()
   const nodeId = [temp.pop(), temp.pop()].reverse().join('-')
   return nodeId
+}
+
+// 根据 nodeId 生成 commentId
+export const getCommentIdByNodeId = (nodeId: string) => {
+  const shortUUID = generateShortUUID()
+  return `en-comment-id-${nodeId}-${shortUUID}`
 }

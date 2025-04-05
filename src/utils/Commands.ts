@@ -1,6 +1,10 @@
 import { usePlugin } from '@/main'
 import { EN_COMMAND_KEYS } from '@/utils/Constants'
 import { ICommand } from 'siyuan'
+import {
+  onBeforeUnmount,
+  onMounted,
+} from 'vue'
 
 const commandsKeyList: string[] = []
 
@@ -101,4 +105,13 @@ export function removeCommand(command: ICommand) {
 
   plugin.commands = plugin.commands
     .filter((i) => i.langKey !== command.langKey)
+}
+
+export function addCommandInModule(command: ICommand) {
+  onMounted(() => {
+    addCommand(command)
+  })
+  onBeforeUnmount(() => {
+    removeCommand(command)
+  })
 }
