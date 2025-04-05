@@ -259,7 +259,7 @@ const {
 
 
     commentWrapMode: 'NodeList',
-    customCommentStructure: '',
+    customCommentStructure: `\${comment}\n\${ref|text}\n\${quote}`,
   },
 })
 
