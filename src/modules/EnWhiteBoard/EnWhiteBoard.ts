@@ -76,6 +76,18 @@ export interface EnWhiteBoardSetting extends EnModule {
   cardHeightDefault: number
 
   backgroundVariant: 'dots' | 'lines' | 'none'
+  
+  // 节点块创建模式相关配置
+  notebookId: string
+  targetId: string
+  autoSaveConfigByWindow: boolean
+
+  // 边默认配置
+  edgeTypeDefault: 'smoothstep' | 'step' | 'straight' | 'bezier'  // 边类型
+  edgeWidthDefault: '1' | '2' | '3'                              // 边粗细
+  edgeStyleDefault: 'solid' | 'dashed' | 'dotted'                // 边样式
+  edgeMarkerStartDefault: '' | 'circle-solid' | 'line' | 'circle-hollow' | 'arrow-start'  // 起点箭头
+  edgeMarkerEndDefault: '' | 'circle-solid' | 'line' | 'circle-hollow' | 'arrow'          // 终点箭头
 }
 export function useWhiteBoardModule() {
   return useModule<EnWhiteBoardSetting>(EN_MODULE_LIST.EN_WHITE_BOARD)
@@ -109,6 +121,10 @@ export interface EnWhiteBoardNodeData {
     // 节点背景色
     backgroundColor?: string
   }
+  // 父节点ID
+  parentId?: string
+  // 子节点ID列表，用于frame节点存储嵌套的节点
+  childNodeIds?: string[]
 }
 
 export interface EnWhiteBoardEdgeData {

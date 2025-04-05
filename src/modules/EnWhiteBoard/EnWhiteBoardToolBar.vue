@@ -6,6 +6,14 @@
       'is-edge-toolbar': isEdgeToolbar,
     }"
   >
+    <!-- 使用EnWhiteBoardNodeFit组件 -->
+    <EnWhiteBoardNodeFit
+      v-if="nodeId"
+      ref="nodeFitRef"
+      :nodeId="nodeId"
+      :whiteBoardConfigData="whiteBoardConfigData"
+    />
+
     <!-- 基础工具栏 -->
     <template v-if="!isNodeToolbar && !isEdgeToolbar">
       <div class="ToolBarContent">
@@ -58,68 +66,28 @@
               </template>
             </a-button>
           </a-tooltip>
-          <a-tooltip content="节点外观">
-            <a-dropdown
-              trigger="click"
-              @select="onNodeStyleSelect"
-            >
-              <a-button>
+          
+          <!-- Frame节点特有的按钮，只在nodeType为frame时显示 -->
+          <template v-if="nodeType === 'frame'">
+            <a-tooltip :content="'编辑标题: ' + (nodeData?.label || '未命名分组')">
+              <a-button @click="onEditFrameLabel">
                 <template #icon>
-                  <icon-skin />
+                  <icon-edit />
                 </template>
               </a-button>
-              <template #content>
-                <a-doption value="default">
-                  <div class="NodeStyleOption">
-                    <span>默认样式</span>
-                  </div>
-                </a-doption>
-                <a-doption value="inherit">
-                  <div class="NodeStyleOption">
-                    <span>继承原样式</span>
-                  </div>
-                </a-doption>
-              </template>
-            </a-dropdown>
-          </a-tooltip>
-          <a-tooltip content="节点类型">
-            <a-dropdown
-              trigger="click"
-              @select="onNodeTypeSelect"
-            >
-              <a-button>
+            </a-tooltip>
+            
+            <a-tooltip :content="isLocked ? '解锁分组' : '锁定分组'">
+              <a-button @click="onToggleLock" :class="{ 'active': isLocked }">
                 <template #icon>
-                  <icon-apps />
+                  <icon-lock v-if="isLocked" />
+                  <icon-unlock v-else />
                 </template>
               </a-button>
-              <template #content>
-                <a-doption value="protyle">
-                  <div class="NodeTypeOption">
-                    <icon-edit />
-                    <span>普通节点</span>
-                  </div>
-                </a-doption>
-                <a-doption value="mindmap">
-                  <div class="NodeTypeOption">
-                    <icon-mind-mapping />
-                    <span>思维导图</span>
-                  </div>
-                </a-doption>
-                <a-doption value="text">
-                  <div class="NodeTypeOption">
-                    <icon-file />
-                    <span>文本节点</span>
-                  </div>
-                </a-doption>
-                <a-doption value="gingko">
-                  <div class="NodeTypeOption">
-                    <icon-branch />
-                    <span>树形卡片</span>
-                  </div>
-                </a-doption>
-              </template>
-            </a-dropdown>
-          </a-tooltip>
+            </a-tooltip>
+          </template>
+          
+          <!-- 节点颜色按钮（所有节点类型通用） -->
           <a-tooltip content="节点颜色">
             <a-dropdown trigger="click">
               <a-button>
@@ -128,20 +96,11 @@
                 </template>
               </a-button>
               <template #content>
-                <div class="EdgeColorPicker">
+                <div class="NodeColorPicker">
                   <div class="ColorRow">
                     <div
-                      class="ColorItem is-clear"
-                      :style="{
-                        backgroundColor: 'var(--b3-theme-surface)',
-                        border: '1px solid var(--b3-border-color)',
-                      }"
-                      @click="onNodeColorChange('clear')"
-                    >
-                      <icon-close />
-                    </div>
-                    <div
                       v-for="color in [
+                        'default',
                         'var(--b3-font-background1)',
                         'var(--b3-font-background2)',
                         'var(--b3-font-background3)',
@@ -151,11 +110,12 @@
                       ]"
                       :key="color"
                       class="ColorItem"
+                      :class="{ 'is-default': color === 'default' }"
                       :style="{
-                        backgroundColor: color,
+                        backgroundColor: color === 'default' ? 'var(--b3-theme-surface)' : color,
                         border: '1px solid var(--b3-border-color)',
                       }"
-                      @click="onNodeColorChange(color)"
+                      @click="onNodeColorChange(color === 'default' ? 'clear' : color)"
                     />
                   </div>
                   <div class="ColorRow">
@@ -182,8 +142,84 @@
               </template>
             </a-dropdown>
           </a-tooltip>
-          <a-tooltip content="自动适配高度">
-            <a-button @click="onAutoFitHeight">
+          
+          <!-- 其他普通节点专用按钮 -->
+          <template v-if="nodeType !== 'frame'">
+            <a-tooltip content="节点外观">
+              <a-dropdown
+                trigger="click"
+                @select="onNodeStyleSelect"
+              >
+                <a-button>
+                  <template #icon>
+                    <icon-skin />
+                  </template>
+                </a-button>
+                <template #content>
+                  <a-doption value="default">
+                    <div class="NodeStyleOption">
+                      <span>默认样式</span>
+                    </div>
+                  </a-doption>
+                  <a-doption value="inherit">
+                    <div class="NodeStyleOption">
+                      <span>继承原样式</span>
+                    </div>
+                  </a-doption>
+                </template>
+              </a-dropdown>
+            </a-tooltip>
+            <a-tooltip content="节点类型">
+              <a-dropdown
+                trigger="click"
+                @select="onNodeTypeSelect"
+              >
+                <a-button>
+                  <template #icon>
+                    <icon-apps />
+                  </template>
+                </a-button>
+                <template #content>
+                  <a-doption value="protyle">
+                    <div class="NodeTypeOption">
+                      <icon-edit />
+                      <span>普通节点</span>
+                    </div>
+                  </a-doption>
+                  <a-doption value="mindmap">
+                    <div class="NodeTypeOption">
+                      <icon-mind-mapping />
+                      <span>思维导图</span>
+                    </div>
+                  </a-doption>
+                  <a-doption value="text">
+                    <div class="NodeTypeOption">
+                      <icon-file />
+                      <span>文本节点</span>
+                    </div>
+                  </a-doption>
+                  <a-doption value="gingko">
+                    <div class="NodeTypeOption">
+                      <icon-branch />
+                      <span>树形卡片</span>
+                    </div>
+                  </a-doption>
+                </template>
+              </a-dropdown>
+            </a-tooltip>
+          </template>
+          
+          <a-tooltip :content="isAutoHeightEnabled ? '关闭自动高度' : '自动适配高度'">
+            <a-button 
+              @click="onAutoFitHeight"
+              @mousedown="startLongPress"
+              @mouseup="clearLongPress"
+              @mouseleave="clearLongPress"
+              @touchstart.prevent="startLongPress"
+              @touchend.prevent="clearLongPress"
+              @touchcancel.prevent="clearLongPress"
+              :class="{'active-button': isAutoHeightEnabled}"
+            >
               <template #icon>
                 <IconExpand />
               </template>
@@ -852,7 +888,11 @@ import {
   computed,
   ref,
   watch,
+  onBeforeUnmount,
 } from 'vue'
+import { EN_CONSTANTS } from '@/utils/Constants'
+import { debounce } from '@/utils'
+import EnWhiteBoardNodeFit from './components/EnWhiteBoardNodeFit.vue'
 
 const props = defineProps<{
   showBasicControls?: boolean
@@ -873,6 +913,8 @@ const emit = defineEmits<{
   removeEdge: [edgeId: string]
   openInSidebar: [nodeId: string]
   collapse: []
+  editFrameLabel: [nodeId: string]
+  toggleLock: [nodeId: string]
 }>()
 
 const {
@@ -934,8 +976,7 @@ const onDuplicateNode = () => {
 
 const onRemoveEdge = () => {
   if (props.edgeId) {
-    const newEdges = edges.value.filter((edge) => edge.id !== props.edgeId)
-    setEdges(newEdges)
+    emit('removeEdge', props.edgeId)
   }
 }
 
@@ -1128,6 +1169,8 @@ const onNodeColorChange = (color: string) => {
   const nodes = getNodes.value
   const newNodes = nodes.map((node) => {
     if (node.id === props.nodeId) {
+      // 检查是否为Frame节点
+      const isFrame = node.type === EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME
       const newData = {
         ...node.data,
         style: {
@@ -1139,6 +1182,11 @@ const onNodeColorChange = (color: string) => {
         delete newData.style.backgroundColor
       } else {
         newData.style.backgroundColor = color
+        
+        // 如果是Frame节点，同时更新边框颜色
+        if (isFrame) {
+          newData.style.borderColor = color
+        }
       }
 
       return {
@@ -1251,61 +1299,94 @@ const updateTreeCardLayout = (nodeId, nodes) => {
   })
 }
 
-const onAutoFitHeight = () => {
-  console.log('自动适配高度按钮被点击')
-  console.log('当前节点 ID:', props.nodeId)
-  const nodeElement = document.querySelector(`[data-en-flow-node-id='${props.nodeId}']`)
-  if (nodeElement) {
-    console.log('找到的节点元素:', nodeElement)
-    const wysiwygElement = nodeElement.querySelector('.protyle-wysiwyg.protyle-wysiwyg--attr')
-    if (wysiwygElement) {
-      // 计算总高度
-      const toolbarHeight = 30 // ProtyleToolbarArea 高度
-      const bottomPadding = 16 // 编辑器底部内边距
-      const borderWidth = 4 // 上下边框宽度总和
-      const contentHeight = wysiwygElement.scrollHeight // 内容实际高度
+// 添加长按相关的状态变量
+const longPressTimer = ref(null)
+const longPressDuration = 800 // 长按触发时间（毫秒）
+const isLongPressing = ref(false) // 是否正在长按
+const longPressCompleted = ref(false) // 长按是否已完成
 
-      // 计算节点需要的总高度
-      const newHeight = toolbarHeight + contentHeight + bottomPadding + borderWidth
+// 引用节点高度适配组件
+const nodeFitRef = ref(null)
 
-      console.log('高度计算明细:', {
-        toolbarHeight,
-        contentHeight,
-        bottomPadding,
-        borderWidth,
-        totalHeight: newHeight,
-      })
+// 自动高度状态改为使用nodeFit组件的状态
+const isAutoHeightEnabled = computed(() => {
+  return nodeFitRef.value?.isAutoHeightEnabled?.value || false
+})
 
-      const nodes = getNodes.value
-      const newNodes = nodes.map((node) => {
-        if (node.id === props.nodeId) {
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              originalHeight: node.dimensions.height, // 保存原始高度
-              height: newHeight,
-            },
-            dimensions: {
-              ...node.dimensions,
-              height: newHeight,
-            },
-            height: newHeight,
-          }
-        }
-        return node
-      })
-      console.log('更新后的节点数据:', newNodes)
-      setNodes(newNodes)
-      if (props.whiteBoardConfigData) {
-        props.whiteBoardConfigData.boardOptions.nodes = newNodes
-      }
-    } else {
-      console.log('未找到 WYSIWYG 元素，检查选择器')
-    }
-  } else {
-    console.log('未找到节点元素，检查选择器和节点 ID')
+// 清除长按状态
+const clearLongPress = () => {
+  // 如果长按已完成且仍在长按状态，触发开关切换
+  if (isLongPressing.value && longPressCompleted.value) {
+    // 切换自动高度状态
+    nodeFitRef.value?.toggleAutoHeight()
+  } else if (isLongPressing.value && !longPressCompleted.value) {
+    // 如果是短按，执行一次高度调整，但不改变自动高度状态
+    nodeFitRef.value?.adjustNodeHeight()
   }
+  
+  // 重置长按状态
+  if (longPressTimer.value) {
+    clearTimeout(longPressTimer.value)
+    longPressTimer.value = null
+  }
+  isLongPressing.value = false
+  longPressCompleted.value = false
+}
+
+// 长按开始
+const startLongPress = () => {
+  // 先清除可能存在的定时器
+  if (longPressTimer.value) {
+    clearTimeout(longPressTimer.value)
+    longPressTimer.value = null
+  }
+  
+  // 设置长按状态
+  isLongPressing.value = true
+  longPressCompleted.value = false
+  
+  // 设置长按定时器
+  longPressTimer.value = setTimeout(() => {
+    // 标记长按已完成
+    longPressCompleted.value = true
+  }, longPressDuration)
+}
+
+// 自动适配高度函数 - 现在只处理单击情况
+const onAutoFitHeight = () => {
+  // 忽略事件处理，真正的逻辑由 mousedown/up 或 touchstart/end 事件处理
+  // 这里什么也不做，因为Vue会自动触发这个点击事件
+}
+
+// 组件卸载时清理
+onBeforeUnmount(() => {
+  // 清理长按定时器
+  if (longPressTimer.value) {
+    clearTimeout(longPressTimer.value)
+    longPressTimer.value = null
+  }
+})
+
+// 添加Frame节点相关的属性
+const nodeType = computed(() => {
+  const node = getNodes.value.find((n) => n.id === props.nodeId)
+  return node?.type === EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME ? 'frame' : 'normal'
+})
+
+// Frame节点的锁定状态
+const isLocked = computed(() => {
+  const node = getNodes.value.find((n) => n.id === props.nodeId)
+  return node?.data?.isLocked || false
+})
+
+// Frame节点编辑标题方法
+const onEditFrameLabel = () => {
+  emit('editFrameLabel', props.nodeId)
+}
+
+// Frame节点锁定/解锁方法
+const onToggleLock = () => {
+  emit('toggleLock', props.nodeId)
 }
 </script>
 
@@ -1413,6 +1494,11 @@ const onAutoFitHeight = () => {
 
         &:hover {
           background: var(--b3-theme-surface-light);
+        }
+        
+        &.active-button {
+          background-color: var(--b3-theme-primary-light) !important;
+          color: var(--b3-theme-on-primary) !important;
         }
       }
     }

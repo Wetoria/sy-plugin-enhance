@@ -62,6 +62,18 @@
         <span>居中视图</span>
       </div>
     </div>
+    <div
+      v-if="isFrame && flowNode.data?.childNodeIds && flowNode.data.childNodeIds.length > 0"
+      class="MenuGroup"
+    >
+      <div
+        class="ContextMenuItem"
+        @click="showNestedNodes"
+      >
+        <IconList />
+        <span>查看嵌套节点 ({{ flowNode.data.childNodeIds.length }})</span>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -76,8 +88,10 @@ import { EN_CONSTANTS } from '@/utils/Constants'
 import {
   useVueFlow,
 } from '@vue-flow/core'
-
-
+import { Notification } from '@arco-design/web-vue'
+import { computed } from 'vue'
+import { appendBlockInto } from '@/utils/Block'
+import { setBlockAttrs } from '@/api'
 
 const props = defineProps<{
   visible: boolean
@@ -89,6 +103,7 @@ const props = defineProps<{
     x: number
     y: number
   }
+  nodeId: string
 }>()
 
 const emit = defineEmits<{
@@ -104,11 +119,20 @@ const {
   setEdges,
   edges,
   project,
+  getNodes,
 } = useVueFlow()
 
 const {
   moduleOptions: moduleWhiteBoardOptions,
 } = useWhiteBoardModule()
+
+const flowNode = computed(() => {
+  return getNodes.value.find(n => n.id === props.nodeId)
+})
+
+const isFrame = computed(() => {
+  return flowNode.value && flowNode.value.type === EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME
+})
 
 // 创建新节点
 const handleCreateNode = async () => {
@@ -117,7 +141,25 @@ const handleCreateNode = async () => {
     y: props.clickPosition.y,
   })
 
-  const blockId = await getNewDailyNoteBlockId()
+  // 获取白板模块配置
+  const { notebookId, targetId } = moduleWhiteBoardOptions.value
+  
+  // 根据配置创建节点
+  let blockId = ''
+  
+  if (notebookId && targetId) {
+    // 使用目标块模式
+    blockId = await appendBlockInto(notebookId, targetId, '')
+  } else {
+    // 使用日记模式
+    blockId = await getNewDailyNoteBlockId()
+  }
+  
+  if (!blockId) {
+    console.error('创建节点失败')
+    return
+  }
+
   const newNode = {
     id: generateWhiteBoardNodeId(),
     type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_PROTYLE,
@@ -137,33 +179,83 @@ const handleCreateNode = async () => {
 }
 
 // 创建新分组
-const handleCreateFrame = () => {
-  const position = project({
-    x: props.clickPosition.x,
-    y: props.clickPosition.y,
-  })
+const handleCreateFrame = async () => {
+  try {
+    const position = project({
+      x: props.clickPosition.x,
+      y: props.clickPosition.y,
+    })
 
-  const newFrame = {
-    id: generateWhiteBoardNodeId(),
-    type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME,
-    data: {
-      label: '新分组',
-      style: {
-        backgroundColor: 'var(--b3-theme-surface-light)',
+    // 生成唯一ID
+    const frameId = generateWhiteBoardNodeId()
+
+    // 定义Frame的尺寸
+    const frameWidth = 400;
+    const frameHeight = 300;
+    
+    // 获取白板模块配置
+    const { notebookId, targetId } = moduleWhiteBoardOptions.value
+    
+    // 创建Frame的思源块
+    let blockId = ''
+    const frameName = '新分组'
+    
+    // 创建Frame的内容：标题块加列表块
+    const frameContent = `{{{row
+# ${frameName}
+
+* 该分组中的节点将显示在这里
+}}}`
+    
+    if (notebookId && targetId) {
+      blockId = await appendBlockInto(notebookId, targetId, frameContent)
+    } else {
+      blockId = await getNewDailyNoteBlockId(frameContent)
+    }
+    
+    if (!blockId) {
+      console.error('创建Frame块失败')
+      return
+    }
+    
+    // 设置块属性
+    await setBlockAttrs(blockId, {
+      'custom-en-whiteboard-frame': 'true',
+      'custom-en-whiteboard-node-id': frameId,
+    })
+
+    const newFrame = {
+      id: frameId,
+      type: EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME,
+      data: {
+        blockId, // 保存思源块ID
+        label: frameName, // 保存标题
+        childNodeIds: [], // 初始化子节点ID列表
+        style: {
+          backgroundColor: 'var(--b3-theme-surface-light)',
+        },
       },
-    },
-    position,
-    dimensions: {
-      width: 400,
-      height: 300,
-    },
-    connectable: true,
-    draggable: true,
-    selectable: true,
-  }
+      position,
+      // 使用dimensions属性设置尺寸
+      dimensions: {
+        width: frameWidth,
+        height: frameHeight,
+      },
+      // 同时也设置width和height属性以确保Vue Flow正确处理
+      width: frameWidth,
+      height: frameHeight,
+      connectable: true,
+      draggable: true,
+      selectable: true,
+    }
 
-  addNodes([newFrame])
-  emit('close')
+    // 添加节点
+    addNodes([newFrame])
+    emit('close')
+  } catch (error) {
+    console.error('创建Frame节点失败:', error)
+    emit('close')
+  }
 }
 
 // 创建思维导图节点
@@ -329,6 +421,32 @@ const handleFitView = () => {
 const handleCenterView = () => {
   setCenter(0, 0, { duration: 800 })
   emit('close')
+}
+
+// 关闭上下文菜单
+const closeContextMenu = () => {
+  emit('close')
+}
+
+const showNestedNodes = () => {
+  if (!flowNode.value?.data?.childNodeIds || flowNode.value.data.childNodeIds.length === 0) return
+  
+  const nestedNodeIds = flowNode.value.data.childNodeIds
+  const nodeInfos = nestedNodeIds.map(id => {
+    const node = getNodes.value.find(n => n.id === id)
+    return node ? 
+      `${id.substring(0, 8)}... (${node.type.replace('EnWhiteBoardNode', '')})` : 
+      `${id.substring(0, 8)}... (未找到)`
+  })
+  
+  // 通过系统通知显示嵌套节点信息
+  Notification.info({
+    title: `Frame "${flowNode.value.data?.label || '未命名分组'}" 嵌套节点列表`,
+    content: nodeInfos.join('<br>'),
+    duration: 5000,
+  })
+  
+  closeContextMenu()
 }
 </script>
 

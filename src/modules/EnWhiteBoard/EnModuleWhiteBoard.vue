@@ -7,6 +7,41 @@
   >
     <EnSettingsItem mode="vertical">
       <div>
+        创建模式
+      </div>
+      <template #desc>
+        <div>
+          选择白板节点对应的思源块的创建位置：添加至目标块或追加至笔记本的日记中。
+        </div>
+        <div>
+          如果目标为容器块（比如文档、列表项、超级块），则会插入容器块的末尾。
+        </div>
+        <div>
+          如果目标非容器块（比如段落），则会插入目标块的后方。
+        </div>
+        <div v-if="moduleOptions.targetId">
+          已选择块：
+          <a-link
+            @click="openTargetDoc"
+          >
+            点击跳转至目标块
+          </a-link>
+        </div>
+      </template>
+      <template #opt>
+        <div class="EnNotebookSelector">
+          <EnBlockAppendModeSelector
+            v-model="moduleOptions.notebookId"
+            v-model:targetId="moduleOptions.targetId"
+            :notebookList="openedNotebookList"
+            :mode="whiteBoardMode"
+            :disabled="cannotEdit"
+          />
+        </div>
+      </template>
+    </EnSettingsItem>
+    <EnSettingsItem mode="vertical">
+      <div>
         白板后的最小高度
       </div>
       <template #opt>
@@ -159,6 +194,156 @@
         </a-select>
       </template>
     </EnSettingsItem>
+    <EnSettingsItem mode="vertical">
+      <div>
+        连接线类型
+      </div>
+      <template #desc>
+        <div>
+          选择白板中连接线的默认类型
+        </div>
+      </template>
+      <template #opt>
+        <a-select
+          v-model="moduleOptions.edgeTypeDefault"
+          placeholder="请选择连接线类型"
+          :disabled="cannotEdit"
+        >
+          <a-option value="smoothstep">
+            平滑阶梯
+          </a-option>
+          <a-option value="step">
+            阶梯
+          </a-option>
+          <a-option value="straight">
+            直线
+          </a-option>
+          <a-option value="bezier">
+            贝塞尔曲线
+          </a-option>
+        </a-select>
+      </template>
+    </EnSettingsItem>
+    <EnSettingsItem mode="vertical">
+      <div>
+        连接线粗细
+      </div>
+      <template #desc>
+        <div>
+          选择白板中连接线的默认粗细
+        </div>
+      </template>
+      <template #opt>
+        <a-select
+          v-model="moduleOptions.edgeWidthDefault"
+          placeholder="请选择连接线粗细"
+          :disabled="cannotEdit"
+        >
+          <a-option value="1">
+            细
+          </a-option>
+          <a-option value="2">
+            中
+          </a-option>
+          <a-option value="3">
+            粗
+          </a-option>
+        </a-select>
+      </template>
+    </EnSettingsItem>
+    <EnSettingsItem mode="vertical">
+      <div>
+        连接线样式
+      </div>
+      <template #desc>
+        <div>
+          选择白板中连接线的默认样式
+        </div>
+      </template>
+      <template #opt>
+        <a-select
+          v-model="moduleOptions.edgeStyleDefault"
+          placeholder="请选择连接线样式"
+          :disabled="cannotEdit"
+        >
+          <a-option value="solid">
+            实线
+          </a-option>
+          <a-option value="dashed">
+            虚线
+          </a-option>
+          <a-option value="dotted">
+            点线
+          </a-option>
+        </a-select>
+      </template>
+    </EnSettingsItem>
+    <EnSettingsItem mode="vertical">
+      <div>
+        连接线起点箭头
+      </div>
+      <template #desc>
+        <div>
+          选择白板中连接线的默认起点箭头
+        </div>
+      </template>
+      <template #opt>
+        <a-select
+          v-model="moduleOptions.edgeMarkerStartDefault"
+          placeholder="请选择起点箭头"
+          :disabled="cannotEdit"
+        >
+          <a-option value="">
+            无
+          </a-option>
+          <a-option value="circle-solid">
+            实心圆点
+          </a-option>
+          <a-option value="line">
+            横线
+          </a-option>
+          <a-option value="circle-hollow">
+            空心圆点
+          </a-option>
+          <a-option value="arrow-start">
+            箭头
+          </a-option>
+        </a-select>
+      </template>
+    </EnSettingsItem>
+    <EnSettingsItem mode="vertical">
+      <div>
+        连接线终点箭头
+      </div>
+      <template #desc>
+        <div>
+          选择白板中连接线的默认终点箭头
+        </div>
+      </template>
+      <template #opt>
+        <a-select
+          v-model="moduleOptions.edgeMarkerEndDefault"
+          placeholder="请选择终点箭头"
+          :disabled="cannotEdit"
+        >
+          <a-option value="">
+            无
+          </a-option>
+          <a-option value="circle-solid">
+            实心圆点
+          </a-option>
+          <a-option value="line">
+            横线
+          </a-option>
+          <a-option value="circle-hollow">
+            空心圆点
+          </a-option>
+          <a-option value="arrow">
+            箭头
+          </a-option>
+        </a-select>
+      </template>
+    </EnSettingsItem>
   </EnSettingsTeleportModule>
 
   <template v-if="hasAuth && moduleOptions.enabled">
@@ -178,6 +363,7 @@
 import { usePlugin } from '@/main'
 import {
   injectAuthStatus,
+  injectGlobalData,
   useModule,
 } from '@/modules/EnModuleControl/ModuleProvide'
 import {
@@ -192,8 +378,6 @@ import EnWhiteBoardRenderEmbed from '@/modules/EnWhiteBoard/EnWhiteBoardRenderEm
 import {
   debounce,
 } from '@/utils'
-
-
 import {
   EN_CONSTANTS,
   EN_MODULE_LIST,
@@ -212,6 +396,7 @@ import {
 import EnSettingsItem from '../../modules/Settings/EnSettingsItem.vue'
 import EnSettingsTeleportModule from '../../modules/Settings/EnSettingsTeleportModule.vue'
 import EnWhiteBoardEntrySlash from './EnWhiteBoardEntrySlash.vue'
+import EnBlockAppendModeSelector from '@/components/EnBlockAppendModeSelector.vue'
 
 const plugin = usePlugin()
 
@@ -248,6 +433,18 @@ const {
     cardHeightDefault: 185,
 
     backgroundVariant: 'dots',
+    
+    // 节点块创建模式相关配置
+    notebookId: '',
+    targetId: '',
+    autoSaveConfigByWindow: false,
+
+    // 边默认配置
+    edgeTypeDefault: 'smoothstep',
+    edgeWidthDefault: '2',
+    edgeStyleDefault: 'solid',
+    edgeMarkerStartDefault: '',
+    edgeMarkerEndDefault: 'arrow',
   },
 })
 
@@ -331,16 +528,27 @@ watch(() => moduleOptions.value.enabled, () => {
   }
 })
 
-// 监听全局背景设置变化
-watch(() => moduleOptions.value.backgroundVariant, (newVariant, oldVariant) => {
-  // 更新所有白板的背景设置
-  Object.values(whiteBoardConfigList.value).forEach((config) => {
-    // 如果白板的背景设置与之前的全局设置相同，说明它没有被手动修改过，应该跟随全局设置更新
-    if (config.moduleOptions.value.boardOptions.backgroundVariant === oldVariant) {
-      config.moduleOptions.value.boardOptions.backgroundVariant = newVariant
+// 获取已打开的笔记本列表
+const globalData = injectGlobalData()
+const openedNotebookList = computed(() => globalData.value.openedNotebookList || [])
+const whiteBoardMode = computed<EnBlockAppendMode[]>(() => 
+  globalData.value.whiteBoardMode || (['All', 'targetBlock', 'targetDoc'] as EnBlockAppendMode[])
+)
+
+// 跳转到目标文档
+const openTargetDoc = () => {
+  if (moduleOptions.value.targetId) {
+    const app = window.siyuan?.ws?.app
+    if (app) {
+      app.openTab({
+        app,
+        doc: {
+          id: moduleOptions.value.targetId,
+        },
+      })
     }
-  })
-})
+  }
+}
 </script>
 
 <style lang="scss">

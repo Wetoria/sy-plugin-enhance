@@ -8,6 +8,13 @@
     :data-depth="nodeDepth"
     @click="handleNodeClick"
   >
+    <!-- 添加EnWhiteBoardNodeFit组件 -->
+    <EnWhiteBoardNodeFit
+      :nodeId="nodeId"
+      :whiteBoardConfigData="whiteBoardConfigData"
+      @height-changed="onHeightChanged"
+    />
+
     <!-- 树形卡片模式下的添加子节点按钮 -->
     <div class="add-child-button">
       <a-button
@@ -76,7 +83,12 @@ import {
   watch,
   onMounted,
   onUnmounted,
+  ref,
+  toRefs,
 } from 'vue'
+
+// 添加EnWhiteBoardNodeFit组件的导入
+import EnWhiteBoardNodeFit from './components/EnWhiteBoardNodeFit.vue'
 
 const props = defineProps<{
   nodeId: string
@@ -743,16 +755,16 @@ onMounted(() => {
     }
   }
   
-  const handleScrollToNode = (event) => {
+  const handleScrollToNode = (event: any) => {
     const { nodeId, relatedNodes } = event.detail
     
     // 如果当前节点是目标节点，或者是目标节点的父节点或子节点，需要滚动到可见区域
     if (nodeId === props.nodeId || 
-        relatedNodes.parents.some(p => p.id === props.nodeId) ||
-        relatedNodes.children.some(c => c.id === props.nodeId)) {
+        relatedNodes.parents.some((p: any) => p.id === props.nodeId) ||
+        relatedNodes.children.some((c: any) => c.id === props.nodeId)) {
       
       // 获取节点DOM元素
-      const nodeElement = document.querySelector(`[data-en-flow-node-id='${props.nodeId}']`)
+      const nodeElement = document.querySelector(`[data-en-flow-node-id='${props.nodeId}']`) as HTMLElement
       if (!nodeElement) return
       
       // 计算滚动位置
@@ -761,23 +773,23 @@ onMounted(() => {
       if (nodeId === props.nodeId) {
         // 当前节点是目标节点，居中显示
         scrollTop = nodeElement.offsetTop - (window.innerHeight / 2) + (nodeElement.offsetHeight / 2)
-      } else if (relatedNodes.parents.some(p => p.id === props.nodeId)) {
+      } else if (relatedNodes.parents.some((p: any) => p.id === props.nodeId)) {
         // 当前节点是目标节点的父节点，与根节点对齐
         const rootNode = relatedNodes.parents[0] || relatedNodes.current
-        const rootElement = document.querySelector(`[data-en-flow-node-id='${rootNode.id}']`)
+        const rootElement = document.querySelector(`[data-en-flow-node-id='${rootNode.id}']`) as HTMLElement
         if (rootElement) {
           scrollTop = nodeElement.offsetTop - rootElement.offsetTop
         }
-      } else if (relatedNodes.children.some(c => c.id === props.nodeId)) {
+      } else if (relatedNodes.children.some((c: any) => c.id === props.nodeId)) {
         // 当前节点是目标节点的子节点，与目标节点对齐
-        const targetElement = document.querySelector(`[data-en-flow-node-id='${nodeId}']`)
+        const targetElement = document.querySelector(`[data-en-flow-node-id='${nodeId}']`) as HTMLElement
         if (targetElement) {
           scrollTop = nodeElement.offsetTop - targetElement.offsetTop
         }
       }
       
       // 执行滚动
-      const container = nodeElement.closest('.vue-flow__transformationpane')
+      const container = nodeElement.closest('.vue-flow__transformationpane') as HTMLElement
       if (container) {
         container.scrollTop = scrollTop
       }
@@ -797,6 +809,21 @@ onMounted(() => {
 // 添加点击事件，实现聚焦功能
 const handleNodeClick = () => {
   scrollToNode(props.nodeId)
+}
+
+// 折叠状态直接使用props.isCollapsed
+const { isCollapsed } = toRefs(props)
+
+// 添加高度变化处理函数
+const onHeightChanged = (height: number) => {
+  // 树形卡片节点高度变化时，需要重新计算布局
+  console.log('树形卡片节点高度已更新:', height)
+  
+  // 清除布局缓存，确保下次使用新的高度计算
+  layoutUtils.clearCache()
+  
+  // 如果有更新布局的事件或方法，可以在这里调用
+  // ...
 }
 </script>
 

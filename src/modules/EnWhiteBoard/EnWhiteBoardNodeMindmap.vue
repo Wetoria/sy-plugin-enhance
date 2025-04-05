@@ -1020,6 +1020,18 @@ const calculateEdgeColor = (parentEdge, siblings, currentEdges) => {
   // 如果是新的分支，使用第一个预设颜色
   return presetColors[0]
 }
+
+// 根据节点获取块ID
+const getBlockIdByNodeId = (nodeId) => {
+  const nodes = getNodes.value
+  const node = nodes.find((n) => n.id === nodeId)
+  return node?.data?.blockId || null
+}
+
+// 优化后的获取随机颜色函数
+const getRandomColor = () => {
+  return presetColors[0]
+}
 </script>
 
 <style lang="scss" scoped>

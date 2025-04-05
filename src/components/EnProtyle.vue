@@ -99,7 +99,7 @@ defineExpose({
     min-height: 100%;
 
     .protyle-content {
-      padding-bottom: 16px;
+      padding-bottom: 0;
     }
 
     .protyle-wysiwyg {

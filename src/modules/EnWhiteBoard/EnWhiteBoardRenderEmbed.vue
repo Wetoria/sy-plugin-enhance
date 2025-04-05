@@ -29,7 +29,7 @@
             :data="data"
             :needSider="!!fullScreen"
           >
-            <template #SiderRightTopButtonGroupAfter>
+            <template #SiderLeftTopButtonGroupAfter>
               <a-tooltip content="思源内铺满">
                 <a-button @click="changeFullScreen('siyuan')">
                   <SyIcon name="iconSiYuan" />
@@ -48,6 +48,8 @@
                   <SyIcon name="iconContract" />
                 </a-button>
               </a-tooltip>
+            </template>
+            <template #SiderRightTopButtonGroupAfter>
             </template>
           </EnWhiteBoardRender>
         </a-resize-box>
