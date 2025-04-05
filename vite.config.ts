@@ -7,7 +7,6 @@ import minimist from "minimist"
 import livereload from "rollup-plugin-livereload"
 import {
   defineConfig,
-  loadEnv,
 } from "vite"
 import { viteStaticCopy } from "vite-plugin-static-copy"
 import zipPack from "vite-plugin-zip-pack"
@@ -73,7 +72,7 @@ export default defineConfig({
   build: {
     // 输出路径
     outDir: distDir,
-    emptyOutDir: false,
+    emptyOutDir: true,
 
     // 构建后是否生成 source map 文件
     sourcemap: false,
