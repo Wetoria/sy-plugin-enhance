@@ -175,13 +175,15 @@
   </EnSettingsTeleportModule>
   <template v-if="enableComment">
     <EnCommentDataProvider>
-      <EnCommentStyle v-if="moduleOptions.enableCommentStyle">
-        <!-- 为历史样式预留 -->
-      </EnCommentStyle>
+      <template v-if="moduleOptions.enableCommentStyle">
+        <EnCommentStyle >
+          <!-- 为历史样式预留 -->
+        </EnCommentStyle>
+        <EnCommentHistory />
+      </template>
       <EnCommentDesktop v-if="!plugin.isMobile" />
       <EnCommentMobile v-else />
 
-      <!-- <EnCommentHistory /> -->
     </EnCommentDataProvider>
   </template>
 </template>
@@ -196,7 +198,7 @@ import {
 
 import EnCommentDataProvider from '@/modules/Comment/EnCommentDataProvider.vue'
 import EnCommentDesktop from '@/modules/Comment/EnCommentDesktop.vue'
-// import EnCommentHistory from '@/modules/Comment/EnCommentHistory.vue'
+import EnCommentHistory from '@/modules/Comment/EnCommentHistory.vue'
 import EnCommentMobile from '@/modules/Comment/EnCommentMobile.vue'
 import EnCommentStyle from '@/modules/Comment/EnCommentStyle.vue'
 import {
