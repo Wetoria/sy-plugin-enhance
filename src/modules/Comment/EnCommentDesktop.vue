@@ -823,6 +823,11 @@ const watchMouseUp = debounce((event: Event) => {
       // eslint-disable-next-line ts/no-use-before-define
       y: getCurrentMousePosition().clientY + 25,
     }
+
+    // 修正顶部位置，防止被顶部工具栏遮挡按钮
+    if (commentButtonPosition.value.y < 32) {
+      commentButtonPosition.value.y = 32
+    }
     showCommentButton()
   }, 200)
 }, 200)
