@@ -44,3 +44,11 @@ export const getCommentIdByNodeId = (nodeId: string) => {
   const shortUUID = generateShortUUID()
   return `en-comment-id-${nodeId}-${shortUUID}`
 }
+
+export const isCommentNode = (target: HTMLElement) => {
+  return target?.getAttribute('custom-en-comment-id') || target?.dataset?.type?.includes('en-comment-id')
+}
+
+export const isCancelShowCommentListDom = (target: HTMLElement) => {
+  return target.classList.contains('enCancelShowCommentListDom')
+}
