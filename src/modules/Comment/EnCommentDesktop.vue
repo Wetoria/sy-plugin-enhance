@@ -163,6 +163,7 @@ const isConfigValid = computed(() => {
 const selectionCopy = ref<Record<string, any>>({})
 const watchSelectionChange = () => {
   selectionCopy.value = getSelectionCopy()
+  showCommentButton()
 }
 
 onMounted(() => {
@@ -222,6 +223,13 @@ const destoryProtyle = () => {
 // #region 评论 modal 窗口
 
 const popoverVisible = ref(false)
+const showCommentModal = () => {
+  popoverVisible.value = true
+}
+const hideCommentModal = () => {
+  popoverVisible.value = false
+  doNotShowCommentButton = true
+}
 
 // #region 双击关闭评论窗口
 
@@ -238,24 +246,28 @@ const isInCommentModal = (target: HTMLElement) => {
 
 const closeModalOutside = (event: Event) => {
   if (!isInCommentModal(event.target as HTMLElement)) {
-    popoverVisible.value = false
-    doNotShowCommentButton = true
+    hideCommentModal()
   }
 }
-onMounted(() => {
-  document.addEventListener('dblclick', closeModalOutside)
-})
-onBeforeUnmount(() => {
-  document.removeEventListener('dblclick', closeModalOutside)
-})
+
+const closeModalByEsc = (event: KeyboardEvent) => {
+  if (event.key === 'Escape') {
+    event.stopImmediatePropagation()
+    hideCommentModal()
+  }
+}
 
 // #endregion 双击关闭评论窗口
 
 watchEffect(() => {
   if (popoverVisible.value) {
+    document.addEventListener('dblclick', closeModalOutside)
+    document.addEventListener('keydown', closeModalByEsc, true)
     // 隐藏评论按钮
     hideCommentButton()
   } else {
+    document.removeEventListener('dblclick', closeModalOutside)
+    document.removeEventListener('keydown', closeModalByEsc, true)
     // 关闭弹窗时，销毁 protyle
     destoryProtyle()
   }
@@ -344,7 +356,7 @@ const createCommentIntoDailyNote = async (commentId: string, text: string) => {
     }
 
     newCommentNodeIdRef.value = newCommentNodeId
-    popoverVisible.value = true
+    showCommentModal()
   } catch (error) {
     stopMessage()
   }
@@ -744,14 +756,14 @@ const commentForInlineText = async () => {
 const commentButtonIsShown = ref(false)
 let commentButtonIsShowing = false
 let doNotShowCommentButton = false
-const showCommentButton = () => {
+const showCommentButton = debounce(() => {
   commentButtonIsShowing = true
   commentButtonIsShown.value = true
 
   setTimeout(() => {
     commentButtonIsShowing = false
   }, 500)
-}
+}, 100)
 const hideCommentButton = () => {
   if (commentButtonIsShowing) {
     commentButtonIsShowing = false
@@ -807,9 +819,9 @@ const watchMouseUp = debounce((event: Event) => {
     stopReadyToHideCommentButton()
     commentButtonPosition.value = {
       // eslint-disable-next-line ts/no-use-before-define
-      x: getCurrentMousePosition().clientX + 10,
+      x: getCurrentMousePosition().clientX,
       // eslint-disable-next-line ts/no-use-before-define
-      y: getCurrentMousePosition().clientY - 14,
+      y: getCurrentMousePosition().clientY + 25,
     }
     showCommentButton()
   }, 200)
@@ -869,7 +881,7 @@ addCommandInModule({
   hotkey: '',
   editorCallback: () => {
     if (popoverVisible.value) {
-      popoverVisible.value = false
+      hideCommentModal()
     } else {
       startComment()
     }
