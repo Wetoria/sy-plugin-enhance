@@ -289,7 +289,8 @@ const adjustCommentModal = () => {
     translateX,
     translateY,
   } = positionModalWithTranslate(adjustModalTargetRef.value, modal)
-  modal.style.transform = `translate(${translateX}px, ${translateY}px)`
+  let posY = translateY <= 32 ? 32 : translateY
+  modal.style.transform = `translate(${translateX}px, ${posY}px)`
 }
 
 // #endregion 评论 modal 窗口
