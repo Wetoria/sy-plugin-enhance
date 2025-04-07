@@ -206,6 +206,7 @@ import {
   generateWhiteBoardNodeId,
   getWhiteBoardConfigRefById,
   useWhiteBoardModule,
+  globalMergingState
 } from '@/modules/EnWhiteBoard/EnWhiteBoard'
 import { debounce } from '@/utils'
 import {
@@ -495,7 +496,7 @@ const mergeTopLevelBlocksIntoSuperBlock = debounce(() => {
     return
   }
 
-  if (isMergingToSuperBlock.value) {
+  if (globalMergingState.isMerging.value || isMergingToSuperBlock.value) {
     return
   }
 
@@ -503,7 +504,14 @@ const mergeTopLevelBlocksIntoSuperBlock = debounce(() => {
     return
   }
 
-  const children = Array.from(cardProtyleRef.value.protyle.wysiwyg.element.children || [])
+  let children = []
+  try {
+    children = Array.from(cardProtyleRef.value.protyle.wysiwyg.element.children || [])
+  } catch (e) {
+    console.warn('获取子元素失败:', e)
+    return
+  }
+  
   if (children.length <= 1) {
     mergeAttemptsCount.value = 0
     return
@@ -525,41 +533,50 @@ const mergeTopLevelBlocksIntoSuperBlock = debounce(() => {
       return
     }
 
-    recordAffectedNodes()
-
+    const blockIdsToMerge = validChildren.map(child => child.dataset?.nodeId).filter(Boolean)
+    
+    if (nodeData.value?.blockId) {
+      globalMergingState.startMerging(flowNode.id, nodeData.value.blockId)
+      
+      blockIdsToMerge.forEach(id => {
+        if (id) globalMergingState.addAffectedBlockId(id)
+      })
+    }
+    
     isMergingToSuperBlock.value = true
     mergeAttemptsCount.value++
 
     updateNodeMergingStatus(true)
     
+    blockIdCheckSuspended.value = true
+    
+    console.log(`开始合并超级块，影响块ID: ${blockIdsToMerge.join(', ')}`)
+    
     protyleIns.turnIntoOneTransaction(validChildren, 'BlocksMergeSuperBlock', 'row')
     
-    const off = useSiyuanDatabaseIndexCommit(debounce(async () => {
+    const off = useSiyuanDatabaseIndexCommit(debounce(() => {
       off()
       setTimeout(() => {
         checkMergeResult()
-      }, 200)
-    }, 50))
+      }, 300)
+    }, 100))
     
     clearTimeout(mergeTimer)
     mergeTimer = setTimeout(() => {
       if (isMergingToSuperBlock.value) {
         console.warn('合并超级块操作超时，恢复状态')
-        isMergingToSuperBlock.value = false
-        updateNodeMergingStatus(false)
+        finishMergeProcess(false)
       }
-    }, 3000)
+    }, 5000)
   } catch (error) {
     console.error('合并超级块时出错:', error)
-    isMergingToSuperBlock.value = false
-    updateNodeMergingStatus(false)
+    finishMergeProcess(false)
   }
 }, whiteBoardModuleOptions.value.autoMergeToSuperBlockDelay * 1000)
 
 const checkMergeResult = () => {
   if (!cardProtyleRef.value?.protyle?.wysiwyg?.element) {
-    isMergingToSuperBlock.value = false
-    updateNodeMergingStatus(false)
+    finishMergeProcess(false)
     return
   }
 
@@ -568,8 +585,7 @@ const checkMergeResult = () => {
     
     if (!element || typeof element.querySelectorAll !== 'function') {
       console.warn('无法安全访问渲染元素')
-      isMergingToSuperBlock.value = false
-      updateNodeMergingStatus(false)
+      finishMergeProcess(false)
       return
     }
     
@@ -578,8 +594,7 @@ const checkMergeResult = () => {
       children = Array.from(element.children || [])
     } catch (e) {
       console.warn('获取子元素失败:', e)
-      isMergingToSuperBlock.value = false
-      updateNodeMergingStatus(false)
+      finishMergeProcess(false)
       return
     }
     
@@ -599,6 +614,11 @@ const checkMergeResult = () => {
         if (superBlock instanceof HTMLElement) {
           superBlock.setAttribute('data-protected-superblock', 'true')
           superBlock.setAttribute('data-rendered', 'true')
+          
+          const newBlockId = superBlock.dataset.nodeId
+          if (newBlockId) {
+            updateBlockIdAfterMerge(newBlockId)
+          }
         }
       } catch (e) {
         console.warn('为超级块添加保护属性失败:', e)
@@ -611,8 +631,7 @@ const checkMergeResult = () => {
           console.error('合并后绑定节点ID出错:', error)
         }
         
-        isMergingToSuperBlock.value = false
-        updateNodeMergingStatus(false)
+        finishMergeProcess(true)
       }, 300)
       
       mergeAttemptsCount.value = 0
@@ -623,14 +642,12 @@ const checkMergeResult = () => {
       }, 500)
     } else {
       console.error('多次尝试合并超级块失败，放弃操作')
-      isMergingToSuperBlock.value = false
-      updateNodeMergingStatus(false)
+      finishMergeProcess(false)
       mergeAttemptsCount.value = 0
     }
   } catch (error) {
     console.error('检查合并结果时出错:', error)
-    isMergingToSuperBlock.value = false
-    updateNodeMergingStatus(false)
+    finishMergeProcess(false)
   }
 }
 
@@ -651,23 +668,78 @@ const updateNodeMergingStatus = (merging: boolean) => {
   setNodes(updatedNodes)
 }
 
-const checkBlockIdValidity = debounce(async () => {
-  if (blockIdCheckSuspended.value || !nodeData.value?.blockId || blockIdCheckInProgress.value) return
+// 缓存上一次的块ID
+const lastCheckedBlockId = ref<string | null>(null)
+
+// 块ID变更检测
+const detectBlockIdChange = () => {
+  if (!nodeData.value?.blockId) return
   
-  if (recentlyMergedNodeIds.value.includes(flowNode.id)) {
-    return
+  // 检查块ID是否发生变化
+  if (lastCheckedBlockId.value && lastCheckedBlockId.value !== nodeData.value.blockId) {
+    console.log(`检测到块ID变更: ${lastCheckedBlockId.value} -> ${nodeData.value.blockId}`)
+    
+    // 更新视图内容
+    updateProtyleContent()
   }
+  
+  // 更新上一次检查的块ID
+  lastCheckedBlockId.value = nodeData.value.blockId
+}
+
+// 更新Protyle内容
+const updateProtyleContent = () => {
+  if (!cardProtyleRef.value?.protyle || !nodeData.value?.blockId) return
+  
+  try {
+    const protyle = cardProtyleRef.value.protyle
+    if (typeof protyle.reloadValue === 'function') {
+      protyle.reloadValue(nodeData.value.blockId)
+      console.log('重新加载Protyle内容，块ID:', nodeData.value.blockId)
+    } else if (protyle.getInstance && typeof protyle.getInstance().reloadBlock === 'function') {
+      protyle.getInstance().reloadBlock(nodeData.value.blockId)
+      console.log('重新加载块内容，块ID:', nodeData.value.blockId)
+    }
+  } catch (error) {
+    console.error('更新Protyle内容时出错:', error)
+  }
+}
+
+// 增强的块ID检查函数
+const checkBlockIdValidity = debounce(async () => {
+  // 检测并处理块ID变更
+  detectBlockIdChange()
+  
+  // 跳过检查的条件
+  if (
+    globalMergingState.isMerging.value || 
+    globalMergingState.isNodeMerging(flowNode.id) || 
+    (nodeData.value?.blockId && globalMergingState.isBlockAffected(nodeData.value.blockId)) ||
+    blockIdCheckSuspended.value || 
+    !nodeData.value?.blockId || 
+    blockIdCheckInProgress.value
+  ) return
   
   blockIdCheckInProgress.value = true
   
   try {
+    // 使用思源API检查块是否存在
     const response = await request('/api/block/getBlockInfo', {
       id: nodeData.value.blockId
     })
     
+    // 如果块不存在且不在全局合并状态中，标记为无效
     if (response.code === -1 || !response.data) {
-      console.warn(`块ID无效: ${nodeData.value.blockId}，尝试恢复`)
-      await handleInvalidBlockId()
+      // 再次检查是否处于全局合并状态，防止在API请求期间状态变化
+      if (
+        !globalMergingState.isMerging.value && 
+        !globalMergingState.isBlockAffected(nodeData.value.blockId)
+      ) {
+        console.warn(`块ID无效: ${nodeData.value.blockId}，尝试恢复`)
+        await handleInvalidBlockId()
+      } else {
+        console.log(`块ID ${nodeData.value.blockId} 在合并过程中暂时无效，跳过恢复`)
+      }
     }
   } catch (error) {
     console.error('检查块ID有效性时出错:', error)
@@ -817,20 +889,106 @@ const bindNodeIdToEnNodeImpl = async () => {
   }
 }
 
-let offTransactionEvent = null
-onMounted(() => {
-  checkBlockIdValidity()
-  
-  offTransactionEvent = useSiyuanEventTransactions((event) => {
-    bindNodeIdToEnNode()
-    removeNodeCreatedByOther(event)
+// 添加事务处理计数和日志
+const eventLogEnabled = ref(false)
+const transactionCount = ref(0)
+let offTransactionEvent = null; // 定义事务监听清理函数
+
+// 记录事务日志
+const logTransaction = (operation: string, data: any) => {
+  if (!eventLogEnabled.value) return
+  console.log(`[事务${transactionCount.value}] ${operation}:`, data)
+}
+
+// 处理思源事务
+const handleTransaction = (event) => {
+  try {
+    transactionCount.value++
+    const detail = event?.detail
     
-    if (!isMergingToSuperBlock.value) {
-      mergeTopLevelBlocksIntoSuperBlock()
+    // 记录事务详情
+    logTransaction('接收事务', {
+      sid: detail?.sid,
+      dataCount: detail?.data?.length || 0
+    })
+    
+    // 忽略空事务
+    if (!detail || !detail.data || !Array.isArray(detail.data) || detail.data.length === 0) {
+      return
     }
     
+    // 检查是否有块操作
+    const operations = []
+    let hasNodeChange = false
+    
+    detail.data.forEach(item => {
+      if (item?.doOperations && Array.isArray(item.doOperations)) {
+        item.doOperations.forEach(op => {
+          if (op && op.action) {
+            operations.push(op)
+            if (['update', 'insert', 'delete', 'moveBlock', 'foldHeading'].includes(op.action)) {
+              hasNodeChange = true
+            }
+          }
+        })
+      }
+    })
+    
+    // 记录操作类型
+    logTransaction('操作类型', operations.map(op => op.action))
+    
+    // 检测全局合并状态
+    const inGlobalMerging = globalMergingState.isMerging.value
+    const inLocalMerging = isMergingToSuperBlock.value
+    
+    logTransaction('合并状态', {
+      全局合并: inGlobalMerging,
+      局部合并: inLocalMerging,
+      节点ID: flowNode.id,
+      块ID: nodeData.value?.blockId
+    })
+    
+    // 先检测块ID变更，这个操作总是安全的
+    detectBlockIdChange()
+    
+    // 如果没有节点变化，不需要继续处理
+    if (!hasNodeChange) {
+      return
+    }
+    
+    // 根据合并状态决定执行的操作
+    if (!inGlobalMerging) {
+      // 只有在非全局合并状态下才执行绑定和移除操作
+      bindNodeIdToEnNode()
+      
+      // 移除其他创建的节点
+      removeNodeCreatedByOther(event)
+      
+      // 在非全局和非局部合并状态下，执行合并和检查
+      if (!inLocalMerging) {
+        // 检查是否需要触发合并
+        mergeTopLevelBlocksIntoSuperBlock()
+        
+        // 检查块ID有效性
+        checkBlockIdValidity()
+      }
+    } else {
+      logTransaction('跳过操作', '当前处于全局合并状态')
+    }
+  } catch (error) {
+    console.error('处理思源事务时出错:', error)
+  }
+}
+
+// 设置事务监听
+onMounted(() => {
+  // 延迟初始检查，确保组件已完全加载
+  setTimeout(() => {
     checkBlockIdValidity()
-  })
+  }, 1000)
+  
+  // 监听思源事务
+  offTransactionEvent = useSiyuanEventTransactions(handleTransaction)
 })
 
 onBeforeUnmount(() => {
@@ -838,6 +996,11 @@ onBeforeUnmount(() => {
     offTransactionEvent()
   }
   clearTimeout(mergeTimer)
+  
+  // 确保全局合并状态结束
+  if (globalMergingState.isNodeMerging(flowNode.id)) {
+    globalMergingState.endMerging()
+  }
 })
 
 const onResize = (event: OnResize) => {
@@ -1156,6 +1319,46 @@ const protectSiyuanRenderer = (protyle) => {
       return true
     }
   }, true)
+}
+
+const finishMergeProcess = (success = true) => {
+  isMergingToSuperBlock.value = false
+  updateNodeMergingStatus(false)
+  
+  setTimeout(() => {
+    blockIdCheckSuspended.value = false
+    globalMergingState.endMerging()
+    
+    if (success) {
+      console.log('超级块合并过程完成')
+    }
+  }, 500)
+}
+
+const updateBlockIdAfterMerge = (newBlockId: string) => {
+  if (!newBlockId || !nodeData.value) return
+  
+  if (nodeData.value.blockId !== newBlockId) {
+    console.log(`合并后更新节点块ID: ${nodeData.value.blockId} -> ${newBlockId}`)
+    nodeData.value.blockId = newBlockId
+    
+    const nodes = getNodes.value
+    if (!nodes || !flowNode || !flowNode.id) return
+    
+    const updatedNodes = nodes.map((node) => {
+      if (node.id === flowNode.id) {
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            blockId: newBlockId
+          }
+        }
+      }
+      return node
+    })
+    setNodes(updatedNodes)
+  }
 }
 </script>
 

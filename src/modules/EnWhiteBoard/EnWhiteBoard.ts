@@ -408,3 +408,57 @@ export const updateWhiteBoardNodesAndEdges = (whiteBoardId: string, nodeId: stri
     })
   }
 }
+
+// 全局超级块合并状态管理
+export const globalMergingState = {
+  isMerging: ref(false),        // 是否有任何节点正在进行合并
+  mergingNodeIds: ref<string[]>([]),  // 正在合并的节点ID列表
+  affectedBlockIds: ref<string[]>([]), // 受影响的块ID列表
+  
+  // 开始合并操作
+  startMerging(nodeId: string, blockId: string) {
+    this.isMerging.value = true
+    if (nodeId && !this.mergingNodeIds.value.includes(nodeId)) {
+      this.mergingNodeIds.value.push(nodeId)
+    }
+    if (blockId && !this.affectedBlockIds.value.includes(blockId)) {
+      this.affectedBlockIds.value.push(blockId)
+    }
+    // 设置超时保护，避免状态永远不恢复
+    setTimeout(() => {
+      if (this.isMerging.value) {
+        console.warn('超级块合并状态超时自动恢复')
+        this.endMerging()
+      }
+    }, 10000) // 10秒超时保护
+    return this.isMerging.value
+  },
+  
+  // 结束合并操作
+  endMerging() {
+    // 延迟一段时间再恢复状态，确保所有相关操作完成
+    setTimeout(() => {
+      this.isMerging.value = false
+      this.mergingNodeIds.value = []
+      this.affectedBlockIds.value = []
+    }, 2000)
+    return !this.isMerging.value
+  },
+  
+  // 检查节点是否正在合并
+  isNodeMerging(nodeId: string) {
+    return this.isMerging.value && this.mergingNodeIds.value.includes(nodeId)
+  },
+  
+  // 检查块ID是否受影响
+  isBlockAffected(blockId: string) {
+    return this.isMerging.value && this.affectedBlockIds.value.includes(blockId)
+  },
+  
+  // 添加受影响的块ID
+  addAffectedBlockId(blockId: string) {
+    if (blockId && !this.affectedBlockIds.value.includes(blockId)) {
+      this.affectedBlockIds.value.push(blockId)
+    }
+  }
+}
