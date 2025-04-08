@@ -9,15 +9,13 @@ const TAB_TYPE = 'sy_plugin_enhance_tab'
 // 存储MutationObserver实例
 const observers: MutationObserver[] = []
 
-// 设置顶层DOM的高度
+// 设置顶层DOM的高度 - 简化版本
 function setupDOMHeight(element: HTMLElement) {
   try {
     // 查找data-v-app元素
     const appElement = element.querySelector('[data-v-app]')
     if (appElement instanceof HTMLElement) {
-      // 设置data-v-app元素的高度为100%
       appElement.style.height = '100%'
-      console.log('已设置data-v-app元素的高度为100%')
     }
     
     // 查找所有需要设置高度的顶层元素
@@ -25,7 +23,6 @@ function setupDOMHeight(element: HTMLElement) {
     topElements.forEach(el => {
       if (el instanceof HTMLElement) {
         el.style.height = '100%'
-        console.log('已设置顶层元素的高度为100%')
       }
     })
     
@@ -34,25 +31,13 @@ function setupDOMHeight(element: HTMLElement) {
     userMemoElements.forEach(el => {
       if (el instanceof HTMLElement) {
         el.style.height = '100%'
-        console.log('已设置en-user-memo元素的高度为100%')
       }
     })
     
     // 创建MutationObserver监听DOM变化
-    const observer = new MutationObserver((mutations) => {
-      let needsUpdate = false
-      
-      // 检查是否有新增的节点需要设置高度
-      mutations.forEach(mutation => {
-        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-          needsUpdate = true
-        }
-      })
-      
-      if (needsUpdate) {
-        // 重新设置高度
-        setupDOMHeightWithoutObserver(element)
-      }
+    const observer = new MutationObserver(() => {
+      // 简化为直接调用高度设置函数
+      setupDOMHeightWithoutObserver(element)
     })
     
     // 配置观察选项
@@ -132,7 +117,6 @@ export function initDock(plugin: Plugin) {
       plugin,
     },
     resize() {
-      console.log(`${DOCK_TYPE} resize`)
       // 在调整大小后重新设置高度
       if (this.element && this.element instanceof HTMLElement) {
         setupDOMHeightWithoutObserver(this.element)
@@ -147,23 +131,15 @@ export function initDock(plugin: Plugin) {
       this.element.appendChild(container)
       app.mount(container)
       
-      // 设置DOM高度，使用多个延迟确保在不同时间点都能正确设置高度
+      // 简化高度设置逻辑，只使用一次延时
       if (this.element instanceof HTMLElement) {
+        // 短延时确保DOM渲染完成
         setTimeout(() => {
           setupDOMHeight(this.element as HTMLElement)
-        }, 100)
-        
-        setTimeout(() => {
-          setupDOMHeightWithoutObserver(this.element as HTMLElement)
-        }, 500)
-        
-        setTimeout(() => {
-          setupDOMHeightWithoutObserver(this.element as HTMLElement)
-        }, 1000)
+        }, 200)
       }
     },
     destroy() {
-      console.log("destroy dock:", DOCK_TYPE)
       cleanupObservers()
     },
   })
@@ -186,26 +162,18 @@ export function initTab(plugin: Plugin) {
       this.element.appendChild(container)
       app.mount(container)
       
-      // 设置DOM高度，使用多个延迟确保在不同时间点都能正确设置高度
+      // 简化高度设置逻辑，只使用一次延时
       if (this.element instanceof HTMLElement) {
+        // 短延时确保DOM渲染完成
         setTimeout(() => {
           setupDOMHeight(this.element as HTMLElement)
-        }, 100)
-        
-        setTimeout(() => {
-          setupDOMHeightWithoutObserver(this.element as HTMLElement)
-        }, 500)
-        
-        setTimeout(() => {
-          setupDOMHeightWithoutObserver(this.element as HTMLElement)
-        }, 1000)
+        }, 200)
       }
     },
     beforeDestroy() {
-      console.log("before destroy tab:", TAB_TYPE)
+      // 清理资源
     },
     destroy() {
-      console.log("destroy tab:", TAB_TYPE)
       cleanupObservers()
     }
   })

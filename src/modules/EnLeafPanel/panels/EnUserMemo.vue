@@ -20,6 +20,11 @@
               @edit="editMemo"
               @delete="deleteMemo"
             />
+            <!-- 加载更多指示器 -->
+            <div v-if="loadingMore || hasMore" class="loading-more-indicator">
+              <div v-if="loadingMore" class="loading-spinner"></div>
+              <div v-else-if="hasMore" class="load-more-text" @click="loadMoreData">加载更多</div>
+            </div>
           </div>
           
           <!-- 卡片模式 -->
@@ -58,6 +63,11 @@
                 </div>
               </div>
             </div>
+            <!-- 加载更多指示器 -->
+            <div v-if="loadingMore || hasMore" class="loading-more-indicator">
+              <div v-if="loadingMore" class="loading-spinner"></div>
+              <div v-else-if="hasMore" class="load-more-text" @click="loadMoreData">加载更多</div>
+            </div>
           </div>
           
           <!-- Gallery模式 -->
@@ -95,6 +105,11 @@
                   </div>
                 </div>
               </div>
+            </div>
+            <!-- 加载更多指示器 -->
+            <div v-if="loadingMore || hasMore" class="loading-more-indicator">
+              <div v-if="loadingMore" class="loading-spinner"></div>
+              <div v-else-if="hasMore" class="load-more-text" @click="loadMoreData">加载更多</div>
             </div>
           </div>
           
@@ -135,6 +150,11 @@
                   </div>
                 </div>
               </div>
+            </div>
+            <!-- 加载更多指示器 -->
+            <div v-if="loadingMore || hasMore" class="loading-more-indicator">
+              <div v-if="loadingMore" class="loading-spinner"></div>
+              <div v-else-if="hasMore" class="load-more-text" @click="loadMoreData">加载更多</div>
             </div>
           </div>
         </div>
@@ -303,6 +323,11 @@
             @edit="editMemo"
             @delete="deleteMemo"
           />
+          <!-- 加载更多指示器 -->
+          <div v-if="loadingMore || hasMore" class="loading-more-indicator">
+            <div v-if="loadingMore" class="loading-spinner"></div>
+            <div v-else-if="hasMore" class="load-more-text" @click="loadMoreData">加载更多</div>
+          </div>
         </div>
         
         <!-- 卡片模式 -->
@@ -341,6 +366,11 @@
               </div>
             </div>
           </div>
+          <!-- 加载更多指示器 -->
+          <div v-if="loadingMore || hasMore" class="loading-more-indicator">
+            <div v-if="loadingMore" class="loading-spinner"></div>
+            <div v-else-if="hasMore" class="load-more-text" @click="loadMoreData">加载更多</div>
+          </div>
         </div>
         
         <!-- Gallery模式 -->
@@ -378,6 +408,11 @@
                 </div>
               </div>
             </div>
+          </div>
+          <!-- 加载更多指示器 -->
+          <div v-if="loadingMore || hasMore" class="loading-more-indicator">
+            <div v-if="loadingMore" class="loading-spinner"></div>
+            <div v-else-if="hasMore" class="load-more-text" @click="loadMoreData">加载更多</div>
           </div>
         </div>
         
@@ -418,6 +453,11 @@
                 </div>
               </div>
             </div>
+          </div>
+          <!-- 加载更多指示器 -->
+          <div v-if="loadingMore || hasMore" class="loading-more-indicator">
+            <div v-if="loadingMore" class="loading-spinner"></div>
+            <div v-else-if="hasMore" class="load-more-text" @click="loadMoreData">加载更多</div>
           </div>
         </div>
       </div>
@@ -473,6 +513,14 @@ const activeTab = ref<'calendar' | 'input'>('calendar')
 // 添加显示模式状态
 const displayMode = ref<DisplayMode>('timeline')
 
+// 添加分页加载相关状态
+const PAGE_SIZE = 20 // 每页显示的数量
+const loadingMore = ref(false)
+const hasMore = ref(true)
+const currentPage = ref(0)
+const allMemos = ref<Memo[]>([]) // 存储所有备忘录
+const isInitialLoad = ref(true) // 标记是否是初始加载
+
 // 响应式布局状态
 const isWideLayout = ref(false)
 const WIDE_LAYOUT_BREAKPOINT = 768 // 宽度大于768px时启用宽屏布局
@@ -514,10 +562,8 @@ const updateLayoutMode = () => {
     const containerWidth = containerRef.value.clientWidth
     const newIsWideLayout = containerWidth > WIDE_LAYOUT_BREAKPOINT
     
-    // 只有在布局模式发生变化时才打印日志
+    // 只有在布局模式发生变化时才进行处理
     if (isWideLayout.value !== newIsWideLayout) {
-      console.log('布局模式变化 - 容器宽度:', containerWidth, '是否宽屏布局:', newIsWideLayout)
-      
       // 如果从宽屏切换到窄屏，确保滑动状态正确
       if (!newIsWideLayout) {
         // 在下一个tick中初始化滑动容器宽度
@@ -550,8 +596,6 @@ const switchTab = (tab: 'calendar' | 'input') => {
       dotsElement.style.transform = 'translateX(-50%)';
     }
   });
-  
-  console.log('切换标签页:', tab, '滑动位置:', translateX.value)
 }
 
 // 开始拖动
@@ -620,8 +664,10 @@ function getTimeFromBlockId(blockId: string): string {
       return ''
     }
 
-    // 普通块ID的处理
+    // 普通块ID的处理 (格式如: 20250408121212-abcdef)
     const timeStr = blockId.split('-')[0]
+    if (timeStr.length < 14) return '' // 确保时间字符串有足够的长度
+    
     const year = timeStr.slice(0, 4)
     const month = timeStr.slice(4, 6)
     const day = timeStr.slice(6, 8)
@@ -630,7 +676,7 @@ function getTimeFromBlockId(blockId: string): string {
     const second = timeStr.slice(12, 14)
     return `${year}-${month}-${day} ${hour}:${minute}:${second}`
   } catch (err) {
-    console.error('Error parsing block ID:', err)
+    console.error('Error parsing block ID:', err, 'blockId:', blockId)
     return ''
   }
 }
@@ -651,16 +697,6 @@ const filteredMemos = computed(() => {
       }
     })
   }
-
-  // 按时间倒序排序
-  filtered = [...filtered].sort((a, b) => {
-    try {
-      return new Date(b.time).getTime() - new Date(a.time).getTime()
-    } catch (err) {
-      console.error('Error sorting dates:', err)
-      return 0
-    }
-  })
 
   return filtered
 })
@@ -762,34 +798,38 @@ watch(activeFilter, (filter, oldFilter) => {
 // 处理日记信息
 const handleDailyNoteInfo = (info: { dailyNotes: any[] }) => {
   const dailyNotes = info?.dailyNotes || []
-
-  // 每次切换过滤器时，先清空所有数据
-  // 这样可以确保不会显示其他类型的数据
+  isInitialLoad.value = true
+  currentPage.value = 0
+  hasMore.value = true
+  
+  // 清空数据
   memos.value = []
+  allMemos.value = []
 
   if (!dailyNotes.length) {
+    hasMore.value = false
     return
   }
 
+  // 预处理数据
   if (activeFilter.value === 'whiteboard') {
-    // 如果是白板数据，直接使用数据
-    memos.value = dailyNotes
+    // 白板数据直接使用
+    allMemos.value = dailyNotes
   } else if (activeFilter.value === 'daily') {
-    // 将日记块转换为Memo格式
+    // 优化: 先处理所有数据，但只加载第一页
     const dailyMemos: Memo[] = dailyNotes.map((note) => {
       try {
         const time = getTimeFromBlockId(note.block_id)
         if (!time) return null
 
-        // 添加块类型信息
         return {
           blockId: note.block_id,
           time,
           type: 'daily',
           dailyNoteId: note.doc_id,
           content: note.block_content,
-          blockType: note.block_type, // 添加块类型
-          dateValue: note.date_value, // 添加日期值
+          blockType: note.block_type,
+          dateValue: note.date_value,
         }
       } catch (err) {
         console.error('Error processing note:', err)
@@ -797,54 +837,174 @@ const handleDailyNoteInfo = (info: { dailyNotes: any[] }) => {
       }
     }).filter(Boolean) as Memo[]
 
-    console.log('Processed daily memos:', dailyMemos.length)
-
-    // 更新备忘录列表，只使用日记类型的备忘录
-    memos.value = dailyMemos
-
-    // 更新日历组件的日期标记
+    // 更新日历组件的日期标记 (这部分需要全部数据)
     const datesWithNotes = [...new Set(dailyMemos.map((memo) =>
       memo.time.split(' ')[0],
     ))]
     selectedDates.value = datesWithNotes
+    
+    // 按时间从新到旧排序
+    allMemos.value = [...dailyMemos].sort((a, b) => {
+      try {
+        return new Date(b.time).getTime() - new Date(a.time).getTime()
+      } catch (err) {
+        return 0
+      }
+    })
   } else if (activeFilter.value === 'annotation') {
-    // 批注类型的数据处理
-    console.log('Processing annotation notes:', dailyNotes)
-    
-    // 直接使用从MemoFilter返回的格式化数据
+    // 批注类型优化
     const annotationMemos: Memo[] = dailyNotes
-    
-    // 更新备忘录列表，只使用批注类型的备忘录
-    memos.value = annotationMemos
     
     // 更新日历组件的日期标记
     const datesWithNotes = [...new Set(annotationMemos.map((memo) =>
       memo.time.split(' ')[0],
     ))]
     selectedDates.value = datesWithNotes
+    
+    // 按时间从新到旧排序
+    allMemos.value = [...annotationMemos].sort((a, b) => {
+      try {
+        return new Date(b.time).getTime() - new Date(a.time).getTime()
+      } catch (err) {
+        return 0
+      }
+    })
   } else {
-    // 其他类型的数据处理
+    // 其他类型数据处理
     const newMemos: Memo[] = dailyNotes.map((note) => ({
       blockId: note.block_id,
       time: note.block_time,
       type: activeFilter.value,
       content: note.block_content,
-      blockType: note.block_type, // 添加块类型
+      blockType: note.block_type,
     }))
+    
+    // 按时间从新到旧排序
+    allMemos.value = [...newMemos].sort((a, b) => {
+      try {
+        return new Date(b.time).getTime() - new Date(a.time).getTime()
+      } catch (err) {
+        return 0
+      }
+    })
+  }
+  
+  // 加载第一页数据
+  loadMoreData()
+}
 
-    // 更新备忘录列表，只使用当前类型的备忘录
-    memos.value = newMemos
+// 加载更多数据
+const loadMoreData = () => {
+  if (!hasMore.value || loadingMore.value) return
+  
+  loadingMore.value = true
+  
+  try {
+    const startIndex = currentPage.value * PAGE_SIZE
+    const endIndex = startIndex + PAGE_SIZE
+    
+    // 检查是否还有更多数据
+    if (startIndex >= allMemos.value.length) {
+      hasMore.value = false
+      loadingMore.value = false
+      return
+    }
+    
+    // 获取当前页数据
+    const pageData = allMemos.value.slice(startIndex, endIndex)
+    
+    // 如果是初始加载，替换数据；否则追加数据
+    if (isInitialLoad.value) {
+      memos.value = pageData
+      isInitialLoad.value = false
+    } else {
+      memos.value = [...memos.value, ...pageData]
+    }
+    
+    // 更新页码
+    currentPage.value++
+    
+    // 如果已加载所有数据，设置hasMore为false
+    if (endIndex >= allMemos.value.length) {
+      hasMore.value = false
+    }
+  } catch (error) {
+    console.error('加载数据出错:', error)
+  } finally {
+    loadingMore.value = false
   }
 }
 
+// 监听滚动到底部事件
+const handleScroll = (event: Event) => {
+  const target = event.target as HTMLElement
+  if (!target) return
+  
+  // 计算滚动位置
+  const scrollPosition = target.scrollTop + target.clientHeight
+  const scrollHeight = target.scrollHeight
+  
+  // 调试信息
+  console.log(`滚动位置: ${scrollPosition}, 总高度: ${scrollHeight}, 距离底部: ${scrollHeight - scrollPosition}`)
+  
+  // 更宽松的预加载触发条件：当距离底部还有200px或20%高度时就开始加载
+  const triggerDistance = Math.min(200, scrollHeight * 0.2)
+  if (scrollHeight - scrollPosition < triggerDistance && hasMore.value && !loadingMore.value) {
+    console.log('触发加载更多数据')
+    loadMoreData()
+  }
+}
+
+// 设置滚动事件监听
+const setupScrollListener = () => {
+  console.log('设置滚动事件监听')
+  setTimeout(() => {
+    const contentElements = document.querySelectorAll('.timeline-content, .card-content, .gallery-content, .waterfall-content')
+    
+    console.log(`找到 ${contentElements.length} 个可滚动元素`)
+    
+    contentElements.forEach(element => {
+      console.log(`添加滚动监听到元素:`, element)
+      element.addEventListener('scroll', handleScroll)
+    })
+    
+    // 触发一次初始检查，以防内容不足以滚动
+    if (hasMore.value && !loadingMore.value) {
+      const element = contentElements[0] as HTMLElement
+      if (element && element.scrollHeight <= element.clientHeight) {
+        console.log('内容不足以滚动，自动加载更多')
+        loadMoreData()
+      }
+    }
+  }, 500) // 延迟确保DOM已经渲染
+}
+
+// 移除滚动事件监听
+const removeScrollListener = () => {
+  console.log('移除滚动事件监听')
+  const contentElements = document.querySelectorAll('.timeline-content, .card-content, .gallery-content, .waterfall-content')
+  
+  contentElements.forEach(element => {
+    element.removeEventListener('scroll', handleScroll)
+  })
+}
+
+// 监听显示模式变化，重新绑定滚动事件
+watch(displayMode, () => {
+  nextTick(() => {
+    removeScrollListener()
+    setupScrollListener()
+  })
+})
+
 // 添加对 memos 的监听
-watch(memos, (newMemos) => {
-  console.log('Memos changed:', newMemos)
+watch(memos, () => {
+  // 使用深度监听，但移除不必要的日志
 }, { deep: true })
 
 // 添加对 filteredMemos 的监听
-watch(() => filteredMemos.value, (newFilteredMemos) => {
-  console.log('Filtered memos changed:', newFilteredMemos)
+watch(() => filteredMemos.value, () => {
+  // 保留观察者，但移除不必要的日志
 }, { deep: true })
 
 // 定义handleResize函数，避免添加和移除不同的函数引用
@@ -874,8 +1034,7 @@ const getOriginalIndex = (columnIndex: number, index: number) => {
 
 // 添加afterProtyleLoad函数
 const afterProtyleLoad = (protyle: any, index: number) => {
-  // 这里可以添加加载后的处理逻辑
-  console.log('Protyle loaded for memo at index:', index)
+  // 加载后的处理逻辑，移除不必要的日志
 }
 
 onMounted(() => {
@@ -904,6 +1063,9 @@ onMounted(() => {
         resizeObserver.observe(parentContainer)
       }
     }
+    
+    // 设置滚动监听
+    setupScrollListener()
   })
   
   // 监听窗口大小变化
@@ -926,6 +1088,9 @@ onBeforeUnmount(() => {
     resizeObserver.disconnect()
     resizeObserver = null
   }
+  
+  // 移除滚动事件监听
+  removeScrollListener()
 })
 </script>
 
@@ -1426,7 +1591,7 @@ onBeforeUnmount(() => {
           svg {
             width: 14px;
             height: 14px;
-            fill: var(--b3-theme-on-surface-light);
+            fill: var (--b3-theme-on-surface-light);
           }
           
           &:hover {
@@ -1592,6 +1757,41 @@ onBeforeUnmount(() => {
         fill: var(--b3-theme-on-surface);
       }
     }
+  }
+}
+
+// 加载更多指示器样式
+.loading-more-indicator {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 0;
+  margin-top: 8px;
+  
+  .loading-spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--b3-theme-background-light);
+    border-top: 2px solid var(--b3-theme-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  
+  .load-more-text {
+    font-size: 14px;
+    color: var(--b3-theme-primary);
+    cursor: pointer;
+    padding: 4px 12px;
+    border-radius: var(--b3-border-radius);
+    
+    &:hover {
+      background-color: var(--b3-theme-primary-lightest);
+    }
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
   }
 }
 </style>
