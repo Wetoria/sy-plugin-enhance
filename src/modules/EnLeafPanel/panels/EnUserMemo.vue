@@ -47,19 +47,30 @@
                   </div>
                 </div>
                 <div class="memo-card-body">
-                  <EnProtyle
-                    :block-id="memo.blockId"
-                    :preview="true"
-                    disableEnhance
-                    :options="{
-                      render: {
-                        gutter: false,
-                        breadcrumb: false,
-                        scroll: false,
-                      },
-                    }"
-                    @after="(protyle) => afterProtyleLoad(protyle, index)"
-                  />
+                  <template v-if="memo.type === 'whiteboard'">
+                    <WhiteboardPreview 
+                      :nodes="memo.whiteBoardConfig?.boardOptions?.nodes ?? []"
+                      :edges="memo.whiteBoardConfig?.boardOptions?.edges ?? []"
+                      :viewport="memo.whiteBoardConfig?.boardOptions?.viewport"
+                      :title="memo.docPath || '白板预览'"
+                      :backgroundVariant="memo.whiteBoardConfig?.boardOptions?.backgroundVariant || 'none'"
+                    />
+                  </template>
+                  <template v-else>
+                    <EnProtyle
+                      :block-id="memo.blockId"
+                      :preview="true"
+                      disableEnhance
+                      :options="{
+                        render: {
+                          gutter: false,
+                          breadcrumb: false,
+                          scroll: false,
+                        },
+                      }"
+                      @after="(protyle) => afterProtyleLoad(protyle, index)"
+                    />
+                  </template>
                 </div>
               </div>
             </div>
@@ -79,19 +90,30 @@
                 class="gallery-item"
               >
                 <div class="gallery-item-content">
-                  <EnProtyle
-                    :block-id="memo.blockId"
-                    :preview="true"
-                    disableEnhance
-                    :options="{
-                      render: {
-                        gutter: false,
-                        breadcrumb: false,
-                        scroll: false,
-                      },
-                    }"
-                    @after="(protyle) => afterProtyleLoad(protyle, index)"
-                  />
+                  <template v-if="memo.type === 'whiteboard'">
+                    <WhiteboardPreview 
+                      :nodes="memo.whiteBoardConfig?.boardOptions?.nodes ?? []"
+                      :edges="memo.whiteBoardConfig?.boardOptions?.edges ?? []"
+                      :viewport="memo.whiteBoardConfig?.boardOptions?.viewport"
+                      :title="memo.docPath || '白板预览'"
+                      :backgroundVariant="memo.whiteBoardConfig?.boardOptions?.backgroundVariant || 'none'"
+                    />
+                  </template>
+                  <template v-else>
+                    <EnProtyle
+                      :block-id="memo.blockId"
+                      :preview="true"
+                      disableEnhance
+                      :options="{
+                        render: {
+                          gutter: false,
+                          breadcrumb: false,
+                          scroll: false,
+                        },
+                      }"
+                      @after="(protyle) => afterProtyleLoad(protyle, index)"
+                    />
+                  </template>
                 </div>
                 <div class="gallery-item-footer">
                   <div class="gallery-item-time">{{ memo.time }}</div>
@@ -123,19 +145,30 @@
                   class="waterfall-item"
                 >
                   <div class="waterfall-item-content">
-                    <EnProtyle
-                      :block-id="memo.blockId"
-                      :preview="true"
-                      disableEnhance
-                      :options="{
-                        render: {
-                          gutter: false,
-                          breadcrumb: false,
-                          scroll: false,
-                        },
-                      }"
-                      @after="(protyle) => afterProtyleLoad(protyle, getOriginalIndex(colIndex, index))"
-                    />
+                    <template v-if="memo.type === 'whiteboard'">
+                      <WhiteboardPreview 
+                        :nodes="memo.whiteBoardConfig?.boardOptions?.nodes ?? []"
+                        :edges="memo.whiteBoardConfig?.boardOptions?.edges ?? []"
+                        :viewport="memo.whiteBoardConfig?.boardOptions?.viewport"
+                        :title="memo.docPath || '白板预览'"
+                        :backgroundVariant="memo.whiteBoardConfig?.boardOptions?.backgroundVariant || 'none'"
+                      />
+                    </template>
+                    <template v-else>
+                      <EnProtyle
+                        :block-id="memo.blockId"
+                        :preview="true"
+                        disableEnhance
+                        :options="{
+                          render: {
+                            gutter: false,
+                            breadcrumb: false,
+                            scroll: false,
+                          },
+                        }"
+                        @after="(protyle) => afterProtyleLoad(protyle, getOriginalIndex(colIndex, index))"
+                      />
+                    </template>
                   </div>
                   <div class="waterfall-item-footer">
                     <div class="waterfall-item-time">{{ memo.time }}</div>
@@ -350,19 +383,30 @@
                 </div>
               </div>
               <div class="memo-card-body">
-                <EnProtyle
-                  :block-id="memo.blockId"
-                  :preview="true"
-                  disableEnhance
-                  :options="{
-                    render: {
-                      gutter: false,
-                      breadcrumb: false,
-                      scroll: false,
-                    },
-                  }"
-                  @after="(protyle) => afterProtyleLoad(protyle, index)"
-                />
+                <template v-if="memo.type === 'whiteboard'">
+                  <WhiteboardPreview 
+                    :nodes="memo.whiteBoardConfig?.boardOptions?.nodes ?? []"
+                    :edges="memo.whiteBoardConfig?.boardOptions?.edges ?? []"
+                    :viewport="memo.whiteBoardConfig?.boardOptions?.viewport"
+                    :title="memo.docPath || '白板预览'"
+                    :backgroundVariant="memo.whiteBoardConfig?.boardOptions?.backgroundVariant || 'none'"
+                  />
+                </template>
+                <template v-else>
+                  <EnProtyle
+                    :block-id="memo.blockId"
+                    :preview="true"
+                    disableEnhance
+                    :options="{
+                      render: {
+                        gutter: false,
+                        breadcrumb: false,
+                        scroll: false,
+                      },
+                    }"
+                    @after="(protyle) => afterProtyleLoad(protyle, index)"
+                  />
+                </template>
               </div>
             </div>
           </div>
@@ -382,19 +426,30 @@
               class="gallery-item"
             >
               <div class="gallery-item-content">
-                <EnProtyle
-                  :block-id="memo.blockId"
-                  :preview="true"
-                  disableEnhance
-                  :options="{
-                    render: {
-                      gutter: false,
-                      breadcrumb: false,
-                      scroll: false,
-                    },
-                  }"
-                  @after="(protyle) => afterProtyleLoad(protyle, index)"
-                />
+                <template v-if="memo.type === 'whiteboard'">
+                  <WhiteboardPreview 
+                    :nodes="memo.whiteBoardConfig?.boardOptions?.nodes ?? []"
+                    :edges="memo.whiteBoardConfig?.boardOptions?.edges ?? []"
+                    :viewport="memo.whiteBoardConfig?.boardOptions?.viewport"
+                    :title="memo.docPath || '白板预览'"
+                    :backgroundVariant="memo.whiteBoardConfig?.boardOptions?.backgroundVariant || 'none'"
+                  />
+                </template>
+                <template v-else>
+                  <EnProtyle
+                    :block-id="memo.blockId"
+                    :preview="true"
+                    disableEnhance
+                    :options="{
+                      render: {
+                        gutter: false,
+                        breadcrumb: false,
+                        scroll: false,
+                      },
+                    }"
+                    @after="(protyle) => afterProtyleLoad(protyle, index)"
+                  />
+                </template>
               </div>
               <div class="gallery-item-footer">
                 <div class="gallery-item-time">{{ memo.time }}</div>
@@ -426,19 +481,30 @@
                 class="waterfall-item"
               >
                 <div class="waterfall-item-content">
-                  <EnProtyle
-                    :block-id="memo.blockId"
-                    :preview="true"
-                    disableEnhance
-                    :options="{
-                      render: {
-                        gutter: false,
-                        breadcrumb: false,
-                        scroll: false,
-                      },
-                    }"
-                    @after="(protyle) => afterProtyleLoad(protyle, getOriginalIndex(colIndex, index))"
-                  />
+                  <template v-if="memo.type === 'whiteboard'">
+                    <WhiteboardPreview 
+                      :nodes="memo.whiteBoardConfig?.boardOptions?.nodes ?? []"
+                      :edges="memo.whiteBoardConfig?.boardOptions?.edges ?? []"
+                      :viewport="memo.whiteBoardConfig?.boardOptions?.viewport"
+                      :title="memo.docPath || '白板预览'"
+                      :backgroundVariant="memo.whiteBoardConfig?.boardOptions?.backgroundVariant || 'none'"
+                    />
+                  </template>
+                  <template v-else>
+                    <EnProtyle
+                      :block-id="memo.blockId"
+                      :preview="true"
+                      disableEnhance
+                      :options="{
+                        render: {
+                          gutter: false,
+                          breadcrumb: false,
+                          scroll: false,
+                        },
+                      }"
+                      @after="(protyle) => afterProtyleLoad(protyle, getOriginalIndex(colIndex, index))"
+                    />
+                  </template>
                 </div>
                 <div class="waterfall-item-footer">
                   <div class="waterfall-item-time">{{ memo.time }}</div>
@@ -499,6 +565,7 @@ import MemoInput from './components/MemoInput.vue'
 import MemoTimeline from './components/MemoTimeline.vue'
 import type { DisplayMode } from '../types'
 import EnProtyle from '@/components/EnProtyle.vue'
+import WhiteboardPreview from './components/WhiteboardPreview.vue'
 
 // 开发环境标志
 const isDev = import.meta.env.DEV || false
