@@ -43,8 +43,12 @@
           <a-radio-group
             v-model="moduleOptions.commentWrapMode"
           >
-            <a-radio value="NodeList">列表</a-radio>
-            <a-radio value="NodeSuperBlock">超级块</a-radio>
+            <a-radio value="NodeList">
+              列表
+            </a-radio>
+            <a-radio value="NodeSuperBlock">
+              超级块
+            </a-radio>
           </a-radio-group>
         </div>
       </template>
@@ -64,34 +68,7 @@
           自定义批注结构
         </div>
         <div>
-          批注结构说明：
-        </div>
-        <div>
-          ${comment}
-        </div>
-        <div>
-          如果需要立即可以输入，请在第一行插入该变量。
-        </div>
-        <div>
-          ${ref}、${ref|text}、${ref|link}
-        </div>
-        <div>
-          锚文本链接。用英文|分割。
-        </div>
-        <div>
-          ${ref} - 动态锚文本。跟随目标块原文变化。
-        </div>
-        <div>
-          ${ref|text} - 静态锚文本。使用目标块的原文纯文本。
-        </div>
-        <div>
-          ${ref|link} - 静态锚文本。显示为|后面的文本(如：link)。可指定任意文本，比如: ${ref|*} 则是显示为 *。
-        </div>
-        <div>
-          ${quote} - 摘录的原文，Markdown 格式。会用引述块进行包裹。
-        </div>
-        <div>
-          当同时存在 ${ref|text} 和 ${quote}，行内评论或评论单独一个块时（text 等于 quote），将不会生成原文摘录，而是显示为 ${ref|text}。
+          具体使用请参考<a href="https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse#share-L5KvdeHBuoc3Uaxf9lgc5Pcenxb">使用说明</a>
         </div>
         <div class="EnCommentStructureEditor">
           <a-textarea
@@ -176,7 +153,7 @@
   <template v-if="enableComment">
     <EnCommentDataProvider>
       <template v-if="moduleOptions.enableCommentStyle">
-        <EnCommentStyle >
+        <EnCommentStyle>
           <!-- 为历史样式预留 -->
         </EnCommentStyle>
         <EnCommentHistory />
