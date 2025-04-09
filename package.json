@@ -11,8 +11,11 @@
     "make-link": "node  --no-warnings ./scripts/make_dev_link.js",
     "clear-normalize": "echo > node_modules/@arco-design/web-vue/es/style/normalize.less && echo > node_modules/@arco-design/web-vue/lib/style/normalize.less",
     "dev": "npm run clear-normalize && vite build --watch",
-    "tag": "node ./autoTag.js",
-    "commitAndTag": "git add ./plugin.json && git commit -m 'update version' && git push && node ./autoTag.js",
+    "release": "node ./release.js",
+    "release:manual": "node ./release.js --mode=manual",
+    "release:patch": "node ./release.js --mode=patch",
+    "release:minor": "node ./release.js --mode=minor",
+    "release:major": "node ./release.js --mode=major",
     "build": "npm run clear-normalize && vite build"
   },
   "dependencies": {
