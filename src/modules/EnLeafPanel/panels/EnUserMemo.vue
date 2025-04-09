@@ -25,7 +25,7 @@
                     <svg class="whiteboard-icon"><use xlink:href="#iconLayout"></use></svg><span class="whiteboard-name">创建新白板</span>
                   </div>
                 </div>
-                <div v-for="(memo, index) in filteredMemos" :key="memo.blockId || index" class="gallery-item">
+                <div v-for="(memo, index) in filteredMemos" :key="memo.blockId || index" class="gallery-item" @dblclick="handleOpenWhiteboard(memo)">
                   <div class="gallery-item-content">
                     <WhiteboardPreview
                       :nodes="memo.whiteBoardConfig?.boardOptions?.nodes ?? []"
@@ -38,8 +38,12 @@
                   <div class="gallery-item-footer">
                     <div class="gallery-item-time">{{ memo.time }}</div>
                     <div class="gallery-item-actions">
-                      <span class="action-icon" @click="editMemo(index)" title="编辑" style="opacity: 0.3; cursor: not-allowed;"><svg><use xlink:href="#iconEdit"></use></svg></span>
-                      <span class="action-icon" @click="deleteMemo(index)" title="删除" style="opacity: 0.3; cursor: not-allowed;"><svg><use xlink:href="#iconTrashcan"></use></svg></span>
+                      <span class="action-icon" @click.stop="handleRenameWhiteboard(memo)" title="重命名">
+                        <svg><use xlink:href="#iconEdit"></use></svg>
+                      </span>
+                      <span class="action-icon" @click.stop="handleDeleteWhiteboard(memo)" title="删除">
+                        <svg><use xlink:href="#iconTrashcan"></use></svg>
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -265,7 +269,7 @@
                   <svg class="whiteboard-icon"><use xlink:href="#iconLayout"></use></svg><span class="whiteboard-name">创建新白板</span>
                 </div>
               </div>
-              <div v-for="(memo, index) in filteredMemos" :key="memo.blockId || index" class="gallery-item">
+              <div v-for="(memo, index) in filteredMemos" :key="memo.blockId || index" class="gallery-item" @dblclick="handleOpenWhiteboard(memo)">
                 <div class="gallery-item-content">
                   <WhiteboardPreview
                     :nodes="memo.whiteBoardConfig?.boardOptions?.nodes ?? []"
@@ -278,8 +282,12 @@
                 <div class="gallery-item-footer">
                   <div class="gallery-item-time">{{ memo.time }}</div>
                   <div class="gallery-item-actions">
-                    <span class="action-icon" @click="editMemo(index)" title="编辑" style="opacity: 0.3; cursor: not-allowed;"><svg><use xlink:href="#iconEdit"></use></svg></span>
-                    <span class="action-icon" @click="deleteMemo(index)" title="删除" style="opacity: 0.3; cursor: not-allowed;"><svg><use xlink:href="#iconTrashcan"></use></svg></span>
+                    <span class="action-icon" @click.stop="handleRenameWhiteboard(memo)" title="重命名">
+                      <svg><use xlink:href="#iconEdit"></use></svg>
+                    </span>
+                    <span class="action-icon" @click.stop="handleDeleteWhiteboard(memo)" title="删除">
+                      <svg><use xlink:href="#iconTrashcan"></use></svg>
+                    </span>
                   </div>
                 </div>
               </div>
@@ -374,16 +382,19 @@ import MemoTimeline from './components/MemoTimeline.vue'
 import type { DisplayMode } from '../types'
 import EnProtyle from '@/components/EnProtyle.vue'
 import WhiteboardPreview from './components/WhiteboardPreview.vue'
-import { Dialog } from 'siyuan'
+import { Dialog, confirm, openTab } from 'siyuan'
 import {
   generateWhiteBoardId,
   loadWhiteBoardConfigById,
+  deleteWhiteBoardConfigById,
+  getWhiteBoardConfigPathById,
   type EnWhiteBoardConfig,
   useWhiteBoardModule,
   whiteBoardRef,
   loadWhiteBoard
 } from '@/modules/EnWhiteBoard/EnWhiteBoard'
 import { usePlugin } from '@/main';
+import { removeFile } from '@/api'
 
 // 开发环境标志
 const isDev = import.meta.env.DEV || false
@@ -1022,6 +1033,153 @@ const handleCreateNewWhiteboard = async () => {
 
   // Focus input
   setTimeout(() => inputEl?.focus(), 100);
+};
+
+// DELETE Whiteboard Function
+const handleDeleteWhiteboard = async (memo: Memo) => {
+  if (memo.type !== 'whiteboard') return;
+
+  confirm('确认删除', `确定要删除白板 "${memo.docPath}" 吗？这将同时删除其配置文件，操作不可恢复。`, async () => {
+    try {
+      const whiteBoardId = memo.blockId;
+      const filePath = getWhiteBoardConfigPathById(whiteBoardId) + '.json'; // Assuming .json extension
+      
+      console.log(`Attempting to delete: ${filePath}`);
+      // 1. Delete the config file via API
+      try {
+          const response = await removeFile(filePath);
+          console.log('Remove file response:', response);
+          if (response?.code !== 0) {
+             console.error('Failed to delete whiteboard config file via API:', response?.msg);
+             // Optional: Show error to user
+             // return; // Decide if failure to delete file should stop the process
+          }
+      } catch (fileError) {
+          console.error('Error calling removeFile API:', fileError);
+           // Optional: Show error to user
+           // return;
+      }
+
+      // 2. Delete config from memory/storage management
+      deleteWhiteBoardConfigById(whiteBoardId);
+
+      // 3. Delete from index map
+      if (whiteBoardRef.indexMap?.moduleOptions?.value) {
+        delete whiteBoardRef.indexMap.moduleOptions.value[whiteBoardId];
+      }
+
+      // 4. Remove from local UI state
+      const allIndex = allMemos.value.findIndex(m => m.blockId === whiteBoardId);
+      if (allIndex > -1) allMemos.value.splice(allIndex, 1);
+      
+      const currentIdx = memos.value.findIndex(m => m.blockId === whiteBoardId);
+      if (currentIdx > -1) memos.value.splice(currentIdx, 1);
+
+      console.log(`Whiteboard ${whiteBoardId} deleted.`);
+      // Optional: Show success message
+
+    } catch (error) {
+      console.error('Error deleting whiteboard:', error);
+      // Optional: Show error message
+    }
+  });
+};
+
+// RENAME Whiteboard Function
+const handleRenameWhiteboard = async (memo: Memo) => {
+  if (memo.type !== 'whiteboard') return;
+
+  const renameDialog = new Dialog({
+    title: '重命名白板',
+    content: `<div class="b3-dialog__content">
+                  <input class="b3-text-field fn__block" id="renameWhiteboardInput" value="${memo.docPath || ''}">
+              </div>
+              <div class="b3-dialog__action">
+                  <button class="b3-button b3-button--cancel">取消</button><span class="fn__space"></span><button class="b3-button b3-button--text">确认</button>
+              </div>`,
+    width: plugin.isMobile ? "92vw" : "520px",
+  });
+
+  const confirmBtn = renameDialog.element.querySelector('.b3-button--text') as HTMLButtonElement;
+  const cancelBtn = renameDialog.element.querySelector('.b3-button--cancel') as HTMLButtonElement;
+  const inputEl = renameDialog.element.querySelector('#renameWhiteboardInput') as HTMLInputElement;
+
+  const handleConfirm = async () => {
+    const newName = inputEl.value.trim();
+    renameDialog.destroy();
+
+    if (!newName || newName === memo.docPath) {
+      return; // No change or empty name
+    }
+
+    try {
+      const whiteBoardId = memo.blockId;
+      
+      // 1. Load config (ensure it's loaded)
+      const config = await loadWhiteBoardConfigById(whiteBoardId);
+      if (!config?.moduleOptions?.value) {
+        console.error('Failed to load whiteboard config for renaming.');
+        return;
+      }
+
+      // 2. Update name in config
+      config.moduleOptions.value.name = newName;
+
+      // 3. Update name in index map
+      if (whiteBoardRef.indexMap?.moduleOptions?.value?.[whiteBoardId]) {
+        whiteBoardRef.indexMap.moduleOptions.value[whiteBoardId].whiteBoardName = newName;
+      } else {
+         console.warn('Whiteboard not found in index map during rename.');
+      }
+      
+      // 4. Update local UI state (find in both arrays)
+       const allIndex = allMemos.value.findIndex(m => m.blockId === whiteBoardId);
+      if (allIndex > -1) allMemos.value[allIndex].docPath = newName;
+      
+      const currentIdx = memos.value.findIndex(m => m.blockId === whiteBoardId);
+      if (currentIdx > -1) memos.value[currentIdx].docPath = newName;
+
+      console.log(`Whiteboard ${whiteBoardId} renamed to ${newName}.`);
+      // Note: Saving should be handled by useGlobalData proxy
+
+    } catch (error) {
+      console.error('Error renaming whiteboard:', error);
+    }
+  };
+
+  confirmBtn.addEventListener('click', handleConfirm);
+  cancelBtn.addEventListener('click', () => renameDialog.destroy());
+  inputEl.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') { event.preventDefault(); handleConfirm(); }
+  });
+
+  setTimeout(() => inputEl?.focus(), 100);
+};
+
+// OPEN Whiteboard Function - Corrected openTab structure
+const handleOpenWhiteboard = (memo: Memo) => {
+  if (memo.type !== 'whiteboard') return;
+
+  const whiteBoardId = memo.blockId;
+  const whiteBoardName = memo.docPath || '白板';
+  const tabType = 'en-enhance-whiteboard-tab'; // Placeholder - Ensure this type is correctly registered
+
+  console.log(`Opening whiteboard ${whiteBoardId} in new tab.`);
+
+  openTab({
+    app: plugin.app, 
+    custom: {
+      icon: "iconLayout", // Use an appropriate icon
+      title: whiteBoardName,
+      data: {
+        whiteBoardId: whiteBoardId,
+        // Any other data the tab component needs
+      },
+      id: plugin.name + tabType + whiteBoardId, // Unique ID for the tab
+      type: tabType, // Specify the custom tab type INSIDE custom
+    },
+    // tabType: tabType, // REMOVE from top level
+  });
 };
 
 onMounted(() => {

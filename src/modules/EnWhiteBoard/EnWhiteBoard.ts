@@ -276,7 +276,7 @@ async function createWhiteBoardConfig({
   return newConfig
 }
 
-function deleteWhiteBoardConfigById(whiteBoardId: string) {
+export function deleteWhiteBoardConfigById(whiteBoardId: string) {
   const path = getWhiteBoardConfigPathById(whiteBoardId)
   unuseModuleByNamespace(path)
   delete whiteBoardRef.configList.value[whiteBoardId]
