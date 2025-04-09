@@ -285,9 +285,8 @@ const getEdgeDashArray = (edge: PreviewEdge): string | undefined => {
   position: relative;
   width: 100%;
   height: 100%;
-  aspect-ratio: 16 / 9; // Maintain aspect ratio
   overflow: hidden;
-  background-color: transparent; // Set to transparent
+  background-color: transparent; // Ensure no background color conflicts
   border-radius: var(--b3-border-radius);
   border: none; // Remove border
   box-sizing: border-box;
