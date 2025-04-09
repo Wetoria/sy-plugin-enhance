@@ -3,7 +3,7 @@
     <!-- 宽屏布局 -->
     <div v-if="isWideLayout" class="en-user-memo-wide-layout">
       <div class="memo-main-area">
-        <div class="memo-input-container">
+        <div class="memo-input-container" v-if="activeFilter !== 'whiteboard'">
           <MemoInput
             :is-editing="isEditing"
             :editing-block-id="editingBlockId"
@@ -186,7 +186,7 @@
               @date-select="handleDateSelect"
             />
           </div>
-          <div class="memo-input-area">
+          <div class="memo-input-area" v-if="activeFilter !== 'whiteboard'">
             <MemoInput
               :is-editing="isEditing"
               :editing-block-id="editingBlockId"
@@ -1156,29 +1156,29 @@ const handleRenameWhiteboard = async (memo: Memo) => {
   setTimeout(() => inputEl?.focus(), 100);
 };
 
-// OPEN Whiteboard Function - Corrected openTab structure
+// OPEN Whiteboard Function
 const handleOpenWhiteboard = (memo: Memo) => {
   if (memo.type !== 'whiteboard') return;
 
   const whiteBoardId = memo.blockId;
   const whiteBoardName = memo.docPath || '白板';
-  const tabType = 'en-enhance-whiteboard-tab'; // Placeholder - Ensure this type is correctly registered
+  const tabType = 'en-enhance-whiteboard-tab'; // 确保这个类型已注册
 
   console.log(`Opening whiteboard ${whiteBoardId} in new tab.`);
 
   openTab({
-    app: plugin.app, 
+    app: plugin.app,
+    // tabType: tabType, // 从顶层移除
     custom: {
-      icon: "iconLayout", // Use an appropriate icon
+      icon: "iconLayout",
       title: whiteBoardName,
       data: {
         whiteBoardId: whiteBoardId,
-        // Any other data the tab component needs
+        // 其他需要传递给页签组件的数据
       },
-      id: plugin.name + tabType + whiteBoardId, // Unique ID for the tab
-      type: tabType, // Specify the custom tab type INSIDE custom
+      id: plugin.name + tabType + whiteBoardId, // 确保 ID 唯一
+      type: tabType, // 将类型指定移回 custom 对象内部，使用 'type' 属性
     },
-    // tabType: tabType, // REMOVE from top level
   });
 };
 
