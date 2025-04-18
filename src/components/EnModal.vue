@@ -448,7 +448,6 @@ const onMouseDown = (event: MouseEvent | TouchEvent, direction: ResizeDirection)
       flex: 1;
       border-bottom-right-radius: var(--b3-border-radius-b);
       border-bottom-left-radius: var(--b3-border-radius-b);
-      overflow: visible;
     }
   }
 }
