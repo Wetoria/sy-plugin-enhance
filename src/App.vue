@@ -82,6 +82,8 @@ registerGlobalObserver()
   left: 0px;
   pointer-events: none;
   box-sizing: border-box;
+
+  z-index: 10;
 }
 .SyEnhancerApp {
   width: 100%;
