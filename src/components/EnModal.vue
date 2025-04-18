@@ -269,6 +269,7 @@ const getPosInfoByEvent = (event: MouseEvent | TouchEvent) => {
   }
 }
 
+// 拖拽中
 const onMove = (event) => {
   const newPosInfo = getPosInfoByEvent(event)
 
@@ -366,22 +367,30 @@ const onMove = (event) => {
         minTop,
         maxTop,
       } = getBoundryLimit()
-      if (newTop > maxTop) {
+      if (newTop - startInfo.value.top + minHeight > maxTop) {
         newTop = maxTop
+      }
+      if (newTop - startInfo.value.top > startInfo.value.height - minHeight) {
+        newTop = startInfo.value.top + startInfo.value.height - minHeight
       }
       modalInfo.value.top = Math.max(minTop, newTop)
     }
   }
 }
 
+const targetResizer = ref<HTMLElement>()
+// 结束拖拽
 const unregister = () => {
   resizeDirection.value = null
+  targetResizer.value?.style.removeProperty('--en-resizer-color')
+  targetResizer.value = null
   document.body.removeEventListener('mousemove', onMove)
   document.body.removeEventListener('touchmove', onMove)
   document.body.removeEventListener('mouseup', unregister)
   document.body.removeEventListener('touchend', unregister)
 }
 
+// 开始拖拽
 const onMouseDown = (event: MouseEvent | TouchEvent, direction: ResizeDirection) => {
   event.stopImmediatePropagation()
   event.stopPropagation()
@@ -395,6 +404,10 @@ const onMouseDown = (event: MouseEvent | TouchEvent, direction: ResizeDirection)
     top: modalInfo.value.top,
   }
   resizeDirection.value = direction
+
+  const target = event.target as HTMLElement
+  targetResizer.value = target
+  target.style.setProperty('--en-resizer-color', 'var(--b3-theme-primary)')
 
   document.body.addEventListener('mousemove', onMove)
   document.body.addEventListener('touchmove', onMove)
@@ -430,8 +443,10 @@ const onMouseDown = (event: MouseEvent | TouchEvent, direction: ResizeDirection)
     flex-direction: column;
     overflow: visible;
 
+    --en-modal-header-height: 30px;
+
     .arco-modal-header {
-      height: 30px;
+      height: var(--en-modal-header-height);
       padding: 0 10px;
       border-bottom: unset;
       border-top-right-radius: var(--b3-border-radius-b);
@@ -448,6 +463,8 @@ const onMouseDown = (event: MouseEvent | TouchEvent, direction: ResizeDirection)
       flex: 1;
       border-bottom-right-radius: var(--b3-border-radius-b);
       border-bottom-left-radius: var(--b3-border-radius-b);
+      overflow: visible;
+      height: calc(100% - var(--en-modal-header-height));
     }
   }
 }
@@ -524,7 +541,8 @@ html {
   &.corner {
     width: var(--en-resizer-corner-size);
     height: var(--en-resizer-corner-size);
-    --en-resizer-corner-offset: calc(var(--en-resizer-corner-size) / -2);
+    // --en-resizer-corner-offset: calc(var(--en-resizer-corner-size) / -2);
+    --en-resizer-corner-offset: calc(var(--en-resizer-line-size) / -2);
 
     &.left {
       left: var(--en-resizer-corner-offset);
@@ -552,10 +570,105 @@ html {
       cursor: nesw-resize;
     }
 
+    &:not(.mobile):hover {
+      --en-resizer-color: var(--b3-theme-primary);
+    }
+
+    border: var(--en-resizer-line-size) solid var(--en-resizer-color);
+
+    &::before {
+      content: '';
+      position: absolute;
+      width: calc(var(--en-resizer-line-size) + (var(--b3-border-radius-b) / 4));
+      height: calc(var(--en-resizer-line-size));
+      background-color: var(--en-resizer-color);
+    }
+    &::after {
+      content: '';
+      position: absolute;
+      width: calc(var(--en-resizer-line-size));
+      height: calc(var(--en-resizer-line-size) + (var(--b3-border-radius-b) / 4));
+      background-color: var(--en-resizer-color);
+    }
+
+    &.top.left {
+      border-top-left-radius: var(--b3-border-radius-b);
+      border-right-color: transparent;
+      border-bottom-color: transparent;
+
+      &::before {
+        border-top-right-radius: var(--en-resizer-line-size);
+        border-bottom-right-radius: var(--en-resizer-line-size);
+        top: calc(-1 * var(--en-resizer-line-size));
+        right: calc(-1 * var(--en-resizer-line-size) - (var(--b3-border-radius-b) / 4));
+      }
+      &::after {
+        border-bottom-left-radius: var(--en-resizer-line-size);
+        border-bottom-right-radius: var(--en-resizer-line-size);
+        bottom: calc(-1 * var(--en-resizer-line-size) - (var(--b3-border-radius-b) / 4));
+        left: calc(-1 * var(--en-resizer-line-size));
+      }
+    }
+      &.top.right {
+        border-top-right-radius: var(--b3-border-radius-b);
+        border-left-color: transparent;
+        border-bottom-color: transparent;
+
+        &::before {
+          border-top-left-radius: var(--en-resizer-line-size);
+          border-bottom-left-radius: var(--en-resizer-line-size);
+          top: calc(-1 * var(--en-resizer-line-size));
+          left: calc(-1 * var(--en-resizer-line-size) - (var(--b3-border-radius-b) / 4));
+        }
+        &::after {
+          border-bottom-left-radius: var(--en-resizer-line-size);
+          border-bottom-right-radius: var(--en-resizer-line-size);
+          bottom: calc(-1 * var(--en-resizer-line-size) - (var(--b3-border-radius-b) / 4));
+          right: calc(-1 * var(--en-resizer-line-size));
+        }
+      }
+      &.bottom.left {
+        border-bottom-left-radius: var(--b3-border-radius-b);
+        border-right-color: transparent;
+        border-top-color: transparent;
+
+        &::before {
+          border-top-right-radius: var(--en-resizer-line-size);
+          border-bottom-right-radius: var(--en-resizer-line-size);
+          bottom: calc(-1 * var(--en-resizer-line-size));
+          right: calc(-1 * var(--en-resizer-line-size) - (var(--b3-border-radius-b) / 4));
+        }
+        &::after {
+          border-top-left-radius: var(--en-resizer-line-size);
+          border-top-right-radius: var(--en-resizer-line-size);
+          top: calc(-1 * var(--en-resizer-line-size) - (var(--b3-border-radius-b) / 4));
+          left: calc(-1 * var(--en-resizer-line-size));
+        }
+      }
+      &.bottom.right {
+        border-bottom-right-radius: var(--b3-border-radius-b);
+        border-left-color: transparent;
+        border-top-color: transparent;
+
+        &::before {
+          border-top-left-radius: var(--en-resizer-line-size);
+          border-bottom-left-radius: var(--en-resizer-line-size);
+          bottom: calc(-1 * var(--en-resizer-line-size));
+          left: calc(-1 * var(--en-resizer-line-size) - (var(--b3-border-radius-b) / 4));
+        }
+        &::after {
+          border-top-left-radius: var(--en-resizer-line-size);
+          border-top-right-radius: var(--en-resizer-line-size);
+          top: calc(-1 * var(--en-resizer-line-size) - (var(--b3-border-radius-b) / 4));
+          right: calc(-1 * var(--en-resizer-line-size));
+        }
+      }
+
     &.mobile {
-      --en-resizer-corner-size: 30px;
-      --en-resizer-line-size: 8px;
-      // background-color: var(--b3-theme-primary);
+      --en-resizer-corner-size: 25px;
+      --en-resizer-line-size: 5px;
+      // --en-resizer-color: var(--b3-theme-primary);
+
 
       &.left {
         left: -10px;
@@ -569,75 +682,26 @@ html {
       &.bottom {
         bottom: -10px;
       }
-
-      // &::before {
-      //   content: '';
-      //   position: absolute;
-      //   width: calc(100%);
-      //   height: var(--en-resizer-line-size);
-      //   background-color: var(--b3-theme-primary);
-      //   border-radius: var(--en-resizer-line-size);
-      //   top: 0;
-      //   left: 0;
-      // }
-      // &::after {
-      //   content: '';
-      //   position: absolute;
-      //   width: var(--en-resizer-line-size);
-      //   height: calc(100%);
-      //   background-color: var(--b3-theme-primary);
-      //   border-radius: var(--en-resizer-line-size);
-      //   top: 0;
-      //   left: 0;
-      // }
-
-      // &.top.left {
-      //   &::before {
-      //     top: calc(50% - var(--en-resizer-line-size) / 2);
-      //     left: calc(50% - var(--en-resizer-line-size) / 2);
-      //   }
-      //   &::after {
-      //     top: calc(50% - var(--en-resizer-line-size) / 2);
-      //     left: calc(50% - var(--en-resizer-line-size) / 2);
-      //   }
-      // }
-      // &.top.right {
-      //   &::before {
-      //     top: calc(50% - var(--en-resizer-line-size) / 2);
-      //     left: calc((50% - var(--en-resizer-line-size) / 2) * -1);
-      //   }
-      //   &::after {
-      //     top: calc(50% - var(--en-resizer-line-size) / 2);
-      //     left: calc(50% - var(--en-resizer-line-size) / 2);
-      //   }
-      // }
-      // &.bottom.left {
-      //   &::before {
-      //     top: calc(50% - var(--en-resizer-line-size) / 2);
-      //     left: calc(50% - var(--en-resizer-line-size) / 2);
-      //   }
-      //   &::after {
-      //     top: calc((50% - var(--en-resizer-line-size) / 2) * -1);
-      //     left: calc(50% - var(--en-resizer-line-size) / 2);
-      //   }
-      // }
-      // &.bottom.right {
-      //   &::before {
-      //     top: calc(50% - var(--en-resizer-line-size) / 2);
-      //     left: calc((50% - var(--en-resizer-line-size) / 2) * -1);
-      //   }
-      //   &::after {
-      //     top: calc((50% - var(--en-resizer-line-size) / 2) * -1);
-      //     left: calc((50% - var(--en-resizer-line-size) / 2) * 1);
-      //   }
-      // }
     }
   }
 
   &.line {
 
+    &:hover {
+      --en-resizer-color: var(--b3-theme-primary);
+    }
+
+    &::before {
+      content: '';
+      position: absolute;
+      background-color: var(--en-resizer-color);
+      border-radius: var(--en-resizer-line-size);
+    }
+
     &.top {
       top: calc(var(--en-resizer-line-size) / -2);
+
+
     }
 
     &.bottom {
@@ -658,6 +722,12 @@ html {
       height: var(--en-resizer-line-size);
       left: calc(var(--en-resizer-corner-size) / 2 + var(--en-resizer-line-offset));
       cursor: ns-resize;
+
+      &::before {
+        width: calc(var(--en-resizer-corner-size) * 2);
+        height: var(--en-resizer-line-size);
+        left: calc(50% - (var(--en-resizer-corner-size)));
+      }
     }
 
     &.left,
@@ -666,6 +736,12 @@ html {
       height: calc(100% - var(--en-resizer-corner-size) - (var(--en-resizer-line-offset) * 2));
       top: calc(var(--en-resizer-corner-size) / 2 + var(--en-resizer-line-offset));
       cursor: ew-resize;
+
+      &::before {
+        width: var(--en-resizer-line-size);
+        height: calc(var(--en-resizer-corner-size) * 2);
+        top: calc(50% - (var(--en-resizer-corner-size)));
+      }
     }
   }
 
@@ -678,11 +754,8 @@ html {
 
 .en-modal-content {
   width: 100%;
-  min-height: 100%;
+  height: 100%;
   overflow-x: hidden;
   overflow-y: auto;
-
-  display: flex;
-  flex-direction: column;
 }
 </style>
