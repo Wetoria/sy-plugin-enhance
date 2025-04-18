@@ -107,6 +107,7 @@ import { useViewport } from '@/modules/EnPWA.vue'
 import {
   computed,
   ref,
+  watch,
   watchEffect,
 } from 'vue'
 
@@ -123,12 +124,35 @@ type ResizeDirection =
   | 'bottomLeft'
   | 'bottomRight'
 
+const props = defineProps<{
+  id?: string
+}>()
+
 const modalInfo = ref({
   width: 500,
   height: 300,
   left: -1,
   top: -1,
 })
+if (props.id) {
+  const storageModalInfoStr = localStorage.getItem(`en_modal_info_${props.id}`)
+  if (storageModalInfoStr) {
+    try {
+      modalInfo.value = JSON.parse(storageModalInfoStr)
+    } catch (error) {
+      console.error(error)
+    }
+  }
+}
+
+watch(modalInfo, (value) => {
+  if (props.id) {
+    localStorage.setItem(`en_modal_info_${props.id}`, JSON.stringify(value))
+  }
+}, {
+  deep: true,
+})
+
 const resizeDirection = ref<ResizeDirection>()
 watchEffect(() => {
   if (resizeDirection.value) {
