@@ -20,7 +20,8 @@
     <template #title>
       <div
         class="en-modal-title"
-        @[startEventName]="(event) => onMouseDown(event, 'move')"
+        @mousedown="(event) => onMouseDown(event, 'move')"
+        @touchstart="(event) => onMouseDown(event, 'move')"
       >
         <slot name="title" />
       </div>
@@ -36,6 +37,7 @@
         :class="[
           plugin.isMobile ? 'mobile' : '',
         ]"
+        @mousedown="(event) => onMouseDown(event, 'topLeft')"
         @touchstart="(event) => onMouseDown(event, 'topLeft')"
       ></div>
       <div
@@ -43,6 +45,7 @@
         :class="[
           plugin.isMobile ? 'mobile' : '',
         ]"
+        @mousedown="(event) => onMouseDown(event, 'topRight')"
         @touchstart="(event) => onMouseDown(event, 'topRight')"
       ></div>
       <div
@@ -50,6 +53,7 @@
         :class="[
           plugin.isMobile ? 'mobile' : '',
         ]"
+        @mousedown="(event) => onMouseDown(event, 'bottomLeft')"
         @touchstart="(event) => onMouseDown(event, 'bottomLeft')"
       ></div>
       <div
@@ -57,6 +61,7 @@
         :class="[
           plugin.isMobile ? 'mobile' : '',
         ]"
+        @mousedown="(event) => onMouseDown(event, 'bottomRight')"
         @touchstart="(event) => onMouseDown(event, 'bottomRight')"
       ></div>
     </template>
@@ -170,10 +175,6 @@ const startInfo = ref({
 const posInfo = ref({
   x: -1,
   y: -1,
-})
-
-const startEventName = computed(() => {
-  return plugin.isMobile ? 'touchstart' : 'mousedown'
 })
 
 const viewport = useViewport()
