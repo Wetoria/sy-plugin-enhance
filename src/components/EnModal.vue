@@ -110,11 +110,17 @@
 import { usePlugin } from '@/main'
 import { useViewport } from '@/modules/EnPWA.vue'
 import {
-  computed,
+  useEventListener,
+} from '@vueuse/core'
+import {
   ref,
   watch,
   watchEffect,
 } from 'vue'
+
+const props = defineProps<{
+  id?: string
+}>()
 
 const plugin = usePlugin()
 
@@ -129,9 +135,6 @@ type ResizeDirection =
   | 'bottomLeft'
   | 'bottomRight'
 
-const props = defineProps<{
-  id?: string
-}>()
 
 const modalInfo = ref({
   width: 500,
@@ -409,8 +412,8 @@ const unregister = () => {
   resizeDirection.value = null
   targetResizer.value?.style.removeProperty('--en-resizer-color')
   targetResizer.value = null
-  document.body.removeEventListener('mousemove', onMove)
-  document.body.removeEventListener('touchmove', onMove)
+  document.body.removeEventListener('mousemove', onMove, true)
+  document.body.removeEventListener('touchmove', onMove, true)
   document.body.removeEventListener('mouseup', unregister)
   document.body.removeEventListener('touchend', unregister)
 }
@@ -434,12 +437,22 @@ const onMouseDown = (event: MouseEvent | TouchEvent, direction: ResizeDirection)
   targetResizer.value = target
   target.style.setProperty('--en-resizer-color', 'var(--b3-theme-primary)')
 
-  document.body.addEventListener('mousemove', onMove)
-  document.body.addEventListener('touchmove', onMove)
+  document.body.addEventListener('mousemove', onMove, true)
+  document.body.addEventListener('touchmove', onMove, true)
   document.body.addEventListener('mouseup', unregister)
   document.body.addEventListener('touchend', unregister)
 }
 
+const listenerWindowResize = () => {
+  startInfo.value = {
+    ...modalInfo.value,
+  }
+
+  // IMP 考虑恢复原来的窗口位置
+  fixModalPosition()
+}
+
+useEventListener(window, 'resize', listenerWindowResize)
 </script>
 
 <style lang="scss">
@@ -456,7 +469,7 @@ const onMouseDown = (event: MouseEvent | TouchEvent, direction: ResizeDirection)
   .en-modal {
     pointer-events: auto;
     max-width: calc(100vw - 20px);
-    max-height: calc(100vh - 20px);
+    max-height: calc(100vh - 32px - 10px);
     position: absolute;
     top: 0;
     left: 0;
