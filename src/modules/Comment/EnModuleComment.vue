@@ -118,18 +118,59 @@
         批注样式
       </div>
       <template #desc>
-        <!-- @vue-ignore -->
         <div
-          :style="{
-            display: 'inline',
-            backgroundColor: moduleOptions.enableHighlight ? moduleOptions.commentBackgroundColor : '',
-            textDecorationLine: moduleOptions.commentStyle ? 'underline' : '',
-            textDecorationStyle: moduleOptions.commentStyle,
-            textDecorationColor: moduleOptions.commentUnderlineColor,
-            textDecorationThickness: `${moduleOptions.commentUnderlineWidth}px`,
-          }"
+          class="flexColumn"
         >
-          批注样式效果预览
+          <div
+          >
+            <!-- @vue-ignore -->
+            <span
+              :style="{
+                color: 'var(--b3-theme-on-background)',
+                backgroundColor: moduleOptions.enableHighlight ? moduleOptions.commentBackgroundColor : '',
+                textDecorationLine: moduleOptions.commentStyle ? 'underline' : '',
+                textDecorationStyle: moduleOptions.commentStyle,
+                textDecorationColor: moduleOptions.commentUnderlineColor,
+                textDecorationThickness: `${moduleOptions.commentUnderlineWidth}px`,
+              }"
+            >
+              批注样式效果预览
+            </span>
+          </div>
+          <div>
+            <a-space>
+              <a-button
+                @click="saveCommentStyle"
+              >
+                保存样式
+              </a-button>
+              <div
+                v-for="style of moduleOptions.styleList"
+                :key="`${style.underlineStyle}-${style.underlineWidth}-${style.underlineColor}-${style.enableHighlight}-${style.backgroundColor}`"
+                @click="applyCommentStyle(style)"
+                type="text"
+                style="
+                  padding: 2px 4px;
+                  cursor: pointer;
+                "
+              >
+                <!-- @vue-ignore -->
+                <span
+                  :style="{
+                    display: 'inline',
+                    color: 'var(--b3-theme-on-background)',
+                    backgroundColor: style.enableHighlight ? style.backgroundColor : '',
+                    textDecorationLine: style.underlineStyle ? 'underline' : '',
+                    textDecorationStyle: style.underlineStyle,
+                    textDecorationColor: style.underlineColor,
+                    textDecorationThickness: `${style.underlineWidth}px`,
+                  }"
+                >
+                  叶归
+                </span>
+              </div>
+            </a-space>
+          </div>
         </div>
       </template>
       <template #opt>
@@ -192,6 +233,7 @@ import {
   EN_CONSTANTS,
   EN_MODULE_LIST,
 } from '@/utils/Constants'
+import { onCountClick } from '@/utils/DOM'
 import { openDocById } from '@/utils/Note'
 import {
   computed,
@@ -289,6 +331,31 @@ const openTargetDoc = () => {
   }
   openDocById(moduleOptions.value.targetId)
 }
+
+const saveCommentStyle = () => {
+  moduleOptions.value.styleList.push({
+    underlineStyle: moduleOptions.value.commentStyle,
+    underlineWidth: moduleOptions.value.commentUnderlineWidth,
+    underlineColor: moduleOptions.value.commentUnderlineColor,
+    enableHighlight: moduleOptions.value.enableHighlight,
+    backgroundColor: moduleOptions.value.commentBackgroundColor,
+  })
+}
+
+const applyCommentStyle = onCountClick((count, style) => {
+  if (count === 1) {
+    moduleOptions.value.commentStyle = style.underlineStyle
+    moduleOptions.value.commentUnderlineWidth = style.underlineWidth
+    moduleOptions.value.commentUnderlineColor = style.underlineColor
+    moduleOptions.value.enableHighlight = style.enableHighlight
+    moduleOptions.value.commentBackgroundColor = style.backgroundColor
+    return
+  }
+  if (count === 2) {
+    moduleOptions.value.styleList = moduleOptions.value.styleList.filter(item => item != style)
+    return
+  }
+})
 </script>
 
 <style lang="scss" scoped>

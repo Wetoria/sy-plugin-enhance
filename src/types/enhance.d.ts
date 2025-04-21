@@ -213,9 +213,12 @@ interface EnModuleComment extends EnModule {
   enableHighlight: false
   commentBackgroundColor: string
   styleList: Array<{
-    style: string
-    width: number
-    color: string
+    underlineStyle: string
+    underlineWidth: number
+    underlineColor: string
+
+    enableHighlight: boolean
+    backgroundColor: string
   }>
 
   customCommentStructure: string

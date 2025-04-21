@@ -30,7 +30,7 @@ export function hideGutterOnTarget(target) {
 }
 
 
-export const onCountClick = (fn) => {
+export const onCountClick = (fn: (count: number, ...args: any[]) => void) => {
   const countTime = ref(0)
   const countTimeTimeoutFlag = ref()
   return (...args) => {
