@@ -19,7 +19,7 @@
   >
     <template #title>
       <div
-        class="en-modal-title"
+        class="en-modal-title en-move"
         @mousedown="(event) => onMouseDown(event, 'move')"
         @touchstart="(event) => onMouseDown(event, 'move')"
       >
@@ -120,6 +120,9 @@ import {
 
 const props = defineProps<{
   id?: string
+  // 过滤掉 modalClass
+  // IMP 可以考虑做合并
+  modalClass?: string
 }>()
 
 const plugin = usePlugin()
@@ -420,6 +423,18 @@ const unregister = () => {
 
 // 开始拖拽
 const onMouseDown = (event: MouseEvent | TouchEvent, direction: ResizeDirection) => {
+  const target = event.target as HTMLElement
+
+  // 检查父元素是否包含 arco 开头的类名
+  let parentElement = target
+  while (parentElement && !parentElement.classList.contains('en-move') && !parentElement.classList.contains('en-resizer')) {
+    if (Array.from(parentElement.classList).some((className) => className.startsWith('arco-'))) {
+      event.stopPropagation()
+      return
+    }
+    parentElement = parentElement.parentElement
+  }
+
   event.stopImmediatePropagation()
   event.stopPropagation()
   event.preventDefault()
@@ -433,7 +448,6 @@ const onMouseDown = (event: MouseEvent | TouchEvent, direction: ResizeDirection)
   }
   resizeDirection.value = direction
 
-  const target = event.target as HTMLElement
   targetResizer.value = target
   target.style.setProperty('--en-resizer-color', 'var(--b3-theme-primary)')
 

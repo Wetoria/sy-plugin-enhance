@@ -60,9 +60,10 @@
 
   <Teleport to="body">
 
-    <a-modal
+    <EnModal
+      id="enCommentModalMobile"
       v-model:visible="popoverVisible"
-      class="enCommentContainerModal enCommentContainerModalMobile"
+      class="enCommentContainerModalMobile"
       modal-class="enCommentContainer"
       :footer="false"
       :mask="false"
@@ -74,9 +75,9 @@
           style="width: 100%;"
         >
           <div class="flexAlignCenter">
-            添加评论
+            叶归｜批注
           </div>
-          <a-divider direction="vertical" />
+          <!-- <a-divider direction="vertical" />
           <div class="flexAlignCenter">
             日记笔记本：
           </div>
@@ -85,7 +86,7 @@
               v-model="moduleOptions.notebookId"
               :notebook-list="openedNotebookList"
             />
-          </div>
+          </div> -->
         </div>
       </template>
       <div
@@ -104,7 +105,7 @@
           />
         </a-spin>
       </div>
-    </a-modal>
+    </EnModal>
   </Teleport>
 
   <EnDrawer
@@ -148,6 +149,7 @@ import {
   sql,
 } from '@/api'
 import EnDrawer from '@/components/EnDrawer.vue'
+import EnModal from '@/components/EnModal.vue'
 import EnNotebookSelector from '@/components/EnNotebookSelector.vue'
 import EnProtyle from '@/components/EnProtyle.vue'
 import {
@@ -906,6 +908,22 @@ const showCommentHistoryList = () => {
 
   }
 }
+
+.enCommentContainerContent {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: auto;
+
+  :deep(.protyle-content) {
+    padding-bottom: unset !important;
+
+    .protyle-wysiwyg {
+      padding: 6px 16px !important;
+    }
+  }
+
+}
 </style>
 
 <style lang="scss">
@@ -914,51 +932,10 @@ const showCommentHistoryList = () => {
 }
 
 .enCommentContainerModalMobile {
-  pointer-events: none;
-
-  & .arco-modal-wrapper {
-    pointer-events: none;
-    overflow: hidden;
-  }
-
-  .enCommentContainer {
-    pointer-events: auto;
-    top: 0;
-    vertical-align: top;
-    min-height: 98px;
-    width: calc(100vw - 20px);
-    background: var(--b3-theme-background);
-    border: 1px solid var(--b3-border-color);
-    transform: translateY(20px);
-    max-height: calc(100vh - 40px);
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-
-    .arco-modal-header {
-      padding: 0 16px;
-      border-bottom: 1px solid var(--b3-border-color);
-      height: 36px;
-    }
-
-    .arco-modal-body {
-      padding: 0;
-    }
-
-    .enCommentContainerContent {
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      overflow: auto;
-
-      .protyle-content {
-        padding-bottom: unset !important;
-      }
-
-      .protyle-wysiwyg {
-        padding: 6px 16px !important;
-      }
-    }
+  .arco-modal-header {
+    padding: 0 16px;
+    border-bottom: 1px solid var(--b3-border-color);
+    height: 36px;
   }
 }
 
