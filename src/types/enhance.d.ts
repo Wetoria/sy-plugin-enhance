@@ -207,9 +207,16 @@ interface EnModuleComment extends EnModule {
   targetId: string
 
   enableCommentStyle: boolean
-  commentStyle: 'dotted' | 'dashed' | 'solid' | 'double' | 'wavy' | 'highlight'
+  commentStyle: undefined | 'dotted' | 'dashed' | 'solid' | 'double' | 'wavy' | 'highlight'
   commentUnderlineWidth: number
   commentUnderlineColor: string
+  enableHighlight: false
+  commentBackgroundColor: string
+  styleList: Array<{
+    style: string
+    width: number
+    color: string
+  }>
 
   customCommentStructure: string
   commentWrapMode: 'NodeList' | 'NodeSuperBlock'

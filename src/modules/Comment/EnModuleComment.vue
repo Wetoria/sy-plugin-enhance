@@ -94,7 +94,7 @@
 
     <EnSettingsItem mode="vertical">
       <div>
-        批注效果
+        批注下划线样式
       </div>
       <template #opt>
         <div class="EnCommentStyleSelector">
@@ -118,19 +118,16 @@
         批注样式
       </div>
       <template #desc>
+        <!-- @vue-ignore -->
         <div
-          :style="
-            moduleOptions.commentStyle === 'highlight' ? {
-              display: 'inline',
-              boxDecorationBreak: 'clone',
-              backgroundColor: moduleOptions.commentUnderlineColor,
-            } : {
-              textDecorationLine: 'underline',
-              textDecorationStyle: moduleOptions.commentStyle,
-              textDecorationColor: moduleOptions.commentUnderlineColor,
-              textDecorationThickness: `${moduleOptions.commentUnderlineWidth}px`,
-            }
-          "
+          :style="{
+            display: 'inline',
+            backgroundColor: moduleOptions.enableHighlight ? moduleOptions.commentBackgroundColor : '',
+            textDecorationLine: moduleOptions.commentStyle ? 'underline' : '',
+            textDecorationStyle: moduleOptions.commentStyle,
+            textDecorationColor: moduleOptions.commentUnderlineColor,
+            textDecorationThickness: `${moduleOptions.commentUnderlineWidth}px`,
+          }"
         >
           批注样式效果预览
         </div>
@@ -145,6 +142,11 @@
           <EnColorPicker
             v-model="moduleOptions.commentUnderlineColor"
             type="color"
+          />
+          <a-switch v-model="moduleOptions.enableHighlight" />
+          <EnColorPicker
+            v-model="moduleOptions.commentBackgroundColor"
+            type="bgColor"
           />
         </div>
       </template>
@@ -235,6 +237,10 @@ const {
     commentStyle: 'solid',
     commentUnderlineWidth: 2,
     commentUnderlineColor: '#65b84d',
+    enableHighlight: false,
+    commentBackgroundColor: '#65b84d7F',
+    styleList: [
+    ],
 
 
     commentWrapMode: 'NodeList',
@@ -246,6 +252,10 @@ provideCommentOptions(moduleOptions)
 
 
 const commentStyleOptions = [
+  {
+    value: '',
+    label: '无',
+  },
   {
     value: 'solid',
     label: '实线',
@@ -265,10 +275,6 @@ const commentStyleOptions = [
   {
     value: 'wavy',
     label: '波浪线',
-  },
-  {
-    value: 'highlight',
-    label: '高亮',
   },
 ]
 
@@ -294,7 +300,6 @@ const openTargetDoc = () => {
   height: 28px;
 }
 
-.EnCommentStyleSlider,
 .EnCommentStyleSelector {
   min-width: 134px;
 }
@@ -303,6 +308,7 @@ const openTargetDoc = () => {
   display: flex;
   align-items: center;
   gap: 8px;
+  width: 200px;
 }
 
 .EnCommentStructureEditor {

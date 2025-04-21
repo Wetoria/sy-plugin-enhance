@@ -35,94 +35,80 @@ watchEffect(() => {
     return `[data-node-id="${nodeId}"][${EN_COMMENT_KEYS.commentIdInAttribute}~="${i}"]`
   })
 
-  const isHighlight = commentOptions.value.commentStyle === 'highlight'
+  const needUnderline = commentOptions.value.commentStyle
+  const needHighlight = commentOptions.value.enableHighlight
   const borderStyle = commentOptions.value.commentStyle === 'wavy' ? 'dashed' : commentOptions.value.commentStyle
 
-  if (isHighlight) {
-    styleDomRef.value.textContent = `
-      ${lineSelectorList.join(', ')} {
-        background-color: ${commentOptions.value.commentUnderlineColor};
-        box-decoration-break: clone;
-
-        & * {
-          background-color: ${commentOptions.value.commentUnderlineColor};
-          box-decoration-break: clone;
-        }
-      }
-      ${blockSelectorList.join(', ')} {
-        &[data-type="NodeParagraph"],
-        &[data-type="NodeHeading"],
-        [data-type="NodeParagraph"],
-        [data-type="NodeHeading"] {
-          & > div:first-child {
-            background-color: ${commentOptions.value.commentUnderlineColor};
-            box-decoration-break: clone;
-          }
-        }
-
-        [data-type="NodeWidget"],
-        [data-type="NodeBlockQueryEmbed"],
-        [data-type="NodeHTMLBlock"],
-        [data-type="NodeCodeBlock"],
-        [data-type="NodeVideo"] video,
-        [data-type="NodeAudio"] audio,
-        [data-type="NodeIFrame"] {
-          background-color: ${commentOptions.value.commentUnderlineColor};
-          box-decoration-break: clone;
-        }
-      }
-    `
-
-    return
-  }
-  styleDomRef.value.textContent = `
-    ${lineSelectorList.join(', ')} {
+  const underLineStyle = needUnderline
+    ? `
       text-decoration-line: underline;
       text-decoration-style: ${commentOptions.value.commentStyle};
       text-decoration-color: ${commentOptions.value.commentUnderlineColor};
       text-decoration-thickness: ${commentOptions.value.commentUnderlineWidth}px;
+    `
+    : ''
 
-      & * {
-        text-decoration-line: underline;
-        text-decoration-style: ${commentOptions.value.commentStyle};
-        text-decoration-color: ${commentOptions.value.commentUnderlineColor};
-        text-decoration-thickness: ${commentOptions.value.commentUnderlineWidth}px;
-      }
-    }
-    ${blockSelectorList.join(', ')} {
-      &[data-type="NodeParagraph"],
-      &[data-type="NodeHeading"],
-      [data-type="NodeParagraph"],
-      [data-type="NodeHeading"] {
-        & > div:first-child {
-          text-decoration-line: underline;
-          text-decoration-style: ${commentOptions.value.commentStyle};
-          text-decoration-color: ${commentOptions.value.commentUnderlineColor};
-          text-decoration-thickness: ${commentOptions.value.commentUnderlineWidth}px;
+  const assetsBorderStyle = needUnderline
+    ? `
+      border: ${commentOptions.value.commentUnderlineWidth}px ${borderStyle} ${commentOptions.value.commentUnderlineColor};
+    `
+    : ''
+
+  const highlightStyle = needHighlight
+    ? `
+      background-color: ${commentOptions.value.commentBackgroundColor};
+    `
+    : ''
+
+  styleDomRef.value.textContent = `
+    ${lineSelectorList.map((item) => {
+      return `
+        ${item} {
+          ${underLineStyle}
+          ${highlightStyle}
 
           & * {
-            text-decoration-line: underline;
-            text-decoration-style: ${commentOptions.value.commentStyle};
-            text-decoration-color: ${commentOptions.value.commentUnderlineColor};
-            text-decoration-thickness: ${commentOptions.value.commentUnderlineWidth}px;
-          }
-
-          img {
-            border: ${commentOptions.value.commentUnderlineWidth}px ${borderStyle} ${commentOptions.value.commentUnderlineColor};
+            ${underLineStyle}
+            ${highlightStyle}
           }
         }
-      }
+      `
+    }).join('\n')}
+    ${blockSelectorList.map((item) => {
+      return `
+        ${item} {
+          &[data-type="NodeParagraph"],
+          &[data-type="NodeHeading"],
+          [data-type="NodeParagraph"],
+          [data-type="NodeHeading"] {
+            & > div:first-child {
+              ${underLineStyle}
+              ${highlightStyle}
+              ${needHighlight ? `display: inline;` : ''}
 
-      [data-type="NodeWidget"],
-      [data-type="NodeBlockQueryEmbed"],
-      [data-type="NodeHTMLBlock"],
-      [data-type="NodeCodeBlock"],
-      [data-type="NodeVideo"] video,
-      [data-type="NodeAudio"] audio,
-      [data-type="NodeIFrame"] {
-        border: ${commentOptions.value.commentUnderlineWidth}px ${borderStyle} ${commentOptions.value.commentUnderlineColor};
-      }
-    }
+              & *:not([data-type*="en-comment-id"]) {
+                ${underLineStyle}
+              }
+
+              img {
+                ${assetsBorderStyle}
+              }
+            }
+          }
+
+          [data-type="NodeWidget"],
+          [data-type="NodeBlockQueryEmbed"],
+          [data-type="NodeHTMLBlock"],
+          [data-type="NodeCodeBlock"],
+          [data-type="NodeVideo"] video,
+          [data-type="NodeAudio"] audio,
+          [data-type="NodeIFrame"] {
+            ${assetsBorderStyle}
+            ${highlightStyle}
+          }
+        }
+      `
+    }).join('\n')}
   `
 })
 
