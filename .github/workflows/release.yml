@@ -145,4 +145,4 @@ jobs:
           curl --request POST \
             --url ${{ secrets.PUBILSH_NOTICE_URL_DISCORD }} \
             --header 'content-type: application/json' \
-            --data "{\"content\": \"Enhance plugin is updated to ${{ steps.create_release.outputs.en_version }}.\nGo to [here](https://simplest-frontend.feishu.cn/share/base/view/shrcn0R30Jqpxg2h9EVNUW673Eg) to check the newest contents.\", \"username\": \"Wetoria\", \"avatar_url\": \"https://cdn.discordapp.com/avatars/563045745406771220/0087a37a676117e020ee24b12122904b.webp?size=240\"}"
+            --data "{\"content\": \"Enhance plugin is updated to ${{ steps.create_release.outputs.en_version }}.\nGo to [here](https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse#share-DpSod4J3yosKJSxwlpMcXECrnWg) to check the newest contents.\", \"username\": \"Wetoria\", \"avatar_url\": \"https://cdn.discordapp.com/avatars/563045745406771220/0087a37a676117e020ee24b12122904b.webp?size=240\"}"
