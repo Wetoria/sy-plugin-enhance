@@ -16,38 +16,13 @@
           <div class="memo-card">
             <div class="memo-card-content">
               <template v-if="memo.type === 'whiteboard'">
-                <div class="whiteboard-preview">
-                  <VueFlow
-                    v-if="memo.whiteBoardConfig?.boardOptions?.nodes"
-                    :nodes="memo.whiteBoardConfig.boardOptions.nodes"
-                    :edges="memo.whiteBoardConfig.boardOptions.edges"
-                    :defaultViewport="memo.whiteBoardConfig.boardOptions.viewport"
-                    :fitView="true"
-                    :panOnDrag="false"
-                    :zoomOnScroll="false"
-                    :zoomOnPinch="false"
-                    :preventScrolling="true"
-                    :nodesConnectable="false"
-                    :nodesDraggable="false"
-                    :elementsSelectable="false"
-                  >
-                    <template #node-EnWhiteBoardNodeProtyle="node">
-                      <div class="minimap-node" />
-                    </template>
-                    <template #edge-EnWhiteBoardEdgeBase="edge">
-                      <div class="minimap-edge" />
-                    </template>
-                    <MiniMap
-                      :zoomable="false"
-                      :pannable="false"
-                      maskColor="transparent"
-                    />
-                  </VueFlow>
-                  <div class="whiteboard-title">
-                    <svg class="whiteboard-icon"><use xlink:href="#iconLayout"></use></svg>
-                    <span class="whiteboard-name">{{ memo.docPath }}</span>
-                  </div>
-                </div>
+                <WhiteboardPreview 
+                  :nodes="memo.whiteBoardConfig?.boardOptions?.nodes ?? []"
+                  :edges="memo.whiteBoardConfig?.boardOptions?.edges ?? []"
+                  :viewport="memo.whiteBoardConfig?.boardOptions?.viewport"
+                  :title="memo.docPath || '白板预览'"
+                  :backgroundVariant="memo.whiteBoardConfig?.boardOptions?.backgroundVariant || 'none'"
+                />
               </template>
               <template v-else-if="memo.type === 'annotation'">
                 <div v-if="memo.blockId" class="annotation-container">
@@ -119,16 +94,13 @@ import type { Protyle } from 'siyuan'
 import type { PropType } from 'vue'
 import { request } from '@/api'
 import EnProtyle from '@/components/EnProtyle.vue'
-import { VueFlow } from '@vue-flow/core'
-import { MiniMap } from '@vue-flow/minimap'
+import WhiteboardPreview from './WhiteboardPreview.vue'
 import { openTab } from 'siyuan'
 import {
   onBeforeUnmount,
   ref,
   watch,
 } from 'vue'
-import '@vue-flow/core/dist/style.css'
-import '@vue-flow/minimap/dist/style.css'
 
 export interface Memo {
   blockId: string
@@ -444,96 +416,6 @@ onBeforeUnmount(() => {
           }
         }
       }
-    }
-  }
-}
-
-.whiteboard-preview {
-  aspect-ratio: 16/9;
-  position: relative;
-  background: var(--b3-theme-surface);
-  border-radius: var(--b3-border-radius);
-  border: 1px solid var(--b3-border-color);
-  overflow: hidden;
-
-  :deep(.vue-flow) {
-    position: absolute;
-    inset: 0;
-    background-color: var(--b3-theme-background);
-
-    .vue-flow__viewport {
-      transform: none !important;
-    }
-
-    .vue-flow__minimap {
-      position: absolute;
-      inset: 0;
-      width: 100% !important;
-      height: 100% !important;
-      transform: none;
-      margin: 0;
-      border-radius: 0;
-      background: none;
-      border: none;
-      box-shadow: none;
-      opacity: 1;
-      pointer-events: none;
-
-      .vue-flow__minimap-node {
-        fill: var(--b3-theme-primary);
-        stroke: var(--b3-theme-on-surface);
-        stroke-width: 1;
-        opacity: 0.6;
-      }
-    }
-
-    // 隐藏所有不必要的元素
-    .vue-flow__controls,
-    .vue-flow__background,
-    .vue-flow__panel {
-      display: none;
-    }
-  }
-
-  .minimap-node {
-    width: 100%;
-    height: 100%;
-    background-color: var(--b3-theme-primary);
-    border-radius: var(--b3-border-radius);
-    opacity: 0.6;
-  }
-
-  .minimap-edge {
-    stroke: var(--b3-theme-on-surface);
-    stroke-width: 1;
-    opacity: 0.6;
-  }
-
-  .whiteboard-title {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 0px;
-    background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.1));
-    color: var(--b3-theme-on-background);
-    font-size: 14px;
-
-    .whiteboard-icon {
-      width: 14px;
-      height: 14px;
-      fill: currentColor;
-      flex-shrink: 0;
-    }
-
-    .whiteboard-name {
-      flex: 1;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
     }
   }
 }

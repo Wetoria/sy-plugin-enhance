@@ -206,6 +206,7 @@ import {
   generateWhiteBoardNodeId,
   getWhiteBoardConfigRefById,
   useWhiteBoardModule,
+  globalMergingState
 } from '@/modules/EnWhiteBoard/EnWhiteBoard'
 import { debounce } from '@/utils'
 import {
@@ -316,8 +317,28 @@ const targetProtyleUtilClassList = [
 const protyleUtilAreaRef = ref<HTMLDivElement | null>(null)
 const cardProtyleRef = ref<Protyle | null>(null)
 
+const blockIdCheckSuspended = ref(false)
+const recentlyMergedNodeIds = ref<string[]>([])
+const blockIdCheckInProgress = ref(false)
+
+const recordAffectedNodes = () => {
+  const allNodes = getNodes.value || []
+  const affectedNodeIds = allNodes.map(node => node.id)
+  recentlyMergedNodeIds.value = affectedNodeIds
+  
+  blockIdCheckSuspended.value = true
+  
+  setTimeout(() => {
+    blockIdCheckSuspended.value = false
+    recentlyMergedNodeIds.value = []
+  }, 5000)
+}
+
 const afterProtyleLoad = (protyle: Protyle) => {
   cardProtyleRef.value = protyle
+  
+  protectSiyuanRenderer(protyle)
+  
   targetProtyleUtilClassList.forEach((className) => {
     const target = protyle.protyle.element.querySelector(`.${className}`)
     if (target) {
@@ -368,68 +389,106 @@ const captureClick = (event: MouseEvent) => {
 const mainRef = ref<HTMLDivElement | null>(null)
 
 const removeNodeCreatedByOther = (event) => {
-  // 仅在启用了自动合并超级块功能时执行此操作
   if (!whiteBoardModuleOptions.value.autoMergeToSuperBlock) {
     return
   }
 
-  const {
-    detail,
-  } = event
-  const {
-    sid,
-    data,
-  } = detail
-  const currentProtyleId = cardProtyleRef.value?.protyle.id
-  if (!currentProtyleId) return
-
-  data.forEach((item) => {
+  try {
     const {
-      doOperations = [],
-    } = item
-    doOperations.forEach((operation) => {
-      const {
-        action,
-        id: opId,
-      } = operation
-      const isCreate = action === 'insert'
-      const isCreateByOther = sid !== currentProtyleId
+      detail,
+    } = event || {}
+    
+    if (!detail) {
+      return
+    }
+    
+    const {
+      sid,
+      data,
+    } = detail
+    
+    if (!data || !Array.isArray(data)) {
+      return
+    }
+    
+    const currentProtyleId = cardProtyleRef.value?.protyle?.id
+    if (!currentProtyleId) return
 
-      if (isCreate && isCreateByOther) {
-        let timer = null
-        let attempts = 0
-        const maxAttempts = 10 // 限制尝试次数
-        
-        timer = setInterval(() => {
-          attempts++
-          const wysiwygElement = cardProtyleRef.value?.protyle.wysiwyg.element
-          if (!wysiwygElement) {
-            clearInterval(timer)
-            return
-          }
-          
-          const firstLevelChildren = wysiwygElement?.children
-          const targetElement = Array.from(firstLevelChildren).find((child: HTMLElement) => {
-            const childNodeId = child.dataset.nodeId
-            return childNodeId && childNodeId === opId
-          })
-          
-          if (targetElement) {
-            targetElement.remove()
-            clearInterval(timer)
-          } else if (attempts >= maxAttempts) {
-            // 达到最大尝试次数，停止尝试
-            clearInterval(timer)
-          }
-        }, 50) // 增加间隔时间，减少性能消耗
+    data.forEach((item) => {
+      if (!item) return
+
+      const {
+        doOperations = [],
+      } = item
+      
+      if (!doOperations || !Array.isArray(doOperations)) {
+        return
       }
+      
+      doOperations.forEach((operation) => {
+        if (!operation) return
+        
+        const {
+          action,
+          id: opId,
+        } = operation
+        
+        if (!action || !opId) return
+        
+        const isCreate = action === 'insert'
+        const isCreateByOther = sid !== currentProtyleId
+
+        if (isCreate && isCreateByOther) {
+          let timer = null
+          let attempts = 0
+          const maxAttempts = 10
+          
+          timer = setInterval(() => {
+            attempts++
+            
+            try {
+              const wysiwygElement = cardProtyleRef.value?.protyle?.wysiwyg?.element
+              if (!wysiwygElement) {
+                clearInterval(timer)
+                return
+              }
+              
+              const firstLevelChildren = wysiwygElement?.children
+              if (!firstLevelChildren || firstLevelChildren.length === 0) {
+                if (attempts >= maxAttempts) {
+                  clearInterval(timer)
+                }
+                return
+              }
+              
+              const targetElement = Array.from(firstLevelChildren).find((child: HTMLElement) => {
+                if (!child || !child.dataset) return false
+                const childNodeId = child.dataset.nodeId
+                return childNodeId && childNodeId === opId
+              }) as HTMLElement | undefined
+              
+              if (targetElement && 'remove' in targetElement) {
+                targetElement.remove()
+                clearInterval(timer)
+              } else if (attempts >= maxAttempts) {
+                clearInterval(timer)
+              }
+            } catch (error) {
+              console.error('移除其他创建的节点时出错:', error)
+              clearInterval(timer)
+            }
+          }, 50)
+        }
+      })
     })
-  })
+  } catch (error) {
+    console.error('处理删除由其他用户创建的节点时出错:', error)
+  }
 }
 
 const isMergingToSuperBlock = ref(false)
 const mergeAttemptsCount = ref(0)
-const maxMergeAttempts = 3 // 最大合并尝试次数
+const maxMergeAttempts = 3
 let mergeTimer = null
 
 const mergeTopLevelBlocksIntoSuperBlock = debounce(() => {
@@ -437,24 +496,27 @@ const mergeTopLevelBlocksIntoSuperBlock = debounce(() => {
     return
   }
 
-  // 如果已经在进行合并，则跳过
-  if (isMergingToSuperBlock.value) {
+  if (globalMergingState.isMerging.value || isMergingToSuperBlock.value) {
     return
   }
 
-  // 检查是否有有效的protyle实例和元素
   if (!cardProtyleRef.value?.protyle?.wysiwyg?.element) {
     return
   }
 
-  const children = Array.from(cardProtyleRef.value.protyle.wysiwyg.element.children || [])
-  // 如果只有一个子元素，则不进行合并
+  let children = []
+  try {
+    children = Array.from(cardProtyleRef.value.protyle.wysiwyg.element.children || [])
+  } catch (e) {
+    console.warn('获取子元素失败:', e)
+    return
+  }
+  
   if (children.length <= 1) {
-    mergeAttemptsCount.value = 0 // 重置尝试计数
+    mergeAttemptsCount.value = 0
     return
   }
 
-  // 检查子元素是否都是有效的块
   const validChildren = children.filter((child: HTMLElement) => 
     child.dataset && child.dataset.nodeId && 
     !child.classList.contains('protyle-action')
@@ -471,80 +533,125 @@ const mergeTopLevelBlocksIntoSuperBlock = debounce(() => {
       return
     }
 
+    const blockIdsToMerge = validChildren.map(child => child.dataset?.nodeId).filter(Boolean)
+    
+    if (nodeData.value?.blockId) {
+      globalMergingState.startMerging(flowNode.id, nodeData.value.blockId)
+      
+      blockIdsToMerge.forEach(id => {
+        if (id) globalMergingState.addAffectedBlockId(id)
+      })
+    }
+    
     isMergingToSuperBlock.value = true
     mergeAttemptsCount.value++
 
-    // 更新节点状态，反映合并中状态
     updateNodeMergingStatus(true)
     
-    // 执行合并操作
+    blockIdCheckSuspended.value = true
+    
+    console.log(`开始合并超级块，影响块ID: ${blockIdsToMerge.join(', ')}`)
+    
     protyleIns.turnIntoOneTransaction(validChildren, 'BlocksMergeSuperBlock', 'row')
     
-    // 使用事务完成监听
-    const off = useSiyuanDatabaseIndexCommit(debounce(async () => {
+    const off = useSiyuanDatabaseIndexCommit(debounce(() => {
       off()
-      // 延迟一段时间后再检查合并结果
       setTimeout(() => {
-        // 检查合并结果
         checkMergeResult()
-      }, 200)
-    }, 50))
+      }, 300)
+    }, 100))
     
-    // 设置安全超时，防止事务完成回调不触发的情况
     clearTimeout(mergeTimer)
     mergeTimer = setTimeout(() => {
       if (isMergingToSuperBlock.value) {
         console.warn('合并超级块操作超时，恢复状态')
-        isMergingToSuperBlock.value = false
-        updateNodeMergingStatus(false)
+        finishMergeProcess(false)
       }
-    }, 3000) // 3秒超时保护
+    }, 5000)
   } catch (error) {
     console.error('合并超级块时出错:', error)
-    isMergingToSuperBlock.value = false
-    updateNodeMergingStatus(false)
+    finishMergeProcess(false)
   }
 }, whiteBoardModuleOptions.value.autoMergeToSuperBlockDelay * 1000)
 
-// 检查合并结果
 const checkMergeResult = () => {
   if (!cardProtyleRef.value?.protyle?.wysiwyg?.element) {
-    isMergingToSuperBlock.value = false
-    updateNodeMergingStatus(false)
+    finishMergeProcess(false)
     return
   }
 
-  const children = Array.from(cardProtyleRef.value.protyle.wysiwyg.element.children || [])
-  const superBlock = children.find((child: HTMLElement) => 
-    child.dataset && child.dataset.type === 'NodeSuperBlock'
-  )
+  try {
+    const element = cardProtyleRef.value.protyle.wysiwyg.element
+    
+    if (!element || typeof element.querySelectorAll !== 'function') {
+      console.warn('无法安全访问渲染元素')
+      finishMergeProcess(false)
+      return
+    }
+    
+    let children = []
+    try {
+      children = Array.from(element.children || [])
+    } catch (e) {
+      console.warn('获取子元素失败:', e)
+      finishMergeProcess(false)
+      return
+    }
+    
+    let superBlock = null
+    try {
+      superBlock = children.find((child: HTMLElement) => 
+        child.dataset && child.dataset.type === 'NodeSuperBlock'
+      )
+    } catch (e) {
+      console.warn('查找超级块失败:', e)
+    }
 
-  if (superBlock) {
-    // 合并成功
-    console.log('成功合并为超级块')
-    // 绑定新的块ID
-    bindNodeIdToEnNode()
-    isMergingToSuperBlock.value = false
-    updateNodeMergingStatus(false)
-    mergeAttemptsCount.value = 0 // 重置尝试计数
-  } else if (mergeAttemptsCount.value < maxMergeAttempts) {
-    // 合并失败但未达到最大尝试次数，重试
-    console.warn(`合并超级块失败，尝试重新合并 (${mergeAttemptsCount.value}/${maxMergeAttempts})`)
-    setTimeout(() => {
-      mergeTopLevelBlocksIntoSuperBlock()
-    }, 500)
-  } else {
-    // 达到最大尝试次数，放弃合并
-    console.error('多次尝试合并超级块失败，放弃操作')
-    isMergingToSuperBlock.value = false
-    updateNodeMergingStatus(false)
-    mergeAttemptsCount.value = 0 // 重置尝试计数
+    if (superBlock) {
+      console.log('成功合并为超级块')
+      
+      try {
+        if (superBlock instanceof HTMLElement) {
+          superBlock.setAttribute('data-protected-superblock', 'true')
+          superBlock.setAttribute('data-rendered', 'true')
+          
+          const newBlockId = superBlock.dataset.nodeId
+          if (newBlockId) {
+            updateBlockIdAfterMerge(newBlockId)
+          }
+        }
+      } catch (e) {
+        console.warn('为超级块添加保护属性失败:', e)
+      }
+      
+      setTimeout(() => {
+        try {
+          bindNodeIdToEnNode()
+        } catch (error) {
+          console.error('合并后绑定节点ID出错:', error)
+        }
+        
+        finishMergeProcess(true)
+      }, 300)
+      
+      mergeAttemptsCount.value = 0
+    } else if (mergeAttemptsCount.value < maxMergeAttempts) {
+      console.warn(`合并超级块失败，尝试重新合并 (${mergeAttemptsCount.value}/${maxMergeAttempts})`)
+      setTimeout(() => {
+        mergeTopLevelBlocksIntoSuperBlock()
+      }, 500)
+    } else {
+      console.error('多次尝试合并超级块失败，放弃操作')
+      finishMergeProcess(false)
+      mergeAttemptsCount.value = 0
+    }
+  } catch (error) {
+    console.error('检查合并结果时出错:', error)
+    finishMergeProcess(false)
   }
 }
 
-// 更新节点的合并状态
 const updateNodeMergingStatus = (merging: boolean) => {
-  // 更新当前节点的数据
   const nodes = getNodes.value
   const updatedNodes = nodes.map((node) => {
     if (node.id === flowNode.id) {
@@ -561,9 +668,59 @@ const updateNodeMergingStatus = (merging: boolean) => {
   setNodes(updatedNodes)
 }
 
-// 检查块ID有效性
+// 缓存上一次的块ID
+const lastCheckedBlockId = ref<string | null>(null)
+
+// 块ID变更检测
+const detectBlockIdChange = () => {
+  if (!nodeData.value?.blockId) return
+  
+  // 检查块ID是否发生变化
+  if (lastCheckedBlockId.value && lastCheckedBlockId.value !== nodeData.value.blockId) {
+    console.log(`检测到块ID变更: ${lastCheckedBlockId.value} -> ${nodeData.value.blockId}`)
+    
+    // 更新视图内容
+    updateProtyleContent()
+  }
+  
+  // 更新上一次检查的块ID
+  lastCheckedBlockId.value = nodeData.value.blockId
+}
+
+// 更新Protyle内容
+const updateProtyleContent = () => {
+  if (!cardProtyleRef.value?.protyle || !nodeData.value?.blockId) return
+  
+  try {
+    const protyle = cardProtyleRef.value.protyle
+    if (typeof protyle.reloadValue === 'function') {
+      protyle.reloadValue(nodeData.value.blockId)
+      console.log('重新加载Protyle内容，块ID:', nodeData.value.blockId)
+    } else if (protyle.getInstance && typeof protyle.getInstance().reloadBlock === 'function') {
+      protyle.getInstance().reloadBlock(nodeData.value.blockId)
+      console.log('重新加载块内容，块ID:', nodeData.value.blockId)
+    }
+  } catch (error) {
+    console.error('更新Protyle内容时出错:', error)
+  }
+}
+
+// 增强的块ID检查函数
 const checkBlockIdValidity = debounce(async () => {
-  if (!nodeData.value.blockId) return
+  // 检测并处理块ID变更
+  detectBlockIdChange()
+  
+  // 跳过检查的条件
+  if (
+    globalMergingState.isMerging.value || 
+    globalMergingState.isNodeMerging(flowNode.id) || 
+    (nodeData.value?.blockId && globalMergingState.isBlockAffected(nodeData.value.blockId)) ||
+    blockIdCheckSuspended.value || 
+    !nodeData.value?.blockId || 
+    blockIdCheckInProgress.value
+  ) return
+  
+  blockIdCheckInProgress.value = true
   
   try {
     // 使用思源API检查块是否存在
@@ -571,97 +728,267 @@ const checkBlockIdValidity = debounce(async () => {
       id: nodeData.value.blockId
     })
     
-    // 如果块不存在，标记为无效
+    // 如果块不存在且不在全局合并状态中，标记为无效
     if (response.code === -1 || !response.data) {
-      console.warn(`块ID无效: ${nodeData.value.blockId}，尝试恢复`)
-      handleInvalidBlockId()
+      // 再次检查是否处于全局合并状态，防止在API请求期间状态变化
+      if (
+        !globalMergingState.isMerging.value && 
+        !globalMergingState.isBlockAffected(nodeData.value.blockId)
+      ) {
+        console.warn(`块ID无效: ${nodeData.value.blockId}，尝试恢复`)
+        await handleInvalidBlockId()
+      } else {
+        console.log(`块ID ${nodeData.value.blockId} 在合并过程中暂时无效，跳过恢复`)
+      }
     }
   } catch (error) {
     console.error('检查块ID有效性时出错:', error)
+  } finally {
+    blockIdCheckInProgress.value = false
   }
 }, 5000)
 
-// 处理无效的块ID
+let invalidBlockIdHandling = false
 const handleInvalidBlockId = async () => {
-  // 方案1: 尝试在节点中创建新的块
+  if (invalidBlockIdHandling) {
+    return
+  }
+  
+  invalidBlockIdHandling = true
+  
   try {
-    const protyleIns = cardProtyleRef.value?.protyle.getInstance()
-    if (!protyleIns) return
-    
-    // 创建一个新的段落块
-    protyleIns.insert('\n', 'paragraph')
-    
-    // 稍后重新绑定ID
-    setTimeout(() => {
-      bindNodeIdToEnNode()
-    }, 200)
-  } catch (error) {
-    console.error('创建新块时出错:', error)
-  }
-}
-
-// 加强版的bindNodeIdToEnNode函数
-const bindNodeIdToEnNode = () => {
-  if (!cardProtyleRef.value) {
-    return
-  }
-  
-  const wysiwygElement = cardProtyleRef.value.protyle.wysiwyg.element
-  if (!wysiwygElement) return
-  
-  // 查找第一个有效的块
-  const firstNode = wysiwygElement.querySelector(`[data-node-id]`) as HTMLElement
-  if (!firstNode) {
-    return
-  }
-  
-  const nodeId = firstNode.dataset.nodeId
-  if (!nodeId) {
-    return
-  }
-
-  // 检查新旧ID是否不同
-  if (nodeData.value.blockId !== nodeId) {
-    console.log(`更新节点块ID: ${nodeData.value.blockId} -> ${nodeId}`)
-    nodeData.value.blockId = nodeId
-    
-    // 更新节点数据
-    const nodes = getNodes.value
-    const updatedNodes = nodes.map((node) => {
-      if (node.id === flowNode.id) {
-        return {
-          ...node,
-          data: {
-            ...node.data,
-            blockId: nodeId
-          }
-        }
-      }
-      return node
-    })
-    setNodes(updatedNodes)
-  }
-}
-
-// 改进的事务监听函数
-let offTransactionEvent = null
-onMounted(() => {
-  // 初始检查块ID有效性
-  checkBlockIdValidity()
-  
-  // 监听事务
-  offTransactionEvent = useSiyuanEventTransactions((event) => {
-    bindNodeIdToEnNode()
-    removeNodeCreatedByOther(event)
-    
-    // 仅当未处于合并状态时才触发合并操作
-    if (!isMergingToSuperBlock.value) {
-      mergeTopLevelBlocksIntoSuperBlock()
+    const protyleIns = cardProtyleRef.value?.protyle?.getInstance?.()
+    if (!protyleIns) {
+      console.warn('无法获取 protyle 实例')
+      return
     }
     
-    // 定期检查块ID有效性
+    if (typeof protyleIns.insert !== 'function') {
+      console.warn('protyle 实例中没有 insert 方法或不是函数')
+      return
+    }
+    
+    protyleIns.insert('\n', 'paragraph')
+    
+    await new Promise(resolve => setTimeout(resolve, 500))
+    
+    try {
+      bindNodeIdToEnNode()
+    } catch (e) {
+      console.error('绑定新节点ID时出错:', e)
+    }
+  } catch (error) {
+    console.error('创建新块时出错:', error)
+    if (error instanceof Error) {
+      console.error('错误详情:', error.message, error.stack)
+    }
+  } finally {
+    setTimeout(() => {
+      invalidBlockIdHandling = false
+    }, 2000)
+  }
+}
+
+let bindNodeIdQueue = []
+let bindNodeIdProcessing = false
+
+const processBindNodeIdQueue = async () => {
+  if (bindNodeIdProcessing || bindNodeIdQueue.length === 0) {
+    return
+  }
+  
+  bindNodeIdProcessing = true
+  
+  try {
+    await bindNodeIdToEnNodeImpl()
+  } catch (error) {
+    console.error('处理节点ID绑定队列时出错:', error)
+  } finally {
+    bindNodeIdQueue.shift()
+    bindNodeIdProcessing = false
+    
+    if (bindNodeIdQueue.length > 0) {
+      setTimeout(processBindNodeIdQueue, 100)
+    }
+  }
+}
+
+const bindNodeIdToEnNode = () => {
+  bindNodeIdQueue.push(Date.now())
+  if (!bindNodeIdProcessing) {
+    processBindNodeIdQueue()
+  }
+}
+
+const bindNodeIdToEnNodeImpl = async () => {
+  try {
+    await new Promise(resolve => setTimeout(resolve, 10))
+    
+    if (!cardProtyleRef.value) {
+      return
+    }
+    
+    const protyle = cardProtyleRef.value.protyle
+    if (!protyle || !protyle.wysiwyg) {
+      console.warn('无法获取 protyle.wysiwyg')
+      return
+    }
+    
+    const wysiwygElement = protyle.wysiwyg.element
+    if (!wysiwygElement) {
+      console.warn('无法获取 wysiwyg.element')
+      return
+    }
+    
+    const firstNode = wysiwygElement.querySelector(`[data-node-id]`) as HTMLElement
+    if (!firstNode) {
+      console.warn('无法找到有效的块元素')
+      return
+    }
+    
+    const nodeId = firstNode.dataset?.nodeId
+    if (!nodeId) {
+      console.warn('找到的块元素没有 nodeId')
+      return
+    }
+
+    if (!nodeData.value) {
+      console.warn('nodeData.value 不存在')
+      return
+    }
+
+    if (nodeData.value.blockId !== nodeId) {
+      console.log(`更新节点块ID: ${nodeData.value.blockId} -> ${nodeId}`)
+      nodeData.value.blockId = nodeId
+      
+      const nodes = getNodes.value
+      if (!nodes || !flowNode || !flowNode.id) {
+        console.warn('nodes 或 flowNode 不存在')
+        return
+      }
+      
+      const updatedNodes = nodes.map((node) => {
+        if (node.id === flowNode.id) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              blockId: nodeId
+            }
+          }
+        }
+        return node
+      })
+      setNodes(updatedNodes)
+    }
+  } catch (error) {
+    console.error('绑定节点ID时出错:', error)
+    if (error instanceof Error) {
+      console.error('错误详情:', error.message, error.stack)
+    }
+  }
+}
+
+// 添加事务处理计数和日志
+const eventLogEnabled = ref(false)
+const transactionCount = ref(0)
+let offTransactionEvent = null; // 定义事务监听清理函数
+
+// 记录事务日志
+const logTransaction = (operation: string, data: any) => {
+  if (!eventLogEnabled.value) return
+  console.log(`[事务${transactionCount.value}] ${operation}:`, data)
+}
+
+// 处理思源事务
+const handleTransaction = (event) => {
+  try {
+    transactionCount.value++
+    const detail = event?.detail
+    
+    // 记录事务详情
+    logTransaction('接收事务', {
+      sid: detail?.sid,
+      dataCount: detail?.data?.length || 0
+    })
+    
+    // 忽略空事务
+    if (!detail || !detail.data || !Array.isArray(detail.data) || detail.data.length === 0) {
+      return
+    }
+    
+    // 检查是否有块操作
+    const operations = []
+    let hasNodeChange = false
+    
+    detail.data.forEach(item => {
+      if (item?.doOperations && Array.isArray(item.doOperations)) {
+        item.doOperations.forEach(op => {
+          if (op && op.action) {
+            operations.push(op)
+            if (['update', 'insert', 'delete', 'moveBlock', 'foldHeading'].includes(op.action)) {
+              hasNodeChange = true
+            }
+          }
+        })
+      }
+    })
+    
+    // 记录操作类型
+    logTransaction('操作类型', operations.map(op => op.action))
+    
+    // 检测全局合并状态
+    const inGlobalMerging = globalMergingState.isMerging.value
+    const inLocalMerging = isMergingToSuperBlock.value
+    
+    logTransaction('合并状态', {
+      全局合并: inGlobalMerging,
+      局部合并: inLocalMerging,
+      节点ID: flowNode.id,
+      块ID: nodeData.value?.blockId
+    })
+    
+    // 先检测块ID变更，这个操作总是安全的
+    detectBlockIdChange()
+    
+    // 如果没有节点变化，不需要继续处理
+    if (!hasNodeChange) {
+      return
+    }
+    
+    // 根据合并状态决定执行的操作
+    if (!inGlobalMerging) {
+      // 只有在非全局合并状态下才执行绑定和移除操作
+      bindNodeIdToEnNode()
+      
+      // 移除其他创建的节点
+      removeNodeCreatedByOther(event)
+      
+      // 在非全局和非局部合并状态下，执行合并和检查
+      if (!inLocalMerging) {
+        // 检查是否需要触发合并
+        mergeTopLevelBlocksIntoSuperBlock()
+        
+        // 检查块ID有效性
+        checkBlockIdValidity()
+      }
+    } else {
+      logTransaction('跳过操作', '当前处于全局合并状态')
+    }
+  } catch (error) {
+    console.error('处理思源事务时出错:', error)
+  }
+}
+
+// 设置事务监听
+onMounted(() => {
+  // 延迟初始检查，确保组件已完全加载
+  setTimeout(() => {
     checkBlockIdValidity()
-  })
+  }, 1000)
+  
+  // 监听思源事务
+  offTransactionEvent = useSiyuanEventTransactions(handleTransaction)
 })
 
 onBeforeUnmount(() => {
@@ -669,10 +996,14 @@ onBeforeUnmount(() => {
     offTransactionEvent()
   }
   clearTimeout(mergeTimer)
+  
+  // 确保全局合并状态结束
+  if (globalMergingState.isNodeMerging(flowNode.id)) {
+    globalMergingState.endMerging()
+  }
 })
 
 const onResize = (event: OnResize) => {
-  // 立即更新DOM元素样式以实现实时视觉反馈
   const nodeElement = document.querySelector(`[data-en-flow-node-id='${flowNode.id}']`)
   if (nodeElement) {
     const htmlElement = nodeElement as HTMLElement
@@ -681,19 +1012,17 @@ const onResize = (event: OnResize) => {
     htmlElement.style.height = `${flowNode.height}px`
   }
   
-  // 直接更新节点数据，不使用延迟
   const nodes = getNodes.value;
   const currentNode = nodes.find(node => node.id === flowNode.id);
   
   if (currentNode) {
-    // 保存内容区域的高度，不包括工具栏高度
     const newNodes = nodes.map((node) => {
       if (node.id === flowNode.id) {
         return {
           ...node,
           data: {
             ...node.data,
-            originalHeight: currentNode.height, // 保存调整后的高度
+            originalHeight: currentNode.height,
           },
         };
       }
@@ -705,7 +1034,6 @@ const onResize = (event: OnResize) => {
 
 const handleRemoveNode = () => {
   removeNodes([flowNode])
-  // 更新白板配置
   if (embedWhiteBoardConfigData.value) {
     embedWhiteBoardConfigData.value.boardOptions.nodes = getNodes.value.filter(
       (node) => node.id !== flowNode.id,
@@ -752,7 +1080,6 @@ const isSelected = computed(() => {
 
 const handleOpenInSidebar = () => {
   if (flowNode.id && nodeData.value.blockId) {
-    // 传递更多信息到父组件
     emit('openInSidebar', flowNode.id, nodeData.value.blockId, {
       title: blockInfo.value.title,
       name: blockInfo.value.name,
@@ -766,29 +1093,23 @@ const handleOpenInSidebar = () => {
 
 const isCollapsed = ref(false)
 
-// 引用折叠组件实例
 const collapseRef = ref()
 
-// 修改块信息状态
 const blockInfo = ref({
-  title: '', // 文档标题
-  name: '', // 块命名
-  alias: '', // 块别名
-  type: '', // 块类型
-  content: '', // 块内容
-  docName: '', // 所属文档标题
+  title: '',
+  name: '',
+  alias: '',
+  type: '',
+  content: '',
+  docName: '',
 })
 
-// 获取块信息的函数
 const getBlockInfo = async (blockId: string) => {
   try {
-    // 获取块信息
     const blockResponse = await request('/api/block/getBlockInfo', { id: blockId })
     if (blockResponse) {
-      // 获取块所属文档信息
       const docResponse = await request('/api/block/getDocInfo', { id: blockId })
 
-      // 如果没有标题等信息，获取第一个子块的内容
       let firstChildContent = ''
       if (!blockResponse.name && !blockResponse.alias && blockResponse.type !== 'd') {
         const childResponse = await request('/api/block/getChildBlocks', { id: blockId })
@@ -812,14 +1133,11 @@ const getBlockInfo = async (blockId: string) => {
   }
 }
 
-// 计算显示的文本
 const displayText = computed(() => {
-  // 如果是文档块，直接显示文档标题
   if (blockInfo.value.type === 'd') {
     return blockInfo.value.title || '无标题文档'
   }
 
-  // 按优先级显示：块命名 > 块别名 > 所属文档标题 > 第一个子块内容 > 默认文本
   return blockInfo.value.name
     || blockInfo.value.alias
     || blockInfo.value.docName
@@ -827,17 +1145,14 @@ const displayText = computed(() => {
     || '未命名块'
 })
 
-// 监听 blockId 变化
 watch(() => nodeData.value?.blockId, async (newBlockId) => {
   if (newBlockId) {
     await getBlockInfo(newBlockId)
   }
 }, { immediate: true })
 
-// 添加思维导图相关的计算属性和方法
 const isMindmapNode = computed(() => nodeData.value?.mindmap === true)
 
-// 根据节点类型更新样式
 const nodeTypeClass = computed(() => ({
   'is-mindmap': isMindmapNode.value,
 }))
@@ -853,19 +1168,15 @@ const {
   embedWhiteBoardConfigData,
 } = getWhiteBoardConfigRefById(props.whiteBoardId, props.nodeId)
 
-// 获取节点类型
 const nodeType = computed(() => {
   return isMindmapNode.value ? 'EnWhiteBoardNodeMindmap' : 'EnWhiteBoardNodeProtyle'
 })
 
-// 更新节点类型
 const updateNodeType = () => {
   if (!flowNode) return
   
-  // 如果节点类型已经正确，则不需要更新
   if (flowNode.type === nodeType.value) return
   
-  // 更新节点类型
   const nodes = getNodes.value || []
   const newNodes = nodes.map((node) => {
     if (node.id === flowNode.id) {
@@ -879,7 +1190,6 @@ const updateNodeType = () => {
   setNodes(newNodes)
 }
 
-// 监听思维导图状态变化，更新节点类型
 watch(isMindmapNode, (newValue) => {
   updateNodeType()
 }, { immediate: true })
@@ -902,12 +1212,9 @@ const handleToggleMindmap = () => {
   setNodes(newNodes)
 }
 
-// 添加TreeCard节点类型的判断
 const isTreeCardNode = computed(() => nodeData.value?.treecard === true)
 
-// 添加TreeCard节点的模板部分
 const handleToggleTreeCard = () => {
-  // 切换节点类型
   const newNodes = getNodes.value.map((node) => {
     if (node.id === flowNode.id) {
       return {
@@ -924,7 +1231,6 @@ const handleToggleTreeCard = () => {
   setNodes(newNodes)
 }
 
-// 节点类名
 const nodeClass = computed(() => {
   return {
     'is-selected': isSelected.value,
@@ -934,7 +1240,6 @@ const nodeClass = computed(() => {
   }
 })
 
-// 获取节点类型
 const getNodeType = () => {
   if (isMindmapNode.value) {
     return 'EnWhiteBoardNodeMindmap'
@@ -945,11 +1250,115 @@ const getNodeType = () => {
   }
 }
 
-// 添加高度变化处理函数
 const onHeightChanged = (height: number) => {
-  // 这里可以添加额外的处理逻辑，例如在高度变化时更新其他组件
-  // 或者触发事件等
   console.log('节点高度已更新:', height)
+}
+
+const protectSiyuanRenderer = (protyle) => {
+  if (!protyle || !protyle.protyle || !protyle.protyle.wysiwyg || !protyle.protyle.wysiwyg.element) {
+    return
+  }
+
+  const element = protyle.protyle.wysiwyg.element
+  
+  const setupSuperBlockProtection = () => {
+    try {
+      const superBlocks = element.querySelectorAll('[data-type="NodeSuperBlock"]')
+      superBlocks.forEach(block => {
+        block.setAttribute('data-protected-superblock', 'true')
+        block.setAttribute('data-rendered', 'true')
+      })
+    } catch (error) {
+      console.warn('设置超级块保护时出错:', error)
+    }
+  }
+  
+  setupSuperBlockProtection()
+  
+  element.addEventListener('mouseover', (e) => {
+    try {
+      const target = e.target
+      if (target && (
+        target.getAttribute('data-type') === 'NodeSuperBlock' || 
+        target.closest('[data-type="NodeSuperBlock"]')
+      )) {
+        target.setAttribute('data-protected', 'true')
+        
+        const superBlock = target.closest('[data-type="NodeSuperBlock"]')
+        if (superBlock) {
+          superBlock.setAttribute('data-protected-superblock', 'true')
+          superBlock.setAttribute('data-rendered', 'true')
+        }
+      }
+    } catch (error) {
+      console.warn('处理mouseover事件时出错:', error)
+    }
+  }, true)
+  
+  const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+        setupSuperBlockProtection()
+      }
+    }
+  })
+  
+  observer.observe(element, { 
+    childList: true, 
+    subtree: true 
+  })
+  
+  window.addEventListener('error', (event) => {
+    if (event.error && 
+        event.error.stack && 
+        (event.error.stack.includes('render') || 
+         event.error.stack.includes('querySelector'))) {
+      console.warn('已拦截思源渲染错误:', event.error.message)
+      event.preventDefault()
+      event.stopPropagation()
+      return true
+    }
+  }, true)
+}
+
+const finishMergeProcess = (success = true) => {
+  isMergingToSuperBlock.value = false
+  updateNodeMergingStatus(false)
+  
+  setTimeout(() => {
+    blockIdCheckSuspended.value = false
+    globalMergingState.endMerging()
+    
+    if (success) {
+      console.log('超级块合并过程完成')
+    }
+  }, 500)
+}
+
+const updateBlockIdAfterMerge = (newBlockId: string) => {
+  if (!newBlockId || !nodeData.value) return
+  
+  if (nodeData.value.blockId !== newBlockId) {
+    console.log(`合并后更新节点块ID: ${nodeData.value.blockId} -> ${newBlockId}`)
+    nodeData.value.blockId = newBlockId
+    
+    const nodes = getNodes.value
+    if (!nodes || !flowNode || !flowNode.id) return
+    
+    const updatedNodes = nodes.map((node) => {
+      if (node.id === flowNode.id) {
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            blockId: newBlockId
+          }
+        }
+      }
+      return node
+    })
+    setNodes(updatedNodes)
+  }
 }
 </script>
 
@@ -1078,7 +1487,6 @@ const onHeightChanged = (height: number) => {
         --en-line-horizontal-height: min(max(8px, calc(var(--en-card-height) * 0.2)), 30px);
       }
 
-      // 调整大小
       &.top::before,
       &.bottom::before {
         width: var(--en-line-vertical-width);
@@ -1091,7 +1499,6 @@ const onHeightChanged = (height: number) => {
         height: var(--en-line-horizontal-height);
       }
 
-      // 调整位置
       &.top::before {
         top: 0px;
         left: calc(50% - var(--en-line-vertical-width) / 2);
@@ -1332,7 +1739,6 @@ const onHeightChanged = (height: number) => {
     transition: box-shadow 0.3s ease;
   }
 
-  /* 确保在白板环境中protyle-content没有底部padding */
   .protyle-content {
     padding-bottom: 0 !important;
   }
