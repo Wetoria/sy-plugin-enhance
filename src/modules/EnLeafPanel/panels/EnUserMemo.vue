@@ -3,7 +3,7 @@
     <!-- 宽屏布局 -->
     <div v-if="isWideLayout" class="en-user-memo-wide-layout">
       <div class="memo-main-area">
-        <div class="memo-input-container">
+        <div class="memo-input-container" v-if="activeFilter !== 'whiteboard'">
           <MemoInput
             :is-editing="isEditing"
             :editing-block-id="editingBlockId"
@@ -13,130 +13,91 @@
           />
         </div>
         <div class="memo-timeline-area">
-          <!-- 根据显示模式显示不同的内容 -->
-          <div v-if="displayMode === 'timeline'" class="timeline-content">
-            <MemoTimeline
-              :memos="filteredMemos"
-              @edit="editMemo"
-              @delete="deleteMemo"
-            />
-          </div>
-          
-          <!-- 卡片模式 -->
-          <div v-else-if="displayMode === 'card'" class="card-content">
-            <div class="card-grid">
-              <div 
-                v-for="(memo, index) in filteredMemos" 
-                :key="index"
-                class="memo-card-item"
-              >
-                <div class="memo-card-header">
-                  <div class="memo-card-time">{{ memo.time }}</div>
-                  <div class="memo-card-actions">
-                    <span class="action-icon" @click="editMemo(index)">
-                      <svg><use xlink:href="#iconEdit"></use></svg>
-                    </span>
-                    <span class="action-icon" @click="deleteMemo(index)">
-                      <svg><use xlink:href="#iconTrashcan"></use></svg>
-                    </span>
+          <template v-if="activeFilter === 'whiteboard'">
+            <!-- Whiteboard: Render ONLY Gallery -->
+            <div class="gallery-content">
+              <div class="gallery-grid">
+                <div class="new-whiteboard-card gallery-item" @click="handleCreateNewWhiteboard">
+                  <div class="new-whiteboard-content">
+                    <svg><use xlink:href="#iconAdd"></use></svg><span>新增白板</span>
+                  </div>
+                  <div class="whiteboard-title">
+                    <svg class="whiteboard-icon"><use xlink:href="#iconLayout"></use></svg><span class="whiteboard-name">创建新白板</span>
                   </div>
                 </div>
-                <div class="memo-card-body">
-                  <EnProtyle
-                    :block-id="memo.blockId"
-                    :preview="true"
-                    disableEnhance
-                    :options="{
-                      render: {
-                        gutter: false,
-                        breadcrumb: false,
-                        scroll: false,
-                      },
-                    }"
-                    @after="(protyle) => afterProtyleLoad(protyle, index)"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Gallery模式 -->
-          <div v-else-if="displayMode === 'gallery'" class="gallery-content">
-            <div class="gallery-grid">
-              <div 
-                v-for="(memo, index) in filteredMemos" 
-                :key="index"
-                class="gallery-item"
-              >
-                <div class="gallery-item-content">
-                  <EnProtyle
-                    :block-id="memo.blockId"
-                    :preview="true"
-                    disableEnhance
-                    :options="{
-                      render: {
-                        gutter: false,
-                        breadcrumb: false,
-                        scroll: false,
-                      },
-                    }"
-                    @after="(protyle) => afterProtyleLoad(protyle, index)"
-                  />
-                </div>
-                <div class="gallery-item-footer">
-                  <div class="gallery-item-time">{{ memo.time }}</div>
-                  <div class="gallery-item-actions">
-                    <span class="action-icon" @click="editMemo(index)">
-                      <svg><use xlink:href="#iconEdit"></use></svg>
-                    </span>
-                    <span class="action-icon" @click="deleteMemo(index)">
-                      <svg><use xlink:href="#iconTrashcan"></use></svg>
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <!-- 瀑布流模式 -->
-          <div v-else-if="displayMode === 'waterfall'" class="waterfall-content">
-            <div class="waterfall-container">
-              <div class="waterfall-column" v-for="colIndex in 2" :key="colIndex">
-                <div 
-                  v-for="(memo, index) in getWaterfallColumnMemos(colIndex)"
-                  :key="index"
-                  class="waterfall-item"
-                >
-                  <div class="waterfall-item-content">
-                    <EnProtyle
-                      :block-id="memo.blockId"
-                      :preview="true"
-                      disableEnhance
-                      :options="{
-                        render: {
-                          gutter: false,
-                          breadcrumb: false,
-                          scroll: false,
-                        },
-                      }"
-                      @after="(protyle) => afterProtyleLoad(protyle, getOriginalIndex(colIndex, index))"
+                <div v-for="(memo, index) in filteredMemos" :key="memo.blockId || index" class="gallery-item" @dblclick="handleOpenWhiteboard(memo)">
+                  <div class="gallery-item-content">
+                    <WhiteboardPreview
+                      :nodes="memo.whiteBoardConfig?.boardOptions?.nodes ?? []"
+                      :edges="memo.whiteBoardConfig?.boardOptions?.edges ?? []"
+                      :viewport="memo.whiteBoardConfig?.boardOptions?.viewport"
+                      :title="memo.docPath || '白板预览'"
+                      :backgroundVariant="memo.whiteBoardConfig?.boardOptions?.backgroundVariant || 'none'"
                     />
                   </div>
-                  <div class="waterfall-item-footer">
-                    <div class="waterfall-item-time">{{ memo.time }}</div>
-                    <div class="waterfall-item-actions">
-                      <span class="action-icon" @click="editMemo(getOriginalIndex(colIndex, index))">
+                  <div class="gallery-item-footer">
+                    <div class="gallery-item-time">{{ memo.time }}</div>
+                    <div class="gallery-item-actions">
+                      <span class="action-icon" @click.stop="handleRenameWhiteboard(memo)" title="重命名">
                         <svg><use xlink:href="#iconEdit"></use></svg>
                       </span>
-                      <span class="action-icon" @click="deleteMemo(getOriginalIndex(colIndex, index))">
+                      <span class="action-icon" @click.stop="handleDeleteWhiteboard(memo)" title="删除">
                         <svg><use xlink:href="#iconTrashcan"></use></svg>
                       </span>
                     </div>
                   </div>
                 </div>
               </div>
+              <div v-if="loadingMore || hasMore" class="loading-more-indicator">
+                <div v-if="loadingMore" class="loading-spinner"></div>
+                <div v-else-if="hasMore" class="load-more-text" @click="loadMoreData">加载更多</div>
+              </div>
             </div>
-          </div>
+          </template>
+          <template v-else>
+            <!-- Other Filters: Render based on displayMode -->
+            <div v-if="displayMode === 'timeline'" class="timeline-content">
+              <MemoTimeline :memos="filteredMemos" @edit="editMemo" @delete="deleteMemo" />
+              <div v-if="loadingMore || hasMore" class="loading-more-indicator">
+                <div v-if="loadingMore" class="loading-spinner"></div><div v-else-if="hasMore" class="load-more-text" @click="loadMoreData">加载更多</div>
+              </div>
+            </div>
+            <div v-else-if="displayMode === 'card'" class="card-content">
+              <div class="card-grid">
+                <div v-for="(memo, index) in filteredMemos" :key="memo.blockId || index" class="memo-card-item">
+                  <div class="memo-card-header"><div class="memo-card-time">{{ memo.time }}</div><div class="memo-card-actions"><span class="action-icon" @click="editMemo(index)"><svg><use xlink:href="#iconEdit"></use></svg></span><span class="action-icon" @click="deleteMemo(index)"><svg><use xlink:href="#iconTrashcan"></use></svg></span></div></div>
+                  <div class="memo-card-body"><EnProtyle :block-id="memo.blockId" :preview="true" disableEnhance :options="{ render: { gutter: false, breadcrumb: false, scroll: false } }" @after="(protyle) => afterProtyleLoad(protyle, index)" /></div>
+                </div>
+              </div>
+              <div v-if="loadingMore || hasMore" class="loading-more-indicator">
+                <div v-if="loadingMore" class="loading-spinner"></div><div v-else-if="hasMore" class="load-more-text" @click="loadMoreData">加载更多</div>
+              </div>
+            </div>
+            <div v-else-if="displayMode === 'gallery'" class="gallery-content">
+              <div class="gallery-grid">
+                <div v-for="(memo, index) in filteredMemos" :key="memo.blockId || index" class="gallery-item">
+                  <div class="gallery-item-content"><EnProtyle :block-id="memo.blockId" :preview="true" disableEnhance :options="{ render: { gutter: false, breadcrumb: false, scroll: false } }" @after="(protyle) => afterProtyleLoad(protyle, index)" /></div>
+                  <div class="gallery-item-footer"><div class="gallery-item-time">{{ memo.time }}</div><div class="gallery-item-actions"><span class="action-icon" @click="editMemo(index)"><svg><use xlink:href="#iconEdit"></use></svg></span><span class="action-icon" @click="deleteMemo(index)"><svg><use xlink:href="#iconTrashcan"></use></svg></span></div></div>
+                </div>
+              </div>
+              <div v-if="loadingMore || hasMore" class="loading-more-indicator">
+                <div v-if="loadingMore" class="loading-spinner"></div><div v-else-if="hasMore" class="load-more-text" @click="loadMoreData">加载更多</div>
+              </div>
+            </div>
+            <div v-else-if="displayMode === 'waterfall'" class="waterfall-content">
+              <div class="waterfall-container">
+                <div class="waterfall-column" v-for="colIndex in 2" :key="colIndex">
+                  <div v-for="(memo, index) in getWaterfallColumnMemos(colIndex)" :key="memo.blockId || index" class="waterfall-item">
+                    <div class="waterfall-item-content"><EnProtyle :block-id="memo.blockId" :preview="true" disableEnhance :options="{ render: { gutter: false, breadcrumb: false, scroll: false } }" @after="(protyle) => afterProtyleLoad(protyle, getOriginalIndex(colIndex, index))" /></div>
+                    <div class="waterfall-item-footer"><div class="waterfall-item-time">{{ memo.time }}</div><div class="waterfall-item-actions"><span class="action-icon" @click="editMemo(getOriginalIndex(colIndex, index))"><svg><use xlink:href="#iconEdit"></use></svg></span><span class="action-icon" @click="deleteMemo(getOriginalIndex(colIndex, index))"><svg><use xlink:href="#iconTrashcan"></use></svg></span></div></div>
+                  </div>
+                </div>
+              </div>
+              <div v-if="loadingMore || hasMore" class="loading-more-indicator">
+                <div v-if="loadingMore" class="loading-spinner"></div><div v-else-if="hasMore" class="load-more-text" @click="loadMoreData">加载更多</div>
+              </div>
+            </div>
+          </template>
         </div>
       </div>
       
@@ -160,36 +121,36 @@
             <div class="switcher-title">显示模式</div>
             <div class="switcher-options">
               <div 
+                v-if="activeFilter !== 'whiteboard'" 
                 class="switcher-option" 
                 :class="{ active: displayMode === 'timeline' }"
                 @click="displayMode = 'timeline'"
               >
-                <svg><use xlink:href="#iconList"></use></svg>
-                <span>时间线</span>
+                <svg><use xlink:href="#iconList"></use></svg><span>时间线</span>
               </div>
               <div 
+                v-if="activeFilter !== 'whiteboard'" 
                 class="switcher-option" 
                 :class="{ active: displayMode === 'card' }"
                 @click="displayMode = 'card'"
               >
-                <svg><use xlink:href="#iconMenu"></use></svg>
-                <span>卡片</span>
+                <svg><use xlink:href="#iconMenu"></use></svg><span>卡片</span>
               </div>
               <div 
                 class="switcher-option" 
                 :class="{ active: displayMode === 'gallery' }"
-                @click="displayMode = 'gallery'"
+                @click="activeFilter !== 'whiteboard' ? (displayMode = 'gallery') : null"
+                :style="activeFilter === 'whiteboard' ? { cursor: 'default', backgroundColor: 'var(--b3-theme-primary-lightest)', color: 'var(--b3-theme-primary)' } : {}"
               >
-                <svg><use xlink:href="#iconImage"></use></svg>
-                <span>相册</span>
+                <svg><use xlink:href="#iconImage"></use></svg><span>相册</span>
               </div>
               <div 
+                v-if="activeFilter !== 'whiteboard'" 
                 class="switcher-option" 
                 :class="{ active: displayMode === 'waterfall' }"
                 @click="displayMode = 'waterfall'"
               >
-                <svg><use xlink:href="#iconLayout"></use></svg>
-                <span>瀑布流</span>
+                <svg><use xlink:href="#iconLayout"></use></svg><span>瀑布流</span>
               </div>
             </div>
           </div>
@@ -225,7 +186,7 @@
               @date-select="handleDateSelect"
             />
           </div>
-          <div class="memo-input-area">
+          <div class="memo-input-area" v-if="activeFilter !== 'whiteboard'">
             <MemoInput
               :is-editing="isEditing"
               :editing-block-id="editingBlockId"
@@ -260,166 +221,127 @@
           <div class="switcher-title">显示模式</div>
           <div class="switcher-options">
             <div 
+              v-if="activeFilter !== 'whiteboard'" 
               class="switcher-option" 
               :class="{ active: displayMode === 'timeline' }"
               @click="displayMode = 'timeline'"
             >
-              <svg><use xlink:href="#iconList"></use></svg>
-              <span>时间线</span>
+              <svg><use xlink:href="#iconList"></use></svg><span>时间线</span>
             </div>
             <div 
+              v-if="activeFilter !== 'whiteboard'" 
               class="switcher-option" 
               :class="{ active: displayMode === 'card' }"
               @click="displayMode = 'card'"
             >
-              <svg><use xlink:href="#iconMenu"></use></svg>
-              <span>卡片</span>
+              <svg><use xlink:href="#iconMenu"></use></svg><span>卡片</span>
             </div>
             <div 
               class="switcher-option" 
               :class="{ active: displayMode === 'gallery' }"
-              @click="displayMode = 'gallery'"
+              @click="activeFilter !== 'whiteboard' ? (displayMode = 'gallery') : null"
+              :style="activeFilter === 'whiteboard' ? { cursor: 'default', backgroundColor: 'var(--b3-theme-primary-lightest)', color: 'var(--b3-theme-primary)' } : {}"
             >
-              <svg><use xlink:href="#iconImage"></use></svg>
-              <span>相册</span>
+              <svg><use xlink:href="#iconImage"></use></svg><span>相册</span>
             </div>
             <div 
+              v-if="activeFilter !== 'whiteboard'" 
               class="switcher-option" 
               :class="{ active: displayMode === 'waterfall' }"
               @click="displayMode = 'waterfall'"
             >
-              <svg><use xlink:href="#iconLayout"></use></svg>
-              <span>瀑布流</span>
+              <svg><use xlink:href="#iconLayout"></use></svg><span>瀑布流</span>
             </div>
           </div>
         </div>
       </div>
       
       <div class="memo-timeline-area">
-        <!-- 根据显示模式显示不同的内容 -->
-        <div v-if="displayMode === 'timeline'" class="timeline-content">
-          <MemoTimeline
-            :memos="filteredMemos"
-            @edit="editMemo"
-            @delete="deleteMemo"
-          />
-        </div>
-        
-        <!-- 卡片模式 -->
-        <div v-else-if="displayMode === 'card'" class="card-content">
-          <div class="card-grid">
-            <div 
-              v-for="(memo, index) in filteredMemos" 
-              :key="index"
-              class="memo-card-item"
-            >
-              <div class="memo-card-header">
-                <div class="memo-card-time">{{ memo.time }}</div>
-                <div class="memo-card-actions">
-                  <span class="action-icon" @click="editMemo(index)">
-                    <svg><use xlink:href="#iconEdit"></use></svg>
-                  </span>
-                  <span class="action-icon" @click="deleteMemo(index)">
-                    <svg><use xlink:href="#iconTrashcan"></use></svg>
-                  </span>
+        <template v-if="activeFilter === 'whiteboard'">
+          <!-- Whiteboard: Render ONLY Gallery -->
+          <div class="gallery-content">
+            <div class="gallery-grid">
+              <div class="new-whiteboard-card gallery-item" @click="handleCreateNewWhiteboard">
+                <div class="new-whiteboard-content">
+                  <svg><use xlink:href="#iconAdd"></use></svg><span>新增白板</span>
+                </div>
+                <div class="whiteboard-title">
+                  <svg class="whiteboard-icon"><use xlink:href="#iconLayout"></use></svg><span class="whiteboard-name">创建新白板</span>
                 </div>
               </div>
-              <div class="memo-card-body">
-                <EnProtyle
-                  :block-id="memo.blockId"
-                  :preview="true"
-                  disableEnhance
-                  :options="{
-                    render: {
-                      gutter: false,
-                      breadcrumb: false,
-                      scroll: false,
-                    },
-                  }"
-                  @after="(protyle) => afterProtyleLoad(protyle, index)"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Gallery模式 -->
-        <div v-else-if="displayMode === 'gallery'" class="gallery-content">
-          <div class="gallery-grid">
-            <div 
-              v-for="(memo, index) in filteredMemos" 
-              :key="index"
-              class="gallery-item"
-            >
-              <div class="gallery-item-content">
-                <EnProtyle
-                  :block-id="memo.blockId"
-                  :preview="true"
-                  disableEnhance
-                  :options="{
-                    render: {
-                      gutter: false,
-                      breadcrumb: false,
-                      scroll: false,
-                    },
-                  }"
-                  @after="(protyle) => afterProtyleLoad(protyle, index)"
-                />
-              </div>
-              <div class="gallery-item-footer">
-                <div class="gallery-item-time">{{ memo.time }}</div>
-                <div class="gallery-item-actions">
-                  <span class="action-icon" @click="editMemo(index)">
-                    <svg><use xlink:href="#iconEdit"></use></svg>
-                  </span>
-                  <span class="action-icon" @click="deleteMemo(index)">
-                    <svg><use xlink:href="#iconTrashcan"></use></svg>
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- 瀑布流模式 -->
-        <div v-else-if="displayMode === 'waterfall'" class="waterfall-content">
-          <div class="waterfall-container">
-            <div class="waterfall-column" v-for="colIndex in 2" :key="colIndex">
-              <div 
-                v-for="(memo, index) in getWaterfallColumnMemos(colIndex)"
-                :key="index"
-                class="waterfall-item"
-              >
-                <div class="waterfall-item-content">
-                  <EnProtyle
-                    :block-id="memo.blockId"
-                    :preview="true"
-                    disableEnhance
-                    :options="{
-                      render: {
-                        gutter: false,
-                        breadcrumb: false,
-                        scroll: false,
-                      },
-                    }"
-                    @after="(protyle) => afterProtyleLoad(protyle, getOriginalIndex(colIndex, index))"
+              <div v-for="(memo, index) in filteredMemos" :key="memo.blockId || index" class="gallery-item" @dblclick="handleOpenWhiteboard(memo)">
+                <div class="gallery-item-content">
+                  <WhiteboardPreview
+                    :nodes="memo.whiteBoardConfig?.boardOptions?.nodes ?? []"
+                    :edges="memo.whiteBoardConfig?.boardOptions?.edges ?? []"
+                    :viewport="memo.whiteBoardConfig?.boardOptions?.viewport"
+                    :title="memo.docPath || '白板预览'"
+                    :backgroundVariant="memo.whiteBoardConfig?.boardOptions?.backgroundVariant || 'none'"
                   />
                 </div>
-                <div class="waterfall-item-footer">
-                  <div class="waterfall-item-time">{{ memo.time }}</div>
-                  <div class="waterfall-item-actions">
-                    <span class="action-icon" @click="editMemo(getOriginalIndex(colIndex, index))">
+                <div class="gallery-item-footer">
+                  <div class="gallery-item-time">{{ memo.time }}</div>
+                  <div class="gallery-item-actions">
+                    <span class="action-icon" @click.stop="handleRenameWhiteboard(memo)" title="重命名">
                       <svg><use xlink:href="#iconEdit"></use></svg>
                     </span>
-                    <span class="action-icon" @click="deleteMemo(getOriginalIndex(colIndex, index))">
+                    <span class="action-icon" @click.stop="handleDeleteWhiteboard(memo)" title="删除">
                       <svg><use xlink:href="#iconTrashcan"></use></svg>
                     </span>
                   </div>
                 </div>
               </div>
             </div>
+            <div v-if="loadingMore || hasMore" class="loading-more-indicator">
+              <div v-if="loadingMore" class="loading-spinner"></div>
+              <div v-else-if="hasMore" class="load-more-text" @click="loadMoreData">加载更多</div>
+            </div>
           </div>
-        </div>
+        </template>
+        <template v-else>
+          <!-- Other Filters: Render based on displayMode -->
+          <div v-if="displayMode === 'timeline'" class="timeline-content">
+            <MemoTimeline :memos="filteredMemos" @edit="editMemo" @delete="deleteMemo" />
+            <div v-if="loadingMore || hasMore" class="loading-more-indicator">
+              <div v-if="loadingMore" class="loading-spinner"></div><div v-else-if="hasMore" class="load-more-text" @click="loadMoreData">加载更多</div>
+            </div>
+          </div>
+          <div v-else-if="displayMode === 'card'" class="card-content">
+            <div class="card-grid">
+              <div v-for="(memo, index) in filteredMemos" :key="memo.blockId || index" class="memo-card-item">
+                <div class="memo-card-header"><div class="memo-card-time">{{ memo.time }}</div><div class="memo-card-actions"><span class="action-icon" @click="editMemo(index)"><svg><use xlink:href="#iconEdit"></use></svg></span><span class="action-icon" @click="deleteMemo(index)"><svg><use xlink:href="#iconTrashcan"></use></svg></span></div></div>
+                <div class="memo-card-body"><EnProtyle :block-id="memo.blockId" :preview="true" disableEnhance :options="{ render: { gutter: false, breadcrumb: false, scroll: false } }" @after="(protyle) => afterProtyleLoad(protyle, index)" /></div>
+              </div>
+            </div>
+            <div v-if="loadingMore || hasMore" class="loading-more-indicator">
+              <div v-if="loadingMore" class="loading-spinner"></div><div v-else-if="hasMore" class="load-more-text" @click="loadMoreData">加载更多</div>
+            </div>
+          </div>
+          <div v-else-if="displayMode === 'gallery'" class="gallery-content">
+            <div class="gallery-grid">
+              <div v-for="(memo, index) in filteredMemos" :key="memo.blockId || index" class="gallery-item">
+                <div class="gallery-item-content"><EnProtyle :block-id="memo.blockId" :preview="true" disableEnhance :options="{ render: { gutter: false, breadcrumb: false, scroll: false } }" @after="(protyle) => afterProtyleLoad(protyle, index)" /></div>
+                <div class="gallery-item-footer"><div class="gallery-item-time">{{ memo.time }}</div><div class="gallery-item-actions"><span class="action-icon" @click="editMemo(index)"><svg><use xlink:href="#iconEdit"></use></svg></span><span class="action-icon" @click="deleteMemo(index)"><svg><use xlink:href="#iconTrashcan"></use></svg></span></div></div>
+              </div>
+            </div>
+            <div v-if="loadingMore || hasMore" class="loading-more-indicator">
+              <div v-if="loadingMore" class="loading-spinner"></div><div v-else-if="hasMore" class="load-more-text" @click="loadMoreData">加载更多</div>
+            </div>
+          </div>
+          <div v-else-if="displayMode === 'waterfall'" class="waterfall-content">
+            <div class="waterfall-container">
+              <div class="waterfall-column" v-for="colIndex in 2" :key="colIndex">
+                <div v-for="(memo, index) in getWaterfallColumnMemos(colIndex)" :key="memo.blockId || index" class="waterfall-item">
+                  <div class="waterfall-item-content"><EnProtyle :block-id="memo.blockId" :preview="true" disableEnhance :options="{ render: { gutter: false, breadcrumb: false, scroll: false } }" @after="(protyle) => afterProtyleLoad(protyle, getOriginalIndex(colIndex, index))" /></div>
+                  <div class="waterfall-item-footer"><div class="waterfall-item-time">{{ memo.time }}</div><div class="waterfall-item-actions"><span class="action-icon" @click="editMemo(getOriginalIndex(colIndex, index))"><svg><use xlink:href="#iconEdit"></use></svg></span><span class="action-icon" @click="deleteMemo(getOriginalIndex(colIndex, index))"><svg><use xlink:href="#iconTrashcan"></use></svg></span></div></div>
+                </div>
+              </div>
+            </div>
+            <div v-if="loadingMore || hasMore" class="loading-more-indicator">
+              <div v-if="loadingMore" class="loading-spinner"></div><div v-else-if="hasMore" class="load-more-text" @click="loadMoreData">加载更多</div>
+            </div>
+          </div>
+        </template>
       </div>
       
       <!-- 调试按钮 -->
@@ -459,6 +381,20 @@ import MemoInput from './components/MemoInput.vue'
 import MemoTimeline from './components/MemoTimeline.vue'
 import type { DisplayMode } from '../types'
 import EnProtyle from '@/components/EnProtyle.vue'
+import WhiteboardPreview from './components/WhiteboardPreview.vue'
+import { Dialog, confirm, openTab } from 'siyuan'
+import {
+  generateWhiteBoardId,
+  loadWhiteBoardConfigById,
+  deleteWhiteBoardConfigById,
+  getWhiteBoardConfigPathById,
+  type EnWhiteBoardConfig,
+  useWhiteBoardModule,
+  whiteBoardRef,
+  loadWhiteBoard
+} from '@/modules/EnWhiteBoard/EnWhiteBoard'
+import { usePlugin } from '@/main';
+import { removeFile } from '@/api'
 
 // 开发环境标志
 const isDev = import.meta.env.DEV || false
@@ -472,6 +408,14 @@ const activeFilter = ref<FilterType>('daily')
 const activeTab = ref<'calendar' | 'input'>('calendar')
 // 添加显示模式状态
 const displayMode = ref<DisplayMode>('timeline')
+
+// 添加分页加载相关状态
+const PAGE_SIZE = 20 // 每页显示的数量
+const loadingMore = ref(false)
+const hasMore = ref(true)
+const currentPage = ref(0)
+const allMemos = ref<Memo[]>([]) // 存储所有备忘录
+const isInitialLoad = ref(true) // 标记是否是初始加载
 
 // 响应式布局状态
 const isWideLayout = ref(false)
@@ -514,10 +458,8 @@ const updateLayoutMode = () => {
     const containerWidth = containerRef.value.clientWidth
     const newIsWideLayout = containerWidth > WIDE_LAYOUT_BREAKPOINT
     
-    // 只有在布局模式发生变化时才打印日志
+    // 只有在布局模式发生变化时才进行处理
     if (isWideLayout.value !== newIsWideLayout) {
-      console.log('布局模式变化 - 容器宽度:', containerWidth, '是否宽屏布局:', newIsWideLayout)
-      
       // 如果从宽屏切换到窄屏，确保滑动状态正确
       if (!newIsWideLayout) {
         // 在下一个tick中初始化滑动容器宽度
@@ -550,8 +492,6 @@ const switchTab = (tab: 'calendar' | 'input') => {
       dotsElement.style.transform = 'translateX(-50%)';
     }
   });
-  
-  console.log('切换标签页:', tab, '滑动位置:', translateX.value)
 }
 
 // 开始拖动
@@ -620,8 +560,10 @@ function getTimeFromBlockId(blockId: string): string {
       return ''
     }
 
-    // 普通块ID的处理
+    // 普通块ID的处理 (格式如: 20250408121212-abcdef)
     const timeStr = blockId.split('-')[0]
+    if (timeStr.length < 14) return '' // 确保时间字符串有足够的长度
+    
     const year = timeStr.slice(0, 4)
     const month = timeStr.slice(4, 6)
     const day = timeStr.slice(6, 8)
@@ -630,7 +572,7 @@ function getTimeFromBlockId(blockId: string): string {
     const second = timeStr.slice(12, 14)
     return `${year}-${month}-${day} ${hour}:${minute}:${second}`
   } catch (err) {
-    console.error('Error parsing block ID:', err)
+    console.error('Error parsing block ID:', err, 'blockId:', blockId)
     return ''
   }
 }
@@ -651,16 +593,6 @@ const filteredMemos = computed(() => {
       }
     })
   }
-
-  // 按时间倒序排序
-  filtered = [...filtered].sort((a, b) => {
-    try {
-      return new Date(b.time).getTime() - new Date(a.time).getTime()
-    } catch (err) {
-      console.error('Error sorting dates:', err)
-      return 0
-    }
-  })
 
   return filtered
 })
@@ -748,48 +680,56 @@ let offTransactionEvent: (() => void) | null = null
 // 监听筛选器变化
 watch(activeFilter, (filter, oldFilter) => {
   if (filter !== oldFilter) {
-    // 当过滤器变化时，清空备忘录列表
     memos.value = []
     console.log(`Filter changed from ${oldFilter} to ${filter}, cleared memos`)
   }
   
-  if (filter === 'daily') {
-    // 日记筛选的状态已经在 handleDailyNoteInfo 中处理
+  // If whiteboard filter is selected, force gallery mode
+  if (filter === 'whiteboard') {
+    displayMode.value = 'gallery'; // Ensure gallery mode is set
+    console.log('Whiteboard filter activated, setting display mode to gallery')
+  } else if (filter === 'daily') {
     console.log('Daily note filter activated')
+    // Optional: Default other filters to a specific mode if desired
+    // if (displayMode.value === 'gallery') displayMode.value = 'timeline'; 
   }
 })
 
 // 处理日记信息
 const handleDailyNoteInfo = (info: { dailyNotes: any[] }) => {
   const dailyNotes = info?.dailyNotes || []
-
-  // 每次切换过滤器时，先清空所有数据
-  // 这样可以确保不会显示其他类型的数据
+  isInitialLoad.value = true
+  currentPage.value = 0
+  hasMore.value = true
+  
+  // 清空数据
   memos.value = []
+  allMemos.value = []
 
   if (!dailyNotes.length) {
+    hasMore.value = false
     return
   }
 
+  // 预处理数据
   if (activeFilter.value === 'whiteboard') {
-    // 如果是白板数据，直接使用数据
-    memos.value = dailyNotes
+    // 白板数据直接使用
+    allMemos.value = dailyNotes
   } else if (activeFilter.value === 'daily') {
-    // 将日记块转换为Memo格式
+    // 优化: 先处理所有数据，但只加载第一页
     const dailyMemos: Memo[] = dailyNotes.map((note) => {
       try {
         const time = getTimeFromBlockId(note.block_id)
         if (!time) return null
 
-        // 添加块类型信息
         return {
           blockId: note.block_id,
           time,
           type: 'daily',
           dailyNoteId: note.doc_id,
           content: note.block_content,
-          blockType: note.block_type, // 添加块类型
-          dateValue: note.date_value, // 添加日期值
+          blockType: note.block_type,
+          dateValue: note.date_value,
         }
       } catch (err) {
         console.error('Error processing note:', err)
@@ -797,54 +737,174 @@ const handleDailyNoteInfo = (info: { dailyNotes: any[] }) => {
       }
     }).filter(Boolean) as Memo[]
 
-    console.log('Processed daily memos:', dailyMemos.length)
-
-    // 更新备忘录列表，只使用日记类型的备忘录
-    memos.value = dailyMemos
-
-    // 更新日历组件的日期标记
+    // 更新日历组件的日期标记 (这部分需要全部数据)
     const datesWithNotes = [...new Set(dailyMemos.map((memo) =>
       memo.time.split(' ')[0],
     ))]
     selectedDates.value = datesWithNotes
+    
+    // 按时间从新到旧排序
+    allMemos.value = [...dailyMemos].sort((a, b) => {
+      try {
+        return new Date(b.time).getTime() - new Date(a.time).getTime()
+      } catch (err) {
+        return 0
+      }
+    })
   } else if (activeFilter.value === 'annotation') {
-    // 批注类型的数据处理
-    console.log('Processing annotation notes:', dailyNotes)
-    
-    // 直接使用从MemoFilter返回的格式化数据
+    // 批注类型优化
     const annotationMemos: Memo[] = dailyNotes
-    
-    // 更新备忘录列表，只使用批注类型的备忘录
-    memos.value = annotationMemos
     
     // 更新日历组件的日期标记
     const datesWithNotes = [...new Set(annotationMemos.map((memo) =>
       memo.time.split(' ')[0],
     ))]
     selectedDates.value = datesWithNotes
+    
+    // 按时间从新到旧排序
+    allMemos.value = [...annotationMemos].sort((a, b) => {
+      try {
+        return new Date(b.time).getTime() - new Date(a.time).getTime()
+      } catch (err) {
+        return 0
+      }
+    })
   } else {
-    // 其他类型的数据处理
+    // 其他类型数据处理
     const newMemos: Memo[] = dailyNotes.map((note) => ({
       blockId: note.block_id,
       time: note.block_time,
       type: activeFilter.value,
       content: note.block_content,
-      blockType: note.block_type, // 添加块类型
+      blockType: note.block_type,
     }))
+    
+    // 按时间从新到旧排序
+    allMemos.value = [...newMemos].sort((a, b) => {
+      try {
+        return new Date(b.time).getTime() - new Date(a.time).getTime()
+      } catch (err) {
+        return 0
+      }
+    })
+  }
+  
+  // 加载第一页数据
+  loadMoreData()
+}
 
-    // 更新备忘录列表，只使用当前类型的备忘录
-    memos.value = newMemos
+// 加载更多数据
+const loadMoreData = () => {
+  if (!hasMore.value || loadingMore.value) return
+  
+  loadingMore.value = true
+  
+  try {
+    const startIndex = currentPage.value * PAGE_SIZE
+    const endIndex = startIndex + PAGE_SIZE
+    
+    // 检查是否还有更多数据
+    if (startIndex >= allMemos.value.length) {
+      hasMore.value = false
+      loadingMore.value = false
+      return
+    }
+    
+    // 获取当前页数据
+    const pageData = allMemos.value.slice(startIndex, endIndex)
+    
+    // 如果是初始加载，替换数据；否则追加数据
+    if (isInitialLoad.value) {
+      memos.value = pageData
+      isInitialLoad.value = false
+    } else {
+      memos.value = [...memos.value, ...pageData]
+    }
+    
+    // 更新页码
+    currentPage.value++
+    
+    // 如果已加载所有数据，设置hasMore为false
+    if (endIndex >= allMemos.value.length) {
+      hasMore.value = false
+    }
+  } catch (error) {
+    console.error('加载数据出错:', error)
+  } finally {
+    loadingMore.value = false
   }
 }
 
+// 监听滚动到底部事件
+const handleScroll = (event: Event) => {
+  const target = event.target as HTMLElement
+  if (!target) return
+  
+  // 计算滚动位置
+  const scrollPosition = target.scrollTop + target.clientHeight
+  const scrollHeight = target.scrollHeight
+  
+  // 调试信息
+  console.log(`滚动位置: ${scrollPosition}, 总高度: ${scrollHeight}, 距离底部: ${scrollHeight - scrollPosition}`)
+  
+  // 更宽松的预加载触发条件：当距离底部还有200px或20%高度时就开始加载
+  const triggerDistance = Math.min(200, scrollHeight * 0.2)
+  if (scrollHeight - scrollPosition < triggerDistance && hasMore.value && !loadingMore.value) {
+    console.log('触发加载更多数据')
+    loadMoreData()
+  }
+}
+
+// 设置滚动事件监听
+const setupScrollListener = () => {
+  console.log('设置滚动事件监听')
+  setTimeout(() => {
+    const contentElements = document.querySelectorAll('.timeline-content, .card-content, .gallery-content, .waterfall-content')
+    
+    console.log(`找到 ${contentElements.length} 个可滚动元素`)
+    
+    contentElements.forEach(element => {
+      console.log(`添加滚动监听到元素:`, element)
+      element.addEventListener('scroll', handleScroll)
+    })
+    
+    // 触发一次初始检查，以防内容不足以滚动
+    if (hasMore.value && !loadingMore.value) {
+      const element = contentElements[0] as HTMLElement
+      if (element && element.scrollHeight <= element.clientHeight) {
+        console.log('内容不足以滚动，自动加载更多')
+        loadMoreData()
+      }
+    }
+  }, 500) // 延迟确保DOM已经渲染
+}
+
+// 移除滚动事件监听
+const removeScrollListener = () => {
+  console.log('移除滚动事件监听')
+  const contentElements = document.querySelectorAll('.timeline-content, .card-content, .gallery-content, .waterfall-content')
+  
+  contentElements.forEach(element => {
+    element.removeEventListener('scroll', handleScroll)
+  })
+}
+
+// 监听显示模式变化，重新绑定滚动事件
+watch(displayMode, () => {
+  nextTick(() => {
+    removeScrollListener()
+    setupScrollListener()
+  })
+})
+
 // 添加对 memos 的监听
-watch(memos, (newMemos) => {
-  console.log('Memos changed:', newMemos)
+watch(memos, () => {
+  // 使用深度监听，但移除不必要的日志
 }, { deep: true })
 
 // 添加对 filteredMemos 的监听
-watch(() => filteredMemos.value, (newFilteredMemos) => {
-  console.log('Filtered memos changed:', newFilteredMemos)
+watch(() => filteredMemos.value, () => {
+  // 保留观察者，但移除不必要的日志
 }, { deep: true })
 
 // 定义handleResize函数，避免添加和移除不同的函数引用
@@ -874,9 +934,253 @@ const getOriginalIndex = (columnIndex: number, index: number) => {
 
 // 添加afterProtyleLoad函数
 const afterProtyleLoad = (protyle: any, index: number) => {
-  // 这里可以添加加载后的处理逻辑
-  console.log('Protyle loaded for memo at index:', index)
+  // 加载后的处理逻辑，移除不必要的日志
 }
+
+// Get whiteboard module functions/state
+const { moduleOptions: whiteBoardModuleOptions } = useWhiteBoardModule()
+
+// Initialize plugin instance here, within <script setup> but outside functions
+const plugin = usePlugin();
+
+// Function to handle creating a new whiteboard
+const handleCreateNewWhiteboard = async () => {
+  // Use Dialog to ask for a name - Simplified structure
+  const dialog = new Dialog({
+    title: '创建新白板',
+    content: `<div class="b3-dialog__content">
+                  <input class="b3-text-field fn__block" id="newWhiteboardNameInput" placeholder="输入白板名称 (可选)">
+              </div>
+              <div class="b3-dialog__action">
+                  <button class="b3-button b3-button--cancel">取消</button>
+                  <span class="fn__space"></span>
+                  <button class="b3-button b3-button--text">确认</button>
+              </div>`,
+    width: plugin.isMobile ? "92vw" : "520px", // Now plugin should be defined
+    destroyCallback() {
+        // Cleanup if needed
+    }
+  });
+  
+  // Add listeners to buttons
+  const confirmBtn = dialog.element.querySelector('.b3-button--text') as HTMLButtonElement;
+  const cancelBtn = dialog.element.querySelector('.b3-button--cancel') as HTMLButtonElement;
+  const inputEl = dialog.element.querySelector('#newWhiteboardNameInput') as HTMLInputElement;
+
+  const handleConfirm = async () => {
+      const whiteBoardName = inputEl.value.trim() || `未命名白板-${new Date().toISOString().slice(0, 10)}`;
+      dialog.destroy();
+
+      try {
+          const whiteBoardId = generateWhiteBoardId();
+          const defaultConfig: EnWhiteBoardConfig = {
+              id: whiteBoardId,
+              name: whiteBoardName,
+              loaded: true,
+              embedOptions: {
+                  default: {
+                      height: 200,
+                      SiderLeftShow: false,
+                      SiderLeftWidth: 0,
+                      SiderRightShow: false,
+                      SiderRightWidth: 0,
+                  }
+              },
+              boardOptions: {
+                  keepEmbedOptionsSame: false,
+                  nodes: [],
+                  edges: [],
+                  viewport: { x: 0, y: 0, zoom: 1 },
+                  backgroundVariant: whiteBoardModuleOptions.value.backgroundVariant || 'dots',
+                  useCustomBackground: false,
+              },
+          };
+
+          await loadWhiteBoardConfigById(whiteBoardId, defaultConfig);
+
+          if (!whiteBoardRef.indexMap) {
+              await loadWhiteBoard();
+              await nextTick();
+          }
+
+          if (whiteBoardRef.indexMap?.moduleOptions?.value) {
+              whiteBoardRef.indexMap.moduleOptions.value[whiteBoardId] = { whiteBoardId, whiteBoardName };
+          } else {
+              console.error('Cannot update whiteboard index map.');
+              return;
+          }
+
+          console.log('New whiteboard created:', whiteBoardId, whiteBoardName);
+
+          const currentFilter = activeFilter.value;
+          activeFilter.value = undefined;
+          await nextTick();
+          activeFilter.value = currentFilter;
+
+      } catch (error) {
+          console.error("Error creating whiteboard:", error);
+      }
+  };
+
+  confirmBtn.addEventListener('click', handleConfirm);
+  cancelBtn.addEventListener('click', () => dialog.destroy());
+  inputEl.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+          event.preventDefault();
+          handleConfirm();
+      }
+  });
+
+  // Focus input
+  setTimeout(() => inputEl?.focus(), 100);
+};
+
+// DELETE Whiteboard Function
+const handleDeleteWhiteboard = async (memo: Memo) => {
+  if (memo.type !== 'whiteboard') return;
+
+  confirm('确认删除', `确定要删除白板 "${memo.docPath}" 吗？这将同时删除其配置文件，操作不可恢复。`, async () => {
+    try {
+      const whiteBoardId = memo.blockId;
+      const filePath = getWhiteBoardConfigPathById(whiteBoardId) + '.json'; // Assuming .json extension
+      
+      console.log(`Attempting to delete: ${filePath}`);
+      // 1. Delete the config file via API
+      try {
+          const response = await removeFile(filePath);
+          console.log('Remove file response:', response);
+          if (response?.code !== 0) {
+             console.error('Failed to delete whiteboard config file via API:', response?.msg);
+             // Optional: Show error to user
+             // return; // Decide if failure to delete file should stop the process
+          }
+      } catch (fileError) {
+          console.error('Error calling removeFile API:', fileError);
+           // Optional: Show error to user
+           // return;
+      }
+
+      // 2. Delete config from memory/storage management
+      deleteWhiteBoardConfigById(whiteBoardId);
+
+      // 3. Delete from index map
+      if (whiteBoardRef.indexMap?.moduleOptions?.value) {
+        delete whiteBoardRef.indexMap.moduleOptions.value[whiteBoardId];
+      }
+
+      // 4. Remove from local UI state
+      const allIndex = allMemos.value.findIndex(m => m.blockId === whiteBoardId);
+      if (allIndex > -1) allMemos.value.splice(allIndex, 1);
+      
+      const currentIdx = memos.value.findIndex(m => m.blockId === whiteBoardId);
+      if (currentIdx > -1) memos.value.splice(currentIdx, 1);
+
+      console.log(`Whiteboard ${whiteBoardId} deleted.`);
+      // Optional: Show success message
+
+    } catch (error) {
+      console.error('Error deleting whiteboard:', error);
+      // Optional: Show error message
+    }
+  });
+};
+
+// RENAME Whiteboard Function
+const handleRenameWhiteboard = async (memo: Memo) => {
+  if (memo.type !== 'whiteboard') return;
+
+  const renameDialog = new Dialog({
+    title: '重命名白板',
+    content: `<div class="b3-dialog__content">
+                  <input class="b3-text-field fn__block" id="renameWhiteboardInput" value="${memo.docPath || ''}">
+              </div>
+              <div class="b3-dialog__action">
+                  <button class="b3-button b3-button--cancel">取消</button><span class="fn__space"></span><button class="b3-button b3-button--text">确认</button>
+              </div>`,
+    width: plugin.isMobile ? "92vw" : "520px",
+  });
+
+  const confirmBtn = renameDialog.element.querySelector('.b3-button--text') as HTMLButtonElement;
+  const cancelBtn = renameDialog.element.querySelector('.b3-button--cancel') as HTMLButtonElement;
+  const inputEl = renameDialog.element.querySelector('#renameWhiteboardInput') as HTMLInputElement;
+
+  const handleConfirm = async () => {
+    const newName = inputEl.value.trim();
+    renameDialog.destroy();
+
+    if (!newName || newName === memo.docPath) {
+      return; // No change or empty name
+    }
+
+    try {
+      const whiteBoardId = memo.blockId;
+      
+      // 1. Load config (ensure it's loaded)
+      const config = await loadWhiteBoardConfigById(whiteBoardId);
+      if (!config?.moduleOptions?.value) {
+        console.error('Failed to load whiteboard config for renaming.');
+        return;
+      }
+
+      // 2. Update name in config
+      config.moduleOptions.value.name = newName;
+
+      // 3. Update name in index map
+      if (whiteBoardRef.indexMap?.moduleOptions?.value?.[whiteBoardId]) {
+        whiteBoardRef.indexMap.moduleOptions.value[whiteBoardId].whiteBoardName = newName;
+      } else {
+         console.warn('Whiteboard not found in index map during rename.');
+      }
+      
+      // 4. Update local UI state (find in both arrays)
+       const allIndex = allMemos.value.findIndex(m => m.blockId === whiteBoardId);
+      if (allIndex > -1) allMemos.value[allIndex].docPath = newName;
+      
+      const currentIdx = memos.value.findIndex(m => m.blockId === whiteBoardId);
+      if (currentIdx > -1) memos.value[currentIdx].docPath = newName;
+
+      console.log(`Whiteboard ${whiteBoardId} renamed to ${newName}.`);
+      // Note: Saving should be handled by useGlobalData proxy
+
+    } catch (error) {
+      console.error('Error renaming whiteboard:', error);
+    }
+  };
+
+  confirmBtn.addEventListener('click', handleConfirm);
+  cancelBtn.addEventListener('click', () => renameDialog.destroy());
+  inputEl.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') { event.preventDefault(); handleConfirm(); }
+  });
+
+  setTimeout(() => inputEl?.focus(), 100);
+};
+
+// OPEN Whiteboard Function
+const handleOpenWhiteboard = (memo: Memo) => {
+  if (memo.type !== 'whiteboard') return;
+
+  const whiteBoardId = memo.blockId;
+  const whiteBoardName = memo.docPath || '白板';
+  const tabType = 'en-enhance-whiteboard-tab'; // 确保这个类型已注册
+
+  console.log(`Opening whiteboard ${whiteBoardId} in new tab.`);
+
+  openTab({
+    app: plugin.app,
+    // tabType: tabType, // 从顶层移除
+    custom: {
+      icon: "iconLayout",
+      title: whiteBoardName,
+      data: {
+        whiteBoardId: whiteBoardId,
+        // 其他需要传递给页签组件的数据
+      },
+      id: plugin.name + tabType + whiteBoardId, // 确保 ID 唯一
+      type: tabType, // 将类型指定移回 custom 对象内部，使用 'type' 属性
+    },
+  });
+};
 
 onMounted(() => {
   registerCommands()
@@ -904,6 +1208,9 @@ onMounted(() => {
         resizeObserver.observe(parentContainer)
       }
     }
+    
+    // 设置滚动监听
+    setupScrollListener()
   })
   
   // 监听窗口大小变化
@@ -926,6 +1233,9 @@ onBeforeUnmount(() => {
     resizeObserver.disconnect()
     resizeObserver = null
   }
+  
+  // 移除滚动事件监听
+  removeScrollListener()
 })
 </script>
 
@@ -1281,7 +1591,16 @@ onBeforeUnmount(() => {
     }
     
     .memo-card-body {
-      padding: 16px;
+      padding: 0;
+      display: flex;
+      align-items: stretch;
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+
+      :deep(.protyle) {
+        padding: 16px;
+        aspect-ratio: auto;
+      }
     }
   }
 }
@@ -1311,15 +1630,23 @@ onBeforeUnmount(() => {
     }
     
     .gallery-item-content {
-      padding: 16px 16px 8px;
-      max-height: 320px;
+      padding: 0;
       overflow: hidden;
-      
+      display: flex;
+      align-items: stretch;
+      aspect-ratio: 16 / 9;
+
+      :deep(.protyle) {
+        padding: 16px 16px 8px;
+        aspect-ratio: auto;
+      }
+
       :deep(img) {
         width: 100%;
         height: auto;
         object-fit: cover;
         border-radius: var(--b3-border-radius);
+        aspect-ratio: auto;
       }
     }
     
@@ -1346,7 +1673,7 @@ onBeforeUnmount(() => {
           svg {
             width: 14px;
             height: 14px;
-            fill: var(--b3-theme-on-surface-light);
+            fill: var (--b3-theme-on-surface-light);
           }
           
           &:hover {
@@ -1393,13 +1720,23 @@ onBeforeUnmount(() => {
     }
     
     .waterfall-item-content {
-      padding: 16px 16px 8px;
-      
+      padding: 0;
+      overflow: hidden;
+      display: flex;
+      align-items: stretch;
+      aspect-ratio: 16 / 9;
+
+      :deep(.protyle) {
+        padding: 16px 16px 8px;
+        aspect-ratio: auto;
+      }
+
       :deep(img) {
         width: 100%;
         height: auto;
         object-fit: cover;
         border-radius: var(--b3-border-radius);
+        aspect-ratio: auto;
       }
     }
     
@@ -1426,7 +1763,7 @@ onBeforeUnmount(() => {
           svg {
             width: 14px;
             height: 14px;
-            fill: var(--b3-theme-on-surface-light);
+            fill: var (--b3-theme-on-surface-light);
           }
           
           &:hover {
@@ -1592,6 +1929,123 @@ onBeforeUnmount(() => {
         fill: var(--b3-theme-on-surface);
       }
     }
+  }
+}
+
+// 加载更多指示器样式
+.loading-more-indicator {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 0;
+  margin-top: 8px;
+  
+  .loading-spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--b3-theme-background-light);
+    border-top: 2px solid var(--b3-theme-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  
+  .load-more-text {
+    font-size: 14px;
+    color: var(--b3-theme-primary);
+    cursor: pointer;
+    padding: 4px 12px;
+    border-radius: var(--b3-border-radius);
+    
+    &:hover {
+      background-color: var(--b3-theme-primary-lightest);
+    }
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+}
+
+// New Whiteboard Card Styles
+.new-whiteboard-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  background-color: var(--b3-theme-surface);
+  border-radius: var(--b3-border-radius);
+  border: 1px dashed var(--b3-border-color);
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  overflow: hidden;
+  padding: 0;
+
+  &:hover {
+    border-color: var(--b3-theme-primary);
+    background-color: var(--b3-theme-background-light);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+
+    .new-whiteboard-content svg {
+      fill: var(--b3-theme-primary);
+      transform: scale(1.1);
+    }
+    .new-whiteboard-content span {
+      color: var(--b3-theme-primary);
+    }
+  }
+}
+
+.new-whiteboard-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--b3-theme-on-surface-light);
+
+  svg {
+    width: 32px;
+    height: 32px;
+    fill: var(--b3-theme-on-surface-light);
+    transition: all 0.2s ease-in-out;
+  }
+
+  span {
+    font-size: 14px;
+    transition: color 0.2s ease-in-out;
+  }
+}
+
+.new-whiteboard-card .whiteboard-title {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 6px 8px;
+  background-color: rgba(var(--b3-theme-background-rgb), 0.7);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  pointer-events: none;
+
+  .whiteboard-icon {
+    width: 12px;
+    height: 12px;
+    fill: var(--b3-theme-on-surface);
+    flex-shrink: 0;
+  }
+
+  .whiteboard-name {
+    font-size: 11px;
+    color: var(--b3-theme-on-surface);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 </style>

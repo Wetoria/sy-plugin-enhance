@@ -137,26 +137,23 @@ async function getParentBlockIds(blockId: string, parentId: string | null): Prom
 
 // 获取日记块
 async function getDailyNotes() {
-  const { moduleOptions } = useDailyNote()
-  const notebookId = moduleOptions.value.dailyNoteNotebookId
-
-  if (!notebookId) {
-    return []
-  }
-
-  // 先获取日记文档
+  // 不再依赖于特定的笔记本ID，获取所有笔记本中的日记
+  // 先获取日记文档 - 改进SQL查询，增加LIMIT和更精确的条件
   const data = {
     stmt: `
       WITH daily_docs AS (
         SELECT
           B.id as doc_id,
-          A.value as date_value
+          A.value as date_value,
+          B.box as notebook_id,
+          B.content as doc_title,
+          B.path as doc_path
         FROM blocks B
         JOIN attributes A ON B.id = A.block_id
         WHERE
-          B.box = '${notebookId}'
-          AND B.type = 'd'
+          B.type = 'd'
           AND A.name LIKE 'custom-dailynote-%'
+        ORDER BY A.value DESC
       )
       SELECT
         C.id as block_id,
@@ -164,6 +161,9 @@ async function getDailyNotes() {
         C.root_id as doc_id,
         C.updated as block_time,
         D.date_value,
+        D.notebook_id,
+        D.doc_title,
+        D.doc_path,
         C.parent_id,
         C.type as block_type
       FROM blocks C
@@ -173,10 +173,13 @@ async function getDailyNotes() {
         AND C.content != ''
         AND C.id != C.root_id
       ORDER BY D.date_value DESC, C.updated DESC
+      LIMIT 1000
     `,
   }
+  
+  console.log('执行SQL查询获取日记数据...')
   const result = await request('/api/query/sql', data)
-  console.log('Initial SQL result:', result)
+  console.log(`SQL查询结果: 获取到 ${result.length} 条记录`)
 
   // 创建一个映射来跟踪每个块的子块
   const blockChildrenMap = new Map<string, string[]>()
@@ -198,7 +201,7 @@ async function getDailyNotes() {
            result.findIndex((b: any) => b.block_id === item.parent_id) === -1
   })
   
-  console.log('Top level blocks:', topLevelBlocks.length)
+  console.log(`顶级块数量: ${topLevelBlocks.length}`)
   
   // 处理顶级块，获取其内容
   const processedResults = await Promise.all(
@@ -207,11 +210,14 @@ async function getDailyNotes() {
         ...item,
         block_id: item.block_id,
         original_block_id: item.block_id,
+        notebook_id: item.notebook_id,
+        doc_title: item.doc_title,
+        doc_path: item.doc_path,
       }
     })
   )
   
-  console.log('Final processed results:', processedResults.length)
+  console.log(`处理后的顶级块数量: ${processedResults.length}`)
   return processedResults
 }
 
