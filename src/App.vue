@@ -42,6 +42,7 @@ registerGlobalObserver()
   // --b3-theme-background: #000;
 }
 
+.flexRow,
 .row {
   display: flex;
   gap: var(--en-gap);

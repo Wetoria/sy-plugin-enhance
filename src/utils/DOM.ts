@@ -30,16 +30,31 @@ export function hideGutterOnTarget(target) {
 }
 
 
-export const onCountClick = (fn: (count: number, ...args: any[]) => void) => {
+export const onCountClick = (fn: (count: number, ...args: any[]) => void, options?: {
+  delay?: number
+  preventDefault?: boolean
+  stopPropagation?: boolean
+  stopImmediatePropagation?: boolean
+}) => {
   const countTime = ref(0)
   const countTimeTimeoutFlag = ref()
+
   return (...args) => {
     clearTimeout(countTimeTimeoutFlag.value)
     countTime.value += 1
     countTimeTimeoutFlag.value = setTimeout(() => {
       fn(countTime.value, ...args)
       countTime.value = 0
-    }, 300)
+    }, options?.delay || 300)
+    if (options?.preventDefault) {
+      args[0].preventDefault()
+    }
+    if (options?.stopPropagation) {
+      args[0].stopPropagation()
+    }
+    if (options?.stopImmediatePropagation) {
+      args[0].stopImmediatePropagation()
+    }
   }
 }
 
