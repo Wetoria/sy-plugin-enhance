@@ -3,6 +3,7 @@ import {
   loadData,
   saveData,
 } from '@/utils/DataManager'
+import { toggleSiyuanSync } from '@/utils/Siyuan'
 import chalk from 'chalk'
 import {
   cloneDeep,
@@ -283,6 +284,7 @@ export const saveModuleDataByNamespace = async (namespace: Namespace) => {
   enLog(`${getColorStringWarn('Ready to save module')} ${getNamespaceLogString(namespace)} data into file [${storageKey}]: `, JSON.parse(JSON.stringify(dataRef.value)))
   await saveData(storageKey, dataRef.value)
   enLog(`${getColorStringWarn('Saved Module Data: ')} ${getNamespaceLogString(namespace)}`)
+  await toggleSiyuanSync()
 }
 
 

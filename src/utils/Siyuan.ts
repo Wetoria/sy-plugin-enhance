@@ -1,3 +1,4 @@
+import { performSync } from '@/api'
 import { usePlugin } from '@/main'
 import { debounce } from '@/utils'
 import { useSiyuanEventTransactions } from '@/utils/EventBusHooks'
@@ -400,3 +401,7 @@ export function isProtyleInEditor(element: HTMLElement) {
   return !!editor?.find((item: any) => item.element === element)
 }
 
+
+export const toggleSiyuanSync = debounce(() => {
+  performSync()
+}, 5000)

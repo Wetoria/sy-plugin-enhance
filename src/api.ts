@@ -533,6 +533,11 @@ export async function currentTime(): Promise<number> {
   return request("/api/system/currentTime", {})
 }
 
+export async function performSync(): Promise<number> {
+  return request("/api/sync/performSync", {})
+}
+
+
 // **************************************** Sqlite ****************************************
 
 export async function flushTransactions(): Promise<any> {
