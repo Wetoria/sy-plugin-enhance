@@ -105,26 +105,43 @@ import {
   nextTick,
   ref,
   watch,
+  watchEffect,
 } from 'vue'
 
 const plugin = usePlugin()
+
+let defaultData = {
+  enabled: false,
+  moduleName: EN_MODULE_LIST.EN_FORMAT_BRUSH,
+  moduleDisplayName: EN_CONSTANTS.EN_FORMAT_BRUSH_DISPLAY,
+}
+
+const storagedDefaultDataStr = localStorage.getItem(defaultData.moduleName)
+if (storagedDefaultDataStr) {
+  try {
+    defaultData = JSON.parse(storagedDefaultDataStr)
+  } catch (error) {
+    console.error(error)
+  }
+}
 
 const {
   module,
   moduleOptions,
 } = useModule<{} & EnModule>(EN_MODULE_LIST.EN_FORMAT_BRUSH, {
-  defaultData: {
-    enabled: false,
-    moduleName: EN_MODULE_LIST.EN_FORMAT_BRUSH,
-    moduleDisplayName: EN_CONSTANTS.EN_FORMAT_BRUSH_DISPLAY,
-  },
+  defaultData,
   needSave: false,
+})
+
+watchEffect(() => {
+  localStorage.setItem(defaultData.moduleName, JSON.stringify(moduleOptions.value))
 })
 
 const { computedLevel } = injectAuthStatus()
 const hasAuth = computedLevel(1)
 // 有权限时，自动开启格式刷功能
 watch(hasAuth, () => {
+  console.log('hasAuth', hasAuth.value)
   if (hasAuth.value) {
     moduleOptions.value.enabled = true
   } else {
