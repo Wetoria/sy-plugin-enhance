@@ -249,33 +249,33 @@ html[data-en_enabled_module~="EnOther"] {
   }
 
   &[data-en_enabled_module~="EnOtherLinkColor"] {
-    [data-type="block-ref"],
-    [data-type="a"] {
+    [data-type~="block-ref"],
+    [data-type~="a"] {
       color: var(--sky-blue) !important;
     }
   }
 
   // #region 文档反链增加 [[]]
   &[data-en_enabled_module~="EnOtherBlockRefBracket"] {
-    span[data-type="block-ref"] {
+    span[data-type~="block-ref"] {
       font-weight: inherit;
       background-color: transparent !important;
       border-bottom: none !important;
-    }
 
-    /* 为引用块后面增加引用图标 */
-    span[data-type="block-ref"]::before {
-      color: var(--b3-theme-on-surface) !important;
-      content: "[[";
-    }
+      /* 为引用块后面增加引用图标 */
+      &::before {
+        color: var(--b3-theme-on-surface) !important;
+        content: "[[";
+      }
 
-    span[data-type="block-ref"]::after {
-      color: var(--b3-theme-on-surface) !important;
-      content: "]]";
-    }
+      &::after {
+        color: var(--b3-theme-on-surface) !important;
+        content: "]]";
+      }
 
-    span[data-type="block-ref"]:hover {
-      background-color: var(--b3-theme-primary-lightest) !important;
+      &:hover {
+        background-color: var(--b3-theme-primary-lightest) !important;
+      }
     }
   }
   // #endregion 文档反链增加 [[]]
@@ -298,7 +298,7 @@ html[data-en_enabled_module~="EnOther"] {
   }
 
   &[data-en_enabled_module~="EnOtherImageDefaultWidth"] {
-    [data-type="img"] {
+    [data-type~="img"] {
       span:nth-child(2):not([style^="width"]) {
         width: var(--en-img-default-width);
       }

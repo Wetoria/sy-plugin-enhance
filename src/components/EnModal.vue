@@ -123,6 +123,8 @@ const props = defineProps<{
   // 过滤掉 modalClass
   // IMP 可以考虑做合并
   modalClass?: string
+  width?: string | number
+  height?: string | number
 }>()
 
 const plugin = usePlugin()
@@ -140,8 +142,8 @@ type ResizeDirection =
 
 
 const modalInfo = ref({
-  width: 500,
-  height: 300,
+  width: Number(props.width) || 500,
+  height: Number(props.height) || 300,
   left: -1,
   top: -1,
 })
