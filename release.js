@@ -74,7 +74,7 @@ const mode = args.find((arg) => arg.startsWith('--mode='))?.split('=')[1]
 const main = async () => {
   try {
 
-    console.log(`\n🌟  Current version: \x1B[36m${currentVersion}\x1B[0m\n`)
+    console.log(`🌟  Current version: \x1B[36m${currentVersion}\x1B[0m\n`)
 
     // Calculate potential new versions for auto-update
     const newPatchVersion = incrementVersion(currentVersion, 'patch')
@@ -130,7 +130,7 @@ const main = async () => {
       }
     }
 
-    console.log(`\n🚀  Ready to release => v${newVersion}`)
+    console.log(`🚀  Ready to release => v${newVersion}`)
 
     const isValid = /^\d+\.\d+\.\d+$/.test(newVersion)
     if (!isValid) {
@@ -139,35 +139,35 @@ const main = async () => {
     }
 
 
-    console.log('Updating plugin.json...')
+    console.log('🔄  \x1B[90mUpdating plugin.json...\x1B[0m')
     const content = readFileSync('./plugin.json', 'utf8')
     const updated = content.replace(
       /"version"\s*:\s*"[^"]+"/,
       `"version": "${newVersion}"`,
     )
     writeFileSync('./plugin.json', updated, 'utf8')
-    console.log('plugin.json updated')
+    console.log('✅  plugin.json updated')
 
-    console.log('Updating package.json...')
+    console.log('🔄  \x1B[90mUpdating package.json...\x1B[0m')
     const packageContent = readFileSync('./package.json', 'utf8')
     const packageUpdated = packageContent.replace(
       /"version"\s*:\s*"[^"]+"/,
       `"version": "${newVersion}"`,
     )
     writeFileSync('./package.json', packageUpdated, 'utf8')
-    console.log('package.json updated')
+    console.log('✅  package.json updated')
 
     exec(
       `git add ./plugin.json ./package.json && git commit -m "chore: update version to ${newVersion}" && git push && git tag v${newVersion}`,
       (err, stdout) => {
         if (err) {
-          console.error('\x1B[31m%s\x1B[0m', 'Error:', err)
+          console.error('\x1B[31m%s\x1B[0m', '❌  Error for adding and committing:', err)
           process.exit(1)
         }
 
         exec(`git push origin v${newVersion}`, (err) => {
           if (err) {
-            console.error('\x1B[31m%s\x1B[0m', 'Error pushing tag:', err)
+            console.error('\x1B[31m%s\x1B[0m', '❌  Error for pushing tag:', err)
             process.exit(1)
           }
           console.log(`\n✅  Version successfully updated to: \x1B[32m${newVersion}\x1B[0m\n`)
@@ -177,7 +177,7 @@ const main = async () => {
 
 
   } catch (error) {
-    console.error('❌  Error:', error)
+    console.error('\x1B[31m%s\x1B[0m', '❌  Error:', error)
   }
 }
 main()
