@@ -41,6 +41,7 @@ export default antfu(
     rules: {
     },
   },
+  // INFO 国际化以及枚举常量中的字段顺序
   {
     files: [
       'src/i18n/*.json',
@@ -88,6 +89,7 @@ export default antfu(
       ],
     },
   },
+  // INFO 一些通用规则
   {
     rules: {
       'antfu/top-level-function': 'off',
@@ -123,7 +125,9 @@ export default antfu(
       'ts/consistent-type-imports': 'off',
       'ts/explicit-function-return-type': 'off',
       'ts/no-require-imports': 'off',
-      'ts/no-use-before-define': 'warn',
+      'ts/no-use-before-define': ['warn', {
+        functions: 'allow',
+      }],
       'ts/prefer-literal-enum-member': 'off',
       'ts/strict-boolean-expressions': 'off',
 
