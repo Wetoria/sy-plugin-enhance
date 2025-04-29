@@ -1,6 +1,7 @@
 <template>
   <div>
     <EnModal
+      id="EnCommentDesktopModal"
       v-model:visible="popoverVisible"
       class="enCommentContainerModal"
       modal-class="enCommentContainer"
@@ -71,7 +72,6 @@
 </template>
 
 <script setup lang="ts">
-import type { Protyle } from 'siyuan'
 import {
   deleteBlock,
   flushTransactions,
@@ -122,6 +122,7 @@ import {
   useCurrentProtyle,
 } from '@/utils/Siyuan'
 import dayjs from 'dayjs'
+import type { Protyle } from 'siyuan'
 import { showMessage } from 'siyuan'
 import {
   computed,
@@ -200,13 +201,13 @@ const onAfterRender = (protyle: Protyle) => {
     if (target) {
       clearInterval(flag)
 
-      // eslint-disable-next-line ts/no-use-before-define
+
       adjustCommentModal()
 
 
       protyle.focusBlock(target, true)
 
-      // eslint-disable-next-line ts/no-use-before-define
+
       isCommenting.value = false
       stopMessage()
     }
@@ -693,9 +694,9 @@ const watchMouseUp = debounce((event: Event) => {
     // 延时获取鼠标当前位置，防止鼠标移动过快，导致位置获取不准确
     stopReadyToHideCommentButton()
     commentButtonPosition.value = {
-      // eslint-disable-next-line ts/no-use-before-define
+
       x: getCurrentMousePosition().clientX,
-      // eslint-disable-next-line ts/no-use-before-define
+
       y: getCurrentMousePosition().clientY + 25,
     }
 
