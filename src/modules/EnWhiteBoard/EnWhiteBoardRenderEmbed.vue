@@ -23,7 +23,7 @@
             minHeight: `${moduleOptions.embedBlockMinHeight}px`,
             height: fullScreen ? '100%' : undefined,
           }"
-          @wheel="handleWheel"
+          @wheel.passive="handleWheel"
         >
           <EnWhiteBoardRender
             :data="data"
@@ -93,57 +93,23 @@ const changeFullScreen = (value?: 'doc' | 'siyuan') => {
   fullScreen.value = value
 }
 
-let scrollAnimation: number | null = null
-let velocity = 0
-const friction = 0.95 // 摩擦系数，可以调整
-const speedMultiplier = 0.2 // 速度倍数，可以调整
-
-
-const animateScroll = () => {
-  const targetElement = customRef.value?.protyleContentRef
-  if (!targetElement || Math.abs(velocity) < 0.1) {
-    scrollAnimation = null
-    velocity = 0
-    return
-  }
-
-  targetElement.scrollTop += velocity
-  velocity *= friction
-
-  scrollAnimation = requestAnimationFrame(animateScroll)
-}
-
 const handleWheel = (e: WheelEvent) => {
   if (fullScreen.value) {
     return
   }
 
-  e.preventDefault()
+  const targetElement = customRef.value?.protyleContentRef
 
-  // 根据deltaMode调整滚动量
-  let delta = e.deltaY
-  if (e.deltaMode === 1) { // 如果是行模式
-    delta *= 16 // 转换为像素
+  if (!targetElement) {
+    return
   }
 
-  // 添加更自然的加速度
-  velocity += delta * speedMultiplier
+  const delta = e.deltaY
 
-  // 限制最大速度
-  const maxVelocity = 100
-  velocity = Math.max(Math.min(velocity, maxVelocity), -maxVelocity)
-
-  if (scrollAnimation === null) {
-    animateScroll()
-  }
+  // 应用滚动到元素A（方向可能需要调整）
+  targetElement.scrollTop += delta
 }
 
-// 在组件卸载时清理
-onBeforeUnmount(() => {
-  if (scrollAnimation) {
-    cancelAnimationFrame(scrollAnimation)
-  }
-})
 
 const embedRenderRef = ref(null)
 const clickedInside = ref(false)

@@ -322,6 +322,7 @@ const captureWheel = (event: WheelEvent) => {
     const isAtTop = scrollTop <= 0
     const isAtBottom = scrollTop + clientHeight >= scrollHeight
 
+    // 未滚动到卡片顶部或底部时，阻止滚动
     if ((event.deltaY < 0 && !isAtTop) || (event.deltaY > 0 && !isAtBottom)) {
       event.stopImmediatePropagation()
     }
