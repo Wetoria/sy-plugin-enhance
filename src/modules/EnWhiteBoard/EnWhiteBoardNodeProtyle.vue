@@ -22,9 +22,12 @@
           <EnIconTarget />
         </a-button>
         <template #content>
-          <div>
+          <div class="flexColumn">
             <div>
               当前绑定的块 ID:
+              <EnBlockJumper
+                :block-id="nodeData.blockId"
+              />
             </div>
             <div>
               <a-input
@@ -177,6 +180,7 @@
 
 <script setup lang="ts">
 import { request, sql } from '@/api'
+import EnBlockJumper from '@/components/EnBlockJumper.vue'
 import EnIconTarget from '@/components/EnIconTarget.vue'
 import EnProtyle from '@/components/EnProtyle.vue'
 import {
