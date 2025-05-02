@@ -62,14 +62,6 @@
         @mousedown.capture="captureMouseDown"
         @click.capture="captureClick"
       >
-        <template v-if="nodeData.blockId">
-          <EnProtyle
-            :block-id="nodeData.blockId"
-            disableEnhance
-            changeHelperPosition
-            @after="afterProtyleLoad"
-          />
-        </template>
       </div>
     </EnWhiteBoardNodeMindmap>
   </template>
@@ -91,14 +83,6 @@
         @mousedown.capture="captureMouseDown"
         @click.capture="captureClick"
       >
-        <template v-if="nodeData.blockId">
-          <EnProtyle
-            :block-id="nodeData.blockId"
-            disableEnhance
-            changeHelperPosition
-            @after="afterProtyleLoad"
-          />
-        </template>
       </div>
     </EnWhiteBoardNodeTreeCard>
   </template>
@@ -156,15 +140,19 @@
       @mousedown.capture="captureMouseDown"
       @click.capture="captureClick"
     >
-      <template v-if="nodeData.blockId">
-        <EnProtyle
-          :block-id="nodeData.blockId"
-          disableEnhance
-          changeHelperPosition
-          @after="afterProtyleLoad"
-        />
-      </template>
     </div>
+
+    <Teleport
+      v-if="mainRef"
+      :to="mainRef"
+    >
+      <EnProtyle
+        :block-id="nodeData.blockId"
+        disableEnhance
+        changeHelperPosition
+        @after="afterProtyleLoad"
+      />
+    </Teleport>
 
     <NodeResizer
       :min-width="100"
@@ -195,7 +183,7 @@
 </script>
 
 <script setup lang="ts">
-import { request } from '@/api'
+import { request, sql } from '@/api'
 import EnIconTarget from '@/components/EnIconTarget.vue'
 import EnProtyle from '@/components/EnProtyle.vue'
 import {
@@ -1087,8 +1075,14 @@ const blockInfo = ref({
 
 const getBlockInfo = async (blockId: string) => {
   try {
-    const blockResponse = await request('/api/block/getBlockInfo', { id: blockId })
-    if (blockResponse) {
+    if (!blockId) {
+      return
+    }
+    // const blockResponse = await request('/api/block/getBlockInfo', { id: blockId })
+    const blockResponseRes = await sql(`select * from blocks where id = '${blockId}'`)
+    if (blockResponseRes && blockResponseRes.length) {
+      const blockResponse = blockResponseRes[0]
+
       const docResponse = await request('/api/block/getDocInfo', { id: blockId })
 
       let firstChildContent = ''
