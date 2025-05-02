@@ -10,7 +10,10 @@
         id="SyEnhancerAppDisplayArea"
         class="displayArea"
       >
-
+        <div
+          ref="EnProtyleUtilAreaRef"
+          class="EnProtyleUtilArea"
+        ></div>
       </div>
       <div
         id="SyEnhancerAppHiddenArea"
@@ -28,7 +31,12 @@
 <script setup lang="ts">
 import ModuleControl from '@/modules/EnModuleControl/ModuleControl.vue'
 
-import { registerGlobalObserver } from '@/utils/DOM'
+import {
+  registerGlobalObserver,
+  useEnProtyleUtilAreaRef,
+} from '@/utils/DOM'
+
+const EnProtyleUtilAreaRef = useEnProtyleUtilAreaRef()
 
 registerGlobalObserver()
 </script>

@@ -5,10 +5,21 @@
   >
     <div></div>
   </div>
+  <Teleport
+    v-if="EnProtyleUtilAreaRef && changeHelperPosition"
+    :disabled="!changeHelperPosition"
+    :to="EnProtyleUtilAreaRef"
+  >
+    <div
+      ref="protyleUtilAreaRef"
+    >
+    </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
 import { usePlugin } from '@/main'
+import { useEnProtyleUtilAreaRef } from '@/utils/DOM'
 import {
   IProtyleOptions,
   Protyle,
@@ -23,6 +34,11 @@ import {
 const props = defineProps<{
   blockId: string
   disableEnhance?: boolean
+
+  // 是否改变 protyle-hint、protyle-gutters 等思源 protyle 自带元素的位置
+  // 防止在 transform 内部使用 protyle 时，这些元素不能正确定位的问题
+  changeHelperPosition?: boolean
+
   options?: IProtyleOptions
 }>()
 const emits = defineEmits<{
@@ -33,6 +49,18 @@ const protyleContainerRef = ref<HTMLDivElement>()
 const protyleRef = ref<Protyle>()
 
 const plugin = usePlugin()
+
+const EnProtyleUtilAreaRef = useEnProtyleUtilAreaRef()
+const protyleUtilAreaRef = ref<HTMLDivElement | null>(null)
+
+// 目前只移动下面四个元素
+// 未来如果有观察到需要移动的元素，再继续添加
+const targetProtyleUtilClassList = [
+  'protyle-gutters',
+  'protyle-select',
+  'protyle-toolbar',
+  'protyle-hint',
+]
 
 const renderProtyle = () => {
   if (!props.blockId) {
@@ -68,6 +96,14 @@ const renderProtyle = () => {
         if (props.disableEnhance) {
           protyle.protyle.element.classList.toggle('EnDisableProtyleEnhance', true)
           protyle.protyle.contentElement.classList.toggle('EnDisableProtyleEnhance', true)
+        }
+        if (props.changeHelperPosition) {
+          targetProtyleUtilClassList.forEach((className) => {
+            const target = protyle.protyle.element.querySelector(`.${className}`)
+            if (target) {
+              protyleUtilAreaRef.value?.appendChild(target)
+            }
+          })
         }
         emits('after', protyle)
       },

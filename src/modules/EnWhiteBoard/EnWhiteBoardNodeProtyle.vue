@@ -66,18 +66,9 @@
           <EnProtyle
             :block-id="nodeData.blockId"
             disableEnhance
+            changeHelperPosition
             @after="afterProtyleLoad"
           />
-          <Teleport
-            v-if="enWhiteBoardProtyleUtilAreaRef"
-            :to="enWhiteBoardProtyleUtilAreaRef"
-          >
-            <div
-              ref="protyleUtilAreaRef"
-              :data-en-whiteboard-node-protyle-util-area="flowNode.id"
-            >
-            </div>
-          </Teleport>
         </template>
       </div>
     </EnWhiteBoardNodeMindmap>
@@ -104,18 +95,9 @@
           <EnProtyle
             :block-id="nodeData.blockId"
             disableEnhance
+            changeHelperPosition
             @after="afterProtyleLoad"
           />
-          <Teleport
-            v-if="enWhiteBoardProtyleUtilAreaRef"
-            :to="enWhiteBoardProtyleUtilAreaRef"
-          >
-            <div
-              ref="protyleUtilAreaRef"
-              :data-en-whiteboard-node-protyle-util-area="flowNode.id"
-            >
-            </div>
-          </Teleport>
         </template>
       </div>
     </EnWhiteBoardNodeTreeCard>
@@ -178,18 +160,9 @@
         <EnProtyle
           :block-id="nodeData.blockId"
           disableEnhance
+          changeHelperPosition
           @after="afterProtyleLoad"
         />
-        <Teleport
-          v-if="enWhiteBoardProtyleUtilAreaRef"
-          :to="enWhiteBoardProtyleUtilAreaRef"
-        >
-          <div
-            ref="protyleUtilAreaRef"
-            :data-en-whiteboard-node-protyle-util-area="flowNode.id"
-          >
-          </div>
-        </Teleport>
       </template>
     </div>
 
@@ -270,7 +243,6 @@ import EnWhiteBoardNodeTreeCard from './EnWhiteBoardNodeTreeCard.vue'
 import EnWhiteBoardToolBar from './EnWhiteBoardToolBar.vue'
 
 const props = defineProps<{
-  enWhiteBoardProtyleUtilAreaRef: HTMLElement
   whiteBoardId: string
   nodeId: string
 }>()
@@ -329,14 +301,6 @@ const captureWheel = (event: WheelEvent) => {
   }
 }
 
-const targetProtyleUtilClassList = [
-  'protyle-gutters',
-  'protyle-select',
-  'protyle-toolbar',
-  'protyle-hint',
-]
-
-const protyleUtilAreaRef = ref<HTMLDivElement | null>(null)
 const cardProtyleRef = ref<Protyle | null>(null)
 
 const blockIdCheckSuspended = ref(false)
@@ -360,13 +324,6 @@ const afterProtyleLoad = (protyle: Protyle) => {
   cardProtyleRef.value = protyle
 
   protectSiyuanRenderer(protyle)
-
-  targetProtyleUtilClassList.forEach((className) => {
-    const target = protyle.protyle.element.querySelector(`.${className}`)
-    if (target) {
-      protyleUtilAreaRef.value?.appendChild(target)
-    }
-  })
 }
 
 const captureMouseDown = (event: MouseEvent) => {
