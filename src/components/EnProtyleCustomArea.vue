@@ -43,14 +43,14 @@ import {
 
 export const enProtyleCustomAreaClassName = 'enProtyleCustomArea'
 export const enProtyleActualAreaClassName = 'enProtyleActualArea'
+
+let count = 0
 </script>
 
 <script setup lang="ts">
 
 const props = defineProps<IProps>()
 const enProtyleCustomAreaContainerOffset = 0
-
-let count = 0
 
 interface IProps {
   getTargetBlockDom: () => HTMLElement

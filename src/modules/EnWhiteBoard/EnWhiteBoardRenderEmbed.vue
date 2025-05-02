@@ -4,7 +4,22 @@
     :getTargetBlockDom="data.getDom"
     :fullScreen="fullScreen"
   >
+    <template #customArea v-if="embedInWhiteBoard">
+      <div
+        class="flexAlignCenter"
+        style="
+          height: 50px;
+          padding: 0 10px;
+          opacity: 0.5;
+        "
+      >
+        <a-typography-text type="warning">
+          检测到当前在白板中嵌套渲染，渲染取消
+        </a-typography-text>
+      </div>
+    </template>
     <div
+      v-if="!embedInWhiteBoard"
       ref="embedRenderRef"
       class="EnWhiteBoardEmbedRenderContainer"
       :class="{
@@ -16,20 +31,6 @@
     >
       <template v-if="!embedWhiteBoardConfigData || !embedBlockOptions">
         <div>白板数据获取失败</div>
-      </template>
-      <template v-else-if="embedInWhiteBoard">
-        <div
-          class="flexAlignCenter"
-          style="
-            height: 50px;
-            padding: 0 10px;
-            opacity: 0.5;
-          "
-        >
-        <a-typography-text type="warning">
-          检测到当前在白板中嵌套渲染，渲染取消
-        </a-typography-text>
-        </div>
       </template>
       <template v-else>
         <a-resize-box
@@ -186,8 +187,8 @@ const handleMouseEnter = () => {
 
 const embedInWhiteBoard = ref(true)
 watchEffect(() => {
-  if (embedRenderRef.value) {
-    const hasWhiteBoardContainer = embedRenderRef.value.parentElement?.closest('.EnWhiteBoardEmbedRenderContainer')
+  if (customRef.value && customRef.value?.protyleContentRef) {
+    const hasWhiteBoardContainer = customRef.value?.protyleContentRef?.closest('.EnWhiteBoardEmbedRenderContainer')
     embedInWhiteBoard.value = !!hasWhiteBoardContainer
   }
 })
