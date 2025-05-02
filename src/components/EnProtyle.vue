@@ -8,8 +8,8 @@
     ] : []"
   >
     <div
-      class="protyle_render_area"
       ref="protyleRenderAreaRef"
+      class="protyle_render_area"
       @keydown.capture.enter.exact="captureEnterKeyEvent"
     >
       <div></div>
@@ -41,7 +41,7 @@
       ref="protyleUtilAreaRef"
       class="EnProtyleInnerUtilArea"
       :class="{
-        hideGutters: hideGutters,
+        hideGutters,
       }"
     >
     </div>
@@ -49,7 +49,10 @@
 </template>
 
 <script setup lang="ts">
-import { flushTransactions, sql } from '@/api'
+import {
+  flushTransactions,
+  sql,
+} from '@/api'
 import { usePlugin } from '@/main'
 import { useEnProtyleUtilAreaRef } from '@/utils/DOM'
 import { useSiyuanEventTransactions } from '@/utils/EventBusHooks'
@@ -61,7 +64,7 @@ import {
   onBeforeMount,
   onMounted,
   ref,
-  watch
+  watch,
 } from 'vue'
 
 
@@ -134,10 +137,10 @@ const captureEnterKeyEvent = (event: KeyboardEvent) => {
 
 
 
-  const selection = window.getSelection();
-  if (!selection.rangeCount) return false;
+  const selection = window.getSelection()
+  if (!selection.rangeCount) return false
 
-  const range = selection.getRangeAt(0);
+  const range = selection.getRangeAt(0)
   const isCollapsed = range.collapsed
   const isAtStart = range.startOffset === 0
   let target = range.startContainer.parentElement as HTMLElement
@@ -259,6 +262,9 @@ const removeNodeCreatedByOther = (event) => {
   const currentProtyleId = protyleRef.value?.protyle?.id
 
   const wysiwygElement = protyleRef.value?.protyle?.wysiwyg.element
+  if (!wysiwygElement) {
+    return
+  }
   const children = Array.from(wysiwygElement?.children) as HTMLElement[]
   const isOtherProtyleEvent = sid !== currentProtyleId
   console.log('isOtherProtyleEvent is ', isOtherProtyleEvent)
@@ -324,8 +330,11 @@ const handleTransaction = async (event) => {
   // 如果被其他 protyle 新增了块，需要删除
   // 为了防止页面“闪烁”，只能在这里进行处理
   setTimeout(() => {
-    // removeNodeCreatedByOther(event)
+    removeNodeCreatedByOther(event)
   }, 0)
+  setTimeout(() => {
+    removeNodeCreatedByOther(event)
+  }, 10)
 
 }
 
