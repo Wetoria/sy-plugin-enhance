@@ -31,6 +31,8 @@
 
     <div class="EnWhiteBoardContentContainer">
       <!-- {{ data.whiteBoardId }} - {{ data.nodeId }} -->
+
+
       <div class="EnWhiteBoardControlArea EnWhiteBoardControlArea__Left">
         <EnWhiteBoardToolBar
           v-if="currentViewMode === 'whiteboard'"
@@ -46,6 +48,8 @@
           </template>
         </EnWhiteBoardToolBar>
       </div>
+
+
       <div class="EnWhiteBoardControlArea EnWhiteBoardControlArea__Bottom">
         <div>
 
@@ -57,8 +61,12 @@
 
         </div>
       </div>
+
+
       <div class="EnWhiteBoardControlArea EnWhiteBoardControlArea__Right">
       </div>
+
+
       <VueFlow
         v-if="embedWhiteBoardConfigData.loaded && currentViewMode === 'whiteboard'"
         v-model:nodes="nodes"
@@ -103,18 +111,21 @@
           <EnWhiteBoardNodeProtyle
             :whiteBoardId="props.data.whiteBoardId"
             :nodeId="node.id"
-            :enWhiteBoardProtyleUtilAreaRef="EnWhiteBoardProtyleUtilAreaRef"
             @open-in-sidebar="handleOpenInSidebar"
           />
         </template>
+
+
         <template #node-EnWhiteBoardNodeMindmap="node">
           <EnWhiteBoardNodeProtyle
             :whiteBoardId="props.data.whiteBoardId"
             :nodeId="node.id"
-            :enWhiteBoardProtyleUtilAreaRef="EnWhiteBoardProtyleUtilAreaRef"
             @open-in-sidebar="handleOpenInSidebar"
           />
         </template>
+
+
+
         <template #node-EnWhiteBoardNodeTreeCard="node">
           <EnWhiteBoardNodeTreeCard
             :nodeId="node.id"
@@ -129,17 +140,22 @@
             <EnWhiteBoardNodeProtyle
               :whiteBoardId="props.data.whiteBoardId"
               :nodeId="node.id"
-              :enWhiteBoardProtyleUtilAreaRef="EnWhiteBoardProtyleUtilAreaRef"
               @open-in-sidebar="handleOpenInSidebar"
             />
           </EnWhiteBoardNodeTreeCard>
         </template>
+
+
+
         <template #node-EnWhiteBoardNodeFrame="node">
           <EnWhiteBoardNodeFrame
             :whiteBoardId="props.data.whiteBoardId"
             :nodeId="node.id"
           />
         </template>
+
+
+
         <template #edge-EnWhiteBoardEdgeBase="edge">
           <EnWhiteBoardEdgeBase
             v-bind="edge"
@@ -147,11 +163,17 @@
             @remove-edge="handleRemoveEdge"
           />
         </template>
+
+
+
         <template #connection-line="connectionLineProps">
           <EnWhiteBoardEdgeBase
             v-bind="connectionLineProps"
           />
         </template>
+
+
+
         <template #panel>
           <div
             v-if="selectedNodes.length > 1"
@@ -311,6 +333,8 @@
             </marker>
           </defs>
         </svg>
+
+
         <template v-if="backgroundVariant !== 'none'">
           <!-- 网格背景 -->
           <Background
@@ -348,16 +372,7 @@
         :whiteBoardNodes="nodes"
         class="EnLineageContainer"
       />
-      <div
-        ref="EnWhiteBoardProtyleUtilAreaRef"
-        class="EnWhiteBoardProtyleUtilArea"
-        :class="{
-          dragging,
-        }"
-        style="height: 0px;"
-      >
 
-      </div>
     </div>
 
 
@@ -460,6 +475,7 @@ import { EN_CONSTANTS } from '@/utils/Constants'
 import {
   handleWith,
   onCountClick,
+  useEnProtyleUtilAreaRef,
 } from '@/utils/DOM'
 import {
   hideHelperByTarget,
@@ -556,8 +572,6 @@ const backgroundVariant = computed(() => {
 const nodes = computed(() => embedWhiteBoardConfigData.value?.boardOptions.nodes)
 const edges = computed(() => embedWhiteBoardConfigData.value?.boardOptions.edges)
 
-const EnWhiteBoardProtyleUtilAreaRef = ref<HTMLElement | null>(null)
-
 const EnWhiteBoardRenderContainerRef = ref<HTMLElement | null>(null)
 
 // 计算右侧按钮组的宽度
@@ -589,8 +603,9 @@ const needMiniMapOffset = computed(() => {
   return embedBlockOptions.value?.SiderRightWidth < rightButtonGroupWidth.value && props.needSider
 })
 
+const EnProtyleUtilAreaRef = useEnProtyleUtilAreaRef()
 const hideAllHelper = () => {
-  hideHelperByTarget(EnWhiteBoardProtyleUtilAreaRef.value)
+  hideHelperByTarget(EnProtyleUtilAreaRef.value)
 }
 
 const dragging = ref(false)

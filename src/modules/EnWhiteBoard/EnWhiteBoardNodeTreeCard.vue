@@ -38,11 +38,6 @@
       </div>
 
       <div class="operations">
-        <a-spin v-if="isMergingToSuperBlock">
-          <template #icon>
-            <icon-sync />
-          </template>
-        </a-spin>
         <a-button-group size="mini">
           <a-button
             class="active"
@@ -71,8 +66,7 @@ import {
 import { EN_CONSTANTS } from '@/utils/Constants'
 import {
   IconApps,
-  IconPlus,
-  IconSync,
+  IconPlus
 } from '@arco-design/web-vue/es/icon'
 import {
   useVueFlow,
@@ -80,11 +74,10 @@ import {
 import {
   computed,
   nextTick,
-  watch,
   onMounted,
   onUnmounted,
-  ref,
   toRefs,
+  watch
 } from 'vue'
 
 // 添加EnWhiteBoardNodeFit组件的导入
@@ -94,7 +87,6 @@ const props = defineProps<{
   nodeId: string
   isCollapsed: boolean
   displayText: string
-  isMergingToSuperBlock: boolean
   nodeData: { nodeType: string, parentId?: string, treecard?: boolean } // 更具体的类型
   whiteBoardConfigData?: any
 }>()
@@ -198,21 +190,21 @@ const layoutUtils = {
     if (childNodes.length === 0) return positions
 
     const nodeWidth = this.calculateNodeWidth(node, nodes)
-    
+
     // 固定列宽，每列的X坐标是固定的
     const columnWidth = 280 // 固定列宽
     const startX = parentX + columnWidth + horizontalSpacing
-    
+
     // 计算子节点的Y坐标，从上到下依次排列
     let startY = 0 // 起始Y坐标
-    
+
     // 计算子节点位置
     childNodes.forEach((child, index) => {
       const childHeight = this.calculateNodeHeight(child, nodes)
-      
+
       // 设置当前节点位置
       positions.set(child.id, { x: startX, y: startY + (childHeight / 2) })
-      
+
       // 递归计算子节点的子节点位置
       const childPositions = this.calculateTreeCardPositions(
         child,
@@ -221,7 +213,7 @@ const layoutUtils = {
         startY + (childHeight / 2)
       )
       childPositions.forEach((pos, id) => positions.set(id, pos))
-      
+
       // 更新下一个节点的Y坐标
       startY += childHeight + verticalSpacing
     })
@@ -283,12 +275,12 @@ const layoutUtils = {
     const columnWidth = 280 // 固定列宽
     const horizontalSpacing = 20 // 列之间的间距
     const verticalSpacing = 10 // 同列卡片之间的间距
-    
+
     const parentWidth = parentNode.dimensions?.width || this.getDefaultDimensions().width
-    
+
     // 计算X坐标 - 固定在父节点右侧的下一列
     const startX = parentNode.position.x + columnWidth + horizontalSpacing
-    
+
     // 如果没有兄弟节点，直接放在列的顶部
     if (siblings.length === 0) {
       return {
@@ -299,18 +291,18 @@ const layoutUtils = {
         siblingPositions: new Map()
       }
     }
-    
+
     // 找到最后一个兄弟节点的位置和高度
     const lastSibling = siblings[siblings.length - 1]
     const lastSiblingHeight = lastSibling.dimensions?.height || this.getDefaultDimensions().height
     const lastSiblingY = lastSibling.position.y
-    
+
     // 新节点放在最后一个兄弟节点的下方
     const newPosition = {
       x: startX,
       y: lastSiblingY + lastSiblingHeight/2 + verticalSpacing + this.getDefaultDimensions().height/2
     }
-    
+
     return {
       newPosition,
       siblingPositions: new Map() // 不需要更新兄弟节点位置
@@ -449,7 +441,7 @@ const calculateTreeCardPositionsOptimized = (node, nodes, parentX = 0, parentY =
 
   // 计算每个子节点的高度
   const childrenHeights = childNodes.map((child) => calculateNodeHeightOptimized(child, nodes))
-  
+
   // 计算总高度（包括间距）
   const totalHeight = childrenHeights.reduce((sum, height, index) => {
     return sum + height + (index < childrenHeights.length - 1 ? verticalSpacing : 0)
@@ -463,7 +455,7 @@ const calculateTreeCardPositionsOptimized = (node, nodes, parentX = 0, parentY =
   // 计算子节点位置
   childNodes.forEach((child, index) => {
     const childHeight = childrenHeights[index]
-    
+
     const childY = startY + (childHeight / 2)
     positions.set(child.id, { x: startX, y: childY })
 
@@ -586,7 +578,7 @@ const handleAddChildNode = async () => {
     // 6. 等待节点渲染完成后更新布局
     await waitForNodeDimensions([newNode])
     await updateTreeCardLayoutRecursively(props.nodeId)
-    
+
     // 7. 滚动到新节点
     setTimeout(() => {
       scrollToNode(newNode.id)
@@ -636,18 +628,18 @@ const nodeDepth = computed(() => {
   let depth = 0
   let currentNodeId = props.nodeId
   let parentId = props.nodeData?.parentId
-  
+
   const nodes = getNodes.value || []
-  
+
   // 向上遍历父节点计算深度
   while (parentId) {
     depth++
     const parentNode = nodes.find(node => node.id === parentId)
     if (!parentNode) break
-    
+
     parentId = parentNode.data?.parentId
   }
-  
+
   return depth
 })
 
@@ -712,36 +704,36 @@ const scrollToNode = (nodeId) => {
   const nodes = getNodes.value
   const targetNode = nodes.find(n => n.id === nodeId)
   if (!targetNode) return
-  
+
   // 找到所有相关节点（父节点链和子节点）
   const relatedNodes = {
     parents: [],
     current: targetNode,
     children: []
   }
-  
+
   // 向上查找所有父节点
   let currentId = targetNode.data?.parentId
   while (currentId) {
     const parent = nodes.find(n => n.id === currentId)
     if (!parent) break
-    
+
     relatedNodes.parents.unshift(parent) // 添加到父节点链的开头
     currentId = parent.data?.parentId
   }
-  
+
   // 向下查找直接子节点
   const findDirectChildren = (parentId) => {
     return nodes.filter(n => n.data?.parentId === parentId)
   }
   relatedNodes.children = findDirectChildren(nodeId)
-  
+
   // 触发自定义滚动事件
-  const event = new CustomEvent('scroll-to-treecard-node', { 
-    detail: { 
+  const event = new CustomEvent('scroll-to-treecard-node', {
+    detail: {
       nodeId,
       relatedNodes
-    } 
+    }
   })
   document.dispatchEvent(event)
 }
@@ -754,22 +746,22 @@ onMounted(() => {
       updateTreeCardLayoutRecursively(nodeId)
     }
   }
-  
+
   const handleScrollToNode = (event: any) => {
     const { nodeId, relatedNodes } = event.detail
-    
+
     // 如果当前节点是目标节点，或者是目标节点的父节点或子节点，需要滚动到可见区域
-    if (nodeId === props.nodeId || 
+    if (nodeId === props.nodeId ||
         relatedNodes.parents.some((p: any) => p.id === props.nodeId) ||
         relatedNodes.children.some((c: any) => c.id === props.nodeId)) {
-      
+
       // 获取节点DOM元素
       const nodeElement = document.querySelector(`[data-en-flow-node-id='${props.nodeId}']`) as HTMLElement
       if (!nodeElement) return
-      
+
       // 计算滚动位置
       let scrollTop = 0
-      
+
       if (nodeId === props.nodeId) {
         // 当前节点是目标节点，居中显示
         scrollTop = nodeElement.offsetTop - (window.innerHeight / 2) + (nodeElement.offsetHeight / 2)
@@ -787,7 +779,7 @@ onMounted(() => {
           scrollTop = nodeElement.offsetTop - targetElement.offsetTop
         }
       }
-      
+
       // 执行滚动
       const container = nodeElement.closest('.vue-flow__transformationpane') as HTMLElement
       if (container) {
@@ -795,10 +787,10 @@ onMounted(() => {
       }
     }
   }
-  
+
   document.addEventListener('update-treecard-layout', handleUpdateLayout)
   document.addEventListener('scroll-to-treecard-node', handleScrollToNode)
-  
+
   // 组件卸载时移除事件监听器
   onUnmounted(() => {
     document.removeEventListener('update-treecard-layout', handleUpdateLayout)
@@ -818,10 +810,10 @@ const { isCollapsed } = toRefs(props)
 const onHeightChanged = (height: number) => {
   // 树形卡片节点高度变化时，需要重新计算布局
   console.log('树形卡片节点高度已更新:', height)
-  
+
   // 清除布局缓存，确保下次使用新的高度计算
   layoutUtils.clearCache()
-  
+
   // 如果有更新布局的事件或方法，可以在这里调用
   // ...
 }
@@ -891,34 +883,34 @@ const onHeightChanged = (height: number) => {
       display: none;
     }
   }
-  
+
   &.is-gingko {
     border-left: 3px solid var(--b3-theme-primary);
-    
+
     .ProtyleToolbarArea {
       background-color: var(--b3-theme-surface-lighter);
     }
-    
+
     &[data-depth="0"] {
       border-left-color: var(--b3-font-background1);
     }
-    
+
     &[data-depth="1"] {
       border-left-color: var(--b3-font-background2);
     }
-    
+
     &[data-depth="2"] {
       border-left-color: var(--b3-font-background3);
     }
-    
+
     &[data-depth="3"] {
       border-left-color: var(--b3-font-background4);
     }
-    
+
     &[data-depth="4"] {
       border-left-color: var(--b3-font-background5);
     }
-    
+
     &[data-depth="5"] {
       border-left-color: var(--b3-font-background6);
     }
@@ -928,4 +920,4 @@ const onHeightChanged = (height: number) => {
 :deep(.treecard-node-transition) {
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
-</style> 
+</style>
