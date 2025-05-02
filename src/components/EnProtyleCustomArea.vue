@@ -13,7 +13,7 @@
     </div>
   </Teleport>
 
-  <template v-if="enProtyleActualAreaRef">
+  <template v-if="enProtyleActualAreaRef && enProtyleCustomAreaRef">
     <!-- 实际显示白板的区域 -->
     <Teleport :to="fullScreen === 'siyuan' ? 'body' : enProtyleActualAreaRef">
       <div
