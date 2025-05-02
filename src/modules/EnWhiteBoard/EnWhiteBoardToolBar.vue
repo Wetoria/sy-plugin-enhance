@@ -58,6 +58,7 @@
     <template v-if="isNodeToolbar">
       <div class="ToolbarContent">
         <a-button-group>
+          <slot name="before" />
           <a-tooltip :content="nodeData?.isCollapsed ? '展开节点' : '折叠节点'">
             <a-button @click="onCollapse">
               <template #icon>
@@ -228,6 +229,7 @@
               </template>
             </a-button>
           </a-tooltip>
+          <slot />
           <slot name="nodeToolbarExtra" />
           <a-tooltip content="在侧边栏中打开">
             <a-button @click="onOpenInSidebar">
@@ -1488,7 +1490,7 @@ const onToggleLock = () => {
       padding: 4px;
       box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
 
-      .arco-btn {
+      :deep(.arco-btn) {
         color: var(--b3-theme-on-surface);
         border: none;
         background: transparent;
