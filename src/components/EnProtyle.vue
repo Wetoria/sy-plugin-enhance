@@ -2,6 +2,10 @@
   <div
     ref="protyleContainerRef"
     class="EnProtyleContainer"
+    :class="[
+      blockIdValid ? 'valid' : 'invalid',
+      blockId ? '' : 'no_block_id',
+    ]"
   >
     <div></div>
   </div>
@@ -18,6 +22,7 @@
 </template>
 
 <script setup lang="ts">
+import { sql } from '@/api'
 import { usePlugin } from '@/main'
 import { useEnProtyleUtilAreaRef } from '@/utils/DOM'
 import {
@@ -39,7 +44,7 @@ const props = defineProps<{
   // 防止在 transform 内部使用 protyle 时，这些元素不能正确定位的问题
   changeHelperPosition?: boolean
 
-  options?: IProtyleOptions
+  options?: Omit<IProtyleOptions, 'blockId'>
 }>()
 const emits = defineEmits<{
   after: [protyle: Protyle]
@@ -48,10 +53,21 @@ const emits = defineEmits<{
 const protyleContainerRef = ref<HTMLDivElement>()
 const protyleRef = ref<Protyle>()
 
+const destroyProtyle = () => {
+  if (protyleRef.value) {
+    protyleRef.value?.destroy()
+    protyleRef.value = null
+    if (protyleContainerRef.value) {
+      protyleContainerRef.value.innerHTML = `<div></div>`
+    }
+  }
+}
+
 const plugin = usePlugin()
 
 const EnProtyleUtilAreaRef = useEnProtyleUtilAreaRef()
 const protyleUtilAreaRef = ref<HTMLDivElement | null>(null)
+const blockIdValid = ref(false)
 
 // 目前只移动下面四个元素
 // 未来如果有观察到需要移动的元素，再继续添加
@@ -62,13 +78,9 @@ const targetProtyleUtilClassList = [
   'protyle-hint',
 ]
 
-const renderProtyle = () => {
+const renderProtyle = async () => {
   if (!props.blockId) {
-    protyleRef.value?.destroy()
-    protyleRef.value = null
-    if (protyleContainerRef.value) {
-      protyleContainerRef.value.innerHTML = `<div></div>`
-    }
+    destroyProtyle()
     return
   }
   const {
@@ -76,17 +88,28 @@ const renderProtyle = () => {
   } = props
 
   const {
-    blockId,
     action,
     render,
     ...rest
   } = options
 
+  const blockId = props.blockId
+
+  const blockInfoRes = await sql(`select * from blocks where id = '${blockId}'`)
+
+  if (!blockInfoRes || !blockInfoRes.length) {
+    blockIdValid.value = false
+    destroyProtyle()
+    return
+  }
+
+  blockIdValid.value = true
+  protyleRef.value?.destroy()
   protyleRef.value = new Protyle(
     plugin.app,
     protyleContainerRef.value?.firstElementChild as HTMLDivElement,
     {
-      blockId: blockId || props.blockId,
+      blockId,
       action: action || ['cb-get-focus'],
       render: {
         breadcrumb: false,
@@ -144,6 +167,26 @@ defineExpose({
       box-sizing: border-box;
       padding: 16px 16px !important;
       padding-bottom: 64px !important;
+    }
+  }
+
+  &.invalid,
+  &.no_block_id {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &.invalid {
+      &::before {
+        content: '块 ID 无效';
+      }
+    }
+
+    &.no_block_id {
+      &::before {
+        content: '未绑定块 ID';
+      }
     }
   }
 }
