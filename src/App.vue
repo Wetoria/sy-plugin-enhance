@@ -119,6 +119,10 @@ registerGlobalObserver()
     position: relative;
     padding: 24px;
     box-sizing: border-box;
+
+    .EnProtyleUtilArea {
+      pointer-events: auto;
+    }
   }
 
   .hidderArea {
