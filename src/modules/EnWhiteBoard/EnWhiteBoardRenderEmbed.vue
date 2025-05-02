@@ -11,6 +11,8 @@
         FullScreen: fullScreen,
         ClickedInside: clickedInside,
       }"
+      @mouseleave="handleMouseLeave"
+      @mouseenter="handleMouseEnter"
     >
       <template v-if="!embedWhiteBoardConfigData || !embedBlockOptions">
         <div>白板数据获取失败</div>
@@ -130,6 +132,23 @@ onBeforeUnmount(() => {
   document.removeEventListener('click', recordClickedInsider)
 })
 
+
+const handleMouseLeave = () => {
+  const closetProtyle = embedRenderRef.value?.closest('.protyle')
+  if (!closetProtyle) {
+    return
+  }
+  closetProtyle.classList.remove('EnMouseInWhiteBoard')
+}
+
+const handleMouseEnter = () => {
+  const closetProtyle = embedRenderRef.value?.closest('.protyle')
+  if (!closetProtyle) {
+    return
+  }
+  closetProtyle.classList.add('EnMouseInWhiteBoard')
+}
+
 </script>
 
 <style lang="scss" scoped>
@@ -156,6 +175,13 @@ onBeforeUnmount(() => {
 
   &:not(.FullScreen).ClickedInside {
     border-color: var(--b3-theme-primary);
+  }
+}
+</style>
+<style lang="scss">
+.EnMouseInWhiteBoard {
+  .protyle-gutters {
+    display: none !important;
   }
 }
 </style>
