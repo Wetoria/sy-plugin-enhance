@@ -397,7 +397,11 @@
             </div>
             <!-- 钉固按钮 -->
             <a-tooltip :content="isSidebarPinned ? '取消钉固' : '钉固内容'">
-              <a-button class="sidebar-pin-button" :class="{ 'active': isSidebarPinned }" @click="toggleSidebarPin">
+              <a-button
+                class="sidebar-pin-button"
+                :class="{ active: isSidebarPinned }"
+                @click="toggleSidebarPin"
+              >
                 <template #icon>
                   <icon-pushpin />
                 </template>
@@ -458,6 +462,7 @@
 import { request } from '@/api'
 import EnProtyle from '@/components/EnProtyle.vue'
 import { getNewDailyNoteBlockId } from '@/modules/DailyNote/DailyNote'
+import EnWhiteBoardViewModeSwitcher from '@/modules/EnWhiteBoard/components/EnWhiteBoardViewModeSwitcher.vue'
 import {
   EnWhiteBoardBlockDomTarget,
   generateWhiteBoardEdgeId,
@@ -466,11 +471,11 @@ import {
   getWhiteBoardConfigRefById,
   useWhiteBoardModule,
 } from '@/modules/EnWhiteBoard/EnWhiteBoard'
-import EnWhiteBoardViewModeSwitcher from '@/modules/EnWhiteBoard/components/EnWhiteBoardViewModeSwitcher.vue'
 
 import EnWhiteBoardEdgeBase from '@/modules/EnWhiteBoard/EnWhiteBoardEdgeBase.vue'
 import EnWhiteBoardNodeFrame from '@/modules/EnWhiteBoard/EnWhiteBoardNodeFrame.vue'
 import EnWhiteBoardSider from '@/modules/EnWhiteBoard/EnWhiteBoardSider.vue'
+import { appendBlockInto } from '@/utils/Block'
 import { EN_CONSTANTS } from '@/utils/Constants'
 import {
   handleWith,
@@ -491,14 +496,12 @@ import {
   NodeMouseEvent,
   pointToRendererPoint,
   useVueFlow,
-  VueFlow
+  VueFlow,
 } from '@vue-flow/core'
 import { MiniMap } from '@vue-flow/minimap'
-
-import { appendBlockInto } from '@/utils/Block'
-import '@vue-flow/controls/dist/style.css'
-import '@vue-flow/minimap/dist/style.css'
 import { cloneDeep } from 'lodash-es'
+
+
 import { Protyle } from 'siyuan'
 import {
   computed,
@@ -716,7 +719,10 @@ const handleNodeSelection = (nodeId: string) => {
 }
 
 // 修改onNodeClick函数
-const onNodeClick = ({ node, event }) => {
+const onNodeClick = ({
+  node,
+  event,
+}) => {
   console.log('onNodeClick', event)
   const mainElement = event.target.closest('.EnWhiteBoardNodeProtyleMain')
   if (!mainElement) {
@@ -767,7 +773,10 @@ const createNewNode = (x: number, y: number) => {
 
   // 获取模块配置
   const { moduleOptions: moduleWhiteBoardOptions } = useWhiteBoardModule()
-  const { notebookId, targetId } = moduleWhiteBoardOptions.value
+  const {
+    notebookId,
+    targetId,
+  } = moduleWhiteBoardOptions.value
 
   // 异步创建节点
   const createNodeAsync = async () => {
@@ -853,8 +862,14 @@ const onTouchStart = (event: TouchEvent) => {
 
 // 添加上下文菜单相关状态
 const contextMenuVisible = ref(false)
-const contextMenuPosition = ref({ x: 0, y: 0 })
-const initialClickPosition = ref({ x: 0, y: 0 })
+const contextMenuPosition = ref({
+  x: 0,
+  y: 0,
+})
+const initialClickPosition = ref({
+  x: 0,
+  y: 0,
+})
 const contextMenuNodeId = ref('')
 
 // 处理画布右键点击
@@ -906,14 +921,14 @@ onNodesChange((changes) => {
     if (change.type === 'add') {
       // 检查节点是否为Frame且是初始创建
       const isFrameInitialCreation =
-        change.item.type === EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME &&
-        change.item.data?.isInitialCreation === true;
+        change.item.type === EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME
+        && change.item.data?.isInitialCreation === true
 
       // 如果是初始创建的Frame，移除isInitialCreation标记
       if (isFrameInitialCreation) {
         // 移除标记，防止后续处理重复
         if (change.item.data) {
-          delete change.item.data.isInitialCreation;
+          delete change.item.data.isInitialCreation
         }
 
         // 确保节点数组已初始化
@@ -923,12 +938,12 @@ onNodesChange((changes) => {
 
         // 检查是否已存在相同ID的节点，防止重复添加
         const existingNodeIndex = embedWhiteBoardConfigData.value.boardOptions.nodes.findIndex(
-          node => node.id === change.item.id
-        );
+          (node) => node.id === change.item.id,
+        )
 
         if (existingNodeIndex === -1) {
           // 如果不存在才添加
-          embedWhiteBoardConfigData.value.boardOptions.nodes.push(change.item);
+          embedWhiteBoardConfigData.value.boardOptions.nodes.push(change.item)
         }
       } else {
         // 对于非Frame节点或非初始创建的Frame节点，正常处理
@@ -1467,11 +1482,11 @@ const getNodeDisplayText = (node) => {
   // 如果没有显示文本，尝试获取节点ID的简短版本
   const blockId = node.data?.blockId
   if (blockId) {
-    return blockId.substring(0, 8) + '...'
+    return `${blockId.substring(0, 8)}...`
   }
 
   // 默认返回节点ID的简短版本
-  return node.id.substring(0, 8) + '...'
+  return `${node.id.substring(0, 8)}...`
 }
 
 // 添加处理树形卡片切换的函数
@@ -1511,12 +1526,12 @@ const handleRemoveEdge = (edgeId) => {
   if (!edgeId) return
 
   // 使用Vue Flow提供的removeEdges函数删除边
-  const edgeToRemove = edges.value.find(edge => edge.id === edgeId)
+  const edgeToRemove = edges.value.find((edge) => edge.id === edgeId)
   if (edgeToRemove) {
     removeEdges([edgeToRemove])
 
     // 确保数据层面也删除了边
-    embedWhiteBoardConfigData.value.boardOptions.edges = edges.value.filter(edge => edge.id !== edgeId)
+    embedWhiteBoardConfigData.value.boardOptions.edges = edges.value.filter((edge) => edge.id !== edgeId)
   }
 }
 
@@ -1899,5 +1914,25 @@ const defaultConnectionLineStyle = computed(() => {
   :deep(*) {
     pointer-events: auto;
   }
+}
+</style>
+
+<style lang="scss">
+/* import the necessary styles for Vue Flow to work */
+@import '@vue-flow/core/dist/style.css';
+
+/* import the default theme, this is optional but generally recommended */
+@import '@vue-flow/core/dist/theme-default.css';
+
+@import '@vue-flow/node-resizer/dist/style.css';
+
+@import '@vue-flow/controls/dist/style.css';
+@import '@vue-flow/minimap/dist/style.css';
+
+body {
+  --en-whiteboard-card-radius: 4px;
+
+  --en-whiteboard-resizer-color: rgb(var(--primary-6));
+  --en-whiteboard-resizer-width: 5px;
 }
 </style>

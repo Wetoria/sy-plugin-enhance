@@ -4,7 +4,10 @@
     :getTargetBlockDom="data.getDom"
     :fullScreen="fullScreen"
   >
-    <template #customArea v-if="embedInWhiteBoard">
+    <template
+      v-if="embedInWhiteBoard"
+      #customArea
+    >
       <div
         class="flexAlignCenter"
         style="
@@ -224,6 +227,7 @@ watchEffect(() => {
   }
 }
 </style>
+
 <style lang="scss">
 .EnMouseInWhiteBoard {
   .protyle-gutters {

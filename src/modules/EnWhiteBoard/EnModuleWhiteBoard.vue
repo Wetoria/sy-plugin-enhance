@@ -360,6 +360,7 @@
 </template>
 
 <script setup lang="ts">
+import EnBlockAppendModeSelector from '@/components/EnBlockAppendModeSelector.vue'
 import { usePlugin } from '@/main'
 import {
   injectAuthStatus,
@@ -372,7 +373,6 @@ import {
   loadWhiteBoard,
   loadWhiteBoardConfigById,
   unloadWhiteBoard,
-  whiteBoardConfigList,
 } from '@/modules/EnWhiteBoard/EnWhiteBoard'
 import EnWhiteBoardRenderEmbed from '@/modules/EnWhiteBoard/EnWhiteBoardRenderEmbed.vue'
 import {
@@ -396,7 +396,6 @@ import {
 import EnSettingsItem from '../../modules/Settings/EnSettingsItem.vue'
 import EnSettingsTeleportModule from '../../modules/Settings/EnSettingsTeleportModule.vue'
 import EnWhiteBoardEntrySlash from './EnWhiteBoardEntrySlash.vue'
-import EnBlockAppendModeSelector from '@/components/EnBlockAppendModeSelector.vue'
 
 const plugin = usePlugin()
 
@@ -433,7 +432,7 @@ const {
     cardHeightDefault: 185,
 
     backgroundVariant: 'dots',
-    
+
     // 节点块创建模式相关配置
     notebookId: '',
     targetId: '',
@@ -531,8 +530,8 @@ watch(() => moduleOptions.value.enabled, () => {
 // 获取已打开的笔记本列表
 const globalData = injectGlobalData()
 const openedNotebookList = computed(() => globalData.value.openedNotebookList || [])
-const whiteBoardMode = computed<EnBlockAppendMode[]>(() => 
-  globalData.value.whiteBoardMode || (['All', 'targetBlock', 'targetDoc'] as EnBlockAppendMode[])
+const whiteBoardMode = computed<EnBlockAppendMode[]>(() =>
+  globalData.value.whiteBoardMode || (['All', 'targetBlock', 'targetDoc'] as EnBlockAppendMode[]),
 )
 
 // 跳转到目标文档
@@ -552,18 +551,4 @@ const openTargetDoc = () => {
 </script>
 
 <style lang="scss">
-/* import the necessary styles for Vue Flow to work */
-@import '@vue-flow/core/dist/style.css';
-
-/* import the default theme, this is optional but generally recommended */
-@import '@vue-flow/core/dist/theme-default.css';
-
-@import '@vue-flow/node-resizer/dist/style.css';
-
-body {
-  --en-whiteboard-card-radius: 4px;
-
-  --en-whiteboard-resizer-color: rgb(var(--primary-6));
-  --en-whiteboard-resizer-width: 5px;
-}
 </style>
