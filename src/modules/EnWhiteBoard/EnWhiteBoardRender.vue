@@ -93,8 +93,8 @@
         @selectionDragStop="onSelectionDragStop"
         @selectionStart="onSelectionStart"
         @selectionEnd="onSelectionEnd"
-        @drop="onDrop"
-        @dragover="onDragover"
+        @drop.capture="onDrop"
+        @dragover.capture="onDragover"
         @touchstart="onTouchStart"
       >
         <template #node-EnWhiteBoardNodeProtyle="node">
@@ -338,7 +338,7 @@
           @nodeClick="onNodeMinimapClick"
         />
       </VueFlow>
-      
+
       <LineageView
         v-if="currentViewMode === 'lineage'"
         :nodeId="props.data.nodeId"
@@ -464,7 +464,7 @@ import {
 } from '@/utils/Siyuan'
 import { Background } from '@vue-flow/background'
 import {
-  Edge,
+  ConnectionLineType,
   EdgeAddChange,
   EdgeChange,
   NodeAddChange,
@@ -472,11 +472,13 @@ import {
   NodeMouseEvent,
   pointToRendererPoint,
   useVueFlow,
-  VueFlow,
-  ConnectionLineType,
+  VueFlow
 } from '@vue-flow/core'
 import { MiniMap } from '@vue-flow/minimap'
 
+import { appendBlockInto } from '@/utils/Block'
+import '@vue-flow/controls/dist/style.css'
+import '@vue-flow/minimap/dist/style.css'
 import { cloneDeep } from 'lodash-es'
 import { Protyle } from 'siyuan'
 import {
@@ -487,18 +489,12 @@ import {
   watch,
   watchEffect,
 } from 'vue'
+import LineageView from '../Lineage/LineageView.vue'
 import EnWhiteBoardContextMenu from './EnWhiteBoardContextMenu.vue'
 import EnWhiteBoardNodeProtyle from './EnWhiteBoardNodeProtyle.vue'
+import EnWhiteBoardNodeTreeCard from './EnWhiteBoardNodeTreeCard.vue'
 import EnWhiteBoardSettings from './EnWhiteBoardSettings.vue'
 import EnWhiteBoardToolBar from './EnWhiteBoardToolBar.vue'
-import EnWhiteBoardNodeTreeCard from './EnWhiteBoardNodeTreeCard.vue'
-import '@vue-flow/minimap/dist/style.css'
-import '@vue-flow/controls/dist/style.css'
-import LineageView from '../Lineage/LineageView.vue'
-import { appendBlockInto } from '@/utils/Block'
-import {
-  ConnectionMode,
-} from '@vue-flow/core'
 
 const props = defineProps<{
   data: EnWhiteBoardBlockDomTarget
@@ -688,7 +684,7 @@ const toggleSidebarPin = () => {
 // 处理节点选择的通用方法
 const handleNodeSelection = (nodeId: string) => {
   if (!nodeId) return
-  
+
   // 如果侧边栏已打开且未钉固，自动在侧边栏显示该节点
   if (embedBlockOptions.value.SiderRightShow && !isSidebarPinned.value) {
     const targetNode = findNode(nodeId)
@@ -713,7 +709,7 @@ const onNodeClick = ({ node, event }) => {
   }
 
   editNewProtyleCard(mainElement)
-  
+
   // 使用通用方法处理节点选择
   if (node?.id) {
     handleNodeSelection(node.id)
@@ -750,16 +746,16 @@ const createNewNode = (x: number, y: number) => {
     x,
     y,
   }, viewport.value)
-  
+
   // 获取模块配置
   const { moduleOptions: moduleWhiteBoardOptions } = useWhiteBoardModule()
   const { notebookId, targetId } = moduleWhiteBoardOptions.value
-  
+
   // 异步创建节点
   const createNodeAsync = async () => {
     // 根据配置决定创建位置
     let blockId = ''
-    
+
     if (notebookId && targetId) {
       // 使用目标块模式
       blockId = await appendBlockInto(notebookId, targetId, '')
@@ -767,12 +763,12 @@ const createNewNode = (x: number, y: number) => {
       // 使用日记模式
       blockId = await getNewDailyNoteBlockId()
     }
-    
+
     if (!blockId) {
       console.error('创建节点失败')
       return
     }
-    
+
     const newEnFlowNodeId = generateWhiteBoardNodeId()
     const newNode = {
       id: newEnFlowNodeId,
@@ -811,7 +807,7 @@ const createNewNode = (x: number, y: number) => {
       },
     )
   }
-  
+
   // 执行创建
   createNodeAsync()
 }
@@ -891,27 +887,27 @@ onNodesChange((changes) => {
   changes.forEach((change) => {
     if (change.type === 'add') {
       // 检查节点是否为Frame且是初始创建
-      const isFrameInitialCreation = 
-        change.item.type === EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME && 
+      const isFrameInitialCreation =
+        change.item.type === EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME &&
         change.item.data?.isInitialCreation === true;
-      
+
       // 如果是初始创建的Frame，移除isInitialCreation标记
       if (isFrameInitialCreation) {
         // 移除标记，防止后续处理重复
         if (change.item.data) {
           delete change.item.data.isInitialCreation;
         }
-        
+
         // 确保节点数组已初始化
         if (!embedWhiteBoardConfigData.value.boardOptions.nodes) {
           embedWhiteBoardConfigData.value.boardOptions.nodes = []
         }
-        
+
         // 检查是否已存在相同ID的节点，防止重复添加
         const existingNodeIndex = embedWhiteBoardConfigData.value.boardOptions.nodes.findIndex(
           node => node.id === change.item.id
         );
-        
+
         if (existingNodeIndex === -1) {
           // 如果不存在才添加
           embedWhiteBoardConfigData.value.boardOptions.nodes.push(change.item);
@@ -1004,11 +1000,11 @@ const onConnect = (event) => {
       whiteBoardConfigData: embedWhiteBoardConfigData.value,
     },
   }
-  
+
   // 使用 setEdges 更新边的状态
   const newEdges = [...edges.value, newEdge]
   setEdges(newEdges)
-  
+
   // 更新配置
   if (embedWhiteBoardConfigData.value) {
     embedWhiteBoardConfigData.value.boardOptions.edges = newEdges
@@ -1050,7 +1046,7 @@ const onNodeMinimapClick = (event: NodeMouseEvent) => {
   const y = Number(targetNode.position.y) + (Number(targetNode.height) || 0) / 2
 
   setCenter(x, y, { duration: 800 })
-  
+
   // 使用通用方法处理节点选择
   handleNodeSelection(targetNode.id)
 }
@@ -1210,10 +1206,34 @@ const handleMultipleNodesAlignBottom = () => {
 
 // 添加拖拽事件处理
 const onDragover = (event: DragEvent) => {
+
+  const target = event.target as HTMLElement
+  const isInProtyleCard = target.closest('.EnWhiteBoardNodeProtyleMain')
+
+  // 在白板卡片中放置时，不进行处理
+  if (isInProtyleCard) {
+    event.preventDefault()
+    event.stopPropagation()
+    event.stopImmediatePropagation()
+    return
+  }
+
   event.preventDefault()
 }
 
 const onDrop = async (event: DragEvent) => {
+
+  const target = event.target as HTMLElement
+  const isInProtyleCard = target.closest('.EnWhiteBoardNodeProtyleMain')
+
+  // 在白板卡片中放置时，不进行处理
+  if (isInProtyleCard) {
+    event.preventDefault()
+    event.stopPropagation()
+    event.stopImmediatePropagation()
+    return
+  }
+
   event.preventDefault()
 
   // 获取拖拽的位置并考虑视口变换
@@ -1425,13 +1445,13 @@ const getNodeDisplayText = (node) => {
   if (node.data?.displayText) {
     return node.data.displayText
   }
-  
+
   // 如果没有显示文本，尝试获取节点ID的简短版本
   const blockId = node.data?.blockId
   if (blockId) {
     return blockId.substring(0, 8) + '...'
   }
-  
+
   // 默认返回节点ID的简短版本
   return node.id.substring(0, 8) + '...'
 }
@@ -1452,10 +1472,10 @@ const handleToggleTreeCard = (node) => {
     }
     return n
   })
-  
+
   // 使用Vue Flow的setNodes函数更新节点
   setNodes(updatedNodes)
-  
+
   // 更新配置数据
   if (embedWhiteBoardConfigData.value) {
     embedWhiteBoardConfigData.value.boardOptions.nodes = updatedNodes
@@ -1471,12 +1491,12 @@ const showError = (message) => {
 // 添加处理removeEdge事件的函数
 const handleRemoveEdge = (edgeId) => {
   if (!edgeId) return
-  
+
   // 使用Vue Flow提供的removeEdges函数删除边
   const edgeToRemove = edges.value.find(edge => edge.id === edgeId)
   if (edgeToRemove) {
     removeEdges([edgeToRemove])
-    
+
     // 确保数据层面也删除了边
     embedWhiteBoardConfigData.value.boardOptions.edges = edges.value.filter(edge => edge.id !== edgeId)
   }
@@ -1500,7 +1520,7 @@ const defaultConnectionLineStyle = computed(() => {
   // 基于全局设置创建样式对象
   const previewWidth = moduleWhiteBoardOptions.value.edgeWidthDefault || '2'
   const previewStyle = moduleWhiteBoardOptions.value.edgeStyleDefault || 'solid'
-  
+
   // 计算预览连线的虚线/点线间距
   let dashArray
   if (previewStyle === 'dashed') {
@@ -1508,7 +1528,7 @@ const defaultConnectionLineStyle = computed(() => {
   } else if (previewStyle === 'dotted') {
     dashArray = `${Number(previewWidth)},${Number(previewWidth) * 2}`
   }
-  
+
   return {
     strokeWidth: Number(previewWidth),
     stroke: 'var(--b3-theme-on-surface)',
@@ -1585,13 +1605,13 @@ const defaultConnectionLineStyle = computed(() => {
     position: relative;
     flex: 1;
     overflow: hidden;
-    
+
     .EnLineageContainer {
       height: 100%;
       width: 100%;
       position: absolute;
       z-index: 1;
-      
+
       &::before {
         content: '';
         position: absolute;
@@ -1664,12 +1684,12 @@ const defaultConnectionLineStyle = computed(() => {
     &:hover {
       background-color: var(--b3-theme-surface);
     }
-    
+
     // 添加钉固按钮激活样式
     &.active {
       background-color: var(--b3-theme-primary);
       color: var(--b3-theme-on-primary);
-      
+
       &:hover {
         background-color: var(--b3-theme-primary-light);
       }
