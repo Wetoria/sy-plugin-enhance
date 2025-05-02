@@ -203,7 +203,6 @@ const initProtyle = async () => {
     targetId.value,
   )
 }
-
 const onAfterRender = (protyle) => {
   protyle.protyle.element.classList.toggle('EnQuickNoteProtyle', true)
   protyle.protyle.element.classList.toggle('EnDisableProtyleEnhance', true)
@@ -220,8 +219,13 @@ const destoryProtyle = async () => {
   // 如果没有编辑过，则删除一键记事中的块
   // IMP 看后续有没有需求，比如输入过再清空的情况下，这种时候会保留下来。
   if (!protyle.updated && currentBlockId.value) {
-    await deleteBlock(currentBlockId.value)
+
+    // 删除块前，先销毁 protyle
+    // 防止触发思源自动插入新块的逻辑
     protyleRef.value?.destroy()
+
+
+    await deleteBlock(currentBlockId.value)
     currentBlockId.value = ''
   }
 }
