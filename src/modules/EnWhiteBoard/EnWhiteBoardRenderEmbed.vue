@@ -31,6 +31,7 @@
             :data="data"
             :needSider="!!fullScreen"
           >
+
             <template #SiderLeftTopButtonGroupAfter>
               <a-tooltip content="思源内铺满">
                 <a-button @click="changeFullScreen('siyuan')">
@@ -51,8 +52,7 @@
                 </a-button>
               </a-tooltip>
             </template>
-            <template #SiderRightTopButtonGroupAfter>
-            </template>
+
           </EnWhiteBoardRender>
         </a-resize-box>
       </template>
@@ -79,7 +79,11 @@ const props = defineProps<{
   data: EnWhiteBoardBlockDomTarget
 }>()
 
+// Custom 组件的 ref
 const customRef = ref(null)
+
+// 实际显示白板的容器的 ref
+const embedRenderRef = ref(null)
 
 const {
   moduleOptions,
@@ -94,6 +98,10 @@ const fullScreen = ref<'doc' | 'siyuan' | undefined>(undefined)
 const changeFullScreen = (value?: 'doc' | 'siyuan') => {
   fullScreen.value = value
 }
+
+
+
+// #region 👇 拦截白板上的滚轮事件，触发嵌入文档的滚动
 
 const handleWheel = (e: WheelEvent) => {
   if (fullScreen.value) {
@@ -112,8 +120,12 @@ const handleWheel = (e: WheelEvent) => {
   targetElement.scrollTop += delta
 }
 
+// #endregion 👆 拦截白板上的滚轮事件，触发嵌入文档的滚动
 
-const embedRenderRef = ref(null)
+
+
+// #region 👇 标记是否为点击白板内部，用于在非铺满的情况下，点击白板内部，显示高亮的边框
+
 const clickedInside = ref(false)
 const recordClickedInsider = (event) => {
   const target = event.target as HTMLElement
@@ -132,6 +144,11 @@ onBeforeUnmount(() => {
   document.removeEventListener('click', recordClickedInsider)
 })
 
+// #endregion 👆 标记是否为点击白板内部，用于在非铺满的情况下，点击白板内部，显示高亮的边框
+
+
+
+// #region 👇 鼠标进入白板时，隐藏外部文档的 gutters
 
 const handleMouseLeave = () => {
   const closetProtyle = embedRenderRef.value?.closest('.protyle')
@@ -148,6 +165,8 @@ const handleMouseEnter = () => {
   }
   closetProtyle.classList.add('EnMouseInWhiteBoard')
 }
+
+// #endregion 👆 鼠标进入白板时，隐藏外部文档的 gutters
 
 </script>
 
@@ -168,11 +187,13 @@ const handleMouseEnter = () => {
     box-sizing: border-box;
   }
 
+  // 铺满的情况下，强制容器区域的高度为 100%
   &.FullScreen .arco-resizebox {
     height: 100% !important;
     padding-bottom: unset !important;
   }
 
+  // 嵌入文档的情况下，点击内部，显示高亮的边框
   &:not(.FullScreen).ClickedInside {
     border-color: var(--b3-theme-primary);
   }
