@@ -31,7 +31,7 @@
       <EnWhiteBoardToolBar
         :is-edge-toolbar="true"
         :edge-id="edgeId"
-        :whiteBoardConfigData="props.whiteBoardConfigData"
+        :whiteBoardConfigData="whiteBoardConfigData"
         @remove-edge="onRemoveEdge"
       />
     </div>
@@ -89,8 +89,8 @@ import {
   ref,
   watch,
 } from 'vue'
-import EnWhiteBoardToolBar from './EnWhiteBoardToolBar.vue'
 import { useWhiteBoardModule } from './EnWhiteBoard'
+import EnWhiteBoardToolBar from './EnWhiteBoardToolBar.vue'
 
 interface EdgeData {
   label?: string
@@ -355,7 +355,7 @@ const edgeStyle = computed(() => {
     const previewMarkerEnd = moduleOptions.value.edgeMarkerEndDefault || 'arrow'
     // 获取预览连线的起点箭头
     const previewMarkerStart = moduleOptions.value.edgeMarkerStartDefault || ''
-    
+
     // 计算预览连线的虚线/点线间距
     let previewDashArray
     if (previewStyle === 'dashed') {
@@ -363,7 +363,7 @@ const edgeStyle = computed(() => {
     } else if (previewStyle === 'dotted') {
       previewDashArray = `${Number(previewWidth)},${Number(previewWidth) * 2}`
     }
-    
+
     return {
       strokeWidth: Number(previewWidth),
       stroke: 'var(--b3-theme-on-surface)',
@@ -387,11 +387,6 @@ const edgeStyle = computed(() => {
 const showToolbar = computed(() => {
   const data = getData()
   return data.showToolbar === true
-})
-
-const whiteBoardConfigData = computed(() => {
-  const data = getData()
-  return data.whiteBoardConfigData || {}
 })
 
 const path = computed(() => {

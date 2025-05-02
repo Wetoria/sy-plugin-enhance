@@ -420,12 +420,8 @@
             <EnProtyle
               :block-id="embedWhiteBoardConfigData.boardOptions.selectedBlockId"
               disableEnhance
+              changeHelperPosition
               @after="afterSidebarProtyleLoad"
-            />
-            <div
-              ref="sidebarProtyleUtilAreaRef"
-              class="sidebar-protyle-util-area"
-              :data-whiteboard-node-protyle-util-area="embedWhiteBoardConfigData.boardOptions.selectedNodeId"
             />
           </div>
         </div>
@@ -572,8 +568,8 @@ const backgroundVariant = computed(() => {
   return moduleWhiteBoardOptions.value.backgroundVariant
 })
 
-const nodes = computed(() => embedWhiteBoardConfigData.value?.boardOptions.nodes)
-const edges = computed(() => embedWhiteBoardConfigData.value?.boardOptions.edges)
+const nodes = computed(() => embedWhiteBoardConfigData.value?.boardOptions.nodes || [])
+const edges = computed(() => embedWhiteBoardConfigData.value?.boardOptions.edges || [])
 
 const EnWhiteBoardRenderContainerRef = ref<HTMLElement | null>(null)
 
@@ -1030,7 +1026,6 @@ const onConnect = (event) => {
       style: moduleWhiteBoardOptions.value.edgeStyleDefault,
       markerStart: moduleWhiteBoardOptions.value.edgeMarkerStartDefault,
       markerEnd: moduleWhiteBoardOptions.value.edgeMarkerEndDefault,
-      whiteBoardConfigData: embedWhiteBoardConfigData.value,
     },
   }
 
@@ -1421,56 +1416,14 @@ const handleOpenInSidebar = (nodeId: string, blockId: string, info: any) => {
   embedWhiteBoardConfigData.value.boardOptions.selectedBlockId = blockId
 }
 
-// 添加切换侧边栏内容的处理函数
-const handleToggleSidebarContent = () => {
-  if (embedWhiteBoardConfigData.value.boardOptions.selectedNodeId) {
-    // 如果当前显示的是节点内容,切换到设置面板
-    embedWhiteBoardConfigData.value.boardOptions.selectedNodeId = undefined
-    embedWhiteBoardConfigData.value.boardOptions.selectedBlockId = undefined
-  } else {
-    // 如果当前显示的是设置面板,尝试恢复上一次查看的节点
-    const selectedNodes = getSelectedNodes.value
-    if (selectedNodes.length === 1) {
-      const lastSelectedNode = selectedNodes[0]
-      embedWhiteBoardConfigData.value.boardOptions.selectedNodeId = lastSelectedNode.id
-      embedWhiteBoardConfigData.value.boardOptions.selectedBlockId = lastSelectedNode.data.blockId
-    }
-  }
-}
-
-const handleShowSelectedNode = () => {
-  const selectedNodes = getSelectedNodes.value
-  if (selectedNodes.length === 1) {
-    const lastSelectedNode = selectedNodes[0]
-    embedWhiteBoardConfigData.value.boardOptions.selectedNodeId = lastSelectedNode.id
-    embedWhiteBoardConfigData.value.boardOptions.selectedBlockId = lastSelectedNode.data.blockId
-  }
-}
 
 // 添加侧边栏 Protyle 相关状态
 const sidebarProtyleRef = ref<Protyle | null>(null)
-const sidebarProtyleUtilAreaRef = ref<HTMLDivElement | null>(null)
 
 // 添加侧边栏 Protyle 加载后的处理函数
 const afterSidebarProtyleLoad = (protyle: Protyle) => {
   sidebarProtyleRef.value = protyle
-
-  // 移动工具区域到指定容器
-  targetProtyleUtilClassList.forEach((className) => {
-    const target = protyle.protyle.element.querySelector(`.${className}`)
-    if (target) {
-      sidebarProtyleUtilAreaRef.value?.appendChild(target)
-    }
-  })
 }
-
-// 添加工具区域类名列表
-const targetProtyleUtilClassList = [
-  'protyle-gutters',
-  'protyle-select',
-  'protyle-toolbar',
-  'protyle-hint',
-]
 
 // 添加获取节点显示文本的函数
 const getNodeDisplayText = (node) => {
@@ -1903,18 +1856,6 @@ const defaultConnectionLineStyle = computed(() => {
   }
 }
 
-.sidebar-protyle-util-area {
-  position: absolute;
-  z-index: 4;
-  top: 0;
-  left: 0;
-  height: 0;
-  pointer-events: none;
-
-  :deep(*) {
-    pointer-events: auto;
-  }
-}
 </style>
 
 <style lang="scss">
