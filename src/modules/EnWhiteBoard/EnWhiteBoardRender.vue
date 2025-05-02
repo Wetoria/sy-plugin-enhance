@@ -8,10 +8,12 @@
       :embedBlockOptions="embedBlockOptions"
       :embedWhiteBoardConfigData="embedWhiteBoardConfigData"
       pos="Left"
-      @view-mode-change="handleViewModeChange"
     >
       <template #SiderTopButtonGroupBefore>
         <slot name="SiderLeftTopButtonGroupBefore" />
+        <EnWhiteBoardViewModeSwitcher
+          v-model:viewMode="currentViewMode"
+        />
       </template>
       <template #SiderTopButtonGroupAfter>
         <slot name="SiderLeftTopButtonGroupAfter" />
@@ -449,6 +451,7 @@ import {
   getWhiteBoardConfigRefById,
   useWhiteBoardModule,
 } from '@/modules/EnWhiteBoard/EnWhiteBoard'
+import EnWhiteBoardViewModeSwitcher from '@/modules/EnWhiteBoard/components/EnWhiteBoardViewModeSwitcher.vue'
 
 import EnWhiteBoardEdgeBase from '@/modules/EnWhiteBoard/EnWhiteBoardEdgeBase.vue'
 import EnWhiteBoardNodeFrame from '@/modules/EnWhiteBoard/EnWhiteBoardNodeFrame.vue'
@@ -1504,11 +1507,6 @@ const handleRemoveEdge = (edgeId) => {
 
 // 添加视图模式状态
 const currentViewMode = ref<'whiteboard' | 'lineage'>('whiteboard')
-
-// 处理视图模式切换
-const handleViewModeChange = (event: CustomEvent) => {
-  currentViewMode.value = event.detail.mode
-}
 
 // 从全局设置中获取连接线类型
 const defaultEdgeType = computed(() => {
