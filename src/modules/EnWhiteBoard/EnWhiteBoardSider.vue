@@ -18,11 +18,6 @@
         class="ButtonGroup"
       >
         <slot name="SiderTopButtonGroupBefore" />
-        <template v-if="pos === 'Left'">
-          <a-button @click="toggleViewMode">
-            <SyIcon :name="viewModeIcon" />
-          </a-button>
-        </template>
         <slot name="SiderTopButtonGroupAfter" />
       </a-button-group>
     </div>
@@ -79,9 +74,7 @@
 <script setup lang="ts">
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import {
-  EnWhiteBoardConfig,
-  useWhiteBoardModule,
-
+  EnWhiteBoardConfig
 } from '@/modules/EnWhiteBoard/EnWhiteBoard'
 import {
   computed,
@@ -175,23 +168,6 @@ const folderIconName = computed(() => {
 
 const showSettingsDrawer = ref(false)
 
-const { moduleOptions: moduleWhiteBoardOptions } = useWhiteBoardModule()
-
-const resetBackgroundToGlobal = () => {
-  props.embedWhiteBoardConfigData.boardOptions.backgroundVariant = moduleWhiteBoardOptions.value.backgroundVariant
-}
-
-const viewMode = ref<'whiteboard' | 'lineage'>('whiteboard')
-const viewModeIcon = computed(() => viewMode.value === 'whiteboard' ? 'iconGraph' : 'iconMindmap')
-
-const toggleViewMode = () => {
-  viewMode.value = viewMode.value === 'whiteboard' ? 'lineage' : 'whiteboard'
-  
-  const event = new CustomEvent('view-mode-change', { 
-    detail: { mode: viewMode.value } 
-  })
-  EnWhiteBoardSiderRef.value?.dispatchEvent(event)
-}
 </script>
 
 <style lang="scss" scoped>

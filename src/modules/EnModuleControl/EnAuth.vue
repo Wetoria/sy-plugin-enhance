@@ -127,11 +127,15 @@ const server1 = 'https://server.wetoria.vip'
 // CF 代理阿里云走frp
 const server2 = 'https://api.wetoria.vip'
 // IPV6 直连
-const server3 = 'http://wetoria.cn'
+const server3 = 'http://wetoria.cn' // TODO remove
+const server6 = 'http://api.wetoria.cn'
 // IPV6 直连 HTTPS
-const server4 = 'https://wetoria.cn'
+const server4 = 'https://wetoria.cn' // TODO remove
+const server5 = 'https://api.wetoria.cn'
 
 const serverList = [
+  server5,
+  server6,
   server4,
   server3,
   server1,

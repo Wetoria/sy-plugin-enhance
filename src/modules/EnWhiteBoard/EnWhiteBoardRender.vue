@@ -8,10 +8,12 @@
       :embedBlockOptions="embedBlockOptions"
       :embedWhiteBoardConfigData="embedWhiteBoardConfigData"
       pos="Left"
-      @view-mode-change="handleViewModeChange"
     >
       <template #SiderTopButtonGroupBefore>
         <slot name="SiderLeftTopButtonGroupBefore" />
+        <EnWhiteBoardViewModeSwitcher
+          v-model:viewMode="currentViewMode"
+        />
       </template>
       <template #SiderTopButtonGroupAfter>
         <slot name="SiderLeftTopButtonGroupAfter" />
@@ -29,6 +31,8 @@
 
     <div class="EnWhiteBoardContentContainer">
       <!-- {{ data.whiteBoardId }} - {{ data.nodeId }} -->
+
+
       <div class="EnWhiteBoardControlArea EnWhiteBoardControlArea__Left">
         <EnWhiteBoardToolBar
           v-if="currentViewMode === 'whiteboard'"
@@ -44,6 +48,8 @@
           </template>
         </EnWhiteBoardToolBar>
       </div>
+
+
       <div class="EnWhiteBoardControlArea EnWhiteBoardControlArea__Bottom">
         <div>
 
@@ -55,8 +61,12 @@
 
         </div>
       </div>
+
+
       <div class="EnWhiteBoardControlArea EnWhiteBoardControlArea__Right">
       </div>
+
+
       <VueFlow
         v-if="embedWhiteBoardConfigData.loaded && currentViewMode === 'whiteboard'"
         v-model:nodes="nodes"
@@ -93,26 +103,29 @@
         @selectionDragStop="onSelectionDragStop"
         @selectionStart="onSelectionStart"
         @selectionEnd="onSelectionEnd"
-        @drop="onDrop"
-        @dragover="onDragover"
+        @drop.capture="onDrop"
+        @dragover.capture="onDragover"
         @touchstart="onTouchStart"
       >
         <template #node-EnWhiteBoardNodeProtyle="node">
           <EnWhiteBoardNodeProtyle
             :whiteBoardId="props.data.whiteBoardId"
             :nodeId="node.id"
-            :enWhiteBoardProtyleUtilAreaRef="EnWhiteBoardProtyleUtilAreaRef"
             @open-in-sidebar="handleOpenInSidebar"
           />
         </template>
+
+
         <template #node-EnWhiteBoardNodeMindmap="node">
           <EnWhiteBoardNodeProtyle
             :whiteBoardId="props.data.whiteBoardId"
             :nodeId="node.id"
-            :enWhiteBoardProtyleUtilAreaRef="EnWhiteBoardProtyleUtilAreaRef"
             @open-in-sidebar="handleOpenInSidebar"
           />
         </template>
+
+
+
         <template #node-EnWhiteBoardNodeTreeCard="node">
           <EnWhiteBoardNodeTreeCard
             :nodeId="node.id"
@@ -127,17 +140,22 @@
             <EnWhiteBoardNodeProtyle
               :whiteBoardId="props.data.whiteBoardId"
               :nodeId="node.id"
-              :enWhiteBoardProtyleUtilAreaRef="EnWhiteBoardProtyleUtilAreaRef"
               @open-in-sidebar="handleOpenInSidebar"
             />
           </EnWhiteBoardNodeTreeCard>
         </template>
+
+
+
         <template #node-EnWhiteBoardNodeFrame="node">
           <EnWhiteBoardNodeFrame
             :whiteBoardId="props.data.whiteBoardId"
             :nodeId="node.id"
           />
         </template>
+
+
+
         <template #edge-EnWhiteBoardEdgeBase="edge">
           <EnWhiteBoardEdgeBase
             v-bind="edge"
@@ -145,11 +163,17 @@
             @remove-edge="handleRemoveEdge"
           />
         </template>
+
+
+
         <template #connection-line="connectionLineProps">
           <EnWhiteBoardEdgeBase
             v-bind="connectionLineProps"
           />
         </template>
+
+
+
         <template #panel>
           <div
             v-if="selectedNodes.length > 1"
@@ -309,6 +333,8 @@
             </marker>
           </defs>
         </svg>
+
+
         <template v-if="backgroundVariant !== 'none'">
           <!-- 网格背景 -->
           <Background
@@ -338,7 +364,7 @@
           @nodeClick="onNodeMinimapClick"
         />
       </VueFlow>
-      
+
       <LineageView
         v-if="currentViewMode === 'lineage'"
         :nodeId="props.data.nodeId"
@@ -346,16 +372,7 @@
         :whiteBoardNodes="nodes"
         class="EnLineageContainer"
       />
-      <div
-        ref="EnWhiteBoardProtyleUtilAreaRef"
-        class="EnWhiteBoardProtyleUtilArea"
-        :class="{
-          dragging,
-        }"
-        style="height: 0px;"
-      >
 
-      </div>
     </div>
 
 
@@ -380,7 +397,11 @@
             </div>
             <!-- 钉固按钮 -->
             <a-tooltip :content="isSidebarPinned ? '取消钉固' : '钉固内容'">
-              <a-button class="sidebar-pin-button" :class="{ 'active': isSidebarPinned }" @click="toggleSidebarPin">
+              <a-button
+                class="sidebar-pin-button"
+                :class="{ active: isSidebarPinned }"
+                @click="toggleSidebarPin"
+              >
                 <template #icon>
                   <icon-pushpin />
                 </template>
@@ -399,12 +420,8 @@
             <EnProtyle
               :block-id="embedWhiteBoardConfigData.boardOptions.selectedBlockId"
               disableEnhance
+              changeHelperPosition
               @after="afterSidebarProtyleLoad"
-            />
-            <div
-              ref="sidebarProtyleUtilAreaRef"
-              class="sidebar-protyle-util-area"
-              :data-whiteboard-node-protyle-util-area="embedWhiteBoardConfigData.boardOptions.selectedNodeId"
             />
           </div>
         </div>
@@ -441,6 +458,7 @@
 import { request } from '@/api'
 import EnProtyle from '@/components/EnProtyle.vue'
 import { getNewDailyNoteBlockId } from '@/modules/DailyNote/DailyNote'
+import EnWhiteBoardViewModeSwitcher from '@/modules/EnWhiteBoard/components/EnWhiteBoardViewModeSwitcher.vue'
 import {
   EnWhiteBoardBlockDomTarget,
   generateWhiteBoardEdgeId,
@@ -453,10 +471,12 @@ import {
 import EnWhiteBoardEdgeBase from '@/modules/EnWhiteBoard/EnWhiteBoardEdgeBase.vue'
 import EnWhiteBoardNodeFrame from '@/modules/EnWhiteBoard/EnWhiteBoardNodeFrame.vue'
 import EnWhiteBoardSider from '@/modules/EnWhiteBoard/EnWhiteBoardSider.vue'
+import { appendBlockInto } from '@/utils/Block'
 import { EN_CONSTANTS } from '@/utils/Constants'
 import {
   handleWith,
   onCountClick,
+  useEnProtyleUtilAreaRef,
 } from '@/utils/DOM'
 import {
   hideHelperByTarget,
@@ -464,7 +484,7 @@ import {
 } from '@/utils/Siyuan'
 import { Background } from '@vue-flow/background'
 import {
-  Edge,
+  ConnectionLineType,
   EdgeAddChange,
   EdgeChange,
   NodeAddChange,
@@ -473,11 +493,11 @@ import {
   pointToRendererPoint,
   useVueFlow,
   VueFlow,
-  ConnectionLineType,
 } from '@vue-flow/core'
 import { MiniMap } from '@vue-flow/minimap'
-
 import { cloneDeep } from 'lodash-es'
+
+
 import { Protyle } from 'siyuan'
 import {
   computed,
@@ -487,18 +507,12 @@ import {
   watch,
   watchEffect,
 } from 'vue'
+import LineageView from '../Lineage/LineageView.vue'
 import EnWhiteBoardContextMenu from './EnWhiteBoardContextMenu.vue'
 import EnWhiteBoardNodeProtyle from './EnWhiteBoardNodeProtyle.vue'
+import EnWhiteBoardNodeTreeCard from './EnWhiteBoardNodeTreeCard.vue'
 import EnWhiteBoardSettings from './EnWhiteBoardSettings.vue'
 import EnWhiteBoardToolBar from './EnWhiteBoardToolBar.vue'
-import EnWhiteBoardNodeTreeCard from './EnWhiteBoardNodeTreeCard.vue'
-import '@vue-flow/minimap/dist/style.css'
-import '@vue-flow/controls/dist/style.css'
-import LineageView from '../Lineage/LineageView.vue'
-import { appendBlockInto } from '@/utils/Block'
-import {
-  ConnectionMode,
-} from '@vue-flow/core'
 
 const props = defineProps<{
   data: EnWhiteBoardBlockDomTarget
@@ -554,10 +568,8 @@ const backgroundVariant = computed(() => {
   return moduleWhiteBoardOptions.value.backgroundVariant
 })
 
-const nodes = computed(() => embedWhiteBoardConfigData.value?.boardOptions.nodes)
-const edges = computed(() => embedWhiteBoardConfigData.value?.boardOptions.edges)
-
-const EnWhiteBoardProtyleUtilAreaRef = ref<HTMLElement | null>(null)
+const nodes = computed(() => embedWhiteBoardConfigData.value?.boardOptions.nodes || [])
+const edges = computed(() => embedWhiteBoardConfigData.value?.boardOptions.edges || [])
 
 const EnWhiteBoardRenderContainerRef = ref<HTMLElement | null>(null)
 
@@ -590,8 +602,9 @@ const needMiniMapOffset = computed(() => {
   return embedBlockOptions.value?.SiderRightWidth < rightButtonGroupWidth.value && props.needSider
 })
 
+const EnProtyleUtilAreaRef = useEnProtyleUtilAreaRef()
 const hideAllHelper = () => {
-  hideHelperByTarget(EnWhiteBoardProtyleUtilAreaRef.value)
+  hideHelperByTarget(EnProtyleUtilAreaRef.value)
 }
 
 const dragging = ref(false)
@@ -688,7 +701,7 @@ const toggleSidebarPin = () => {
 // 处理节点选择的通用方法
 const handleNodeSelection = (nodeId: string) => {
   if (!nodeId) return
-  
+
   // 如果侧边栏已打开且未钉固，自动在侧边栏显示该节点
   if (embedBlockOptions.value.SiderRightShow && !isSidebarPinned.value) {
     const targetNode = findNode(nodeId)
@@ -702,7 +715,10 @@ const handleNodeSelection = (nodeId: string) => {
 }
 
 // 修改onNodeClick函数
-const onNodeClick = ({ node, event }) => {
+const onNodeClick = ({
+  node,
+  event,
+}) => {
   console.log('onNodeClick', event)
   const mainElement = event.target.closest('.EnWhiteBoardNodeProtyleMain')
   if (!mainElement) {
@@ -713,7 +729,7 @@ const onNodeClick = ({ node, event }) => {
   }
 
   editNewProtyleCard(mainElement)
-  
+
   // 使用通用方法处理节点选择
   if (node?.id) {
     handleNodeSelection(node.id)
@@ -750,16 +766,19 @@ const createNewNode = (x: number, y: number) => {
     x,
     y,
   }, viewport.value)
-  
+
   // 获取模块配置
   const { moduleOptions: moduleWhiteBoardOptions } = useWhiteBoardModule()
-  const { notebookId, targetId } = moduleWhiteBoardOptions.value
-  
+  const {
+    notebookId,
+    targetId,
+  } = moduleWhiteBoardOptions.value
+
   // 异步创建节点
   const createNodeAsync = async () => {
     // 根据配置决定创建位置
     let blockId = ''
-    
+
     if (notebookId && targetId) {
       // 使用目标块模式
       blockId = await appendBlockInto(notebookId, targetId, '')
@@ -767,12 +786,12 @@ const createNewNode = (x: number, y: number) => {
       // 使用日记模式
       blockId = await getNewDailyNoteBlockId()
     }
-    
+
     if (!blockId) {
       console.error('创建节点失败')
       return
     }
-    
+
     const newEnFlowNodeId = generateWhiteBoardNodeId()
     const newNode = {
       id: newEnFlowNodeId,
@@ -811,7 +830,7 @@ const createNewNode = (x: number, y: number) => {
       },
     )
   }
-  
+
   // 执行创建
   createNodeAsync()
 }
@@ -839,8 +858,14 @@ const onTouchStart = (event: TouchEvent) => {
 
 // 添加上下文菜单相关状态
 const contextMenuVisible = ref(false)
-const contextMenuPosition = ref({ x: 0, y: 0 })
-const initialClickPosition = ref({ x: 0, y: 0 })
+const contextMenuPosition = ref({
+  x: 0,
+  y: 0,
+})
+const initialClickPosition = ref({
+  x: 0,
+  y: 0,
+})
 const contextMenuNodeId = ref('')
 
 // 处理画布右键点击
@@ -891,30 +916,30 @@ onNodesChange((changes) => {
   changes.forEach((change) => {
     if (change.type === 'add') {
       // 检查节点是否为Frame且是初始创建
-      const isFrameInitialCreation = 
-        change.item.type === EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME && 
-        change.item.data?.isInitialCreation === true;
-      
+      const isFrameInitialCreation =
+        change.item.type === EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME
+        && change.item.data?.isInitialCreation === true
+
       // 如果是初始创建的Frame，移除isInitialCreation标记
       if (isFrameInitialCreation) {
         // 移除标记，防止后续处理重复
         if (change.item.data) {
-          delete change.item.data.isInitialCreation;
+          delete change.item.data.isInitialCreation
         }
-        
+
         // 确保节点数组已初始化
         if (!embedWhiteBoardConfigData.value.boardOptions.nodes) {
           embedWhiteBoardConfigData.value.boardOptions.nodes = []
         }
-        
+
         // 检查是否已存在相同ID的节点，防止重复添加
         const existingNodeIndex = embedWhiteBoardConfigData.value.boardOptions.nodes.findIndex(
-          node => node.id === change.item.id
-        );
-        
+          (node) => node.id === change.item.id,
+        )
+
         if (existingNodeIndex === -1) {
           // 如果不存在才添加
-          embedWhiteBoardConfigData.value.boardOptions.nodes.push(change.item);
+          embedWhiteBoardConfigData.value.boardOptions.nodes.push(change.item)
         }
       } else {
         // 对于非Frame节点或非初始创建的Frame节点，正常处理
@@ -1001,14 +1026,13 @@ const onConnect = (event) => {
       style: moduleWhiteBoardOptions.value.edgeStyleDefault,
       markerStart: moduleWhiteBoardOptions.value.edgeMarkerStartDefault,
       markerEnd: moduleWhiteBoardOptions.value.edgeMarkerEndDefault,
-      whiteBoardConfigData: embedWhiteBoardConfigData.value,
     },
   }
-  
+
   // 使用 setEdges 更新边的状态
   const newEdges = [...edges.value, newEdge]
   setEdges(newEdges)
-  
+
   // 更新配置
   if (embedWhiteBoardConfigData.value) {
     embedWhiteBoardConfigData.value.boardOptions.edges = newEdges
@@ -1050,7 +1074,7 @@ const onNodeMinimapClick = (event: NodeMouseEvent) => {
   const y = Number(targetNode.position.y) + (Number(targetNode.height) || 0) / 2
 
   setCenter(x, y, { duration: 800 })
-  
+
   // 使用通用方法处理节点选择
   handleNodeSelection(targetNode.id)
 }
@@ -1210,10 +1234,34 @@ const handleMultipleNodesAlignBottom = () => {
 
 // 添加拖拽事件处理
 const onDragover = (event: DragEvent) => {
+
+  const target = event.target as HTMLElement
+  const isInProtyleCard = target.closest('.EnWhiteBoardNodeProtyleMain')
+
+  // 在白板卡片中放置时，不进行处理
+  if (isInProtyleCard) {
+    event.preventDefault()
+    event.stopPropagation()
+    event.stopImmediatePropagation()
+    return
+  }
+
   event.preventDefault()
 }
 
 const onDrop = async (event: DragEvent) => {
+
+  const target = event.target as HTMLElement
+  const isInProtyleCard = target.closest('.EnWhiteBoardNodeProtyleMain')
+
+  // 在白板卡片中放置时，不进行处理
+  if (isInProtyleCard) {
+    event.preventDefault()
+    event.stopPropagation()
+    event.stopImmediatePropagation()
+    return
+  }
+
   event.preventDefault()
 
   // 获取拖拽的位置并考虑视口变换
@@ -1368,56 +1416,14 @@ const handleOpenInSidebar = (nodeId: string, blockId: string, info: any) => {
   embedWhiteBoardConfigData.value.boardOptions.selectedBlockId = blockId
 }
 
-// 添加切换侧边栏内容的处理函数
-const handleToggleSidebarContent = () => {
-  if (embedWhiteBoardConfigData.value.boardOptions.selectedNodeId) {
-    // 如果当前显示的是节点内容,切换到设置面板
-    embedWhiteBoardConfigData.value.boardOptions.selectedNodeId = undefined
-    embedWhiteBoardConfigData.value.boardOptions.selectedBlockId = undefined
-  } else {
-    // 如果当前显示的是设置面板,尝试恢复上一次查看的节点
-    const selectedNodes = getSelectedNodes.value
-    if (selectedNodes.length === 1) {
-      const lastSelectedNode = selectedNodes[0]
-      embedWhiteBoardConfigData.value.boardOptions.selectedNodeId = lastSelectedNode.id
-      embedWhiteBoardConfigData.value.boardOptions.selectedBlockId = lastSelectedNode.data.blockId
-    }
-  }
-}
-
-const handleShowSelectedNode = () => {
-  const selectedNodes = getSelectedNodes.value
-  if (selectedNodes.length === 1) {
-    const lastSelectedNode = selectedNodes[0]
-    embedWhiteBoardConfigData.value.boardOptions.selectedNodeId = lastSelectedNode.id
-    embedWhiteBoardConfigData.value.boardOptions.selectedBlockId = lastSelectedNode.data.blockId
-  }
-}
 
 // 添加侧边栏 Protyle 相关状态
 const sidebarProtyleRef = ref<Protyle | null>(null)
-const sidebarProtyleUtilAreaRef = ref<HTMLDivElement | null>(null)
 
 // 添加侧边栏 Protyle 加载后的处理函数
 const afterSidebarProtyleLoad = (protyle: Protyle) => {
   sidebarProtyleRef.value = protyle
-
-  // 移动工具区域到指定容器
-  targetProtyleUtilClassList.forEach((className) => {
-    const target = protyle.protyle.element.querySelector(`.${className}`)
-    if (target) {
-      sidebarProtyleUtilAreaRef.value?.appendChild(target)
-    }
-  })
 }
-
-// 添加工具区域类名列表
-const targetProtyleUtilClassList = [
-  'protyle-gutters',
-  'protyle-select',
-  'protyle-toolbar',
-  'protyle-hint',
-]
 
 // 添加获取节点显示文本的函数
 const getNodeDisplayText = (node) => {
@@ -1425,15 +1431,15 @@ const getNodeDisplayText = (node) => {
   if (node.data?.displayText) {
     return node.data.displayText
   }
-  
+
   // 如果没有显示文本，尝试获取节点ID的简短版本
   const blockId = node.data?.blockId
   if (blockId) {
-    return blockId.substring(0, 8) + '...'
+    return `${blockId.substring(0, 8)}...`
   }
-  
+
   // 默认返回节点ID的简短版本
-  return node.id.substring(0, 8) + '...'
+  return `${node.id.substring(0, 8)}...`
 }
 
 // 添加处理树形卡片切换的函数
@@ -1452,10 +1458,10 @@ const handleToggleTreeCard = (node) => {
     }
     return n
   })
-  
+
   // 使用Vue Flow的setNodes函数更新节点
   setNodes(updatedNodes)
-  
+
   // 更新配置数据
   if (embedWhiteBoardConfigData.value) {
     embedWhiteBoardConfigData.value.boardOptions.nodes = updatedNodes
@@ -1471,24 +1477,19 @@ const showError = (message) => {
 // 添加处理removeEdge事件的函数
 const handleRemoveEdge = (edgeId) => {
   if (!edgeId) return
-  
+
   // 使用Vue Flow提供的removeEdges函数删除边
-  const edgeToRemove = edges.value.find(edge => edge.id === edgeId)
+  const edgeToRemove = edges.value.find((edge) => edge.id === edgeId)
   if (edgeToRemove) {
     removeEdges([edgeToRemove])
-    
+
     // 确保数据层面也删除了边
-    embedWhiteBoardConfigData.value.boardOptions.edges = edges.value.filter(edge => edge.id !== edgeId)
+    embedWhiteBoardConfigData.value.boardOptions.edges = edges.value.filter((edge) => edge.id !== edgeId)
   }
 }
 
 // 添加视图模式状态
 const currentViewMode = ref<'whiteboard' | 'lineage'>('whiteboard')
-
-// 处理视图模式切换
-const handleViewModeChange = (event: CustomEvent) => {
-  currentViewMode.value = event.detail.mode
-}
 
 // 从全局设置中获取连接线类型
 const defaultEdgeType = computed(() => {
@@ -1500,7 +1501,7 @@ const defaultConnectionLineStyle = computed(() => {
   // 基于全局设置创建样式对象
   const previewWidth = moduleWhiteBoardOptions.value.edgeWidthDefault || '2'
   const previewStyle = moduleWhiteBoardOptions.value.edgeStyleDefault || 'solid'
-  
+
   // 计算预览连线的虚线/点线间距
   let dashArray
   if (previewStyle === 'dashed') {
@@ -1508,7 +1509,7 @@ const defaultConnectionLineStyle = computed(() => {
   } else if (previewStyle === 'dotted') {
     dashArray = `${Number(previewWidth)},${Number(previewWidth) * 2}`
   }
-  
+
   return {
     strokeWidth: Number(previewWidth),
     stroke: 'var(--b3-theme-on-surface)',
@@ -1585,13 +1586,13 @@ const defaultConnectionLineStyle = computed(() => {
     position: relative;
     flex: 1;
     overflow: hidden;
-    
+
     .EnLineageContainer {
       height: 100%;
       width: 100%;
       position: absolute;
       z-index: 1;
-      
+
       &::before {
         content: '';
         position: absolute;
@@ -1664,12 +1665,12 @@ const defaultConnectionLineStyle = computed(() => {
     &:hover {
       background-color: var(--b3-theme-surface);
     }
-    
+
     // 添加钉固按钮激活样式
     &.active {
       background-color: var(--b3-theme-primary);
       color: var(--b3-theme-on-primary);
-      
+
       &:hover {
         background-color: var(--b3-theme-primary-light);
       }
@@ -1855,16 +1856,24 @@ const defaultConnectionLineStyle = computed(() => {
   }
 }
 
-.sidebar-protyle-util-area {
-  position: absolute;
-  z-index: 4;
-  top: 0;
-  left: 0;
-  height: 0;
-  pointer-events: none;
+</style>
 
-  :deep(*) {
-    pointer-events: auto;
-  }
+<style lang="scss">
+/* import the necessary styles for Vue Flow to work */
+@import '@vue-flow/core/dist/style.css';
+
+/* import the default theme, this is optional but generally recommended */
+@import '@vue-flow/core/dist/theme-default.css';
+
+@import '@vue-flow/node-resizer/dist/style.css';
+
+@import '@vue-flow/controls/dist/style.css';
+@import '@vue-flow/minimap/dist/style.css';
+
+body {
+  --en-whiteboard-card-radius: 4px;
+
+  --en-whiteboard-resizer-color: rgb(var(--primary-6));
+  --en-whiteboard-resizer-width: 5px;
 }
 </style>

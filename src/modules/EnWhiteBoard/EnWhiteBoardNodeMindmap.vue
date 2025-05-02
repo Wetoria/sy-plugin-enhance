@@ -7,7 +7,7 @@
     }"
   >
     <!-- 思维导图模式下的添加子节点按钮和折叠按钮 -->
-    <div 
+    <div
       v-if="!hasParent || parentEdgeHandle === 'left'"
       class="button-group left"
     >
@@ -26,7 +26,7 @@
           </template>
         </a-button>
       </div>
-      <div 
+      <div
         class="add-child-button"
         @click.stop="handleAddChildNode('left')"
       >
@@ -42,11 +42,11 @@
       </div>
     </div>
 
-    <div 
+    <div
       v-if="!hasParent || parentEdgeHandle === 'right'"
       class="button-group right"
     >
-      <div 
+      <div
         class="add-child-button"
         @click.stop="handleAddChildNode('right')"
       >
@@ -135,7 +135,6 @@ const props = defineProps<{
   nodeId: string
   isCollapsed: boolean
   displayText: string
-  isMergingToSuperBlock: boolean
   nodeData: { nodeType: string, parentId?: string, mindmap?: boolean, folded?: boolean } // 更新类型，增加folded属性
   whiteBoardConfigData?: any
 }>()
@@ -234,7 +233,7 @@ const layoutCache = {
         const positions = calculateNodePositionsOptimized(node, mindmapNodes, node.position.x, node.position.y)
         positions.forEach((pos, id) => updatedNodes.set(id, pos))
       }
-      
+
       // 然后处理其余节点
       const normalNodes = sortedNodes.filter(node => !node.data?.folded)
       for (const node of normalNodes) {
@@ -303,13 +302,13 @@ const calculateNodeHeightOptimized = (node, nodes) => {
   }
 
   const nodeHeight = node.dimensions?.height || getDefaultDimensions().height
-  
+
   // 如果节点被折叠，则不考虑子节点高度
   if (node.data?.folded) {
     layoutCache.nodeHeights.set(node.id, nodeHeight)
     return nodeHeight
   }
-  
+
   // 只获取思维导图子节点
   const childNodes = nodes.filter((n) => n.data?.mindmap && n.data?.parentId === node.id)
 
@@ -338,14 +337,14 @@ const calculateNodePositionsOptimized = (node, nodes, parentX = 0, startY = 0) =
   const verticalSpacing = 20
 
   if (node.data?.folded) return positions
-  
+
   // 获取所有可见的子节点
-  const childNodes = nodes.filter((n) => 
-    n.data?.mindmap && 
-    n.data?.parentId === node.id && 
+  const childNodes = nodes.filter((n) =>
+    n.data?.mindmap &&
+    n.data?.parentId === node.id &&
     !n.hidden
   )
-  
+
   if (childNodes.length === 0) return positions
 
   const nodeWidth = node.dimensions?.width || getDefaultDimensions().width
@@ -364,22 +363,22 @@ const calculateNodePositionsOptimized = (node, nodes, parentX = 0, startY = 0) =
   // 计算左侧节点位置
   if (leftNodes.length > 0) {
     const leftHeights = leftNodes.map(child => calculateNodeHeightOptimized(child, nodes))
-    const leftTotalHeight = leftHeights.reduce((sum, height, index) => 
+    const leftTotalHeight = leftHeights.reduce((sum, height, index) =>
       sum + height + (index < leftHeights.length - 1 ? verticalSpacing : 0), 0
     )
-    
+
     let currentY = startY - (leftTotalHeight / 2) + (node.dimensions?.height || 0) / 2
     const leftX = parentX - horizontalSpacing
 
     leftNodes.forEach((child, index) => {
       const childHeight = leftHeights[index]
       const childWidth = child.dimensions?.width || getDefaultDimensions().width
-      
+
       positions.set(child.id, {
         x: leftX - childWidth,
         y: currentY + (childHeight - (child.dimensions?.height || 0)) / 2,
       })
-      
+
       currentY += childHeight + verticalSpacing
 
       // 递归计算子节点位置
@@ -396,21 +395,21 @@ const calculateNodePositionsOptimized = (node, nodes, parentX = 0, startY = 0) =
   // 计算右侧节点位置
   if (rightNodes.length > 0) {
     const rightHeights = rightNodes.map(child => calculateNodeHeightOptimized(child, nodes))
-    const rightTotalHeight = rightHeights.reduce((sum, height, index) => 
+    const rightTotalHeight = rightHeights.reduce((sum, height, index) =>
       sum + height + (index < rightHeights.length - 1 ? verticalSpacing : 0), 0
     )
-    
+
     let currentY = startY - (rightTotalHeight / 2) + (node.dimensions?.height || 0) / 2
     const rightX = parentX + nodeWidth + horizontalSpacing
 
     rightNodes.forEach((child, index) => {
       const childHeight = rightHeights[index]
-      
+
       positions.set(child.id, {
         x: rightX,
         y: currentY + (childHeight - (child.dimensions?.height || 0)) / 2,
       })
-      
+
       currentY += childHeight + verticalSpacing
 
       // 递归计算子节点位置
@@ -453,17 +452,17 @@ const updateMindmapLayoutRecursively = (nodeId) => {
     if (currentNode.data?.mindmap) {
       // 获取当前节点的所有可见子节点（跳过隐藏节点或折叠节点的子节点）
       const childNodes = nodes.filter((n) => {
-        return n.data?.mindmap && 
-               n.data?.parentId === currentNode.id && 
+        return n.data?.mindmap &&
+               n.data?.parentId === currentNode.id &&
                !n.hidden // 跳过隐藏节点
       })
-      
+
       // 只有当节点有可见子节点时才添加到更新列表
       if (childNodes.length > 0 || currentNode.data?.folded) {
         nodesToUpdate.add(currentNode.id)
       }
     }
-    
+
     // 向上递归处理父节点
     if (currentNode.data?.parentId) {
       const parentNode = nodes.find((n) => n.id === currentNode.data.parentId)
@@ -480,7 +479,7 @@ const updateMindmapLayoutRecursively = (nodeId) => {
   // 将需要更新的节点添加到待更新队列
   nodesToUpdate.forEach((id) => layoutCache.pendingUpdates.add(id))
   layoutCache.scheduleBatchUpdate()
-  
+
   // 确保边也被正确处理
   updateEdgesVisibility()
 }
@@ -489,7 +488,7 @@ const updateMindmapLayoutRecursively = (nodeId) => {
 const updateEdgesVisibility = () => {
   const nodes = getNodes.value
   const allEdges = edges.value || []
-  
+
   // 查找所有隐藏的节点
   const hiddenNodeIds = new Set()
   nodes.forEach(node => {
@@ -497,27 +496,27 @@ const updateEdgesVisibility = () => {
       hiddenNodeIds.add(node.id)
     }
   })
-  
+
   // 更新边的可见性
   const updatedEdges = allEdges.map(edge => {
     const isSourceHidden = hiddenNodeIds.has(edge.source)
     const isTargetHidden = hiddenNodeIds.has(edge.target)
-    
+
     if (isSourceHidden || isTargetHidden) {
       return {
-        ...edge, 
+        ...edge,
         hidden: true,
         class: 'mindmap-edge-fold-transition'
       }
     }
-    
+
     return {
       ...edge,
       hidden: false,
       class: 'mindmap-edge-fold-transition'
     }
   })
-  
+
   setEdges(updatedEdges)
 }
 
@@ -536,9 +535,9 @@ const calculateNewNodePosition = (parentNode, siblings, nodes, handle = 'right')
   const horizontalSpacing = 150
   const verticalSpacing = 20
   const parentWidth = parentNode.dimensions?.width || getDefaultDimensions().width
-  
+
   // 根据handle决定x轴位置
-  const baseX = handle === 'right' 
+  const baseX = handle === 'right'
     ? parentNode.position.x + parentWidth + horizontalSpacing
     : parentNode.position.x - horizontalSpacing - getDefaultDimensions().width
 
@@ -669,10 +668,10 @@ const handleAddChildNode = async (handle: string = 'right') => {
     // 6. 批量更新节点状态
     await nextTick()
     setNodes(finalNodes)
-    
+
     // 7. 等待节点渲染完成
     await new Promise(resolve => setTimeout(resolve, 100))
-    
+
     // 8. 创建并添加边
     const newEdge = {
       id: generateWhiteBoardEdgeId(),
@@ -691,7 +690,7 @@ const handleAddChildNode = async (handle: string = 'right') => {
         markerStart: 'none',
       },
     }
-    
+
     const updatedEdges = [...currentEdges, newEdge]
     setEdges(updatedEdges)
 
@@ -744,10 +743,10 @@ const setupMindmapWatchers = () => {
         const node = nodes.find(n => n.id === nodeId)
         if (!node?.data?.mindmap) return
         result.add(nodeId)
-        
+
         // 如果节点已折叠，则不遍历其子节点
         if (node.data?.folded) return
-        
+
         nodes
           .filter(n => n.data?.mindmap && n.data?.parentId === nodeId)
           .forEach(child => traverse(child.id))
@@ -762,16 +761,16 @@ const setupMindmapWatchers = () => {
     // 检查当前节点是否移动了（作为根节点）
     const currentNodeOld = oldNodes.find(n => n.id === props.nodeId)
     const currentNodeNew = newNodes.find(n => n.id === props.nodeId)
-    
-    if (currentNodeOld && currentNodeNew && 
+
+    if (currentNodeOld && currentNodeNew &&
         JSON.stringify(currentNodeOld.position) !== JSON.stringify(currentNodeNew.position)) {
       // 计算位置偏移量
       const offsetX = currentNodeNew.position.x - currentNodeOld.position.x
       const offsetY = currentNodeNew.position.y - currentNodeOld.position.y
-      
+
       // 检查是否是单纯的拖动（而非其他操作）
       const isDragOnly = offsetX !== 0 || offsetY !== 0
-      
+
       if (isDragOnly) {
         // 对于根节点拖动，同步移动所有子节点而不是重新计算布局
         const childNodeIds = Array.from(oldMindmapIds).filter(id => id !== props.nodeId)
@@ -788,7 +787,7 @@ const setupMindmapWatchers = () => {
       Array.from(oldMindmapIds).some(id => {
         const oldNode = oldNodes.find(n => n.id === id)
         const newNode = newNodes.find(n => n.id === id)
-        return !newNode || 
+        return !newNode ||
           JSON.stringify(oldNode.position) !== JSON.stringify(newNode.position) ||
           JSON.stringify(oldNode.dimensions) !== JSON.stringify(newNode.dimensions) ||
           oldNode.data?.folded !== newNode.data?.folded // 添加折叠状态检查
@@ -815,10 +814,10 @@ const setupMindmapWatchers = () => {
 // 同步移动所有子节点
 const syncMoveChildNodes = (childNodeIds, offsetX, offsetY) => {
   const nodes = getNodes.value
-  
+
   // 过滤出所有需要移动的节点
   const nodesToMove = nodes.filter(node => childNodeIds.includes(node.id))
-  
+
   // 准备更新所有子节点的位置
   const updatedNodes = nodes.map(node => {
     if (childNodeIds.includes(node.id)) {
@@ -834,7 +833,7 @@ const syncMoveChildNodes = (childNodeIds, offsetX, offsetY) => {
     }
     return node
   })
-  
+
   // 更新节点
   setNodes(updatedNodes)
 }
@@ -845,10 +844,10 @@ setupMindmapWatchers()
 // 获取节点的所有祖先节点
 const getNodeAncestors = (node, nodes, ancestors = []) => {
   if (!node.data?.parentId) return ancestors
-  
+
   const parent = nodes.find(n => n.id === node.data.parentId)
   if (!parent) return ancestors
-  
+
   ancestors.push(parent)
   return getNodeAncestors(parent, nodes, ancestors)
 }
@@ -886,7 +885,7 @@ watch(() => props.nodeData?.folded, (newVal) => {
 // 获取所有子孙节点ID
 const getDescendantNodeIds = (nodeId, nodes) => {
   const result = new Set()
-  
+
   const collectDescendants = (currentNodeId) => {
     const children = nodes.filter(n => n.data?.parentId === currentNodeId)
     children.forEach(child => {
@@ -894,7 +893,7 @@ const getDescendantNodeIds = (nodeId, nodes) => {
       collectDescendants(child.id)
     })
   }
-  
+
   collectDescendants(nodeId)
   return result
 }
@@ -933,11 +932,11 @@ const toggleFoldSubtree = async (side: 'left' | 'right') => {
   } else {
     isRightFolded.value = !isRightFolded.value
   }
-  
+
   // 获取所有节点和边
   const nodes = getNodes.value || []
   const allEdges = edges.value || []
-  
+
   // 获取指定侧边的子孙节点ID
   const descendantIds = new Set()
   const collectDescendants = (nodeId) => {
@@ -946,15 +945,15 @@ const toggleFoldSubtree = async (side: 'left' | 'right') => {
       const edge = allEdges.find(e => e.target === n.id)
       return edge?.sourceHandle === side
     })
-    
+
     children.forEach(child => {
       descendantIds.add(child.id)
       collectDescendants(child.id)
     })
   }
-  
+
   collectDescendants(props.nodeId)
-  
+
   // 更新节点可见性
   const updatedNodes = nodes.map(node => {
     if (descendantIds.has(node.id)) {
@@ -966,7 +965,7 @@ const toggleFoldSubtree = async (side: 'left' | 'right') => {
     }
     return node
   })
-  
+
   // 更新边的可见性
   const updatedEdges = allEdges.map(edge => {
     if (descendantIds.has(edge.source) || descendantIds.has(edge.target)) {
@@ -978,17 +977,17 @@ const toggleFoldSubtree = async (side: 'left' | 'right') => {
     }
     return edge
   })
-  
+
   // 更新节点和边
   setNodes(updatedNodes)
   setEdges(updatedEdges)
-  
+
   // 等待状态更新
   await nextTick()
-  
+
   // 更新布局
   await updateMindmapLayoutRecursively(props.nodeId)
-  
+
   // 更新白板配置
   if (props.whiteBoardConfigData) {
     props.whiteBoardConfigData.boardOptions.nodes = updatedNodes
@@ -1005,7 +1004,7 @@ const calculateEdgeColor = (parentEdge, siblings, currentEdges) => {
 
   // 获取当前节点的所有子边（包括左右两侧）
   const sourceEdges = currentEdges.filter((edge) => edge.source === props.nodeId)
-  
+
   // 如果已经有子边，则基于最后一个子边的颜色选择下一个颜色
   if (sourceEdges.length > 0) {
     const lastEdge = sourceEdges[sourceEdges.length - 1]

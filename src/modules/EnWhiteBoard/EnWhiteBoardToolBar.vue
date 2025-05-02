@@ -18,6 +18,7 @@
     <template v-if="!isNodeToolbar && !isEdgeToolbar">
       <div class="ToolBarContent">
         <a-button-group>
+          <slot name="before" />
           <template v-if="showBasicControls">
             <a-tooltip content="适应视图">
               <a-button @click="onFitView">
@@ -47,7 +48,6 @@
               </a-button>
             </a-tooltip>
           </template>
-          <slot name="before" />
           <slot />
           <slot name="after" />
         </a-button-group>
@@ -58,6 +58,7 @@
     <template v-if="isNodeToolbar">
       <div class="ToolbarContent">
         <a-button-group>
+          <slot name="before" />
           <a-tooltip :content="nodeData?.isCollapsed ? '展开节点' : '折叠节点'">
             <a-button @click="onCollapse">
               <template #icon>
@@ -66,19 +67,22 @@
               </template>
             </a-button>
           </a-tooltip>
-          
+
           <!-- Frame节点特有的按钮，只在nodeType为frame时显示 -->
           <template v-if="nodeType === 'frame'">
-            <a-tooltip :content="'编辑标题: ' + (nodeData?.label || '未命名分组')">
+            <a-tooltip :content="`编辑标题: ${nodeData?.label || '未命名分组'}`">
               <a-button @click="onEditFrameLabel">
                 <template #icon>
                   <icon-edit />
                 </template>
               </a-button>
             </a-tooltip>
-            
+
             <a-tooltip :content="isLocked ? '解锁分组' : '锁定分组'">
-              <a-button @click="onToggleLock" :class="{ 'active': isLocked }">
+              <a-button
+                :class="{ active: isLocked }"
+                @click="onToggleLock"
+              >
                 <template #icon>
                   <icon-lock v-if="isLocked" />
                   <icon-unlock v-else />
@@ -86,7 +90,7 @@
               </a-button>
             </a-tooltip>
           </template>
-          
+
           <!-- 节点颜色按钮（所有节点类型通用） -->
           <a-tooltip content="节点颜色">
             <a-dropdown trigger="click">
@@ -142,7 +146,7 @@
               </template>
             </a-dropdown>
           </a-tooltip>
-          
+
           <!-- 其他普通节点专用按钮 -->
           <template v-if="nodeType !== 'frame'">
             <a-tooltip content="节点外观">
@@ -208,9 +212,10 @@
               </a-dropdown>
             </a-tooltip>
           </template>
-          
+
           <a-tooltip :content="isAutoHeightEnabled ? '关闭自动高度' : '自动适配高度'">
-            <a-button 
+            <a-button
+              :class="{ 'active-button': isAutoHeightEnabled }"
               @click="onAutoFitHeight"
               @mousedown="startLongPress"
               @mouseup="clearLongPress"
@@ -218,13 +223,13 @@
               @touchstart.prevent="startLongPress"
               @touchend.prevent="clearLongPress"
               @touchcancel.prevent="clearLongPress"
-              :class="{'active-button': isAutoHeightEnabled}"
             >
               <template #icon>
                 <IconExpand />
               </template>
             </a-button>
           </a-tooltip>
+          <slot />
           <slot name="nodeToolbarExtra" />
           <a-tooltip content="在侧边栏中打开">
             <a-button @click="onOpenInSidebar">
@@ -879,6 +884,7 @@
 
 <script setup lang="ts">
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
+import { EN_CONSTANTS } from '@/utils/Constants'
 import { IconExpand } from '@arco-design/web-vue/es/icon'
 import {
   Edge,
@@ -886,12 +892,10 @@ import {
 } from '@vue-flow/core'
 import {
   computed,
+  onBeforeUnmount,
   ref,
   watch,
-  onBeforeUnmount,
 } from 'vue'
-import { EN_CONSTANTS } from '@/utils/Constants'
-import { debounce } from '@/utils'
 import EnWhiteBoardNodeFit from './components/EnWhiteBoardNodeFit.vue'
 
 const props = defineProps<{
@@ -1182,7 +1186,7 @@ const onNodeColorChange = (color: string) => {
         delete newData.style.backgroundColor
       } else {
         newData.style.backgroundColor = color
-        
+
         // 如果是Frame节点，同时更新边框颜色
         if (isFrame) {
           newData.style.borderColor = color
@@ -1237,10 +1241,10 @@ const onNodeTypeSelect = (type: string) => {
   if (props.whiteBoardConfigData) {
     props.whiteBoardConfigData.boardOptions.nodes = newNodes
   }
-  
+
   // 如果切换为树形卡片类型，需要更新布局
   if (type === 'gingko') {
-    const currentNode = nodes.find(node => node.id === props.nodeId)
+    const currentNode = nodes.find((node) => node.id === props.nodeId)
     if (currentNode) {
       // 延迟执行以确保节点类型已更新
       setTimeout(() => {
@@ -1252,48 +1256,48 @@ const onNodeTypeSelect = (type: string) => {
 
 // 添加更新树形卡片布局的函数
 const updateTreeCardLayout = (nodeId, nodes) => {
-  const node = nodes.find(n => n.id === nodeId)
+  const node = nodes.find((n) => n.id === nodeId)
   if (!node) return
-  
+
   // 查找所有相关的树形卡片节点
   const relatedNodes = new Set()
-  
+
   // 向上查找父节点
   const findParents = (currentId) => {
-    const current = nodes.find(n => n.id === currentId)
+    const current = nodes.find((n) => n.id === currentId)
     if (!current) return
-    
+
     if (current.data?.parentId) {
-      const parent = nodes.find(n => n.id === current.data.parentId)
+      const parent = nodes.find((n) => n.id === current.data.parentId)
       if (parent && parent.data?.treecard) {
         relatedNodes.add(parent.id)
         findParents(parent.id)
       }
     }
   }
-  
+
   // 向下查找子节点
   const findChildren = (currentId) => {
-    const children = nodes.filter(n => n.data?.parentId === currentId)
-    children.forEach(child => {
+    const children = nodes.filter((n) => n.data?.parentId === currentId)
+    children.forEach((child) => {
       if (child.data?.treecard) {
         relatedNodes.add(child.id)
         findChildren(child.id)
       }
     })
   }
-  
+
   // 收集所有相关节点
   relatedNodes.add(nodeId)
   findParents(nodeId)
   findChildren(nodeId)
-  
+
   // 更新所有相关节点的布局
   // 使用自定义事件触发布局更新
-  Array.from(relatedNodes).forEach(id => {
+  Array.from(relatedNodes).forEach((id) => {
     // 触发自定义事件，让相应的组件处理布局更新
-    const event = new CustomEvent('update-treecard-layout', { 
-      detail: { nodeId: id } 
+    const event = new CustomEvent('update-treecard-layout', {
+      detail: { nodeId: id },
     })
     document.dispatchEvent(event)
   })
@@ -1323,7 +1327,7 @@ const clearLongPress = () => {
     // 如果是短按，执行一次高度调整，但不改变自动高度状态
     nodeFitRef.value?.adjustNodeHeight()
   }
-  
+
   // 重置长按状态
   if (longPressTimer.value) {
     clearTimeout(longPressTimer.value)
@@ -1340,11 +1344,11 @@ const startLongPress = () => {
     clearTimeout(longPressTimer.value)
     longPressTimer.value = null
   }
-  
+
   // 设置长按状态
   isLongPressing.value = true
   longPressCompleted.value = false
-  
+
   // 设置长按定时器
   longPressTimer.value = setTimeout(() => {
     // 标记长按已完成
@@ -1486,7 +1490,7 @@ const onToggleLock = () => {
       padding: 4px;
       box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
 
-      .arco-btn {
+      :deep(.arco-btn) {
         color: var(--b3-theme-on-surface);
         border: none;
         background: transparent;
@@ -1495,7 +1499,7 @@ const onToggleLock = () => {
         &:hover {
           background: var(--b3-theme-surface-light);
         }
-        
+
         &.active-button {
           background-color: var(--b3-theme-primary-light) !important;
           color: var(--b3-theme-on-primary) !important;

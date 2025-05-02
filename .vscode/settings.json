@@ -1,9 +1,4 @@
 {
-  "volar.autoCompleteRefs": true,
-  "volar.updateImportOnFileMove.enabled": true,
-  "css.validate": false,
-  "scss.validate": false,
-  "less.validate": false,
   "typescript.tsdk": "node_modules/typescript/lib",
   "todo-tree.tree.showBadges": true,
   "todo-tree.tree.showCountsInTree": true,
@@ -14,7 +9,7 @@
   // Auto fix
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit",
-    "source.organizeImports": "never"
+    "source.organizeImports": "explicit"
   },
 
   // Silent the stylistic rules in you IDE, but still auto fix them

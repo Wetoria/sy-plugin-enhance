@@ -4,13 +4,33 @@
     :getTargetBlockDom="data.getDom"
     :fullScreen="fullScreen"
   >
+    <template
+      v-if="embedInWhiteBoard"
+      #customArea
+    >
+      <div
+        class="flexAlignCenter"
+        style="
+          height: 50px;
+          padding: 0 10px;
+          opacity: 0.5;
+        "
+      >
+        <a-typography-text type="warning">
+          检测到当前在白板中嵌套渲染，渲染取消
+        </a-typography-text>
+      </div>
+    </template>
     <div
+      v-if="!embedInWhiteBoard"
       ref="embedRenderRef"
       class="EnWhiteBoardEmbedRenderContainer"
       :class="{
         FullScreen: fullScreen,
         ClickedInside: clickedInside,
       }"
+      @mouseleave="handleMouseLeave"
+      @mouseenter="handleMouseEnter"
     >
       <template v-if="!embedWhiteBoardConfigData || !embedBlockOptions">
         <div>白板数据获取失败</div>
@@ -23,12 +43,13 @@
             minHeight: `${moduleOptions.embedBlockMinHeight}px`,
             height: fullScreen ? '100%' : undefined,
           }"
-          @wheel="handleWheel"
+          @wheel.passive="handleWheel"
         >
           <EnWhiteBoardRender
             :data="data"
             :needSider="!!fullScreen"
           >
+
             <template #SiderLeftTopButtonGroupAfter>
               <a-tooltip content="思源内铺满">
                 <a-button @click="changeFullScreen('siyuan')">
@@ -49,8 +70,7 @@
                 </a-button>
               </a-tooltip>
             </template>
-            <template #SiderRightTopButtonGroupAfter>
-            </template>
+
           </EnWhiteBoardRender>
         </a-resize-box>
       </template>
@@ -71,13 +91,18 @@ import {
   onBeforeUnmount,
   onMounted,
   ref,
+  watchEffect,
 } from 'vue'
 
 const props = defineProps<{
   data: EnWhiteBoardBlockDomTarget
 }>()
 
+// Custom 组件的 ref
 const customRef = ref(null)
+
+// 实际显示白板的容器的 ref
+const embedRenderRef = ref(null)
 
 const {
   moduleOptions,
@@ -93,59 +118,33 @@ const changeFullScreen = (value?: 'doc' | 'siyuan') => {
   fullScreen.value = value
 }
 
-let scrollAnimation: number | null = null
-let velocity = 0
-const friction = 0.95 // 摩擦系数，可以调整
-const speedMultiplier = 0.2 // 速度倍数，可以调整
 
 
-const animateScroll = () => {
-  const targetElement = customRef.value?.protyleContentRef
-  if (!targetElement || Math.abs(velocity) < 0.1) {
-    scrollAnimation = null
-    velocity = 0
-    return
-  }
-
-  targetElement.scrollTop += velocity
-  velocity *= friction
-
-  scrollAnimation = requestAnimationFrame(animateScroll)
-}
+// #region 👇 拦截白板上的滚轮事件，触发嵌入文档的滚动
 
 const handleWheel = (e: WheelEvent) => {
   if (fullScreen.value) {
     return
   }
 
-  e.preventDefault()
+  const targetElement = customRef.value?.protyleContentRef
 
-  // 根据deltaMode调整滚动量
-  let delta = e.deltaY
-  if (e.deltaMode === 1) { // 如果是行模式
-    delta *= 16 // 转换为像素
+  if (!targetElement) {
+    return
   }
 
-  // 添加更自然的加速度
-  velocity += delta * speedMultiplier
+  const delta = e.deltaY
 
-  // 限制最大速度
-  const maxVelocity = 100
-  velocity = Math.max(Math.min(velocity, maxVelocity), -maxVelocity)
-
-  if (scrollAnimation === null) {
-    animateScroll()
-  }
+  // 应用滚动到元素A（方向可能需要调整）
+  targetElement.scrollTop += delta
 }
 
-// 在组件卸载时清理
-onBeforeUnmount(() => {
-  if (scrollAnimation) {
-    cancelAnimationFrame(scrollAnimation)
-  }
-})
+// #endregion 👆 拦截白板上的滚轮事件，触发嵌入文档的滚动
 
-const embedRenderRef = ref(null)
+
+
+// #region 👇 标记是否为点击白板内部，用于在非铺满的情况下，点击白板内部，显示高亮的边框
+
 const clickedInside = ref(false)
 const recordClickedInsider = (event) => {
   const target = event.target as HTMLElement
@@ -162,6 +161,39 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   document.removeEventListener('click', recordClickedInsider)
+})
+
+// #endregion 👆 标记是否为点击白板内部，用于在非铺满的情况下，点击白板内部，显示高亮的边框
+
+
+
+// #region 👇 鼠标进入白板时，隐藏外部文档的 gutters
+
+const handleMouseLeave = () => {
+  const closetProtyle = embedRenderRef.value?.closest('.protyle')
+  if (!closetProtyle) {
+    return
+  }
+  closetProtyle.classList.remove('EnMouseInWhiteBoard')
+}
+
+const handleMouseEnter = () => {
+  const closetProtyle = embedRenderRef.value?.closest('.protyle')
+  if (!closetProtyle) {
+    return
+  }
+  closetProtyle.classList.add('EnMouseInWhiteBoard')
+}
+
+// #endregion 👆 鼠标进入白板时，隐藏外部文档的 gutters
+
+
+const embedInWhiteBoard = ref(true)
+watchEffect(() => {
+  if (customRef.value && customRef.value?.protyleContentRef) {
+    const hasWhiteBoardContainer = customRef.value?.protyleContentRef?.closest('.EnWhiteBoardEmbedRenderContainer')
+    embedInWhiteBoard.value = !!hasWhiteBoardContainer
+  }
 })
 
 </script>
@@ -183,13 +215,23 @@ onBeforeUnmount(() => {
     box-sizing: border-box;
   }
 
+  // 铺满的情况下，强制容器区域的高度为 100%
   &.FullScreen .arco-resizebox {
     height: 100% !important;
     padding-bottom: unset !important;
   }
 
+  // 嵌入文档的情况下，点击内部，显示高亮的边框
   &:not(.FullScreen).ClickedInside {
     border-color: var(--b3-theme-primary);
+  }
+}
+</style>
+
+<style lang="scss">
+.EnMouseInWhiteBoard {
+  .protyle-gutters {
+    display: none !important;
   }
 }
 </style>

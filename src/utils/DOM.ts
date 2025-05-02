@@ -346,3 +346,10 @@ export function getLastCharPositionFromTextNode(textNode) {
     return null
   }
 }
+
+
+const EnProtyleUtilAreaRef = ref(null)
+export function useEnProtyleUtilAreaRef() {
+  return EnProtyleUtilAreaRef
+}
+
