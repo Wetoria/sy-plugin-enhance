@@ -50,7 +50,7 @@ watchEffect(() => {
 
   const assetsBorderStyle = needUnderline
     ? `
-      border: ${commentOptions.value.commentUnderlineWidth}px ${borderStyle} ${commentOptions.value.commentUnderlineColor};
+      border: ${commentOptions.value.commentUnderlineWidth}px ${borderStyle} var(--en-comment-highlight-color, ${commentOptions.value.commentUnderlineColor});
     `
     : ''
 
@@ -77,6 +77,8 @@ watchEffect(() => {
     ${blockSelectorList.map((item) => {
       return `
         ${item} {
+          --en-comment-highlight-color: ${commentOptions.value.commentUnderlineColor};
+
           &[data-type="NodeParagraph"],
           &[data-type="NodeHeading"],
           [data-type="NodeParagraph"],

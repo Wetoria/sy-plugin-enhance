@@ -67,11 +67,13 @@ import EnDock from '@/components/EnDock/EnDock.vue'
 import EnProtyle from '@/components/EnProtyle.vue'
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import {
+  EN_COMMENT_KEYS,
   getNodeIdByCommentId,
   injectCommentIdList,
   isCancelShowCommentListDom,
   isCommentNode,
 } from '@/modules/Comment/Comment'
+import { useRegisterStyle } from '@/utils/DOM'
 import { useCurrentProtyle } from '@/utils/Siyuan'
 import { quickMakeCard } from '@/utils/Siyuan/Card'
 import { nextTick } from 'process'
@@ -151,9 +153,50 @@ watchEffect(() => {
   }
 })
 
+const styleDomRef = useRegisterStyle('en-comment-target-block-style')
+watchEffect(() => {
+  const styleText = selectedCommentIdList.value.map((i) => {
+    return `
+      [data-node-id="${i.commentForNodeId}"] {
+        --en-comment-highlight-color-base: 240, 182, 34;
+        --en-comment-highlight-color: rgb(var(--en-comment-highlight-color-base)) !important;
+        --en-comment-highlight-background-color: rgba(var(--en-comment-highlight-color-base), .25) !important;
+
+        &[${EN_COMMENT_KEYS.commentIdInAttribute}~="${i.commentId}"] {
+
+          &[data-type="NodeParagraph"],
+          &[data-type="NodeHeading"],
+          [data-type="NodeParagraph"],
+          [data-type="NodeHeading"] {
+
+            & > div:first-child {
+              background-color: var(--en-comment-highlight-background-color) !important;
+              text-decoration-color: var(--en-comment-highlight-color) !important;
+
+              & *:not([data-type*="en-comment-id"]) {
+                text-decoration-color: var(--en-comment-highlight-color) !important;
+              }
+            }
+
+          }
+
+        }
+
+        [data-type~="${i.commentId}"] {
+          background-color: var(--en-comment-highlight-background-color) !important;
+          text-decoration-color: var(--en-comment-highlight-color) !important;
+        }
+      }
+    `
+  }).join('\n')
+  styleDomRef.value.textContent = styleText
+})
+
 
 const onClickComment = async (event: MouseEvent) => {
   let target = event.target as HTMLElement
+
+  selectedCommentIdList.value = []
 
   const allCommentNodes = []
   while (target) {
@@ -222,7 +265,6 @@ const onClickComment = async (event: MouseEvent) => {
   const queryCommentBlockIdSql = `select * from attributes where name = 'custom-en-comment-ref-id' and value in ('${idListWhichHasComment.map((i) => i.commentId).join("','")}')`
   const commentBlockIdRes = await sql(queryCommentBlockIdSql)
 
-  selectedCommentIdList.value = []
   idListWhichHasComment.forEach((id) => {
     const commentBlockId = commentBlockIdRes.find((i) => i.value === id.commentId)?.block_id
     if (commentBlockId) {
