@@ -57,8 +57,8 @@
             @click="entryOpenSettings"
           >
             <div class="NavItemIcon EnEntryIcon">
-              <EnIconLeaf2 v-if="!settings.v" />
-              <EnIconDragon v-else-if="settings.v === 1" />
+              <EnIconLeaf2 v-if="!settings.v" size="16" />
+              <EnIconDragon v-else-if="settings.v === 1" size="16" />
               <SyIcon
                 v-else
                 name="iconSuper"

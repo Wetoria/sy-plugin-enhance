@@ -1,37 +1,52 @@
 <template>
-  <Teleport
-    v-if="entryRef"
-    :to="entryRef"
-  >
-    <EnIconLeaf2 v-if="!settings.v" />
-    <EnIconDragon v-else-if="settings.v === 1" />
-    <svg v-else>
-      <use xlink:href="#iconSuper"></use>
-    </svg>
-  </Teleport>
+
 </template>
 
 <script setup lang="ts">
-import EnIconDragon from '@/components/EnIconDragon.vue'
-import EnIconLeaf2 from '@/components/EnIconLeaf2.vue'
 import { usePlugin } from '@/main'
 import { injectSettings } from '@/modules/EnModuleControl/ModuleProvide'
 import { EN_EVENT_BUS_KEYS } from '@/utils/Constants'
 import { enEventBus } from '@/utils/EnEventBus'
 import {
+  onBeforeUnmount,
   onMounted,
   ref,
+  watchEffect,
 } from 'vue'
 
 const settings = injectSettings()
 
+const plugin = usePlugin()
+
 const entryRef = ref<HTMLElement>(window.SEP_GLOBAL.topBarEntryRef)
+
+watchEffect(() => {
+  if (entryRef.value) {
+    const target = entryRef.value.querySelector('use')
+    if (!target) {
+      return
+    }
+
+    const iconName = !settings.value.v ? 'iconEnLeaf2' : (
+      settings.value.v === 1 ? 'iconEnDragon' : 'iconSuper'
+    )
+    target.setAttribute('xlink:href', `#${iconName}`)
+  }
+})
+
+onBeforeUnmount(() => {
+  const target = entryRef.value.querySelector('use')
+  if (!target) {
+    return
+  }
+
+  target.setAttribute('xlink:href', `#iconEnLeaf`)
+})
 
 const registerTopBar = () => {
   if (entryRef.value) {
     return
   }
-  const plugin = usePlugin()
   const el = plugin.addTopBar({
     icon: "iconEnLeaf",
     title: plugin.i18n.pluginName,
@@ -48,13 +63,5 @@ onMounted(() => {
 </script>
 
 <style lang="scss">
-html[data-en_enabled_module~="En_Plugin_Enabled"] {
 
-  .toolbar__item[aria-label="叶归"] {
-
-    & svg:first-child {
-      display: none;
-    }
-  }
-}
 </style>

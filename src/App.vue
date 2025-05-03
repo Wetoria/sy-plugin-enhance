@@ -14,6 +14,7 @@
           ref="EnProtyleUtilAreaRef"
           class="EnProtyleUtilArea"
         ></div>
+        <ModuleControl />
       </div>
       <div
         id="SyEnhancerAppHiddenArea"
@@ -21,7 +22,6 @@
       >
 
       </div>
-      <ModuleControl />
 
       <!-- <FixedDocArea v-if="!plugin.isMobile" /> -->
     </div>

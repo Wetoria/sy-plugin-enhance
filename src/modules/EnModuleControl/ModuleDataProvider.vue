@@ -1,5 +1,7 @@
 <template>
-  <template v-if="allIsReady">
+  <div v-if="allIsReady">
+    <EnAuth />
+    <EnProtyleObserver />
     <slot
       v-bind="{
         isFree,
@@ -9,9 +11,7 @@
         isPermanent,
       }"
     ></slot>
-    <EnAuth />
-    <EnProtyleObserver />
-  </template>
+  </div>
 </template>
 
 <script setup lang="ts">
