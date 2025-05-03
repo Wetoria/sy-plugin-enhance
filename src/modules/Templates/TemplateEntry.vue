@@ -38,7 +38,7 @@
         康奈尔颜色
       </div>
     </EnSettingsItem>
-    <EnSettingsItem>
+    <EnSettingsItem mode="vertical">
       <div>
         笔记区
       </div>
@@ -69,7 +69,7 @@
         </a-space>
       </template>
     </EnSettingsItem>
-    <EnSettingsItem>
+    <EnSettingsItem mode="vertical">
       <div>
         线索区
       </div>
@@ -100,7 +100,7 @@
         </a-space>
       </template>
     </EnSettingsItem>
-    <EnSettingsItem>
+    <EnSettingsItem mode="vertical">
       <div>
         总结区
       </div>
