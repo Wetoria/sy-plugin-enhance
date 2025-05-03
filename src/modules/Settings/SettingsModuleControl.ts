@@ -135,21 +135,36 @@ export const onSettingListScroll = (e: Event) => {
   const targetRect = target.getBoundingClientRect()
 
   // 获取所有模块元素
-  const moduleElements = Array.from(document.querySelectorAll('[data-en-setting-ref-module-name]'))
+  const moduleElements =
+    Array.from(document.querySelectorAll('[data-en-setting-ref-module-name]'))
 
   // 找到当前在视口中最靠近顶部的模块
   let closestModule = null
-  let minDistance = Infinity
+  // let minDistance = Infinity
+  let minDistance = 20
 
-  moduleElements.forEach((el) => {
+  for (let i = 0; i < moduleElements.length; i++) {
+    const el = moduleElements[i]
     const rect = el.getBoundingClientRect()
-    const distance = Math.abs(rect.top - targetRect.top)
 
-    if (distance < minDistance) {
-      minDistance = distance
+    const lastEl = moduleElements[i - 1]
+    const lastRect = lastEl?.getBoundingClientRect()
+
+    const currentTopDistance = Math.abs(rect.top - targetRect.top)
+    const lastBottomDistance = lastEl ? Math.abs(lastRect.bottom - targetRect.top) : Infinity
+
+    if (currentTopDistance <= minDistance) {
+      minDistance = currentTopDistance
       closestModule = el
+      break
     }
-  })
+
+    if (lastBottomDistance <= minDistance) {
+      minDistance = lastBottomDistance
+      closestModule = lastEl
+      break
+    }
+  }
 
   if (closestModule) {
     const moduleName = closestModule.getAttribute('data-en-setting-ref-module-name')

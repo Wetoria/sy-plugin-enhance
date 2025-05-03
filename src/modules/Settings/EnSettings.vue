@@ -46,6 +46,8 @@
     <div
       class="enSettingsMain"
     >
+
+      <!-- 模块导航 -->
       <div :class="`enSettingsModuleSelectorList ${!plugin.isMobile ? 'isNotMobile' : ''}`">
         <div
           v-for="(moduleInfo, index) of settingModulesList"
@@ -57,9 +59,14 @@
           :data-en-setting-module-index="index"
           @click="onSelectModule(index)"
         >
-          {{ moduleInfo.moduleDisplayName }}
+          <span>
+            {{ moduleInfo.moduleDisplayName }}
+          </span>
         </div>
       </div>
+
+
+      <!-- 模块设置列表 -->
       <div
         ref="enSettingsMainContentRef"
         class="flexColumn enSettingsMainContent"
@@ -70,18 +77,19 @@
             v-for="(refItem) of settingRefKeysSorted"
             :key="refItem"
           >
-            <a-card
+            <!-- <a-card
               hoverable
-              :data-en-setting-ref-module-name="refItem"
               style="
                 border-radius: var(--b3-border-radius);
-              "
+                "
             >
-              <div
-                :ref="(el) => settingsRefMap[refItem] = el"
-              >
-              </div>
-            </a-card>
+          </a-card> -->
+            <div
+              :ref="(el) => settingsRefMap[refItem] = el"
+              :data-en-setting-ref-module-name="refItem"
+              class="enSettingsModuleArea"
+            >
+            </div>
           <!-- <EnDivider v-if="index != settingRefKeysSorted.length - 1" /> -->
           </template>
           <a-button
@@ -222,9 +230,9 @@ const openAuthModal = () => {
   color: rgb(var(--primary-6));
 }
 .en_settings_list {
-  padding: 16px 10px;
-  padding-right: 4px;
-  gap: 10px;
+  padding: 0px 8px;
+  padding-bottom: 30px;
+  gap: 20px;
 }
 
 .enSettingsFooter {
@@ -236,21 +244,20 @@ const openAuthModal = () => {
 .enSettingsMain {
   overflow: hidden;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   max-height: 85vh;
-  padding: 2px;
 }
 
 .enSettingsModuleSelectorList {
+  overflow-x: hidden;
+  overflow-y: auto;
 
-  padding: 0px 10px;
-  overflow-x: auto;
-  background-color: var(--color-bg-3);
-
-  display: flex;
-  align-items: center;
-  height: 34px; // 明确设置与子元素相同的高度
+  width: 90px;
   flex-shrink: 0;
+
+  background-color: var(--b3-theme-surface-light);
+
+  padding-bottom: 30px;
 
   &::-webkit-scrollbar {
     display: none; // Chrome, Safari, newer versions of Opera
@@ -259,43 +266,22 @@ const openAuthModal = () => {
   .moduleSelectorItem {
     display: inline-block;
     box-sizing: border-box;
-    padding: 4px 6px;
-    font-size: 1.17em;
+    padding: 4px 8px;
+    font-size: 1em;
     cursor: pointer;
-    font-weight: bold;
     position: relative;
-    width: max-content;
+
+    width: 100%;
+    height: 30px;
+
+    color: var(--b3-theme-on-surface);
+    overflow: hidden;
     white-space: nowrap;
-    background-color: var(--color-bg-3);
-    height: 34px;
-
-    &:first-child {
-      scroll-margin-left: 16px;
-    }
-
-    &:last-child {
-      scroll-margin-right: 16px;
-    }
+    text-overflow: ellipsis;
 
     &.moduleSelectorItem__Actived {
-      color: rgb(var(--primary-6));
-
-      &:after {
-        content: '';
-        display: block;
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 2px;
-        border-radius: 2px;
-        background-color: rgb(var(--primary-6));
-      }
-
-      &:hover {
-        border-bottom-left-radius: unset;
-        border-bottom-right-radius: unset;
-      }
+      color: var(--b3-theme-primary);
+      background-color: var(--b3-theme-surface-lighter);
     }
 
 
@@ -306,8 +292,7 @@ const openAuthModal = () => {
     .moduleSelectorItem {
 
       &:hover {
-        background-color: var(--color-fill-2);
-        border-radius: var(--b3-border-radius);
+        background-color: var(--b3-theme-surface-lighter);
       }
     }
   }
@@ -317,7 +302,6 @@ const openAuthModal = () => {
   overscroll-behavior: none;
   overflow: hidden;
   overflow-y: auto;
-  padding-bottom: 32px;
 }
 </style>
 
@@ -340,6 +324,10 @@ const openAuthModal = () => {
 
     display: flex;
     flex-direction: column;
+  }
+
+  .arco-drawer-footer {
+    padding: 8px 12px;
   }
 }
 </style>

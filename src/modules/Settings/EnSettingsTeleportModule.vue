@@ -230,6 +230,16 @@ onMounted(() => {
 .en_settings_module {
   position: relative;
 
+  .en_settings_module_head {
+    padding: 2px 0px;
+
+    position: sticky;
+    top: 0px;
+    z-index: 1;
+
+    background-color: var(--b3-theme-surface);
+  }
+
   .mask {
     position: absolute;
     top: 0;
