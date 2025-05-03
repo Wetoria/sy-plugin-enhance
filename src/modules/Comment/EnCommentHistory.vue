@@ -59,6 +59,7 @@ const commentIdList = injectCommentIdList()
 
 const popoverVisible = ref(false)
 
+
 const closeModalByEsc = (event: KeyboardEvent) => {
   if (event.key === 'Escape') {
     event.stopImmediatePropagation()
@@ -82,6 +83,14 @@ const selectedCommentIdList = ref<Array<{
   // 写下评论的块 id：列表（旧版）、列表项（新版）
   commentBlockId: string
 }>>([])
+
+watchEffect(() => {
+
+  // 关闭历史批注窗口时，清空列表
+  if (!popoverVisible.value) {
+    selectedCommentIdList.value = []
+  }
+})
 
 
 const onClickComment = async (event: MouseEvent) => {
