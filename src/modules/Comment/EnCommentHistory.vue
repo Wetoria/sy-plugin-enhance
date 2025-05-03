@@ -27,6 +27,11 @@
             </div>
           </div>
         </template>
+        <template v-else>
+          <div class="flexCenter" style="padding: 10px 16px;">
+            请选择批注过的块
+          </div>
+        </template>
       </div>
     </div>
   </EnDock>

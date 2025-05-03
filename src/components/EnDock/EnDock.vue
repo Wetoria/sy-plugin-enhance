@@ -62,8 +62,8 @@ const plugin = usePlugin()
 
 let clicked = false
 const open = defineModel<boolean>('open', { required: false })
-watch(open, (newValue, oldValue) => {
-  if (props.autoOpen && newValue && !oldValue) {
+watch(open, (newValue) => {
+  if (props.autoOpen && newValue && !clicked) {
     openDock()
   }
 })
@@ -85,10 +85,6 @@ const clickDockItem = () => {
 }
 
 const openDock = () => {
-  if (clicked) {
-    clicked = false
-    return
-  }
   clickDockItem()
 }
 
@@ -107,6 +103,9 @@ const recordClickDockItem = (event) => {
   })
   if (clickedId) {
     clicked = true
+    setTimeout(() => {
+      clicked = false
+    }, 1000)
   }
 }
 
