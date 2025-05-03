@@ -67,15 +67,22 @@
       >
         <div class="flexColumn en_settings_list">
           <template
-            v-for="(refItem, index) of settingRefKeysSorted"
+            v-for="(refItem) of settingRefKeysSorted"
             :key="refItem"
           >
-            <div
-              :ref="(el) => settingsRefMap[refItem] = el"
+            <a-card
+              hoverable
               :data-en-setting-ref-module-name="refItem"
+              style="
+                border-radius: var(--b3-border-radius);
+              "
             >
-            </div>
-            <EnDivider v-if="index != settingRefKeysSorted.length - 1" />
+              <div
+                :ref="(el) => settingsRefMap[refItem] = el"
+              >
+              </div>
+            </a-card>
+          <!-- <EnDivider v-if="index != settingRefKeysSorted.length - 1" /> -->
           </template>
           <a-button
             size="mini"
@@ -105,7 +112,6 @@
 </template>
 
 <script setup lang="ts">
-import EnDivider from '@/components/EnDivider.vue'
 import EnDrawer from '@/components/EnDrawer.vue'
 import EnIconDragon from '@/components/EnIconDragon.vue'
 import { usePlugin } from '@/main'
@@ -216,7 +222,9 @@ const openAuthModal = () => {
   color: rgb(var(--primary-6));
 }
 .en_settings_list {
-  padding: 0 16px;
+  padding: 16px 10px;
+  padding-right: 4px;
+  gap: 10px;
 }
 
 .enSettingsFooter {
@@ -323,6 +331,8 @@ const openAuthModal = () => {
     max-width: 560px;
     left: unset;
     right: 0;
+
+    background-color: var(--b3-theme-surface);
   }
   .arco-drawer-body {
     overscroll-behavior: none;
