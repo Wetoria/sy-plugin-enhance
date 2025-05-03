@@ -44,6 +44,7 @@ import { addDock } from '@/components/EnDock/EnDock'
 import EnDrawer from '@/components/EnDrawer.vue'
 import { usePlugin } from '@/main'
 import EnSettingsItemAreaHeading from '@/modules/Settings/EnSettingsItemAreaHeading.vue'
+import { targetIsInnerOf } from '@/utils/DOM'
 import { useStorage } from '@vueuse/core'
 import { Custom } from 'siyuan'
 import { computed, onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue'
@@ -59,7 +60,7 @@ const props = defineProps<{
 const plugin = usePlugin()
 
 
-
+let clicked = false
 const open = defineModel<boolean>('open', { required: false })
 watch(open, (newValue, oldValue) => {
   if (props.autoOpen && newValue && !oldValue) {
@@ -75,8 +76,8 @@ const clickDockItem = () => {
   if (plugin.isMobile) {
     return
   }
-  const name = `${plugin.name}_${dockType.value}`
-  const dockItem = document.querySelector(`.dock__item[data-type="${name}"]`) as HTMLElement
+  const key = `${plugin.name}_${dockType.value}`
+  const dockItem = document.querySelector(`.dock__item[data-type="${key}"]`) as HTMLElement
   if (!dockItem) {
     return
   }
@@ -84,6 +85,10 @@ const clickDockItem = () => {
 }
 
 const openDock = () => {
+  if (clicked) {
+    clicked = false
+    return
+  }
   clickDockItem()
 }
 
@@ -92,6 +97,25 @@ onBeforeUnmount(() => {
   if (open.value) {
     clickDockItem()
   }
+})
+
+const recordClickDockItem = (event) => {
+  const target = event.target as HTMLElement
+  const key = `${plugin.name}_${dockType.value}`
+  const clickedId = targetIsInnerOf(target, (target) => {
+    return target.dataset.type === key
+  })
+  if (clickedId) {
+    clicked = true
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', recordClickDockItem)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', recordClickDockItem)
 })
 
 
@@ -167,6 +191,7 @@ onMounted(() => {
   padding: 6px 12px;
   display: flex;
   align-items: center;
+  border-bottom: 1px solid var(--b3-border-color);
 }
 </style>
 
