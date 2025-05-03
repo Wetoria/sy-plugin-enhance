@@ -13,10 +13,34 @@
         <template v-if="selectedCommentIdList.length > 0">
           <!-- <a-divider orientation="left">历史评论</a-divider> -->
           <div class="historyCommentList">
-            <div
+            <a-card
               v-for="item of selectedCommentIdList"
               :key="item.commentBlockId"
+              class="historyCommentListItemCard"
             >
+              <div class="historyCommentListItemOperations">
+                <a-button-group>
+                  <a-button type="text" @click="(event) => quickMakeCardForCommentBlock(event, item)">
+                    <template #icon>
+                      <SyIcon name="iconRiffCard" />
+                    </template>
+                    快速制卡
+                  </a-button>
+                  <a-popconfirm
+                    content="确定删除吗？"
+                    position="tr"
+                    type="error"
+                    @ok="onDeleteComment(item)"
+                  >
+                    <a-button type="text" status="danger">
+                      <template #icon>
+                        <SyIcon name="iconTrashcan" />
+                      </template>
+                      删除
+                    </a-button>
+                  </a-popconfirm>
+                </a-button-group>
+              </div>
               <EnProtyle
                 :blockId="item.commentBlockId"
                 :options="{
@@ -24,7 +48,7 @@
                 }"
                 disableEnhance
               />
-            </div>
+            </a-card>
           </div>
         </template>
         <template v-else>
@@ -38,15 +62,19 @@
 </template>
 
 <script setup lang="ts">
-import { sql } from '@/api'
+import { deleteBlock, sql } from '@/api'
 import EnDock from '@/components/EnDock/EnDock.vue'
 import EnProtyle from '@/components/EnProtyle.vue'
+import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import {
   getNodeIdByCommentId,
   injectCommentIdList,
   isCancelShowCommentListDom,
   isCommentNode,
 } from '@/modules/Comment/Comment'
+import { useCurrentProtyle } from '@/utils/Siyuan'
+import { quickMakeCard } from '@/utils/Siyuan/Card'
+import { nextTick } from 'process'
 import { onBeforeUnmount, onMounted, ref, watchEffect } from 'vue'
 
 const commentIdList = injectCommentIdList()
@@ -73,6 +101,37 @@ watchEffect(() => {
     document.removeEventListener('keydown', closeModalByEsc, true)
   }
 })
+
+const currentProtyle = useCurrentProtyle()
+const quickMakeCardForCommentBlock = (event: MouseEvent, item: { commentBlockId: string }) => {
+
+  const target = event.target as HTMLElement
+  const cardElement = target.closest('.historyCommentListItemCard')
+  if (!cardElement) {
+    return
+  }
+  const blockElement = cardElement.querySelector(`[data-node-id="${item.commentBlockId}"]`) as HTMLElement
+
+  if (!blockElement) {
+    return
+  }
+  // 点击块，好记录当前 Protyle
+  blockElement.click()
+  quickMakeCard(currentProtyle.value, [blockElement])
+}
+
+const onDeleteComment = (item: { commentBlockId: string }) => {
+  const blockId = item.commentBlockId
+  // 先从列表中移除
+  selectedCommentIdList.value = selectedCommentIdList.value.filter((i) => i.commentBlockId !== blockId)
+
+  // 确保 EnProtyle 已经销毁，再删除块
+  // 否则会出现需要重建索引的问题
+  nextTick(() => {
+    // 调用思源 API 删除块
+    deleteBlock(blockId)
+  })
+}
 
 const selectedCommentIdList = ref<Array<{
   // 评论的目标块中的 id
@@ -202,7 +261,7 @@ onBeforeUnmount(() => {
 
 
     .protyle-wysiwyg {
-      padding: 6px 16px !important;
+      padding: 2px 2px !important;
     }
   }
 
@@ -215,13 +274,30 @@ onBeforeUnmount(() => {
     .historyCommentList {
       display: flex;
       flex-direction: column;
-      // gap: var(--en-gap);
+      gap: 10px;
 
       overflow: hidden;
       overflow-y: auto;
+      padding: 10px 4px;
 
       .protyle-content {
         padding-bottom: unset !important;
+      }
+
+      :deep(.arco-card) {
+        border-radius: var(--b3-border-radius);
+        overflow: hidden;
+        background-color: var(--b3-theme-background);
+
+        .arco-card-body {
+          padding: 0;
+        }
+      }
+
+      .historyCommentListItemOperations {
+        display: flex;
+        justify-content: flex-end;
+        padding: 4px 8px;
       }
     }
   }
