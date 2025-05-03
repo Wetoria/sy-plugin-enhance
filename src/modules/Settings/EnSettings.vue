@@ -91,12 +91,13 @@
     <template #footer>
       <div class="enSettingsFooter">
         <span>
-          <span>作者：</span>
-          <a href="https://wetoria.me">Wetoria</a>
-        </span>
-        <span>
           使用说明：
           <a href="https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse">{{ plugin.version ? `v${plugin.version}` : '' }}</a>
+        </span>
+        <span>
+          问题反馈：
+          <a href="https://qm.qq.com/q/uqtSkQUS8U">Q 群</a>、
+          <a href="https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse#share-OKS2dR19WopKDqxWUWlcfI7tn3G">其他</a>
         </span>
       </div>
     </template>
