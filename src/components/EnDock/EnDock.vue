@@ -5,7 +5,7 @@
     class="EnDockMobile"
     :class="dockType"
     :scrollTarget="drawerContainerRef"
-    @cancel="close"
+    @cancel="closeDrawer"
   >
     <template #title>
       <div>
@@ -21,8 +21,8 @@
     </div>
   </EnDrawer>
   <Teleport
-    v-if="open && (drawerContainerRef || dockAreaElementRef)"
-    :to="plugin.isMobile ? drawerContainerRef : dockAreaElementRef"
+    v-if="open && (drawerContainerRef || dockElement)"
+    :to="plugin.isMobile ? drawerContainerRef : dockElement"
   >
     <div
       class="en_dock_container"
@@ -40,20 +40,24 @@
 </template>
 
 <script setup lang="ts">
+import { addDock } from '@/components/EnDock/EnDock'
 import EnDrawer from '@/components/EnDrawer.vue'
 import { usePlugin } from '@/main'
 import EnSettingsItemAreaHeading from '@/modules/Settings/EnSettingsItemAreaHeading.vue'
-import { generateShortUUID } from '@/utils'
 import { useStorage } from '@vueuse/core'
 import { Custom } from 'siyuan'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue'
 
 const props = defineProps<{
-  type?: string
+  type: string
   icon?: string
   title?: string
   autoOpen?: boolean
 }>()
+
+
+const plugin = usePlugin()
+
 
 
 const open = defineModel<boolean>('open', { required: false })
@@ -62,11 +66,11 @@ watch(open, (newValue, oldValue) => {
     openDock()
   }
 })
-const close = () => {
+const closeDrawer = () => {
   open.value = false
 }
 
-const openDock = () => {
+const clickDockItem = () => {
   // 移动端不打开 dock
   if (plugin.isMobile) {
     return
@@ -79,34 +83,52 @@ const openDock = () => {
   dockItem.click()
 }
 
-const emits = defineEmits<{
-  (e: 'init', dock: Custom): void
-  (e: 'resize', dock: Custom): void
-  (e: 'destroy', dock: Custom): void
-  (e: 'update', dock: Custom): void
-}>()
+const openDock = () => {
+  clickDockItem()
+}
+
+// 卸载时如果打开了 dock，则点击一次，关闭 dock
+onBeforeUnmount(() => {
+  if (open.value) {
+    clickDockItem()
+  }
+})
 
 
-const plugin = usePlugin()
 
-const dockAreaElementRef = ref<HTMLElement>()
 
-const syDockRef = ref<Custom>(null)
+const dock = ref<{
+  dockRef: Custom,
+  open: boolean,
+  width: number,
+}>({
+  dockRef: null,
+  open: false,
+  width: 0,
+})
+const dockElement = computed(() => {
+  return dock.value?.dockRef?.element
+})
+
 const dockType = computed(() => {
-  return props.type ? `EnDock_${props.type}` : `EnDock_${generateShortUUID()}`
+  return `EnDock_${props.type}`
 })
 
 const drawerContainerRef = ref<HTMLDivElement>()
-const dockTypeStorage = props.type ? useStorage(dockType.value, {
+const dockTypeStorage = useStorage(dockType.value, {
   width: 300,
-}) : ref({
-  width: 300
+})
+watchEffect(() => {
+  if (dock.value.open) {
+    dockTypeStorage.value.width = dock.value.width
+  }
+  open.value = dock.value.open
 })
 
 onMounted(() => {
-  if (!plugin.isMobile) {
-    // 添加叶归侧边栏
-    plugin.addDock({
+  if (!plugin.isMobile && props.type) {
+
+    dock.value = addDock({
       type: `_${dockType.value}`,
       config: {
         position: 'RightTop',
@@ -118,29 +140,6 @@ onMounted(() => {
         title: props.title || '叶归',
       },
       data: {},
-      init() {
-        syDockRef.value = this as any as Custom
-        dockAreaElementRef.value = this.element
-        emits('init', this as any as Custom)
-      },
-      resize() {
-        syDockRef.value = this as any as Custom
-        const rect = this.element.getBoundingClientRect()
-        const isOpened = rect.width > 0
-        open.value = isOpened
-        if (isOpened) {
-          dockTypeStorage.value.width = rect.width
-        }
-        emits('resize', this as any as Custom)
-      },
-      update() {
-        syDockRef.value = this as any as Custom
-        emits('update', this as any as Custom)
-      },
-      destroy() {
-        emits('destroy', this as any as Custom)
-        syDockRef.value = null
-      },
     })
   }
 })
