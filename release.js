@@ -157,6 +157,7 @@ const main = async () => {
     writeFileSync('./package.json', packageUpdated, 'utf8')
     console.log('✅  package.json updated')
 
+    console.log('🔄  \x1B[90m Ready to commit new version and create tag...\x1B[0m')
     exec(
       `git add ./plugin.json ./package.json && git commit -m "chore: update version to ${newVersion}" && git push && git tag v${newVersion}`,
       (err, stdout) => {
@@ -165,6 +166,7 @@ const main = async () => {
           process.exit(1)
         }
 
+        console.log('🔄  \x1B[90mTag Created, pushing...\x1B[0m')
         exec(`git push origin v${newVersion}`, (err) => {
           if (err) {
             console.error('\x1B[31m%s\x1B[0m', '❌  Error for pushing tag:', err)
