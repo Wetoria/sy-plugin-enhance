@@ -1,18 +1,11 @@
 <template>
-  <a-modal
-    v-model:visible="popoverVisible"
-    class="enCommentListContainerModal enCommentListContainerModalDesktop"
-    modal-class="enCommentListContainer"
-    draggable
-    :footer="false"
-    :mask="false"
-    :alignCenter="true"
+  <EnDock
+    v-model:open="popoverVisible"
+    icon="iconEnComment"
+    title="历史批注"
+    autoOpen
+    type="EnCommentHistory"
   >
-    <template #title>
-      <div>
-        历史批注
-      </div>
-    </template>
     <div
       class="enCommentListContainerContent"
     >
@@ -36,11 +29,12 @@
         </template>
       </div>
     </div>
-  </a-modal>
+  </EnDock>
 </template>
 
 <script setup lang="ts">
 import { sql } from '@/api'
+import EnDock from '@/components/EnDock/EnDock.vue'
 import EnProtyle from '@/components/EnProtyle.vue'
 import {
   getNodeIdByCommentId,
@@ -177,68 +171,49 @@ onBeforeUnmount(() => {
 // #endregion 点击评论，显示历史评论列表
 </script>
 
-<style lang="scss">
-.enCommentListContainerModalDesktop {
-  pointer-events: none;
+<style lang="scss" scoped>
+.EnCommentListHeader {
+  padding: 4px 8px;
+}
 
-  & .arco-modal-wrapper {
-    pointer-events: none;
-    overflow: hidden;
+.enCommentListContainerContent {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: auto;
+
+  :deep(.protyle-content) {
+    padding-bottom: unset !important;
+    scrollbar-gutter: auto;
+
+
+    .protyle-wysiwyg {
+      padding: 6px 16px !important;
+    }
   }
 
-  .enCommentListContainer {
-    pointer-events: auto;
-    min-height: 98px;
-    max-width: 45vw;
-    max-height: 80vh;
-    background: var(--b3-theme-background);
-    border: 1px solid var(--b3-border-color);
-    // transform: translate(100vw, 100vh);
 
-    .arco-modal-header {
-      padding: 0 16px;
-      border-bottom: 1px solid var(--b3-border-color);
-      height: 36px;
-    }
+  .enCommentListContainerContentHistoryCommentList {
+    display: flex;
+    flex-direction: column;
+    // gap: var(--en-gap);
 
-    .arco-modal-body {
-      padding: 0;
-    }
-
-    .enCommentListContainerContent {
+    .historyCommentList {
       display: flex;
       flex-direction: column;
-      flex: 1;
-      overflow: auto;
+      // gap: var(--en-gap);
+
+      overflow: hidden;
+      overflow-y: auto;
 
       .protyle-content {
         padding-bottom: unset !important;
       }
-
-      .protyle-wysiwyg {
-        padding: 6px 16px !important;
-      }
-
-      .enCommentListContainerContentHistoryCommentList {
-        display: flex;
-        flex-direction: column;
-        // gap: var(--en-gap);
-
-        .historyCommentList {
-          display: flex;
-          flex-direction: column;
-          // gap: var(--en-gap);
-
-          overflow: hidden;
-          overflow-y: auto;
-
-          .protyle-content {
-            padding-bottom: unset !important;
-          }
-        }
-      }
     }
   }
 }
+</style>
+
+<style lang="scss">
 
 </style>
