@@ -62,6 +62,7 @@ import {
 } from 'siyuan'
 import {
   onBeforeMount,
+  onBeforeUnmount,
   onMounted,
   ref,
   watch,
@@ -225,6 +226,9 @@ const renderProtyle = async () => {
 
 onMounted(() => {
   renderProtyle()
+})
+onBeforeUnmount(() => {
+  destroyProtyle()
 })
 
 watch(props, () => {
