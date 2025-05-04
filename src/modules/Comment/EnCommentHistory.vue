@@ -196,8 +196,6 @@ watchEffect(() => {
 const onClickComment = async (event: MouseEvent) => {
   let target = event.target as HTMLElement
 
-  selectedCommentIdList.value = []
-
   const allCommentNodes = []
   while (target) {
     if (isCancelShowCommentListDom(target)) {
@@ -265,6 +263,7 @@ const onClickComment = async (event: MouseEvent) => {
   const queryCommentBlockIdSql = `select * from attributes where name = 'custom-en-comment-ref-id' and value in ('${idListWhichHasComment.map((i) => i.commentId).join("','")}')`
   const commentBlockIdRes = await sql(queryCommentBlockIdSql)
 
+  selectedCommentIdList.value = []
   idListWhichHasComment.forEach((id) => {
     const commentBlockId = commentBlockIdRes.find((i) => i.value === id.commentId)?.block_id
     if (commentBlockId) {
