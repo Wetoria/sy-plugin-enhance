@@ -1,177 +1,183 @@
 <template>
-  <NodeToolbar
-    :position="Position.Top"
-    :is-visible="isSelected && !isMultipleSelected"
-    :node-id="flowNode.id"
-    class="EnWhiteBoardNodeToolbar"
-    :style="{
-      transform: 'translateY(-8px)',
-    }"
-  >
-    <EnWhiteBoardToolBar
-      :is-node-toolbar="true"
-      :node-id="flowNode.id"
-      :style="{ transform: 'translateY(-8px)' }"
-      @remove-node="handleRemoveNode"
-      @duplicate-node="handleDuplicateNode"
-      @open-in-sidebar="handleOpenInSidebar"
-      @collapse="collapseRef?.toggleCollapse()"
-    >
-      <a-tooltip content="块 ID">
-        <a-button>
-          <EnIconTarget />
-        </a-button>
-        <template #content>
-          <div class="flexColumn">
-            <div>
-              当前绑定的块 ID:
-              <EnBlockJumper
-                :block-id="nodeData.blockId"
-              />
-            </div>
-            <div>
-              <a-input
-                v-model="nodeData.blockId"
-                style="width: 200px"
-              />
-            </div>
-          </div>
-        </template>
-      </a-tooltip>
-    </EnWhiteBoardToolBar>
-  </NodeToolbar>
-  <EnWhiteBoardNodeCollapse
-    ref="collapseRef"
-    :nodeId="flowNode.id"
-    :initialCollapsed="flowNode.data?.isCollapsed || false"
-    :whiteBoardConfigData="embedWhiteBoardConfigData"
-    @update:isCollapsed="(val) => isCollapsed = val"
-  />
-  <template v-if="isMindmapNode">
-    <EnWhiteBoardNodeMindmap
-      :nodeId="flowNode.id"
-      :isCollapsed="isCollapsed"
-      :displayText="displayText"
-      :nodeData="nodeData"
-      :whiteBoardConfigData="embedWhiteBoardConfigData"
-      @toggleMindmap="handleToggleMindmap"
-    >
-      <div
-        ref="mainRef"
-        class="main EnWhiteBoardNodeProtyleMain"
-        :data-en-flow-node-id="flowNode.id"
-        @wheel.capture="captureWheel"
-        @mousedown.capture="captureMouseDown"
-        @click.capture="captureClick"
-      >
-      </div>
-    </EnWhiteBoardNodeMindmap>
-  </template>
-  <template v-else-if="isTreeCardNode">
-    <EnWhiteBoardNodeTreeCard
-      :nodeId="flowNode.id"
-      :isCollapsed="isCollapsed"
-      :displayText="displayText"
-      :nodeData="nodeData"
-      :whiteBoardConfigData="embedWhiteBoardConfigData"
-      @toggleTreeCard="handleToggleTreeCard"
-    >
-      <div
-        ref="mainRef"
-        class="main EnWhiteBoardNodeProtyleMain"
-        :data-en-flow-node-id="flowNode.id"
-        @wheel.capture="captureWheel"
-        @mousedown.capture="captureMouseDown"
-        @click.capture="captureClick"
-      >
-      </div>
-    </EnWhiteBoardNodeTreeCard>
-  </template>
+  <!-- 增加最外层包裹，方便控制整个卡片中的显隐 -->
   <div
-    v-else
     ref="containerRef"
-    class="EnWhiteBoardNodeProtyleContainer"
-    :class="{
-      'variant-default': !nodeData.style?.variant || nodeData.style.variant === 'default',
-      'variant-card': nodeData.style?.variant === 'card',
-      'variant-note': nodeData.style?.variant === 'note',
-      'is-collapsed': isCollapsed,
-      ...nodeTypeClass,
-    }"
-    :data-en-flow-node-id="flowNode.id"
-    :style="{
-      '--en-card-width': `${flowNode.dimensions.width}px`,
-      '--en-card-height': `${flowNode.height}px`,
-      '--node-color': nodeData.style?.backgroundColor || 'var(--b3-border-color)',
-      'backgroundColor': nodeData.style?.backgroundColor
-        ? `color-mix(in srgb, var(--b3-theme-background) 95%, ${nodeData.style.backgroundColor})`
-        : undefined,
-      'borderColor': nodeData.style?.backgroundColor || 'var(--b3-border-color)',
-    }"
+    class="EnWhiteBoardNodeProtyle"
+    style="width: 100%; height: 100%;"
   >
-    <EnWhiteBoardNodeFit
+    <NodeToolbar
+      :position="Position.Top"
+      :is-visible="isSelected && !isMultipleSelected"
+      :node-id="flowNode.id"
+      class="EnWhiteBoardNodeToolbar"
+      :style="{
+        transform: 'translateY(-8px)',
+      }"
+    >
+      <EnWhiteBoardToolBar
+        :is-node-toolbar="true"
+        :node-id="flowNode.id"
+        :style="{ transform: 'translateY(-8px)' }"
+        @remove-node="handleRemoveNode"
+        @duplicate-node="handleDuplicateNode"
+        @open-in-sidebar="handleOpenInSidebar"
+        @collapse="collapseRef?.toggleCollapse()"
+      >
+        <a-tooltip content="块 ID">
+          <a-button>
+            <EnIconTarget />
+          </a-button>
+          <template #content>
+            <div class="flexColumn">
+              <div>
+                当前绑定的块 ID:
+                <EnBlockJumper
+                  :block-id="nodeData.blockId"
+                />
+              </div>
+              <div>
+                <a-input
+                  v-model="nodeData.blockId"
+                  style="width: 200px"
+                />
+              </div>
+            </div>
+          </template>
+        </a-tooltip>
+      </EnWhiteBoardToolBar>
+    </NodeToolbar>
+    <EnWhiteBoardNodeCollapse
+      ref="collapseRef"
       :nodeId="flowNode.id"
+      :initialCollapsed="flowNode.data?.isCollapsed || false"
       :whiteBoardConfigData="embedWhiteBoardConfigData"
-      @height-changed="onHeightChanged"
+      @update:isCollapsed="(val) => isCollapsed = val"
     />
+    <template v-if="isMindmapNode">
+      <EnWhiteBoardNodeMindmap
+        :nodeId="flowNode.id"
+        :isCollapsed="isCollapsed"
+        :displayText="displayText"
+        :nodeData="nodeData"
+        :whiteBoardConfigData="embedWhiteBoardConfigData"
+        @toggleMindmap="handleToggleMindmap"
+      >
+        <div
+          ref="mainRef"
+          class="main EnWhiteBoardNodeProtyleMain"
+          :data-en-flow-node-id="flowNode.id"
+          @wheel.capture="captureWheel"
+          @mousedown.capture="captureMouseDown"
+          @click.capture="captureClick"
+        >
+        </div>
+      </EnWhiteBoardNodeMindmap>
+    </template>
+    <template v-else-if="isTreeCardNode">
+      <EnWhiteBoardNodeTreeCard
+        :nodeId="flowNode.id"
+        :isCollapsed="isCollapsed"
+        :displayText="displayText"
+        :nodeData="nodeData"
+        :whiteBoardConfigData="embedWhiteBoardConfigData"
+        @toggleTreeCard="handleToggleTreeCard"
+      >
+        <div
+          ref="mainRef"
+          class="main EnWhiteBoardNodeProtyleMain"
+          :data-en-flow-node-id="flowNode.id"
+          @wheel.capture="captureWheel"
+          @mousedown.capture="captureMouseDown"
+          @click.capture="captureClick"
+        >
+        </div>
+      </EnWhiteBoardNodeTreeCard>
+    </template>
     <div
-      v-if="isCollapsed"
-      class="ProtyleToolbarArea"
-    >
-      <div class="infos">
-        <span
-          class="block-title"
-          :title="displayText"
-        >{{ displayText }}</span>
-      </div>
-    </div>
-    <div
-      ref="mainRef"
-      class="main EnWhiteBoardNodeProtyleMain"
+      v-else
+      class="EnWhiteBoardNodeProtyleContainer"
+      :class="{
+        'variant-default': !nodeData.style?.variant || nodeData.style.variant === 'default',
+        'variant-card': nodeData.style?.variant === 'card',
+        'variant-note': nodeData.style?.variant === 'note',
+        'is-collapsed': isCollapsed,
+        ...nodeTypeClass,
+      }"
       :data-en-flow-node-id="flowNode.id"
-      @wheel.capture="captureWheel"
-      @mousedown.capture="captureMouseDown"
-      @click.capture="captureClick"
+      :style="{
+        '--en-card-width': `${flowNode.dimensions.width}px`,
+        '--en-card-height': `${flowNode.height}px`,
+        '--node-color': nodeData.style?.backgroundColor || 'var(--b3-border-color)',
+        'backgroundColor': nodeData.style?.backgroundColor
+          ? `color-mix(in srgb, var(--b3-theme-background) 95%, ${nodeData.style.backgroundColor})`
+          : undefined,
+        'borderColor': nodeData.style?.backgroundColor || 'var(--b3-border-color)',
+      }"
     >
-    </div>
-
-    <!-- 需确保 mainRef 唯一，目前的写法是唯一的（需要 v-else 等） -->
-    <Teleport
-      v-if="mainRef"
-      :to="mainRef"
-    >
-      <EnProtyle
-        :block-id="nodeData.blockId"
-        autoBind
-        hideGutters
-        disableEnhance
-        changeHelperPosition
-        @after="afterProtyleLoad"
+      <EnWhiteBoardNodeFit
+        :nodeId="flowNode.id"
+        :whiteBoardConfigData="embedWhiteBoardConfigData"
+        @height-changed="onHeightChanged"
       />
-    </Teleport>
-
-    <NodeResizer
-      :min-width="100"
-      :min-height="36"
-      color="transparent"
-      :disable-style-updates="true"
-      @resize="onResize"
-    />
-
-    <!-- 只在非思维导图节点时显示所有连接点 -->
-    <Handle
-      v-for="position in ['top', 'right', 'bottom', 'left']"
-      :id="position"
-      :key="position"
-      class="Handle"
-      :class="[position.toLowerCase()]"
-      type="source"
-      :position="Position[position.charAt(0).toUpperCase() + position.slice(1)]"
-    >
-      <div class="HandleIcon">
-        <component :is="handleIcons[position]" />
+      <div
+        v-if="isCollapsed"
+        class="ProtyleToolbarArea"
+      >
+        <div class="infos">
+          <span
+            class="block-title"
+            :title="displayText"
+          >{{ displayText }}</span>
+        </div>
       </div>
-    </Handle>
+      <div
+        ref="mainRef"
+        class="main EnWhiteBoardNodeProtyleMain"
+        :data-en-flow-node-id="flowNode.id"
+        @wheel.capture="captureWheel"
+        @mousedown.capture="captureMouseDown"
+        @click.capture="captureClick"
+      >
+      </div>
+
+      <!-- 需确保 mainRef 唯一，目前的写法是唯一的（需要 v-else 等） -->
+      <Teleport
+        v-if="isInViewport && mainRef"
+        :to="mainRef"
+      >
+        <EnProtyle
+          :block-id="nodeData.blockId"
+          autoBind
+          hideGutters
+          disableEnhance
+          changeHelperPosition
+          @after="afterProtyleLoad"
+        />
+      </Teleport>
+
+      <NodeResizer
+        :min-width="100"
+        :min-height="36"
+        color="transparent"
+        :disable-style-updates="true"
+        @resize="onResize"
+      />
+
+      <!-- 只在非思维导图节点时显示所有连接点 -->
+      <Handle
+        v-for="position in ['top', 'right', 'bottom', 'left']"
+        :id="position"
+        :key="position"
+        class="Handle"
+        :class="[position.toLowerCase()]"
+        type="source"
+        :position="Position[position.charAt(0).toUpperCase() + position.slice(1)]"
+      >
+        <div class="HandleIcon">
+          <component :is="handleIcons[position]" />
+        </div>
+      </Handle>
+    </div>
   </div>
 </template>
 
@@ -199,7 +205,7 @@ import {
   Position,
   useKeyPress,
   useNode,
-  useVueFlow,
+  useVueFlow
 } from '@vue-flow/core'
 import {
   NodeResizer,
@@ -209,6 +215,7 @@ import { NodeToolbar } from '@vue-flow/node-toolbar'
 import { Protyle } from 'siyuan'
 import {
   computed,
+  onMounted,
   ref,
   watch
 } from 'vue'
@@ -246,11 +253,53 @@ const {
   removeNodes,
   addNodes,
   getSelectedNodes,
+  onViewportChange
 } = useVueFlow()
 
 const nodeData = computed(() => flowNode.data)
 
 const containerRef = ref<HTMLDivElement | null>(null)
+
+let offset = 100
+const isInViewport = ref(false)
+
+const calculateIsInViewport = () => {
+  if (!containerRef.value) {
+    return
+  }
+
+  const vueFlowElement = containerRef.value?.closest('.EnWhiteBoardRenderContainer')
+  if (!vueFlowElement) {
+    return
+  }
+
+  const vueFlowElementRect = vueFlowElement.getBoundingClientRect()
+  const nodeRect = containerRef.value.getBoundingClientRect()
+
+  const leftBoundaryInViewport = nodeRect.left < vueFlowElementRect.right + offset && nodeRect.left > vueFlowElementRect.left - offset
+  const rightBoundaryInViewport = nodeRect.right > vueFlowElementRect.left - offset && nodeRect.right < vueFlowElementRect.right + offset
+  const topBoundaryInViewport = nodeRect.top < vueFlowElementRect.bottom + offset && nodeRect.top > vueFlowElementRect.top - offset
+  const bottomBoundaryInViewport = nodeRect.bottom > vueFlowElementRect.top - offset && nodeRect.bottom < vueFlowElementRect.bottom + offset
+
+  const horizontalInViewport =
+    leftBoundaryInViewport
+    || rightBoundaryInViewport
+  const verticalInViewport =
+    topBoundaryInViewport
+    || bottomBoundaryInViewport
+
+  const isIn =
+    horizontalInViewport
+    && verticalInViewport
+
+  // console.log('vueFlowElementRect', vueFlowElementRect, nodeRect)
+  // console.log(`isInViewport ${isInViewport} horizontalInViewport ${horizontalInViewport} verticalInViewport ${verticalInViewport} leftBoundaryInViewport ${leftBoundaryInViewport} rightBoundaryInViewport ${rightBoundaryInViewport} topBoundaryInViewport ${topBoundaryInViewport} bottomBoundaryInViewport ${bottomBoundaryInViewport}`)
+  isInViewport.value = isIn
+}
+
+onViewportChange(calculateIsInViewport)
+onMounted(calculateIsInViewport)
+
 
 const spaceKeyPressing = useKeyPress('Space')
 const captureWheel = (event: WheelEvent) => {
