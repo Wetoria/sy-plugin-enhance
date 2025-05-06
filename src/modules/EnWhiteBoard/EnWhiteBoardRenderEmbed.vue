@@ -87,6 +87,8 @@ import {
   useWhiteBoardModule,
 } from '@/modules/EnWhiteBoard/EnWhiteBoard'
 import EnWhiteBoardRender from '@/modules/EnWhiteBoard/EnWhiteBoardRender.vue'
+import { EN_EVENT_BUS_KEYS } from '@/utils/Constants'
+import { enEventBus } from '@/utils/EnEventBus'
 import {
   onBeforeUnmount,
   onMounted,
@@ -116,6 +118,9 @@ const {
 const fullScreen = ref<'doc' | 'siyuan' | undefined>(undefined)
 const changeFullScreen = (value?: 'doc' | 'siyuan') => {
   fullScreen.value = value
+  enEventBus.emit(EN_EVENT_BUS_KEYS.WHITEBOARD_CALCULATE_IS_IN_VIEWPORT, {
+    whiteBoardId: props.data.whiteBoardId,
+  })
 }
 
 

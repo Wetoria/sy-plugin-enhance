@@ -1240,9 +1240,9 @@ const onDragover = (event: DragEvent) => {
 
   // 在白板卡片中放置时，不进行处理
   if (isInProtyleCard) {
-    event.preventDefault()
-    event.stopPropagation()
-    event.stopImmediatePropagation()
+    // event.preventDefault()
+    // event.stopPropagation()
+    // event.stopImmediatePropagation()
     return
   }
 
@@ -1256,9 +1256,9 @@ const onDrop = async (event: DragEvent) => {
 
   // 在白板卡片中放置时，不进行处理
   if (isInProtyleCard) {
-    event.preventDefault()
-    event.stopPropagation()
-    event.stopImmediatePropagation()
+    // event.preventDefault()
+    // event.stopPropagation()
+    // event.stopImmediatePropagation()
     return
   }
 

@@ -2,7 +2,7 @@
   <div
     ref="protyleContainerRef"
     class="EnProtyleContainer"
-    :class="autoBind ? [
+    :class="auto ? [
       blockIdValid ? 'valid' : 'invalid',
       blockId ? '' : 'no_block_id',
     ] : []"
@@ -16,20 +16,18 @@
     </div>
     <div
       v-if="processing"
-      class="protyle_handling_prompt"
+      class="protyle_handling_prompt flexCenter"
     >
-      <a-tooltip>
-        <a-spin
-          :spinning="true"
-        >
-          <template #icon>
-            <icon-sync />
-          </template>
-        </a-spin>
-        <template #content>
-          正在处理，请勿在此时进行其他操作
+      <span>
+        正在更新卡片绑定的块 id，请勿进行其他操作
+      </span>
+      <a-spin
+        :spinning="true"
+      >
+        <template #icon>
+          <icon-sync />
         </template>
-      </a-tooltip>
+      </a-spin>
     </div>
   </div>
   <Teleport
@@ -50,18 +48,21 @@
 
 <script setup lang="ts">
 import {
+  deleteBlock,
   flushTransactions,
+  getBlockInfo,
   sql,
 } from '@/api'
 import { usePlugin } from '@/main'
+import { debounce } from '@/utils'
 import { useEnProtyleUtilAreaRef } from '@/utils/DOM'
 import { useSiyuanEventTransactions } from '@/utils/EventBusHooks'
+import { mergeElementsIntoSuperBlock, SyDomNodeTypes, waitingForSuperBlockIndexCommited } from '@/utils/Siyuan'
 import {
   IProtyleOptions,
   Protyle,
 } from 'siyuan'
 import {
-  onBeforeMount,
   onBeforeUnmount,
   onMounted,
   ref,
@@ -79,7 +80,7 @@ const props = defineProps<{
 
   options?: Omit<IProtyleOptions, 'blockId'>
 
-  autoBind?: boolean
+  auto?: boolean
 
   // 是否隐藏思源的 gutters 元素
   hideGutters?: boolean
@@ -87,12 +88,9 @@ const props = defineProps<{
 const emits = defineEmits<{
   after: [protyle: Protyle]
   afterRender: [protyle: Protyle]
+  updated: [blockId: string, type: 'delete' | 'move' | 'update']
+  moved: [parentId: string]
 }>()
-
-
-const blockId = defineModel<string>('blockId', {
-  required: true,
-})
 
 
 const protyleContainerRef = ref<HTMLDivElement>()
@@ -130,7 +128,7 @@ const checkBlockId = async () => {
 // TODO 如果思源调整了这部分逻辑，可能需要删掉这个拦截处理
 // INFO 拦截思源 Enter 未带任何修饰符的事件（仅Enter）
 const captureEnterKeyEvent = (event: KeyboardEvent) => {
-  if (!props.autoBind) {
+  if (!props.auto) {
     return
   }
 
@@ -169,8 +167,10 @@ const destroyProtyle = () => {
   }
 }
 
-const renderProtyle = async () => {
-  if (!props.blockId) {
+const renderProtyle = async (id?: string) => {
+  const newId = id || props.blockId
+
+  if (!newId) {
     destroyProtyle()
     return
   }
@@ -184,7 +184,7 @@ const renderProtyle = async () => {
     ...rest
   } = options
 
-  const blockId = props.blockId
+  const blockId = newId
 
   await checkBlockId()
 
@@ -231,7 +231,8 @@ onBeforeUnmount(() => {
   destroyProtyle()
 })
 
-watch(props, () => {
+// 监听 blockId 的变化，重新渲染 protyle
+watch(() => props.blockId, () => {
   renderProtyle()
 })
 
@@ -244,9 +245,11 @@ defineExpose({
 
 let offTransactionEvent = null // 定义事务监听清理函数
 onMounted(() => {
-  offTransactionEvent = useSiyuanEventTransactions(handleTransaction)
+  if (props.auto) {
+    offTransactionEvent = useSiyuanEventTransactions(handleTransaction)
+  }
 })
-onBeforeMount(() => {
+onBeforeUnmount(() => {
   if (offTransactionEvent) {
     offTransactionEvent()
   }
@@ -254,27 +257,129 @@ onBeforeMount(() => {
 
 const processing = ref(false)
 
-const removeNodeCreatedByOther = (event) => {
+
+const deletedFlag = ref(false)
+const movedFlag = ref(false)
+
+
+const needRemovedBlockIds = ref([])
+const needRemovedBlockIdsInterval = ref(null)
+const removeBlocksCreatedByOtherProtyle = () => {
+  needRemovedBlockIdsInterval.value = setInterval(() => {
+
+    if (!needRemovedBlockIds.value.length) {
+      clearInterval(needRemovedBlockIdsInterval.value)
+      return
+    }
+
+    const wysiwygElement = protyleRef.value?.protyle?.wysiwyg.element
+    if (!wysiwygElement) {
+      return
+    }
+
+    let firstLevelChildren = Array.from(wysiwygElement?.children) as HTMLElement[]
+    firstLevelChildren = firstLevelChildren.filter((item) => item.dataset.nodeId)
+
+    needRemovedBlockIds.value.forEach((needRemovedBlockId) => {
+      const target = firstLevelChildren.find((child) => child.dataset.nodeId === needRemovedBlockId)
+      if (target) {
+        target.remove()
+        needRemovedBlockIds.value = needRemovedBlockIds.value.filter((id) => id !== needRemovedBlockId)
+      }
+    })
+  })
+}
+onBeforeUnmount(() => {
+  if (needRemovedBlockIdsInterval.value) {
+    clearInterval(needRemovedBlockIdsInterval.value)
+  }
+})
+
+
+const checkAndMerge = () => {
+  processing.value = true
+  const finished = () => {
+    processing.value = false
+  }
+
+  const isDocProtyle = protyleRef.value?.protyle.wysiwyg.element.dataset.docType === SyDomNodeTypes.NodeDocument
+  // 如果当前是文档类型，则放弃合并
+  if (isDocProtyle) {
+    finished()
+    return
+  }
+
+  const wysiwygElement = protyleRef.value?.protyle?.wysiwyg.element
+
+  let firstLevelNodeChildren = Array.from(wysiwygElement?.children) as HTMLElement[]
+  firstLevelNodeChildren = firstLevelNodeChildren.filter((item) => item.dataset.nodeId)
+  const firstNode = firstLevelNodeChildren[0]
+
+  const isOnlyOne = firstLevelNodeChildren.length === 1
+  if (isOnlyOne) {
+    const nodeId = firstLevelNodeChildren[0].dataset.nodeId
+    const isSame = nodeId === props.blockId
+    if (!isSame) {
+      // 如果当前块 ID 和第一个子块的 ID 不一致，则更新当前块 ID
+      emits('updated', nodeId, 'update')
+    }
+
+    finished()
+    return
+  }
+
+  const firstNodeIsHeading = firstNode.dataset.type === SyDomNodeTypes.NodeHeading
+  if (firstNodeIsHeading) {
+    const headingNodeId = firstNode.dataset.nodeId
+    emits('updated', headingNodeId, 'update')
+    finished()
+    return
+  }
+
+  const superBlockId = mergeElementsIntoSuperBlock(protyleRef.value, firstLevelNodeChildren)
+  waitingForSuperBlockIndexCommited(() => {
+    emits('updated', superBlockId, 'update')
+    finished()
+  })
+}
+
+const checkAndMergeIntervalFlag = ref(null)
+// 应该不需要判断当前 protyle 是不是正在编辑了
+// 在 handleTransaction 中已经判断过了
+// 如果以后有问题的话，再另外处理了
+const waitingToCheckAndMergeBlocks = debounce(() => {
+  if (checkAndMergeIntervalFlag.value) {
+    // 如果已经在处理中了，取消之前的等待
+    clearInterval(checkAndMergeIntervalFlag.value)
+  }
+
+  checkAndMergeIntervalFlag.value = setInterval(() => {
+    if (needRemovedBlockIds.value.length || movedFlag.value || deletedFlag.value) {
+      return
+    }
+
+    clearInterval(checkAndMergeIntervalFlag.value)
+
+    // 检查并合并块
+    checkAndMerge()
+  }, 0)
+// }, 1000 * 30) // 停止编辑 30s 后检查并合并块
+}) // 停止编辑 30s 后检查并合并块
+onBeforeUnmount(() => {
+  if (checkAndMergeIntervalFlag.value) {
+    clearInterval(checkAndMergeIntervalFlag.value)
+  }
+  waitingToCheckAndMergeBlocks.cancel()
+})
+
+
+const handleBlockWithOtherProtyle = (event) => {
   const {
     detail,
   } = event || {}
 
-  const {
-    sid,
-  } = detail
-
-  const currentProtyleId = protyleRef.value?.protyle?.id
-
   const wysiwygElement = protyleRef.value?.protyle?.wysiwyg.element
   if (!wysiwygElement) {
-    return
-  }
-  const children = Array.from(wysiwygElement?.children) as HTMLElement[]
-  const isOtherProtyleEvent = sid !== currentProtyleId
-  console.log('isOtherProtyleEvent is ', isOtherProtyleEvent)
-
-  // 如果是当前 protyle 的事件，则不进行处理
-  if (!isOtherProtyleEvent) {
     return
   }
 
@@ -284,62 +389,131 @@ const removeNodeCreatedByOther = (event) => {
   const {
     doOperations = [],
   } = data[0]
-  console.log('doOperations is ', doOperations)
 
 
   doOperations.forEach((operation) => {
     const {
       action,
       id,
+      parentID,
+      previousID,
     } = operation
 
+    // 当前块被删除
+    if (id === props.blockId) {
+      if (action === 'delete') {
+        // 标记当前 protyle 绑定的块已被删除
+        deletedFlag.value = true
+        return
+      }
+
+      // 当前块被移动
+      if (action === 'move') {
+        movedFlag.value = true
+
+        if (!previousID) {
+          // 如果 previousID 为空，则说明当前块是父块的第一个子块
+          // parentId 就是新的父块 ID
+          emits('moved', parentID)
+
+          // 不能销毁当前的 protyle，否则不能监听到后续自动新增块的逻辑
+          // destroyProtyle()
+          renderProtyle(parentID)
+          return
+        }
+
+        getParentBlockId(previousID)
+        return
+      }
+
+      return
+    }
+
+
     const isAddContentIntoProtyle = ['insert', 'move'].includes(action)
-    console.log('isAddContentIntoProtyle is ', isAddContentIntoProtyle, action)
 
     if (isAddContentIntoProtyle) {
-      let target = null
-      let targetIndex = -1
-      children.forEach((child, index) => {
-        if (child.dataset.nodeId === id) {
-          target = child
-          targetIndex = index
-        }
-      })
-      console.log('target is ', target, 'targetIndex is ', targetIndex)
-      if (!target) {
-        // 如果目标节点不存在，则不进行处理
-        return
-      }
-      if (targetIndex <= 0) {
-        // 如果插入后是第一个块，则不进行处理
-        return
-      }
-      target.remove()
+      // 记录下需要从 EnProtyle 中移除的块
+      needRemovedBlockIds.value.push(id)
     }
   })
+  removeBlocksCreatedByOtherProtyle()
 }
 
-const handleTransaction = async (event) => {
+const removeAutoCreatedBlock = (detail) => {
+  const operation = detail.data[0].doOperations[0]
+  // 当前块在其他地方被删除了，需要删除新创建的空块，并标记 protyle 无效
+  if (operation.action === 'insert' && detail.data[0].doOperations.length === 1) {
+    blockIdValid.value = false
+    destroyProtyle()
+    emits('updated', '', 'delete')
+    deleteBlock(operation.id)
+  }
+}
 
+const getParentBlockId = async (id: string) => {
+  const blockInfo = await getBlockInfo(id)
+  const parentIsNotDoc = blockInfo.parent_id !== blockInfo.root_id
+
+  if (blockInfo.parent_id && parentIsNotDoc) {
+    emits('updated', blockInfo.parent_id, 'move')
+    emits('moved', blockInfo.parent_id)
+    renderProtyle(blockInfo.parent_id)
+  } else {
+    renderProtyle(props.blockId)
+  }
+}
+
+const handleTransaction = (event) => {
   if (!props.blockId) {
     // 如果块 ID 为空，则不进行处理
     return
   }
 
-  if (!props.autoBind) {
-    // 如果 autoBind 为 false，则不进行处理
+  if (!props.auto) {
+    // 如果 auto 为 false，则不进行处理
     return
   }
 
-  // 如果被其他 protyle 新增了块，需要删除
-  // 为了防止页面“闪烁”，只能在这里进行处理
-  setTimeout(() => {
-    removeNodeCreatedByOther(event)
-  }, 0)
-  setTimeout(() => {
-    removeNodeCreatedByOther(event)
-  }, 10)
+  const { detail } = event
+  // console.log('detail is ', detail)
 
+  const isCurrentAppEvent = detail.app === protyleRef.value?.protyle.app.appId
+  const isCurrentProtyleEvent = detail.sid === protyleRef.value?.protyle?.id
+  // console.log(`id: ${props.blockId}, isCurrentAppEvent is [${isCurrentAppEvent}], isCurrentProtyleEvent is [${isCurrentProtyleEvent}]`, protyleRef.value)
+  // console.log('protyleRef.value?.protyle?.id is ', protyleRef.value?.protyle?.id)
+
+
+  if (!isCurrentAppEvent) {
+    // 证明是伺服其他端的思源触发的，不进行处理
+    // 比如多人协作的场景
+    // 用户 A 在伺服本体的electron中使用
+    // 用户 B 在伺服的web中使用
+    // 假如 B 编辑了，在 A 这里，不应该处理，以用户 B 输入的内容为准
+    return
+  }
+
+  // FIXME 跨端的时候，其他端如果在某个卡片的块后增加了块，不会被清理掉
+  if (!isCurrentProtyleEvent) {
+    // 如果是其他编辑器中操作的事件，则需要进行一些处理
+    // 比如删除其他编辑器中新增的块
+    handleBlockWithOtherProtyle(event)
+    return
+  }
+
+  if (deletedFlag.value) {
+    removeAutoCreatedBlock(detail)
+    deletedFlag.value = false
+    return
+  }
+
+  if (movedFlag.value) {
+    removeAutoCreatedBlock(detail)
+    return
+  }
+
+  // 剩余的情况则是需要判断并记录当前 protyle 中的块 ID
+  waitingToCheckAndMergeBlocks()
 }
 
 // #endregion 👆 监听思源的事务
@@ -360,6 +534,10 @@ const handleTransaction = async (event) => {
     bottom: 8px;
     right: 8px;
     z-index: 1;
+
+    & * {
+      color: rgba(240, 182, 34, 1) !important;
+    }
   }
 
   :deep(.protyle) {
