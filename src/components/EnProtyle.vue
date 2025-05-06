@@ -258,6 +258,21 @@ onBeforeUnmount(() => {
 
 const processing = ref(false)
 
+const topIsDoc = () => {
+  return protyleRef.value?.protyle.wysiwyg.element.dataset.docType === SyDomNodeTypes.NodeDocument
+}
+
+const topIsHeading = () => {
+  const wysiwygTypeIsHeading = protyleRef.value?.protyle.wysiwyg.element.dataset.type === SyDomNodeTypes.NodeHeading
+  const wysiwygElement = protyleRef.value?.protyle?.wysiwyg.element
+
+  let firstLevelNodeChildren = Array.from(wysiwygElement?.children) as HTMLElement[]
+  firstLevelNodeChildren = firstLevelNodeChildren.filter((item) => item.dataset.nodeId)
+  const firstNode = firstLevelNodeChildren[0]
+  const firstNodeIsHeading = firstNode.dataset.type === SyDomNodeTypes.NodeHeading
+  return wysiwygTypeIsHeading || firstNodeIsHeading
+}
+
 
 const deletedFlag = ref(false)
 const movedFlag = ref(false)
@@ -267,6 +282,10 @@ const needRemovedBlockIds = ref([])
 const needRemovedBlockIdsInterval = ref(null)
 const initTime = ref(null)
 const removeBlocksCreatedByOtherProtyle = () => {
+  const isDocOrHeading = topIsDoc() || topIsHeading()
+  if (isDocOrHeading) {
+    return
+  }
   needRemovedBlockIdsInterval.value = setInterval(() => {
 
     if (!needRemovedBlockIds.value.length) {
@@ -311,7 +330,7 @@ const checkAndMerge = () => {
     processing.value = false
   }
 
-  const isDocProtyle = protyleRef.value?.protyle.wysiwyg.element.dataset.docType === SyDomNodeTypes.NodeDocument
+  const isDocProtyle = topIsDoc()
   // 如果当前是文档类型，则放弃合并
   if (isDocProtyle) {
     finished()
