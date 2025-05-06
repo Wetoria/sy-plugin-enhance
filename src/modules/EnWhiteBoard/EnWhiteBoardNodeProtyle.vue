@@ -197,7 +197,8 @@ import {
   generateWhiteBoardNodeId,
   getWhiteBoardConfigRefById,
 } from '@/modules/EnWhiteBoard/EnWhiteBoard'
-import { EN_CONSTANTS } from '@/utils/Constants'
+import { EN_CONSTANTS, EN_EVENT_BUS_KEYS } from '@/utils/Constants'
+import { enEventBus } from '@/utils/EnEventBus'
 import {
   IconArrowDown,
   IconArrowLeft,
@@ -219,6 +220,7 @@ import { NodeToolbar } from '@vue-flow/node-toolbar'
 import { Protyle } from 'siyuan'
 import {
   computed,
+  nextTick,
   onMounted,
   ref,
   watch,
@@ -313,6 +315,17 @@ const calculateIsInViewport = () => {
 
 onViewportChange(calculateIsInViewport)
 onMounted(calculateIsInViewport)
+onMounted(() => {
+  enEventBus.on(EN_EVENT_BUS_KEYS.WHITEBOARD_CALCULATE_IS_IN_VIEWPORT, ({
+    whiteBoardId,
+  }) => {
+    if (whiteBoardId === props.whiteBoardId) {
+      nextTick(() => {
+        calculateIsInViewport()
+      })
+    }
+  })
+})
 
 
 const spaceKeyPressing = useKeyPress('Space')

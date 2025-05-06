@@ -476,9 +476,12 @@ const handleTransaction = (event) => {
   }
 
   const { detail } = event
+  // console.log('detail is ', detail)
 
   const isCurrentAppEvent = detail.app === protyleRef.value?.protyle.app.appId
   const isCurrentProtyleEvent = detail.sid === protyleRef.value?.protyle?.id
+  // console.log(`id: ${props.blockId}, isCurrentAppEvent is [${isCurrentAppEvent}], isCurrentProtyleEvent is [${isCurrentProtyleEvent}]`, protyleRef.value)
+  // console.log('protyleRef.value?.protyle?.id is ', protyleRef.value?.protyle?.id)
 
 
   if (!isCurrentAppEvent) {

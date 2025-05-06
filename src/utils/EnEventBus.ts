@@ -1,5 +1,5 @@
 import { EN_EVENT_BUS_KEYS } from '@/utils/Constants'
-import mitt from 'mitt' // 需要先安装 mitt 包: npm install mitt
+import mitt from 'mitt'; // 需要先安装 mitt 包: npm install mitt
 
 // 创建一个 mitt 实例
 const emitter = mitt()
@@ -15,6 +15,9 @@ export interface EventBusType {
     dateList: string[]
   }
   [EN_EVENT_BUS_KEYS.WHITEBOARD_SYNC_FRAME_CONTENT]: string // 需要同步内容的frame节点ID
+  [EN_EVENT_BUS_KEYS.WHITEBOARD_CALCULATE_IS_IN_VIEWPORT]: {
+    whiteBoardId: string
+  }
 }
 
 // 导出类型化的 eventBus
