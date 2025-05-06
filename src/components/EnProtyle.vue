@@ -259,12 +259,15 @@ onBeforeUnmount(() => {
 const processing = ref(false)
 
 const topIsDoc = () => {
-  return protyleRef.value?.protyle.wysiwyg.element.dataset.docType === SyDomNodeTypes.NodeDocument
+  return protyleRef.value?.protyle?.wysiwyg?.element?.dataset?.docType === SyDomNodeTypes.NodeDocument
 }
 
 const topIsHeading = () => {
-  const wysiwygTypeIsHeading = protyleRef.value?.protyle.wysiwyg.element.dataset.type === SyDomNodeTypes.NodeHeading
-  const wysiwygElement = protyleRef.value?.protyle?.wysiwyg.element
+  const wysiwygTypeIsHeading = protyleRef.value?.protyle?.wysiwyg?.element?.dataset?.type === SyDomNodeTypes.NodeHeading
+  const wysiwygElement = protyleRef.value?.protyle?.wysiwyg?.element
+  if (!wysiwygElement) {
+    return false
+  }
 
   let firstLevelNodeChildren = Array.from(wysiwygElement?.children) as HTMLElement[]
   firstLevelNodeChildren = firstLevelNodeChildren.filter((item) => item.dataset.nodeId)
@@ -275,6 +278,7 @@ const topIsHeading = () => {
 
 
 const deletedFlag = ref(false)
+const firstChildNodeIdOfDeletedBlock = ref('')
 const movedFlag = ref(false)
 
 
@@ -432,6 +436,8 @@ const handleBlockWithOtherProtyle = (event) => {
       if (action === 'delete') {
         // 标记当前 protyle 绑定的块已被删除
         deletedFlag.value = true
+        const firstChild = doOperations.find(i => i.action !== 'delete')
+        firstChildNodeIdOfDeletedBlock.value = firstChild?.id
         return
       }
 
@@ -503,6 +509,8 @@ const handleTransaction = (event) => {
     return
   }
 
+  waitingToCheckAndMergeBlocks.cancel()
+
   const { detail } = event
   // console.log('detail is ', detail)
 
@@ -529,9 +537,16 @@ const handleTransaction = (event) => {
     return
   }
 
+  // FIXME 转换列表为段落时，不能正确的渲染
   if (deletedFlag.value) {
     removeAutoCreatedBlock(detail)
     deletedFlag.value = false
+    if (firstChildNodeIdOfDeletedBlock.value) {
+      emits('updated', firstChildNodeIdOfDeletedBlock.value, 'update')
+      blockIdValid.value = true
+      renderProtyle(firstChildNodeIdOfDeletedBlock.value)
+      firstChildNodeIdOfDeletedBlock.value = ''
+    }
     return
   }
 
