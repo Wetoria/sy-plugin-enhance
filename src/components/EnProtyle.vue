@@ -58,6 +58,7 @@ import { debounce } from '@/utils'
 import { useEnProtyleUtilAreaRef } from '@/utils/DOM'
 import { useSiyuanEventTransactions } from '@/utils/EventBusHooks'
 import { mergeElementsIntoSuperBlock, SyDomNodeTypes, waitingForSuperBlockIndexCommited } from '@/utils/Siyuan'
+import dayjs from 'dayjs'
 import {
   IProtyleOptions,
   Protyle,
@@ -264,6 +265,7 @@ const movedFlag = ref(false)
 
 const needRemovedBlockIds = ref([])
 const needRemovedBlockIdsInterval = ref(null)
+const initTime = ref(null)
 const removeBlocksCreatedByOtherProtyle = () => {
   needRemovedBlockIdsInterval.value = setInterval(() => {
 
@@ -280,6 +282,9 @@ const removeBlocksCreatedByOtherProtyle = () => {
     let firstLevelChildren = Array.from(wysiwygElement?.children) as HTMLElement[]
     firstLevelChildren = firstLevelChildren.filter((item) => item.dataset.nodeId)
 
+    if (!initTime.value) {
+      initTime.value = dayjs()
+    }
     needRemovedBlockIds.value.forEach((needRemovedBlockId) => {
       const target = firstLevelChildren.find((child) => child.dataset.nodeId === needRemovedBlockId)
       if (target) {
@@ -287,6 +292,10 @@ const removeBlocksCreatedByOtherProtyle = () => {
         needRemovedBlockIds.value = needRemovedBlockIds.value.filter((id) => id !== needRemovedBlockId)
       }
     })
+    if (dayjs().diff(initTime.value, 'seconds') > 3) {
+      needRemovedBlockIds.value = []
+      initTime.value = null
+    }
   })
 }
 onBeforeUnmount(() => {
@@ -478,7 +487,7 @@ const handleTransaction = (event) => {
   const { detail } = event
   // console.log('detail is ', detail)
 
-  const isCurrentAppEvent = detail.app === protyleRef.value?.protyle.app.appId
+  const isCurrentAppEvent = !detail.app || detail.app === protyleRef.value?.protyle.app.appId
   const isCurrentProtyleEvent = detail.sid === protyleRef.value?.protyle?.id
   // console.log(`id: ${props.blockId}, isCurrentAppEvent is [${isCurrentAppEvent}], isCurrentProtyleEvent is [${isCurrentProtyleEvent}]`, protyleRef.value)
   // console.log('protyleRef.value?.protyle?.id is ', protyleRef.value?.protyle?.id)
