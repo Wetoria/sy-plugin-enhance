@@ -146,11 +146,12 @@
         :to="mainRef"
       >
         <EnProtyle
-          :block-id="nodeData.blockId"
-          autoBind
+          :blockId="nodeData.blockId"
+          auto
           hideGutters
           disableEnhance
           changeHelperPosition
+          @updated="updateNodeId"
           @after="afterProtyleLoad"
         />
       </Teleport>
@@ -185,13 +186,16 @@
 </script>
 
 <script setup lang="ts">
-import { request, sql } from '@/api'
+import {
+  request,
+  sql,
+} from '@/api'
 import EnBlockJumper from '@/components/EnBlockJumper.vue'
 import EnIconTarget from '@/components/EnIconTarget.vue'
 import EnProtyle from '@/components/EnProtyle.vue'
 import {
   generateWhiteBoardNodeId,
-  getWhiteBoardConfigRefById
+  getWhiteBoardConfigRefById,
 } from '@/modules/EnWhiteBoard/EnWhiteBoard'
 import { EN_CONSTANTS } from '@/utils/Constants'
 import {
@@ -205,7 +209,7 @@ import {
   Position,
   useKeyPress,
   useNode,
-  useVueFlow
+  useVueFlow,
 } from '@vue-flow/core'
 import {
   NodeResizer,
@@ -217,7 +221,7 @@ import {
   computed,
   onMounted,
   ref,
-  watch
+  watch,
 } from 'vue'
 import EnWhiteBoardNodeCollapse from './components/EnWhiteBoardNodeCollapse.vue'
 import EnWhiteBoardNodeFit from './components/EnWhiteBoardNodeFit.vue'
@@ -253,14 +257,24 @@ const {
   removeNodes,
   addNodes,
   getSelectedNodes,
-  onViewportChange
+  onViewportChange,
 } = useVueFlow()
 
 const nodeData = computed(() => flowNode.data)
+const updateNodeId = (newId: string, type: 'delete' | 'move' | 'update') => {
+  if (!newId) {
+    return
+  }
+  if (type === 'move') {
+    nodeData.value.blockId = newId
+    return
+  }
+  nodeData.value.blockId = newId
+}
 
 const containerRef = ref<HTMLDivElement | null>(null)
 
-let offset = 100
+const offset = 100
 const isInViewport = ref(false)
 
 const calculateIsInViewport = () => {

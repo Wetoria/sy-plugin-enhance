@@ -315,6 +315,10 @@ export async function transferBlockRef(
   return request(url, data)
 }
 
+export async function getBlockInfo(id: BlockId) {
+  const url = await sql(`select * from blocks where id = '${id}'`)
+  return url[0]
+}
 // **************************************** Attributes ****************************************
 export async function setBlockAttrs(
   id: BlockId,

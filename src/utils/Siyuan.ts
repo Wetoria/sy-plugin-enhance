@@ -1,11 +1,13 @@
-import { performSync } from '@/api'
+import { flushTransactions, performSync } from '@/api'
 import { usePlugin } from '@/main'
 import { debounce } from '@/utils'
-import { useSiyuanEventTransactions } from '@/utils/EventBusHooks'
+import { useSiyuanDatabaseIndexCommit, useSiyuanEventTransactions } from '@/utils/EventBusHooks'
+import dayjs from 'dayjs'
 import {
   getAllModels,
   IOperation,
   IProtyle,
+  Protyle,
 } from 'siyuan'
 import {
   onMounted,
@@ -405,3 +407,36 @@ export function isProtyleInEditor(element: HTMLElement) {
 export const toggleSiyuanSync = debounce(() => {
   performSync()
 }, 5000)
+
+
+export function mergeElementsIntoSuperBlock(protyle: Protyle, elements: HTMLElement[]) {
+  const protyleIns = protyle
+  const firstNode = elements[0] as HTMLElement
+
+  protyleIns.turnIntoOneTransaction(elements, 'BlocksMergeSuperBlock', 'row')
+
+  let firstNodeParent = firstNode.parentElement
+  const startTime = dayjs()
+  while (firstNodeParent && firstNodeParent.dataset.type !== 'NodeSuperBlock') {
+    firstNodeParent = firstNodeParent.parentElement
+    const now = dayjs()
+    if (now.diff(startTime, 'minute') > 1) {
+      break
+    }
+  }
+  if (!firstNodeParent) {
+    enWarn('firstNodeParent is incorrect.')
+    return
+  }
+  const superBlock = firstNodeParent as HTMLElement
+  const superBlockId = superBlock.dataset.nodeId
+  return superBlockId
+}
+
+export async function waitingForSuperBlockIndexCommited(callback: () => void) {
+  await flushTransactions()
+  const off = useSiyuanDatabaseIndexCommit(debounce(async () => {
+    off()
+    callback()
+  }, 20))
+}
