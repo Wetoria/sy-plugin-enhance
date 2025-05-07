@@ -1,9 +1,9 @@
 /* eslint-disable node/prefer-global/process */
-import { resolve } from "node:path"
 import { vitePluginForArco } from "@arco-plugins/vite-vue"
 import vue from "@vitejs/plugin-vue"
 import fg from "fast-glob"
 import minimist from "minimist"
+import { resolve } from "node:path"
 import livereload from "rollup-plugin-livereload"
 import {
   defineConfig,
@@ -102,7 +102,7 @@ export default defineConfig(({
     build: {
       // 输出路径
       outDir: distDir,
-      emptyOutDir: true,
+      emptyOutDir: !isWatch,
 
       // 构建后是否生成 source map 文件
       sourcemap: false,
