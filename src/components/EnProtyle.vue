@@ -58,6 +58,7 @@ import { debounce } from '@/utils'
 import { useEnProtyleUtilAreaRef } from '@/utils/DOM'
 import { useSiyuanEventTransactions } from '@/utils/EventBusHooks'
 import { mergeElementsIntoSuperBlock, SyDomNodeTypes, waitingForSuperBlockIndexCommited } from '@/utils/Siyuan'
+import { useEventListener } from '@vueuse/core'
 import dayjs from 'dayjs'
 import {
   IProtyleOptions,
@@ -305,7 +306,7 @@ onBeforeUnmount(() => {
 })
 
 
-const checkAndMerge = () => {
+const checkAndMerge = debounce(() => {
   processing.value = true
   const finished = () => {
     processing.value = false
@@ -350,17 +351,21 @@ const checkAndMerge = () => {
     emits('updated', superBlockId, 'update')
     finished()
   })
-}
+})
 
 const checkAndMergeIntervalFlag = ref(null)
+const cancelCheckAndMergeInterval = () => {
+  if (checkAndMergeIntervalFlag.value) {
+    clearInterval(checkAndMergeIntervalFlag.value)
+  }
+  checkAndMergeIntervalFlag.value = null
+}
 // 应该不需要判断当前 protyle 是不是正在编辑了
 // 在 handleTransaction 中已经判断过了
 // 如果以后有问题的话，再另外处理了
 const waitingToCheckAndMergeBlocks = debounce(() => {
-  if (checkAndMergeIntervalFlag.value) {
-    // 如果已经在处理中了，取消之前的等待
-    clearInterval(checkAndMergeIntervalFlag.value)
-  }
+  cancelCheckAndMergeInterval()
+  checkAndMerge.cancel()
 
   checkAndMergeIntervalFlag.value = setInterval(() => {
     if (needRemovedBlockIds.value.length || movedFlag.value || deletedFlag.value) {
@@ -372,14 +377,20 @@ const waitingToCheckAndMergeBlocks = debounce(() => {
     // 检查并合并块
     checkAndMerge()
   }, 0)
-// }, 1000 * 30) // 停止编辑 30s 后检查并合并块
-}) // 停止编辑 30s 后检查并合并块
-onBeforeUnmount(() => {
-  if (checkAndMergeIntervalFlag.value) {
-    clearInterval(checkAndMergeIntervalFlag.value)
-  }
+}, 1000 * 2) // 停止编辑 3s 后检查并合并块
+const cancelCheckAndMerge = () => {
+  checkAndMerge.cancel()
+  cancelCheckAndMergeInterval()
   waitingToCheckAndMergeBlocks.cancel()
+}
+onBeforeUnmount(() => {
+  cancelCheckAndMerge()
 })
+if (props.auto) {
+  useEventListener(document, 'keydown', () => {
+    cancelCheckAndMerge()
+  })
+}
 
 
 const handleBlockWithOtherProtyle = (event) => {
@@ -486,6 +497,7 @@ const handleTransaction = (event) => {
 
   const { detail } = event
   // console.log('detail is ', detail)
+  cancelCheckAndMerge()
 
   const isCurrentAppEvent = !detail.app || detail.app === protyleRef.value?.protyle.app.appId
   const isCurrentProtyleEvent = detail.sid === protyleRef.value?.protyle?.id
