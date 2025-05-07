@@ -263,12 +263,8 @@ const {
 } = useVueFlow()
 
 const nodeData = computed(() => flowNode.data)
-const updateNodeId = (newId: string, type: 'delete' | 'move' | 'update') => {
+const updateNodeId = (newId: string) => {
   if (!newId) {
-    return
-  }
-  if (type === 'move') {
-    nodeData.value.blockId = newId
     return
   }
   nodeData.value.blockId = newId

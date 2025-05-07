@@ -172,7 +172,7 @@ export const getParentNode = (list, node) => {
 
 
 
-enum SyNodeTypes {
+export enum SyNodeTypes {
   h = 'h',
   c = 'c',
   m = 'm',
