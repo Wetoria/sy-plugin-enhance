@@ -530,12 +530,16 @@ const handleTransaction = (event) => {
 
 const handleCurrentBlockChange = async (operations: IOperation[]) => {
   const currentBlockIsListItem = currentBlockInfo.value.type === SyNodeTypes.i
+  const isParent = (id: string) => {
+    return currentBlockInfo.value.parent_id === id
+  }
   const targetOperation = operations.find((operation) => {
-    const isDealingParentOfCurrentListItem = currentBlockIsListItem && operation.id === currentBlockInfo.value.parent_id
+    const isDealingParentOfCurrentListItem = currentBlockIsListItem && isParent(operation.id)
     // 当前块 or 当前块是列表项，父列表被删除
     return operation.id === props.blockId || isDealingParentOfCurrentListItem
   })
 
+  // console.log('targetOperation is ', targetOperation)
   if (!targetOperation) {
     return
   }
@@ -558,6 +562,12 @@ const handleCurrentBlockChange = async (operations: IOperation[]) => {
 
     if (firstChild?.id) {
       emitBlockIdUpdated(firstChild.id, 'after_delete')
+      return
+    }
+
+    if (isParent(id)) {
+      emitBlockIdUpdated('', 'after_delete')
+      return
     }
     return
   }
