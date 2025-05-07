@@ -145,7 +145,7 @@
         v-if="isInViewport && mainRef"
         :to="mainRef"
       >
-        <EnProtyle
+        <EnProtyleAuto
           :blockId="nodeData.blockId"
           auto
           hideGutters
@@ -192,7 +192,7 @@ import {
 } from '@/api'
 import EnBlockJumper from '@/components/EnBlockJumper.vue'
 import EnIconTarget from '@/components/EnIconTarget.vue'
-import EnProtyle from '@/components/EnProtyle.vue'
+import EnProtyleAuto from '@/components/EnProtyleAuto.vue'
 import {
   generateWhiteBoardNodeId,
   getWhiteBoardConfigRefById,

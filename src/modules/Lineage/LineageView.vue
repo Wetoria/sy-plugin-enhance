@@ -32,16 +32,16 @@
             <div class="LineageCellContent">
               <div class="CellTitle">{{ getCellTitle(cell) }}</div>
               <div class="CellType">{{ getCellType(cell) }}</div>
-              
+
               <!-- 新增思源块内容渲染区域 -->
-              <div 
-                v-if="cell.data?.blockId" 
+              <div
+                v-if="cell.data?.blockId"
                 class="CellBlockContent"
                 :class="{ 'is-expanded': expandedCellIds.includes(cell.id) }"
               >
                 <div v-if="expandedCellIds.includes(cell.id)" class="ProtyleWrapper">
-                  <EnProtyle 
-                    :block-id="cell.data.blockId" 
+                  <EnProtyleAuto
+                    :block-id="cell.data.blockId"
                     disableEnhance
                     @after="protyle => handleProtyleLoaded(protyle, cell.id)"
                   />
@@ -59,9 +59,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
-import { EN_CONSTANTS } from '@/utils/Constants';
-import EnProtyle from '@/components/EnProtyle.vue';
+import EnProtyleAuto from '@/components/EnProtyleAuto.vue'
+import { EN_CONSTANTS } from '@/utils/Constants'
+import { computed, onMounted, ref, watch } from 'vue'
 
 const props = defineProps<{
   nodeId: string
@@ -94,7 +94,7 @@ const processedLineageData = computed(() => {
   if (!props.whiteBoardNodes || props.whiteBoardNodes.length === 0) {
     return defaultLineageData.value;
   }
-  
+
   // 创建节点映射以便快速查找
   const nodeMap = new Map();
   props.whiteBoardNodes.forEach(node => {
@@ -105,32 +105,32 @@ const processedLineageData = computed(() => {
       type: node.type || 'default'
     });
   });
-  
+
   // 获取所有Frame节点
-  const frameNodes = props.whiteBoardNodes.filter(node => 
+  const frameNodes = props.whiteBoardNodes.filter(node =>
     node.type === EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME
   );
-  
+
   // 对Frame按面积从大到小排序，确保先处理较大的Frame
   const sortedFrames = [...frameNodes].sort((a, b) => {
     const areaA = (a.width || 0) * (a.height || 0);
     const areaB = (b.width || 0) * (b.height || 0);
     return areaB - areaA; // 从大到小排序
   });
-  
+
   // 遍历所有节点，构建父子关系
   props.whiteBoardNodes.forEach(node => {
     const nodeObj = nodeMap.get(node.id);
-    
+
     // 如果是Frame节点，寻找它的父Frame
     if (node.type === EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME) {
       // 找出包含当前Frame的最小Frame（如果有）
       let parentFrame = null;
       let smallestArea = Infinity;
-      
+
       for (const frame of sortedFrames) {
         if (frame.id === node.id) continue; // 跳过自己
-        
+
         if (isNodeInFrame(node, frame)) {
           const area = (frame.width || 0) * (frame.height || 0);
           if (area < smallestArea) {
@@ -139,7 +139,7 @@ const processedLineageData = computed(() => {
           }
         }
       }
-      
+
       // 如果找到父Frame，建立关系
       if (parentFrame) {
         const parentObj = nodeMap.get(parentFrame.id);
@@ -151,7 +151,7 @@ const processedLineageData = computed(() => {
       // 如果是普通节点，寻找包含它的最小Frame
       let containingFrame = null;
       let smallestArea = Infinity;
-      
+
       for (const frame of sortedFrames) {
         if (isNodeInFrame(node, frame)) {
           const area = (frame.width || 0) * (frame.height || 0);
@@ -161,7 +161,7 @@ const processedLineageData = computed(() => {
           }
         }
       }
-      
+
       // 如果找到包含的Frame，建立关系
       if (containingFrame) {
         const frameObj = nodeMap.get(containingFrame.id);
@@ -171,28 +171,28 @@ const processedLineageData = computed(() => {
       }
     }
   });
-  
+
   // 找出没有被处理过的顶层节点
   const topLevelNodes = Array.from(nodeMap.values()).filter(node => !node.processed && !node.parent_id);
-  
+
   // 创建一个树形结构
   const tree = topLevelNodes;
-  
+
   // 将树形结构转换为分层结构
   const result = [];
-  
+
   // 递归填充结果数组
   const fillResult = (nodes, level = 0) => {
     if (!nodes || nodes.length === 0) return;
-    
+
     // 确保结果数组有足够的层级
     if (!result[level]) {
       result[level] = [];
     }
-    
+
     // 添加当前层级的节点
     result[level].push(...nodes);
-    
+
     // 处理每个节点的子节点
     nodes.forEach(node => {
       if (node.children && node.children.length > 0) {
@@ -200,10 +200,10 @@ const processedLineageData = computed(() => {
       }
     });
   };
-  
+
   // 从顶层节点开始填充
   fillResult(tree);
-  
+
   return result.length > 0 ? result : defaultLineageData.value;
 });
 
@@ -212,22 +212,22 @@ function isNodeInFrame(node, frameNode) {
   if (frameNode.type !== EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_FRAME) {
     return false;
   }
-  
+
   // 检查节点是否在Frame的范围内
   const frameX = frameNode.position?.x || 0;
   const frameY = frameNode.position?.y || 0;
   const frameWidth = frameNode.width || 0;
   const frameHeight = frameNode.height || 0;
-  
+
   const nodeX = node.position?.x || 0;
   const nodeY = node.position?.y || 0;
   const nodeWidth = node.width || 0;
   const nodeHeight = node.height || 0;
-  
+
   return (
-    nodeX >= frameX && 
-    nodeY >= frameY && 
-    nodeX + nodeWidth <= frameX + frameWidth && 
+    nodeX >= frameX &&
+    nodeY >= frameY &&
+    nodeX + nodeWidth <= frameX + frameWidth &&
     nodeY + nodeHeight <= frameY + frameHeight
   );
 }
@@ -237,11 +237,11 @@ const getCellTitle = (cell) => {
   if (cell.data?.displayText) {
     return cell.data.displayText;
   }
-  
+
   if (cell.data?.blockId) {
     return cell.data.blockId.substring(0, 8) + '...';
   }
-  
+
   return cell.id.substring(0, 8) + '...';
 };
 
@@ -256,7 +256,7 @@ const getCellType = (cell) => {
   } else if (cell.type === EN_CONSTANTS.EN_WHITE_BOARD_NODE_TYPE_MINDMAP) {
     return '思维导图';
   }
-  
+
   return '默认';
 };
 
@@ -326,23 +326,23 @@ watch(() => props.whiteBoardNodes, () => {
   parentIdList.value = [];
   slideIdList.value = [];
   childrenIdList.value = [];
-  
+
   // 清理已展开的节点状态 - 只保留在新节点列表中仍然存在的节点
   if (props.whiteBoardNodes && props.whiteBoardNodes.length > 0) {
     const existingNodeIds = props.whiteBoardNodes.map(node => node.id);
-    expandedCellIds.value = expandedCellIds.value.filter(id => 
+    expandedCellIds.value = expandedCellIds.value.filter(id =>
       existingNodeIds.includes(id)
     );
   } else {
     // 如果没有节点了，清空展开状态
     expandedCellIds.value = [];
   }
-  
+
   // 重置当前选中的节点
   currentCellId.value = '';
-  
+
   // 如果有数据，自动选中第一个节点
-  if (processedLineageData.value.length > 0 && 
+  if (processedLineageData.value.length > 0 &&
       processedLineageData.value[0].length > 0) {
     const firstNode = processedLineageData.value[0][0];
     recursiveScrollByCell(firstNode, 0);
@@ -399,7 +399,7 @@ const recursiveScrollByCell = (node, colIndex) => {
 
   let parentColIndex = colIndex - 1
   let parentNode = getParentNodeByNodeAndColIndex(node, parentColIndex)
-  
+
   // 找到父级，按 children 记录兄弟
   if (parentNode) {
     // 记录所有兄弟节点
@@ -408,7 +408,7 @@ const recursiveScrollByCell = (node, colIndex) => {
         slideIdList.value.push(child.id)
       }
     })
-    
+
     parentIdList.value.push(parentNode.id)
 
     // 递归查 parentId
@@ -426,7 +426,7 @@ const recursiveScrollByCell = (node, colIndex) => {
       }
     })
   }
-  
+
   const recursive = (list) => {
     if (!list || !list.length) return
 
@@ -446,18 +446,18 @@ const recursiveScrollByCell = (node, colIndex) => {
     scrollToCellById(id)
   })
   scrollToCellById(currentCellId.value)
-  
+
   // 如果节点有blockId，自动展开该节点的内容
   if (node.data?.blockId) {
     // 先收起所有其他展开的节点
-    expandedCellIds.value = expandedCellIds.value.filter(id => 
+    expandedCellIds.value = expandedCellIds.value.filter(id =>
       id === node.id || !isNodeVisible(id)
     );
-    
+
     // 如果当前节点没有展开，则展开它
     if (!expandedCellIds.value.includes(node.id)) {
       expandedCellIds.value.push(node.id);
-      
+
       // 给渲染一些时间后再次滚动到位置
       setTimeout(() => {
         scrollToCellById(currentCellId.value);
@@ -491,7 +491,7 @@ const scrollToCol = (col: HTMLDivElement) => {
 
 onMounted(() => {
   // 如果有数据，自动选中第一个节点
-  if (processedLineageData.value.length > 0 && 
+  if (processedLineageData.value.length > 0 &&
       processedLineageData.value[0].length > 0) {
     const firstNode = processedLineageData.value[0][0];
     recursiveScrollByCell(firstNode, 0);
@@ -508,16 +508,16 @@ onMounted(() => {
   background-color: var(--b3-theme-background);
   overflow-x: auto;
   overflow-y: hidden;
-  
+
   // 白板背景样式
   &.bg-dots {
     background-image: radial-gradient(var(--b3-border-color) 1px, transparent 0);
     background-size: 48px 48px;
     background-position: 0 0;
   }
-  
+
   &.bg-lines {
-    background-image: 
+    background-image:
       linear-gradient(to right, var(--b3-border-color) 1px, transparent 1px),
       linear-gradient(to bottom, var(--b3-border-color) 1px, transparent 1px);
     background-size: 48px 48px;
@@ -573,7 +573,7 @@ onMounted(() => {
         border: 1px solid var(--b3-border-color);
         cursor: pointer;
         transition: all 0.3s ease;
-        
+
         &:hover {
           transform: translateY(-2px);
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -587,18 +587,18 @@ onMounted(() => {
         &.level_second {
           background-color: var(--b3-theme-surface-light);
         }
-        
+
         &.node-type-EnWhiteBoardNodeFrame {
           border-style: dashed;
           border-width: 2px;
           background-color: rgba(var(--primary-2), 0.5);
         }
-        
+
         .LineageCellContent {
           display: flex;
           flex-direction: column;
           height: 100%;
-          
+
           .CellTitle {
             font-weight: bold;
             margin-bottom: 8px;
@@ -609,19 +609,19 @@ onMounted(() => {
             overflow: hidden;
             text-overflow: ellipsis;
           }
-          
+
           .CellType {
             font-size: 12px;
             color: var(--b3-theme-on-surface);
             margin-bottom: 6px;
             opacity: 0.8;
           }
-          
+
           .CellBlockContent {
             margin-top: 10px;
             transform-origin: top center;
             transition: all 0.3s ease;
-            
+
             &.is-expanded {
               animation: fadeIn 0.3s ease-in-out;
             }
@@ -651,42 +651,42 @@ onMounted(() => {
   margin-top: 12px;
   border-top: 1px solid var(--b3-border-color);
   position: relative;
-  
+
   .ProtyleWrapper {
     margin-top: 8px;
     max-height: 300px;
     overflow-y: auto;
     background-color: var(--b3-theme-background);
     border-radius: 4px;
-    
+
     &::-webkit-scrollbar {
       width: 4px;
       height: 4px;
     }
-    
+
     &::-webkit-scrollbar-thumb {
       background-color: var(--b3-scroll-color);
     }
-    
+
     &:hover::-webkit-scrollbar-thumb {
       background-color: var(--b3-scroll-hover-color);
     }
-    
+
     :deep(.protyle) {
       min-height: 0 !important;
-      
+
       .protyle-wysiwyg {
         padding: 8px !important;
         padding-bottom: 16px !important;
         min-height: 0 !important;
       }
-      
+
       .protyle-content {
         padding-bottom: 0;
       }
     }
   }
-  
+
   .BlockExpandButton {
     cursor: pointer;
     user-select: none;
@@ -695,14 +695,14 @@ onMounted(() => {
     text-align: center;
     padding: 4px 0;
     margin-top: 4px;
-    
+
     &:hover {
       color: var(--b3-theme-on-primary);
       background-color: var(--b3-theme-primary-light);
       border-radius: 4px;
     }
   }
-  
+
   // 展开状态特殊样式
   &.is-expanded {
     .BlockExpandButton {

@@ -417,7 +417,7 @@
         </div>
         <div class="sidebar-content">
           <div class="sidebar-protyle-container">
-            <EnProtyle
+            <EnProtyleAuto
               :block-id="embedWhiteBoardConfigData.boardOptions.selectedBlockId"
               disableEnhance
               changeHelperPosition
@@ -456,7 +456,6 @@
 
 <script setup lang="ts">
 import { request } from '@/api'
-import EnProtyle from '@/components/EnProtyle.vue'
 import { getNewDailyNoteBlockId } from '@/modules/DailyNote/DailyNote'
 import EnWhiteBoardViewModeSwitcher from '@/modules/EnWhiteBoard/components/EnWhiteBoardViewModeSwitcher.vue'
 import {
@@ -498,6 +497,7 @@ import { MiniMap } from '@vue-flow/minimap'
 import { cloneDeep } from 'lodash-es'
 
 
+import EnProtyleAuto from '@/components/EnProtyleAuto.vue'
 import { Protyle } from 'siyuan'
 import {
   computed,
