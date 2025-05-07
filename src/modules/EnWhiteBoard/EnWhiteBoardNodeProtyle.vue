@@ -140,22 +140,6 @@
       >
       </div>
 
-      <!-- 需确保 mainRef 唯一，目前的写法是唯一的（需要 v-else 等） -->
-      <Teleport
-        v-if="isInViewport && mainRef"
-        :to="mainRef"
-      >
-        <EnProtyleAuto
-          :blockId="nodeData.blockId"
-          auto
-          hideGutters
-          disableEnhance
-          changeHelperPosition
-          @updated="updateNodeId"
-          @after="afterProtyleLoad"
-        />
-      </Teleport>
-
       <NodeResizer
         :min-width="100"
         :min-height="36"
@@ -179,6 +163,21 @@
         </div>
       </Handle>
     </div>
+    <!-- 需确保 mainRef 唯一，目前的写法是唯一的（需要 v-else 等） -->
+    <Teleport
+      v-if="isInViewport && mainRef"
+      :to="mainRef"
+    >
+      <EnProtyleAuto
+        :blockId="nodeData.blockId"
+        auto
+        hideGutters
+        disableEnhance
+        changeHelperPosition
+        @updated="updateNodeId"
+        @after="afterProtyleLoad"
+      />
+    </Teleport>
   </div>
 </template>
 
