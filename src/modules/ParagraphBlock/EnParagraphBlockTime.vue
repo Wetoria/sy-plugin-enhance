@@ -46,7 +46,7 @@ const protyleRef = computed<IProtyleObserverItem>(() => {
   return protyleContentRefList.value.find((i) => i.protyleEl === protyleElement)
 })
 const protyleDailyNoteAttrs = computed<string[]>(() => {
-  return Object.values(protyleRef.value.dailyNoteValues)
+  return Object.values(protyleRef.value?.dailyNoteValues || {})
 })
 
 const styledFormatted = computed(() => {
