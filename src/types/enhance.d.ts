@@ -230,6 +230,7 @@ interface EnModuleComment extends EnModule {
 
 interface EnModuleVideoAndAudio extends EnModule {
   jumpMode: 'toDoc' | 'openModal' | 'openWindow'
+  autoPlay: boolean
 }
 
 

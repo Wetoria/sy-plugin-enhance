@@ -46,6 +46,19 @@
         </div>
       </template>
     </EnSettingsItem>
+    <EnSettingsItem>
+      <div>
+        跳转后自动播放
+      </div>
+      <template #desc>
+        <div>
+          跳转后是否自动播放。
+        </div>
+      </template>
+      <template #opt>
+        <a-switch v-model="moduleOptions.autoPlay" />
+      </template>
+    </EnSettingsItem>
   </EnSettingsTeleportModule>
   <EnVideoAndAudio v-if="moduleOptions.enabled" />
   <EnVideoAndAudioJumper />
@@ -79,6 +92,7 @@ const {
     moduleDisplayName: EN_CONSTANTS.EN_VIDEO_AND_AUDIO_DISPLAY,
 
     jumpMode: 'toDoc',
+    autoPlay: true,
   },
 })
 
