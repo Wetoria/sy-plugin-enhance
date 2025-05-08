@@ -21,12 +21,9 @@
 
 <script lang="ts">
 import { debounce } from '@/utils'
-import { EN_STYLE_KEYS } from '@/utils/Constants'
 import dayjs from 'dayjs'
 import {
   computed,
-  onBeforeUnmount,
-  onMounted,
   ref,
   watch,
 } from 'vue'
@@ -98,20 +95,6 @@ watch(() => props.el, () => {
 }, { immediate: true })
 
 const attrContainerRef = ref<HTMLDivElement | null>(null)
-const resizeObserver = new ResizeObserver(() => {
-  if (!attrContainerRef.value) return
-  const width = attrContainerRef.value.offsetWidth + 2
-
-  props.el.style.setProperty(EN_STYLE_KEYS.enAttrContainerWidth, `${width}px`)
-})
-
-onMounted(() => {
-  resizeObserver.observe(attrContainerRef.value)
-})
-onBeforeUnmount(() => {
-  resizeObserver.disconnect()
-  attrContainerRef.value = null
-})
 </script>
 
 <style lang="scss" scoped>

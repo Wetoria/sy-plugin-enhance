@@ -205,7 +205,12 @@ const bindAttrContainer = () => {
 
   const attrList = paragraphBlockAttrContainerRefList.value
   paragraphBlockAttrContainerRefList.value = attrList.filter((item) => {
-    return paragraphList.includes(item.paragraphEl)
+    const exist = paragraphList.includes(item.paragraphEl)
+    if (!exist) {
+      item.attrEl = null
+      item.paragraphEl = null
+    }
+    return exist
   })
 
   paragraphList.forEach((dom: HTMLDivElement) => {
@@ -319,18 +324,22 @@ html[data-en_enabled_module~="EnParagraphBlock"] {
   --enTimeFontSize: 9px;
 
   .enProtyleAttrContainer {
-    width: max-content;
+    width: auto;
     display: flex;
+    justify-content: flex-end;
+    align-items: center;
     gap: 4px;
     height: calc(var(--enTimeFontSize) + var(--en-gap));
     line-height: calc(var(--enTimeFontSize) + var(--en-gap));
     font-size: var(--enTimeFontSize);
     color: var(--b3-theme-on-surface);
     box-sizing: border-box;
+
+
     position: absolute;
-    top: 0;
-    transform: translateY(calc(-100% + 4px));
-    right: 0;
+    right: 4px;
+    bottom: -4px;
+    z-index: 1;
 
     svg {
       height: var(--enTimeFontSize) !important;
@@ -340,32 +349,17 @@ html[data-en_enabled_module~="EnParagraphBlock"] {
 
   div[data-type="NodeParagraph"] {
 
-    margin-bottom: var(--enTimeFontSize);
-    --enAttrContainerWidth: 64px;
+    margin-top: 4px;
+    margin-bottom: 6px;
+    // margin-bottom: calc(var(--enTimeFontSize) + var(--en-gap) - 4px);
 
-    .protyle-attr {
-      font-size: var(--enTimeFontSize) !important;
-      height: calc(var(--enTimeFontSize) + var(--en-gap)) !important;
-      line-height: calc(var(--enTimeFontSize) + var(--en-gap)) !important;
-      right: var(--enAttrContainerWidth);
-      top: 0;
-      transform: translateY(calc(-100% + 4px));
-
-      & > div {
-        display: flex !important;
-        align-items: center;
-        gap: var(--en-gap);
-      }
-
-      svg {
-        margin: unset !important;
-        height: var(--enTimeFontSize) !important;
-        width: var(--enTimeFontSize) !important;
+    &[custom-lifelog-type] {
+      .enProtyleAttrContainer {
+        bottom: -2px;
       }
     }
 
     &.en-stickied {
-      .enProtyleAttrContainer,
       .protyle-attr {
         opacity: 0;
       }
@@ -378,11 +372,8 @@ html[data-en_enabled_module~="EnParagraphBlock"] {
     div[data-type="NodeBlockquote"] {
 
       div[data-type="NodeParagraph"] {
-        .protyle-attr {
-          right: calc(var(--enAttrContainerWidth) - 0px);
-        }
         .enProtyleAttrContainer {
-          right: 0px;
+          right: 4px;
         }
       }
     }
@@ -391,11 +382,8 @@ html[data-en_enabled_module~="EnParagraphBlock"] {
   div[data-type="NodeBlockquote"] {
 
     div[data-type="NodeParagraph"] {
-      .protyle-attr {
-        right: calc(var(--enAttrContainerWidth) - 4px);
-      }
       .enProtyleAttrContainer {
-        right: -4px;
+        right: 0px;
       }
     }
   }
