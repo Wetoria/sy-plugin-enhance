@@ -20,6 +20,22 @@
         <a-switch v-model="moduleOptions.enableBlockTime" />
       </template>
     </EnSettingsItem>
+    <EnSettingsItem>
+      <div>
+        是否一直显示年月日
+      </div>
+      <template #desc>
+        <div>
+          该选项关闭时，如果是日记中的块，当创建时间或更新时间的年月日与日记的日期相同，则不显示年月日。
+        </div>
+        <div>
+          如果一篇日记绑定了多个日期，会一直显示年月日。
+        </div>
+      </template>
+      <template #opt>
+        <a-switch v-model="moduleOptions.alwaysShowYMD" />
+      </template>
+    </EnSettingsItem>
     <EnSettingsItem mode="vertical">
       <div>
         时间类型
@@ -93,6 +109,7 @@
             :updatedFormatted="updatedFormatted"
             :pDom="attrItem.paragraphEl"
             :defaultBlockType="moduleOptions.defaultBlockType"
+            :alwaysShowYMD="moduleOptions.alwaysShowYMD"
           />
         </template>
       </template>
@@ -158,6 +175,8 @@ const {
     enableBlockTime: false,
     blockTimeFontSize: 9,
     defaultBlockType: 'created',
+
+    alwaysShowYMD: false,
 
     // enableBlockLock: false,
     // autoLockTimeDiff: 5 * 60,
