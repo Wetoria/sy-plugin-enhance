@@ -186,7 +186,6 @@ export enum EN_EVENT_BUS_KEYS {
 
 export enum EN_STYLE_KEYS {
   enTimeFontSize = '--enTimeFontSize',
-  enAttrContainerWidth = '--enAttrContainerWidth',
   enBottomBacklinkTopDistance = '--enBottomBacklinkTopDistance',
 }
 

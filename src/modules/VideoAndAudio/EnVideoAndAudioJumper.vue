@@ -154,6 +154,10 @@ const onAfterRender = (protyle: Protyle) => {
     }
     clearInterval(flag)
     setVideoTime(currentVNAInfo.value)
+
+    if (moduleOptions.value.autoPlay) {
+      target.play()
+    }
   }
 
   checkTargetTime()

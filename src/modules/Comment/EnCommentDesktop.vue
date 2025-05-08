@@ -122,8 +122,10 @@ import {
   useCurrentProtyle,
 } from '@/utils/Siyuan'
 import dayjs from 'dayjs'
-import type { Protyle } from 'siyuan'
-import { showMessage } from 'siyuan'
+import {
+  Protyle,
+  showMessage,
+} from 'siyuan'
 import {
   computed,
   onBeforeUnmount,
@@ -163,7 +165,7 @@ const isConfigValid = computed(() => {
 const selectionCopy = ref<Record<string, any>>({})
 const watchSelectionChange = () => {
   selectionCopy.value = getSelectionCopy()
-  showCommentButton()
+  // showCommentButton()
 }
 
 onMounted(() => {
