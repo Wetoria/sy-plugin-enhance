@@ -186,6 +186,21 @@ interface LifeLogModule extends EnModule {
 }
 
 
+interface ILifeLogCheckData {
+  paragraphList: Array<{
+    id: string
+    root_id: string
+    content: string
+    markdown: string
+    date?: string
+  }>
+  docDateMap: {
+    [key: string]: string[]
+  }
+}
+
+
+
 
 
 

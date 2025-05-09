@@ -271,3 +271,105 @@ export function getTargetLifelogRecordsByDateList(lifelogRecords: Array<ILifeLog
     )
   })
 }
+
+
+export async function queryAndMarkLifeLogParagraph() {
+  const sqlStmt = `
+    select
+      b.id,
+      b.root_id,
+      b.content,
+      b.markdown
+
+    FROM
+      blocks b
+      left join attributes attr
+        on b.id = attr.block_id
+        and attr.name = 'custom-lifelog-type'
+
+    where (
+      1=1
+      and b.parent_id = b.root_id
+      and b.type = 'p'
+      and b.content REGEXP '^\\d{2}:\\d{2}(:\\d{2})? (\\S[^\\n\\r]*)?$'
+      and attr.name is null
+
+      and b.root_id in (
+        SELECT
+          a.root_id
+        FROM
+          attributes a
+        WHERE
+          a.block_id = a.root_id
+          and a.name like 'custom-dailynote%'
+      )
+    )
+    order BY
+      date desc
+  `
+  const needToMarkParagraphList = await sql(sqlStmt)
+  const dnIdList = needToMarkParagraphList.map((i) => i.root_id)
+  const dnDatesSqlStmt = `
+    select
+      value,
+      block_id
+    FROM
+      attributes a
+    where
+      a.block_id in (
+        ${dnIdList.map((i) => `'${i}'`).join(',')}
+      )
+      and a.name like 'custom-dailynote-%'
+  `
+  const dnDates = await sql(dnDatesSqlStmt)
+  const dateMap = {}
+  dnDates.forEach((i) => {
+    const dateValue = dayjs(i.value).format(lifelogKeyMap.YYYY_MM_DD)
+    if (dateMap[i.block_id]) {
+      dateMap[i.block_id].push(dateValue)
+    } else {
+      dateMap[i.block_id] = [dateValue]
+    }
+  })
+
+  return {
+    paragraphList: needToMarkParagraphList,
+    dateMap,
+  }
+}
+
+export async function convertLifeLogParagraph(paragraphList: Array<{
+  id: string
+  content: string
+  date: string
+}>) {
+  const result = []
+
+  paragraphList.forEach((item) => {
+    const time = (item.content.match(/^\d{2}:\d{2}(:\d{2})?/) || [])[0]
+    const contentWithoutTime = item.content.replace(/^\d{2}:\d{2}(:\d{2})?\s+/, '')
+    let colonIndex = contentWithoutTime.indexOf('：')
+    colonIndex = colonIndex < 0 ? contentWithoutTime.length : colonIndex
+    const logType = contentWithoutTime.substring(0, colonIndex)
+    const logContent = contentWithoutTime.substring(colonIndex + 1, contentWithoutTime.length)
+    const createdTime = dayjs().format(lifelogKeyMap.YYYY_MM_DD_HH_mm_ss)
+    const updatedTime = dayjs().format(lifelogKeyMap.YYYY_MM_DD_HH_mm_ss)
+
+    const itemLifeLogResult = {
+      [lifelogAttrTime]: time,
+      [lifelogAttrDate]: item.date,
+      [lifelogAttrType]: logType,
+      [lifelogAttrContent]: logContent,
+      [lifelogAttrCreated]: createdTime,
+      [lifelogAttrUpdated]: updatedTime,
+    }
+
+    result.push({
+      id: item.id,
+      attrs: itemLifeLogResult,
+    })
+  })
+
+  await batchSetBlockAttrs(result)
+  await flushTransactions()
+}

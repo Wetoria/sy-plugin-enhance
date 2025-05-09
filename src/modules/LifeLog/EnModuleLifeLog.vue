@@ -41,6 +41,16 @@
     </EnSettingsItem>
     <EnSettingsItem>
       <div>
+        检测未完成标记的 LifeLog 段落
+      </div>
+      <template #opt>
+        <a-button @click="startCheckLifeLogParagraph">
+          开始检测
+        </a-button>
+      </template>
+    </EnSettingsItem>
+    <EnSettingsItem>
+      <div>
         显示 LifeLog 段落标记
       </div>
       <template #desc>
@@ -239,6 +249,11 @@
       </EnLifeLogDataControl>
     </template>
   </template>
+
+  <EnLifeLogDataCheckerModal
+    v-model:visible="lifeLogDataCheckerModalVisible"
+    :data="lifeLogDataCheckerModalData"
+  />
 </template>
 
 <script setup lang="ts">
@@ -250,10 +265,14 @@ import {
   watchConfigChanged,
   watchConfigEnableStatus,
 } from '@/modules/EnModuleControl/ModuleProvide'
+import EnLifeLogDataCheckerModal from '@/modules/LifeLog/EnLifeLogDataCheckerModal.vue'
 import EnLifeLogDataControl from '@/modules/LifeLog/EnLifeLogDataControl.vue'
 import EnLifeLogSettingTypeItem from '@/modules/LifeLog/EnLifeLogSettingTypeItem.vue'
 import EnLifeLogWeekGraphModal from '@/modules/LifeLog/EnLifeLogWeekGraphModal.vue'
-import { markLifeLogBlock } from '@/modules/LifeLog/LifeLog'
+import {
+  markLifeLogBlock,
+  queryAndMarkLifeLogParagraph,
+} from '@/modules/LifeLog/LifeLog'
 import RenderControl from '@/modules/LifeLog/RenderControl.vue'
 import { moduleEnableStatusSwitcher } from '@/utils'
 import {
@@ -266,6 +285,7 @@ import {
   useRegisterStyle,
 } from '@/utils/DOM'
 import { enEventBus } from '@/utils/EnEventBus'
+import { Message } from '@arco-design/web-vue'
 import dayjs from 'dayjs'
 import { Protyle } from 'siyuan'
 import {
@@ -535,6 +555,29 @@ onBeforeUnmount(() => {
 
 const openLifeLogTimeline = () => {
   enEventBus.emit(EN_EVENT_BUS_KEYS.LIFELOG_OPEN_GRAPH_MODAL)
+}
+
+const lifeLogDataCheckerModalVisible = ref(false)
+const lifeLogDataCheckerModalData = ref<ILifeLogCheckData>({
+  paragraphList: [],
+  docDateMap: {},
+})
+const startCheckLifeLogParagraph = async () => {
+  const {
+    paragraphList,
+    dateMap,
+  } = await queryAndMarkLifeLogParagraph()
+
+  if (!paragraphList.length) {
+    Message.info('没有需要转换的 LifeLog 段落')
+    return
+  }
+
+  lifeLogDataCheckerModalData.value = {
+    paragraphList,
+    docDateMap: dateMap,
+  }
+  lifeLogDataCheckerModalVisible.value = true
 }
 </script>
 
