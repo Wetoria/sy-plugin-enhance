@@ -54,7 +54,7 @@
 import {
   flushTransactions,
   getBlockInfo,
-  sql
+  sql,
 } from '@/api'
 import { usePlugin } from '@/main'
 import { debounce } from '@/utils'
@@ -75,7 +75,7 @@ import {
   onBeforeUnmount,
   onMounted,
   ref,
-  watch
+  watch,
 } from 'vue'
 
 
@@ -102,6 +102,9 @@ const emits = defineEmits<{
 }>()
 
 const emitBlockIdUpdated = (blockId: string, type: 'after_delete' | 'after_move' | 'after_merge') => {
+  if (blockId === props.blockId) {
+    return
+  }
   destroyProtyle()
   innerUpdated.value = true
   emits('updated', blockId, type)
@@ -519,7 +522,7 @@ const handleTransaction = (event) => {
 
 
   // 内部更改过了，不需要再检查合并了
-  if (innerUpdated.value){
+  if (innerUpdated.value) {
     return
   }
 
@@ -558,7 +561,7 @@ const handleCurrentBlockChange = async (operations: IOperation[]) => {
     // 如果是转换超级块、引述块、列表块
     // 或者是当前是列表项，父列表被删除
     // 取第一个子块的 ID 作为新渲染的块
-    const firstChild = operations.find(i => i.action !== 'delete')
+    const firstChild = operations.find((i) => i.action !== 'delete')
 
     if (firstChild?.id) {
       emitBlockIdUpdated(firstChild.id, 'after_delete')
@@ -597,7 +600,7 @@ const handleCurrentBlockChange = async (operations: IOperation[]) => {
       }
 
     })
-    return
+
   }
 }
 
