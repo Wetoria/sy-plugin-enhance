@@ -210,6 +210,7 @@ interface EnModuleComment extends EnModule {
 
   enableCommentStyle: boolean
   commentStyle: undefined | 'dotted' | 'dashed' | 'solid' | 'double' | 'wavy' | 'highlight'
+  autoMakeCard: boolean
   commentUnderlineWidth: number
   commentUnderlineColor: string
   enableHighlight: false

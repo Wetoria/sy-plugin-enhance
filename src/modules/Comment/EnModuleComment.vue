@@ -34,6 +34,14 @@
         </div>
       </template>
     </EnSettingsItem>
+    <EnSettingsItem>
+      <div>
+        批注完成后是否自动创建闪卡卡片
+      </div>
+      <template #opt>
+        <a-switch v-model="moduleOptions.autoMakeCard" />
+      </template>
+    </EnSettingsItem>
     <EnSettingsItem mode="vertical">
       <div>
         批注包裹模式
@@ -121,8 +129,7 @@
         <div
           class="flexColumn"
         >
-          <div
-          >
+          <div>
             <!-- @vue-ignore -->
             <span
               :style="{
@@ -147,12 +154,12 @@
               <div
                 v-for="style of moduleOptions.styleList"
                 :key="`${style.underlineStyle}-${style.underlineWidth}-${style.underlineColor}-${style.enableHighlight}-${style.backgroundColor}`"
-                @click="applyCommentStyle(style)"
                 type="text"
                 style="
                   padding: 2px 4px;
                   cursor: pointer;
                 "
+                @click="applyCommentStyle(style)"
               >
                 <!-- @vue-ignore -->
                 <span
@@ -275,6 +282,8 @@ const {
     notebookId: '',
     targetId: '',
 
+    autoMakeCard: false,
+
     enableCommentStyle: true,
     commentStyle: 'solid',
     commentUnderlineWidth: 2,
@@ -352,8 +361,8 @@ const applyCommentStyle = onCountClick((count, style) => {
     return
   }
   if (count === 2) {
-    moduleOptions.value.styleList = moduleOptions.value.styleList.filter(item => item != style)
-    return
+    moduleOptions.value.styleList = moduleOptions.value.styleList.filter((item) => item != style)
+
   }
 })
 </script>

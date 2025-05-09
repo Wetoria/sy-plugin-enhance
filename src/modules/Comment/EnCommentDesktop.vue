@@ -121,6 +121,7 @@ import {
   SyDomNodeTypes,
   useCurrentProtyle,
 } from '@/utils/Siyuan'
+import { quickMakeCard } from '@/utils/Siyuan/Card'
 import dayjs from 'dayjs'
 import {
   Protyle,
@@ -208,6 +209,10 @@ const onAfterRender = (protyle: Protyle) => {
 
 
       protyle.focusBlock(target, true)
+
+      if (moduleOptions.value.autoMakeCard) {
+        quickMakeCard(protyle.protyle, [target])
+      }
 
 
       isCommenting.value = false
