@@ -296,9 +296,13 @@ onBeforeUnmount(() => {
   flex: 1;
   overflow: auto;
 
+  .EnProtyleContainer {
+    padding-bottom: 4px;
+  }
+
   :deep(.protyle-content) {
     padding-bottom: unset !important;
-    scrollbar-gutter: auto;
+    overflow-y: hidden;
 
 
     .protyle-wysiwyg {
