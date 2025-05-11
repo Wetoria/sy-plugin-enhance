@@ -1,7 +1,13 @@
-import { flushTransactions, performSync } from '@/api'
+import {
+  flushTransactions,
+  performSync,
+} from '@/api'
 import { usePlugin } from '@/main'
 import { debounce } from '@/utils'
-import { useSiyuanDatabaseIndexCommit, useSiyuanEventTransactions } from '@/utils/EventBusHooks'
+import {
+  useSiyuanDatabaseIndexCommit,
+  useSiyuanEventTransactions,
+} from '@/utils/EventBusHooks'
 import dayjs from 'dayjs'
 import {
   getAllModels,
@@ -371,6 +377,7 @@ let recorded = false
 export function useCurrentProtyle() {
   const plugin = usePlugin()
   const recordCurrentProtyle = ({ detail }) => {
+    currentProtyle.value = null
     currentProtyle.value = detail?.protyle
   }
 
