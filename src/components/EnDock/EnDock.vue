@@ -26,8 +26,12 @@
   >
     <div
       class="en_dock_container"
+      :class="dockType"
     >
-      <div class="EnDockHeader" v-if="!plugin.isMobile">
+      <div
+        v-if="!plugin.isMobile"
+        class="EnDockHeader"
+      >
         <EnSettingsItemAreaHeading>
           {{ title }}
         </EnSettingsItemAreaHeading>
@@ -47,7 +51,14 @@ import EnSettingsItemAreaHeading from '@/modules/Settings/EnSettingsItemAreaHead
 import { targetIsInnerOf } from '@/utils/DOM'
 import { useStorage } from '@vueuse/core'
 import { Custom } from 'siyuan'
-import { computed, onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue'
+import {
+  computed,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  watch,
+  watchEffect,
+} from 'vue'
 
 const props = defineProps<{
   type: string
@@ -121,9 +132,9 @@ onBeforeUnmount(() => {
 
 
 const dock = ref<{
-  dockRef: Custom,
-  open: boolean,
-  width: number,
+  dockRef: Custom
+  open: boolean
+  width: number
 }>({
   dockRef: null,
   open: false,
