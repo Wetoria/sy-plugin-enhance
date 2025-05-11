@@ -1,3 +1,4 @@
+<!-- 历史批注 带侧边定位版本 -->
 <template>
   <EnDock
     v-model:open="popoverVisible"
@@ -17,6 +18,7 @@
               ref="historyCommentListRef"
               class="historyCommentList"
               :style="{
+                minHeight: `${minProtyleHeight}px`,
               }"
             >
               <a-card
@@ -102,7 +104,6 @@ import {
 import { injectGlobalWindowData } from '@/modules/EnModuleControl/ModuleProvide'
 import { debounce } from '@/utils'
 import { useRegisterStyle } from '@/utils/DOM'
-import { useSiyuanEventLoadedProtyleDynamic } from '@/utils/EventBusHooks'
 import { useCurrentProtyle } from '@/utils/Siyuan'
 import { quickMakeCard } from '@/utils/Siyuan/Card'
 import {
@@ -171,7 +172,6 @@ const getCommentsForCurrentProtyle = async () => {
   const currentProtyleId = currentProtyle.value?.block.id
   const isInEditor = globalWindowData.value.protyleList.find((i) => i.protyleBlockId === currentProtyleId)?.isEditorProtyle
   if (!isInEditor) {
-    commentListForCurrentProtyle.value = []
     return
   }
   commentListForCurrentProtyle.value = commentInfoList.value.filter((i) => i.commentForDocId === currentProtyleId)
@@ -207,32 +207,32 @@ const calculateCardPosition = debounce(() => {
   // 这里需要对每个 card 做个排序先
 
 
-  // cardElements.forEach((cardElement: HTMLElement) => {
-  //   const commentForNodeId = cardElement.dataset.en_comment_for_node_id
-  //   const targetNodeElement = protyleContentElement.querySelector(`[data-node-id="${commentForNodeId}"]`)
-  //   if (!targetNodeElement) {
-  //     const removedOffset = cardElement.getBoundingClientRect().height + gap
-  //     cardElement.style.top = `-${removedOffset}px`
-  //     cardElement.dataset.en_comment_top_offset = `-${removedOffset}`
-  //     cardElement.dataset.en_comment_target_top_offset = `-${removedOffset}`
-  //     return
-  //   }
+  cardElements.forEach((cardElement: HTMLElement) => {
+    const commentForNodeId = cardElement.dataset.en_comment_for_node_id
+    const targetNodeElement = protyleContentElement.querySelector(`[data-node-id="${commentForNodeId}"]`)
+    if (!targetNodeElement) {
+      const removedOffset = cardElement.getBoundingClientRect().height + gap
+      cardElement.style.top = `-${removedOffset}px`
+      cardElement.dataset.en_comment_top_offset = `-${removedOffset}`
+      cardElement.dataset.en_comment_target_top_offset = `-${removedOffset}`
+      return
+    }
 
-  //   const targetNodeElementRect = targetNodeElement.getBoundingClientRect()
+    const targetNodeElementRect = targetNodeElement.getBoundingClientRect()
 
-  //   const topOffset = targetNodeElementRect.top - protyleContentElementRect.top + protyleContentElement.scrollTop
+    const topOffset = targetNodeElementRect.top - protyleContentElementRect.top + protyleContentElement.scrollTop
 
-  //   const cardOffset = topOffset + fixedTopOffset
-  //   cardElement.style.top = `${cardOffset}px`
-  //   cardElement.dataset.en_comment_top_offset = `${cardOffset}`
-  //   cardElement.dataset.en_comment_target_top_offset = `${cardOffset}`
-  // })
+    const cardOffset = topOffset + fixedTopOffset
+    cardElement.style.top = `${cardOffset}px`
+    cardElement.dataset.en_comment_top_offset = `${cardOffset}`
+    cardElement.dataset.en_comment_target_top_offset = `${cardOffset}`
+  })
 
-  // cardElements.sort((a: HTMLElement, b: HTMLElement) => {
-  //   const aTopOffset = a.dataset.en_comment_top_offset
-  //   const bTopOffset = b.dataset.en_comment_top_offset
-  //   return Number(aTopOffset || Infinity) - Number(bTopOffset || Infinity)
-  // })
+  cardElements.sort((a: HTMLElement, b: HTMLElement) => {
+    const aTopOffset = a.dataset.en_comment_top_offset
+    const bTopOffset = b.dataset.en_comment_top_offset
+    return Number(aTopOffset || Infinity) - Number(bTopOffset || Infinity)
+  })
 
   commentListForCurrentProtyle.value.sort((a, b) => {
     const aTargetNodeElement = protyleContentElement.querySelector(`[data-node-id="${a.commentForNodeId}"]`)
@@ -261,32 +261,32 @@ const calculateCardPosition = debounce(() => {
     return aTargetRect.top - bTargetRect.top || aTargetRect.left - bTargetRect.left
   })
 
-  // let preBottom = fixedTopOffset
+  let preBottom = fixedTopOffset
 
-  // nextTick(() => {
-  //   cardElements.forEach((element) => {
-  //     const currentTop = Number(element.dataset.en_comment_top_offset)
-  //     if (!element.dataset.en_comment_top_offset || currentTop < 0) {
-  //       return
-  //     }
+  nextTick(() => {
+    cardElements.forEach((element) => {
+      const currentTop = Number(element.dataset.en_comment_top_offset)
+      if (!element.dataset.en_comment_top_offset || currentTop < 0) {
+        return
+      }
 
-  //     const newTop = preBottom + gap
+      const newTop = preBottom + gap
 
-  //     if (currentTop < newTop) {
-  //       element.style.top = `${newTop}px`
-  //       element.dataset.en_comment_top_offset = `${newTop}`
+      if (currentTop < newTop) {
+        element.style.top = `${newTop}px`
+        element.dataset.en_comment_top_offset = `${newTop}`
 
-  //       preBottom = newTop + element.getBoundingClientRect().height
-  //     } else {
-  //       preBottom = currentTop + element.getBoundingClientRect().height
-  //     }
-  //   })
-  // })
+        preBottom = newTop + element.getBoundingClientRect().height
+      } else {
+        preBottom = currentTop + element.getBoundingClientRect().height
+      }
+    })
+  })
 }, 300)
 
-useSiyuanEventLoadedProtyleDynamic(() => {
-  calculateCardPosition()
-})
+// useSiyuanEventLoadedProtyleDynamic(() => {
+//   calculateCardPosition()
+// })
 
 const selectedCommentIdList = ref<Array<{
   // 评论的目标块中的 id
@@ -440,25 +440,25 @@ const scrollToFirstSelectedCard = (commentBlockId: string) => {
     return
   }
 
-  firstSelectedCard.scrollIntoView({
-    behavior: 'smooth',
-  })
+  // firstSelectedCard.scrollIntoView({
+  //   behavior: 'smooth',
+  // })
 
-  // const protyleContentElement = currentProtyle.value.contentElement
+  const protyleContentElement = currentProtyle.value.contentElement
 
-  // const enDockElement = historyCommentListRef.value.closest('.EnDockContent') as HTMLElement
+  const enDockElement = historyCommentListRef.value.closest('.EnDockContent') as HTMLElement
 
-  // const targetNodeElement = protyleContentElement.querySelector(`[data-node-id="${firstSelectedCard.dataset.en_comment_for_node_id}"]`)
-  // if (!targetNodeElement) {
-  //   return
-  // }
+  const targetNodeElement = protyleContentElement.querySelector(`[data-node-id="${firstSelectedCard.dataset.en_comment_for_node_id}"]`)
+  if (!targetNodeElement) {
+    return
+  }
 
-  // const targetNodeElementRect = targetNodeElement.getBoundingClientRect()
-  // const firstSelectedCardRect = firstSelectedCard.getBoundingClientRect()
+  const targetNodeElementRect = targetNodeElement.getBoundingClientRect()
+  const firstSelectedCardRect = firstSelectedCard.getBoundingClientRect()
 
-  // const offset = targetNodeElementRect.top - firstSelectedCardRect.top
+  const offset = targetNodeElementRect.top - firstSelectedCardRect.top
 
-  // enDockElement.scrollTop -= offset
+  enDockElement.scrollTop -= offset
 }
 onMounted(() => {
   document.addEventListener('click', onClickComment, true)
@@ -502,9 +502,9 @@ onBeforeUnmount(() => {
     // gap: var(--en-gap);
 
     .historyCommentList {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+      // display: flex;
+      // flex-direction: column;
+      // gap: 10px;
 
       overflow: hidden;
       overflow-y: auto;
@@ -521,10 +521,10 @@ onBeforeUnmount(() => {
         overflow: hidden;
         background-color: var(--b3-theme-background);
 
-        // position: absolute;
-        // top: -2000px;
-        // left: 4px;
-        // width: calc(100% - 10px);
+        position: absolute;
+        top: -2000px;
+        left: 4px;
+        width: calc(100% - 10px);
 
         // transition: top 0.3s ease-out;
 

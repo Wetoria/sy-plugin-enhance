@@ -22,6 +22,9 @@ export function useSiyuanEventOnce(eventName: keyof IEventBusMap, cb: (event: an
 export function useSiyuanEventLoadedProtyleStatic(cb: (event: any) => void): offSiyuanEvent {
   return useSiyuanEvent('loaded-protyle-static', cb)
 }
+export function useSiyuanEventLoadedProtyleDynamic(cb: (event: any) => void): offSiyuanEvent {
+  return useSiyuanEvent('loaded-protyle-dynamic', cb)
+}
 
 export function useSiyuanEventProtyleDestroy(cb: (event: any) => void): offSiyuanEvent {
   return useSiyuanEvent('destroy-protyle', cb)

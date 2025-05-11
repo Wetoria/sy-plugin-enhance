@@ -23,6 +23,14 @@ export enum EN_COMMENT_KEYS {
   nodeCommentRefKey = 'custom-en-comment-ref-id',
 }
 
+export function provideCommentInfoList(commentInfoList: Ref<EnCommentInfo[]>) {
+  provide('en-comment-info-list', commentInfoList)
+}
+
+export function injectCommentInfoList(): Ref<EnCommentInfo[]> {
+  return inject('en-comment-info-list')
+}
+
 export function provideCommentIdList(commentIdList: Ref<string[]>) {
   provide(EN_PROVIDE_KEYS.EN_COMMENT_ID_LIST, commentIdList)
 }

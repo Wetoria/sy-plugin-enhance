@@ -6,7 +6,9 @@
 import { sql } from '@/api'
 import {
   EN_COMMENT_KEYS,
+  getNodeIdByCommentId,
   provideCommentIdList,
+  provideCommentInfoList,
 } from '@/modules/Comment/Comment'
 import { injectGlobalWindowData } from '@/modules/EnModuleControl/ModuleProvide'
 import { debounce } from '@/utils'
@@ -23,6 +25,10 @@ import {
 const commentIdList = ref([])
 provideCommentIdList(commentIdList)
 
+const commentInfoList = ref<EnCommentInfo[]>([])
+provideCommentInfoList(commentInfoList)
+
+
 const globalWindowData = injectGlobalWindowData()
 const protyleContentRefList = computed<IProtyleObserverItem[]>(() => {
   return globalWindowData.value.protyleList
@@ -33,23 +39,28 @@ const getAllCommentIds = async () => {
 
   if (!protyleBlockIdList.length) {
     commentIdList.value = []
+    commentInfoList.value = []
     return
   }
 
+  // 根据当前打开的 protyle 里，所有块的 id
+  // 获取所有评论了这些块的 commentId
   const sqlStmt = `
     with comment_ids as (
       select distinct
         CASE
           WHEN b.type = 'd' THEN b.id
           ELSE b.root_id
-        END as id
+        END as id,
+        b.root_id as comment_for_doc_id
       from
         blocks b
       where
         id in (${protyleBlockIdList.map((i) => `'${i}'`).join(',')})
       union
       select distinct
-        b.id
+        b.id as id,
+        b.root_id as comment_for_doc_id
       from
         blocks b
       where
@@ -66,7 +77,8 @@ const getAllCommentIds = async () => {
         )
     )
     select
-      a.*
+      a.*,
+      c.comment_for_doc_id as comment_for_doc_id
     from
       attributes a
       inner join comment_ids c
@@ -78,6 +90,14 @@ const getAllCommentIds = async () => {
   `
   const res = await sql(sqlStmt)
   commentIdList.value = res.map((i) => i.value)
+  commentInfoList.value = res.map((i) => {
+    return {
+      commentId: i.value,
+      commentForDocId: i.comment_for_doc_id,
+      commentForNodeId: getNodeIdByCommentId(i.value),
+      commentBlockId: i.block_id,
+    }
+  })
 }
 
 
