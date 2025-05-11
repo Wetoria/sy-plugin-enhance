@@ -241,7 +241,8 @@ const bindAttrContainer = () => {
     span.className = 'enProtyleAttrContainer protyle-custom'
     span.contentEditable = 'false'
     span.dataset.en_loop_key = generateUUIDWithTimestamp()
-    const protyleAttr = dom.querySelector('.protyle-attr')
+
+    const protyleAttr = Array.from(dom.children).find((i) => i.classList.contains('protyle-attr'))
     if (!protyleAttr) return
 
     dom.insertBefore(span, protyleAttr)
