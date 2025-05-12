@@ -353,3 +353,41 @@ export function useEnProtyleUtilAreaRef() {
   return EnProtyleUtilAreaRef
 }
 
+
+export const calculateElementIsInTargetElement = (element: HTMLElement, targetElement: HTMLElement = document.body, options: {
+  offset?: number
+} = {}) => {
+  if (!element) {
+    return
+  }
+
+  const {
+    offset = 100,
+  } = options
+
+  const elementRect = element.getBoundingClientRect()
+  const targetElementRect = targetElement.getBoundingClientRect()
+
+  const leftBoundary = targetElementRect.left - offset
+  const rightBoundary = targetElementRect.right + offset
+  const topBoundary = targetElementRect.top - offset
+  const bottomBoundary = targetElementRect.bottom + offset
+
+  const leftBoundaryIn = leftBoundary < elementRect.left && elementRect.left < rightBoundary
+  const rightBoundaryIn = leftBoundary < elementRect.right && elementRect.right < rightBoundary
+  const topBoundaryIn = topBoundary < elementRect.top && elementRect.top < bottomBoundary
+  const bottomBoundaryIn = topBoundary < elementRect.bottom && elementRect.bottom < bottomBoundary
+
+  const horizontalIn =
+    leftBoundaryIn
+    || rightBoundaryIn
+  const verticalIn =
+    topBoundaryIn
+    || bottomBoundaryIn
+
+  const isIn =
+    horizontalIn
+    && verticalIn
+
+  return isIn
+}

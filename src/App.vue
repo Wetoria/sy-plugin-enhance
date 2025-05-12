@@ -82,6 +82,11 @@ registerGlobalObserver()
   gap: var(--en-gap);
 }
 
+.fullContent {
+  width: 100%;
+  height: 100%;
+}
+
 #enApp {
   width: 100vw;
   height: 100dvh;
@@ -109,7 +114,7 @@ registerGlobalObserver()
   flex-wrap: nowrap;
 
   .displayArea,
-  .hidderArea {
+  .hiddenArea {
     width: 100%;
     height: 100%;
     pointer-events: none;
@@ -125,7 +130,7 @@ registerGlobalObserver()
     }
   }
 
-  .hidderArea {
+  .hiddenArea {
     display: none;
   }
 }
