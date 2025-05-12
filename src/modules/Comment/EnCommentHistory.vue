@@ -174,7 +174,6 @@ const getCommentsForCurrentProtyle = async () => {
   const currentProtyleId = currentProtyle.value?.block.id
   const isInEditor = globalWindowData.value.protyleList.find((i) => i.protyleBlockId === currentProtyleId)?.isEditorProtyle
   if (!isInEditor) {
-    commentListForCurrentProtyle.value = []
     return
   }
   commentListForCurrentProtyle.value = commentInfoList.value.filter((i) => i.commentForDocId === currentProtyleId)
