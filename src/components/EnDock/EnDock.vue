@@ -36,7 +36,10 @@
           {{ title }}
         </EnSettingsItemAreaHeading>
       </div>
-      <div class="EnDockContent">
+      <div
+        class="EnDockContent"
+        @scroll="handleScroll"
+      >
         <slot></slot>
       </div>
     </div>
@@ -69,6 +72,10 @@ const props = defineProps<{
 
 
 const plugin = usePlugin()
+
+const emits = defineEmits<{
+  scroll: [event: Event]
+}>()
 
 
 let clicked = false
@@ -177,6 +184,11 @@ onMounted(() => {
     })
   }
 })
+
+
+const handleScroll = (event) => {
+  emits('scroll', event)
+}
 </script>
 
 <style lang="scss" scoped>

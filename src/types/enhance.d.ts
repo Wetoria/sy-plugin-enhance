@@ -1,5 +1,18 @@
 type Noop = () => void
 
+interface Window {
+  enEnableLogContext: () => void
+  enDisableLogContext: () => void
+  enWarnLogText: (text: string) => string
+  enErrorLogText: (text: string) => string
+  enSuccessLogText: (text: string) => string
+}
+const enEnableLogContext = () => {}
+const enDisableLogContext = () => {}
+const enWarnLogText = (text: string) => text
+const enErrorLogText = (text: string) => text
+const enSuccessLogText = (text: string) => text
+
 interface EnAuth {
   lv: number
   expiration: string | number | null

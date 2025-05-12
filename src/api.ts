@@ -319,6 +319,15 @@ export async function getBlockInfo(id: BlockId) {
   const url = await sql(`select * from blocks where id = '${id}'`)
   return url[0]
 }
+
+
+export async function getBlockDOM(id: BlockId) {
+  const url = "/api/block/getBlockDOM"
+  const data = {
+    id,
+  }
+  return request(url, data)
+}
 // **************************************** Attributes ****************************************
 export async function setBlockAttrs(
   id: BlockId,

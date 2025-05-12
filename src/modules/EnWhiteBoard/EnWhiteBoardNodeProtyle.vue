@@ -164,6 +164,7 @@
       </Handle>
     </div>
     <!-- 需确保 mainRef 唯一，目前的写法是唯一的（需要 v-else 等） -->
+    <!-- FIXME 卡片如果没有显示，会导致 transactions 监听失败 -->
     <Teleport
       v-if="isInViewport && mainRef"
       :to="mainRef"

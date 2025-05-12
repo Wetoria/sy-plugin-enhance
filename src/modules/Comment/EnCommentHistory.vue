@@ -5,6 +5,7 @@
     title="历史批注"
     autoOpen
     type="EnCommentHistory"
+    @scroll="handleScroll"
   >
     <div
       class="enCommentListContainerContent"
@@ -57,12 +58,14 @@
                     </a-popconfirm>
                   </a-button-group>
                 </div>
-                <EnProtyle
+                <EnProtyleAutoRender
                   :blockId="item.commentBlockId"
                   :options="{
                     action: [],
                   }"
                   disableEnhance
+                  ref="enProtyleRefList"
+                  :targetElement="getEnDockContentElement"
                   @after="calculateCardPosition"
                 />
               </a-card>
@@ -88,7 +91,7 @@ import {
   sql,
 } from '@/api'
 import EnDock from '@/components/EnDock/EnDock.vue'
-import EnProtyle from '@/components/EnProtyle.vue'
+import EnProtyleAutoRender from '@/components/EnProtyleAutoRender.vue'
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import { usePlugin } from '@/main'
 import {
@@ -171,7 +174,6 @@ const getCommentsForCurrentProtyle = async () => {
   const currentProtyleId = currentProtyle.value?.block.id
   const isInEditor = globalWindowData.value.protyleList.find((i) => i.protyleBlockId === currentProtyleId)?.isEditorProtyle
   if (!isInEditor) {
-    commentListForCurrentProtyle.value = []
     return
   }
   commentListForCurrentProtyle.value = commentInfoList.value.filter((i) => i.commentForDocId === currentProtyleId)
@@ -468,6 +470,17 @@ onBeforeUnmount(() => {
 })
 
 // #endregion 点击评论，显示历史评论列表
+
+
+const enProtyleRefList = ref([])
+const getEnDockContentElement = () => {
+  return historyCommentListRef.value?.closest('.EnDockContent') as HTMLElement
+}
+const handleScroll = () => {
+  enProtyleRefList.value.forEach((enProtyleRef) => {
+    enProtyleRef.checkProtyleVisible()
+  })
+}
 </script>
 
 <style lang="scss" scoped>
