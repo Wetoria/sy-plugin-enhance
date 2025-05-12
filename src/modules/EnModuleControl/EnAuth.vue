@@ -127,17 +127,13 @@ const server1 = 'https://server.wetoria.vip'
 // CF 代理阿里云走frp
 const server2 = 'https://api.wetoria.vip'
 // IPV6 直连
-const server3 = 'http://wetoria.cn' // TODO remove
-const server6 = 'http://api.wetoria.cn'
+const ipv6Http = 'http://api.wetoria.cn'
 // IPV6 直连 HTTPS
-const server4 = 'https://wetoria.cn' // TODO remove
-const server5 = 'https://api.wetoria.cn'
+const ipv6Https = 'https://api.wetoria.cn'
 
 const serverList = [
-  server5,
-  server6,
-  server4,
-  server3,
+  ipv6Https,
+  ipv6Http,
   server1,
   server2,
 ]
@@ -303,18 +299,13 @@ const updateRequest = async (data, showMessage = true) => {
   }
 }
 
-const updateByUser = async (showMessage = true) => {
+const updateByUser = async () => {
   if (isPermanent.value) {
     enLog('Auth subscription update canceled, current version is permanent')
     return true
   }
   if (!siyuanAccount.value.userId) {
     enLog('Auth subscription update canceled, userId is empty')
-    if (showMessage) {
-      Notification.error({
-        content: `叶归｜请先登录思源`,
-      })
-    }
     return
   }
   const data = {
@@ -324,7 +315,7 @@ const updateByUser = async (showMessage = true) => {
     t: `${getT()}100`,
     afdOrderNo: afdOrderNo.value,
   }
-  updateRequest(data, showMessage)
+  updateRequest(data, true)
 }
 
 const updateOnUserChange = () => {
