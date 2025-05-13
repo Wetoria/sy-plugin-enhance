@@ -1,21 +1,21 @@
 <template>
-  <a-tooltip :content="content || '跳转至目标块'">
-    <template #content>
-      <slot name="content" />
-    </template>
-    <a-link @click="jumpToBlock" class="EnBlockJumper">
-      <template #icon>
-        <SyIcon
-          name="iconOpen"
-          :size="10"
-        />
-      </template>
+  <EnButtonIcon
+    type="text"
+    class="EnBlockJumper"
+    @click="jumpToBlock"
+  >
+    <SyIcon
+      name="iconOpen"
+      :size="10"
+    />
+    <template #prompt>
       跳转原文
-    </a-link>
-  </a-tooltip>
+    </template>
+  </EnButtonIcon>
 </template>
 
 <script setup lang="ts">
+import EnButtonIcon from '@/components/EnButtonIcon.vue'
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import { openDocById } from '@/utils/Note'
 

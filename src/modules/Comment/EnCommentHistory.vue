@@ -30,37 +30,35 @@
                 ]"
               >
                 <div class="historyCommentListItemOperations">
-                  <a-button-group>
-                    <EnBlockJumper
-                      :blockId="item.commentForNodeId"
-                      @click="onClickCommentItem(item)"
-                    />
-                    <a-button
-                      type="text"
-                      @click="(event) => quickMakeCardForCommentBlock(event, item)"
-                    >
-                      <template #icon>
-                        <SyIcon name="iconRiffCard" />
-                      </template>
+                  <EnBlockJumper
+                    :blockId="item.commentForNodeId"
+                    @click="onClickCommentItem(item)"
+                  />
+                  <EnButtonIcon
+                    type="text"
+                    @click="(event) => quickMakeCardForCommentBlock(event, item)"
+                  >
+                    <SyIcon name="iconRiffCard" />
+                    <template #prompt>
                       快速制卡
-                    </a-button>
-                    <a-popconfirm
-                      content="确定删除吗？"
-                      position="tr"
-                      type="error"
-                      @ok="onDeleteComment(item)"
+                    </template>
+                  </EnButtonIcon>
+                  <a-popconfirm
+                    content="确定删除吗？"
+                    position="tr"
+                    type="error"
+                    @ok="onDeleteComment(item)"
+                  >
+                    <EnButtonIcon
+                      type="text"
+                      status="danger"
                     >
-                      <a-button
-                        type="text"
-                        status="danger"
-                      >
-                        <template #icon>
-                          <SyIcon name="iconTrashcan" />
-                        </template>
+                      <SyIcon name="iconTrashcan" />
+                      <template #prompt>
                         删除
-                      </a-button>
-                    </a-popconfirm>
-                  </a-button-group>
+                      </template>
+                    </EnButtonIcon>
+                  </a-popconfirm>
                 </div>
                 <EnProtyleAutoRender
                   :blockId="item.commentBlockId"
@@ -95,6 +93,7 @@ import {
   sql,
 } from '@/api'
 import EnBlockJumper from '@/components/EnBlockJumper.vue'
+import EnButtonIcon from '@/components/EnButtonIcon.vue'
 import EnDock from '@/components/EnDock/EnDock.vue'
 import EnProtyleAutoRender from '@/components/EnProtyleAutoRender.vue'
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
@@ -590,6 +589,7 @@ const handleScroll = () => {
         display: flex;
         justify-content: flex-end;
         padding: 4px 8px;
+        gap: 4px;
       }
     }
   }
