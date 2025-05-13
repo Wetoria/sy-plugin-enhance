@@ -3,10 +3,11 @@
     <template #content>
       <slot name="content" />
     </template>
-    <a-link @click="jumpToBlock">
+    <a-link @click="jumpToBlock" class="EnBlockJumper">
       <template #icon>
         <SyIcon
           name="iconOpen"
+          :size="10"
         />
       </template>
       跳转原文
@@ -24,12 +25,26 @@ const props = defineProps<{
   content?: string
 }>()
 
+const emits = defineEmits<{
+  (e: 'click'): void
+  (e: 'beforeJump'): boolean
+}>()
+
 const jumpToBlock = () => {
+  emits('click')
+  const jump = emits('beforeJump')
+  if (typeof jump === 'boolean' && !jump) {
+    return
+  }
   openDocById(props.blockId)
 }
 
 </script>
 
 <style lang="scss" scoped>
-
+.EnBlockJumper {
+  :deep(.arco-link-icon) {
+    display: flex;
+  }
+}
 </style>

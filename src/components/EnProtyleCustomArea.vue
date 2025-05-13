@@ -13,7 +13,9 @@
     </div>
   </Teleport>
 
-  <template v-if="enProtyleActualAreaRef && enProtyleCustomAreaRef">
+  <template
+    v-if="renderActualArea"
+  >
     <!-- 实际显示白板的区域 -->
     <Teleport :to="fullScreen === 'siyuan' ? 'body' : enProtyleActualAreaRef">
       <div
@@ -39,6 +41,7 @@ import {
   onBeforeUnmount,
   onMounted,
   ref,
+  useSlots,
 } from 'vue'
 
 export const enProtyleCustomAreaClassName = 'enProtyleCustomArea'
@@ -53,6 +56,7 @@ const props = defineProps<IProps>()
 const enProtyleCustomAreaContainerOffset = 0
 
 interface IProps {
+  name?: string
   getTargetBlockDom: () => HTMLElement
   // 主要还是文档 doc 和思源 siyuan 占满了。系统级别的还是暂时不考虑了。
   fullScreen?: 'doc' | 'siyuan' | 'system' | undefined
@@ -65,6 +69,16 @@ const enProtyleCustomAreaContainerRef = ref<HTMLElement | null>(null)
 
 const enProtyleActualAreaRef = ref<HTMLElement | null>(null)
 const enProtyleActualAreaContainerRef = ref<HTMLElement | null>(null)
+
+const slots = useSlots()
+
+const hasDefaultSlot = computed(() => !!slots.default)
+const hasCustomAreaSlot = computed(() => !!slots.customArea)
+const bothDefaultAndCustomSlot = computed(() => hasDefaultSlot.value && hasCustomAreaSlot.value)
+
+const renderActualArea = computed(() => {
+  return hasDefaultSlot.value && enProtyleActualAreaRef.value && enProtyleCustomAreaRef.value
+})
 
 const protyleContentRef = ref<HTMLElement | null>(null)
 defineExpose({
@@ -81,6 +95,9 @@ const registerDom = () => {
   const enProtyleCustomAreaDom = appendTargetDomAsClassOrder(
     `${enProtyleCustomAreaClassName}-${count}`,
     dom,
+    {
+      needCustomClass: true,
+    },
   )
   const isSameDom = enProtyleCustomAreaDom === enProtyleCustomAreaRef.value
   if (isSameDom) {
@@ -88,6 +105,7 @@ const registerDom = () => {
     return
   }
   enProtyleCustomAreaDom.classList.add(enProtyleCustomAreaClassName)
+  enProtyleCustomAreaDom.classList.add(props.name)
   enProtyleCustomAreaDom.dataset.enTargetNodeId = dom.dataset.nodeId
   enProtyleCustomAreaDom.dataset.enId = `${count}`
   enProtyleCustomAreaRef.value = enProtyleCustomAreaDom
@@ -101,17 +119,23 @@ const registerDom = () => {
   if (!parent) {
     return
   }
+  protyleContentRef.value = parent
 
+
+
+  if (!hasDefaultSlot.value) {
+    return
+  }
   const enProtyleActualDom = appendTargetDomAsClassOrder(
     `${enProtyleActualAreaClassName}-${count}`,
     parent,
   )
   enProtyleActualDom.classList.add(enProtyleActualAreaClassName)
+  enProtyleActualDom.classList.add(props.name)
   enProtyleActualDom.dataset.enTargetNodeId = dom.dataset.nodeId
   enProtyleActualDom.dataset.enId = `${count}`
   enProtyleActualAreaRef.value = enProtyleActualDom
 
-  protyleContentRef.value = parent
 }
 
 const cancelMouseDown = (event: MouseEvent) => {
@@ -166,6 +190,10 @@ const moveActualAreaToCustomArea = () => {
 }
 
 const enable = () => {
+  if (bothDefaultAndCustomSlot.value) {
+    enWarn(`Please don't use both default and custom slot at the same time`)
+    return
+  }
   registerDom()
   watchDomChange(matchActualAreaToCustomArea)
 }

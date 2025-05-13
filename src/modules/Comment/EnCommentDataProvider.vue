@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import { sql } from '@/api'
+import { flushTransactions, sql } from '@/api'
 import {
   EN_COMMENT_KEYS,
   getNodeIdByCommentId,
@@ -35,6 +35,7 @@ const protyleContentRefList = computed<IProtyleObserverItem[]>(() => {
 })
 
 const getAllCommentIds = async () => {
+  await flushTransactions()
   const protyleBlockIdList = protyleContentRefList.value.map((i) => i.protyleBlockId)
 
   if (!protyleBlockIdList.length) {

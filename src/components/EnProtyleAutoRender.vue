@@ -31,6 +31,7 @@ import {
   Protyle,
 } from 'siyuan'
 import {
+  onBeforeUnmount,
   onMounted,
   ref,
   watch
@@ -60,6 +61,9 @@ const destroyProtyle = () => {
     protyleRenderAreaRef.value.innerHTML = `<div></div>`
   }
 }
+onBeforeUnmount(() => {
+  destroyProtyle()
+})
 
 const renderProtyle = () => {
   if (!props.blockId || !protyleVisible.value) {
