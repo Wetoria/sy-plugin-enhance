@@ -31,6 +31,7 @@ import {
   Protyle,
 } from 'siyuan'
 import {
+  onBeforeUnmount,
   onMounted,
   ref,
   watch
