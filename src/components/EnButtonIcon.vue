@@ -9,7 +9,9 @@
     <a-button
       class="EnButtonIcon"
       size="small"
+      type="text"
       v-bind="$attrs"
+      @click="onClick"
     >
       <template #icon>
         <slot />
@@ -23,6 +25,9 @@ import { usePlugin } from '@/main'
 import { ref } from 'vue'
 
 const plugin = usePlugin()
+const emit = defineEmits<{
+  (e: 'click'): void
+}>()
 
 const tooltipVisible = ref(false)
 const onPopupVisibleChange = (visible: boolean) => {
@@ -30,6 +35,10 @@ const onPopupVisibleChange = (visible: boolean) => {
     return
   }
   tooltipVisible.value = visible
+}
+
+const onClick = () => {
+  emit('click')
 }
 </script>
 
