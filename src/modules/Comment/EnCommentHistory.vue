@@ -462,7 +462,7 @@ const onClickComment = async (event: MouseEvent) => {
 }
 
 const scrollToFirstSelectedCard = (commentBlockId: string) => {
-  const firstSelectedCard = historyCommentListRef.value.querySelector(`[data-en_comment_for_node_id="${commentBlockId}"]`) as HTMLDivElement
+  const firstSelectedCard = historyCommentListRef.value?.querySelector(`[data-en_comment_for_node_id="${commentBlockId}"]`) as HTMLDivElement
   if (!firstSelectedCard) {
     return
   }
