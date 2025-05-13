@@ -31,6 +31,10 @@
               >
                 <div class="historyCommentListItemOperations">
                   <a-button-group>
+                    <EnBlockJumper
+                      :blockId="item.commentForNodeId"
+                      @click="onClickCommentItem(item)"
+                    />
                     <a-button
                       type="text"
                       @click="(event) => quickMakeCardForCommentBlock(event, item)"
@@ -90,6 +94,7 @@ import {
   deleteBlock,
   sql,
 } from '@/api'
+import EnBlockJumper from '@/components/EnBlockJumper.vue'
 import EnDock from '@/components/EnDock/EnDock.vue'
 import EnProtyleAutoRender from '@/components/EnProtyleAutoRender.vue'
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
@@ -189,6 +194,10 @@ const getCommentsForCurrentProtyle = async () => {
   setTimeout(() => {
     calculateCardPosition()
   }, 0)
+}
+
+const onClickCommentItem = (item: Omit<EnCommentInfo, 'commentForDocId'>) => {
+  selectedCommentIdList.value = [item]
 }
 
 
