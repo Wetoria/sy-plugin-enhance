@@ -1,3 +1,4 @@
+import { SiyuanProtyleCustomClassName } from '@/utils/Siyuan'
 import {
   onBeforeUnmount,
   onMounted,
@@ -200,7 +201,9 @@ export enum AppendDomClassOrder {
 }
 const appendDomClassOrder = Object.values(AppendDomClassOrder)
 
-export function appendTargetDomAsClassOrder(className: AppendDomClassOrder | string, targetDom: HTMLElement) {
+export function appendTargetDomAsClassOrder(className: AppendDomClassOrder | string, targetDom: HTMLElement, options?: {
+  needCustomClass?: boolean
+} = {}) {
   if (!className) {
     enWarn('Append Target need a className')
     return
@@ -210,6 +213,10 @@ export function appendTargetDomAsClassOrder(className: AppendDomClassOrder | str
     return
   }
   const indexInOrder = appendDomClassOrder.findIndex((i) => i === className)
+
+  const {
+    needCustomClass = false,
+  } = options
 
 
   // 如果 className 不在 appendDomClassOrder 中，则认为它在最后
@@ -233,11 +240,24 @@ export function appendTargetDomAsClassOrder(className: AppendDomClassOrder | str
 
   result = document.createElement('div')
   result.classList.add(className)
+  if (needCustomClass) {
+    result.classList.add(SiyuanProtyleCustomClassName)
+  }
 
   if (finalIndex < children.length) {
     targetDom.insertBefore(result, children[finalIndex])
   } else {
-    targetDom.appendChild(result)
+
+    const isNodeElement = targetDom.dataset.nodeId
+    const children = Array.from(targetDom.children)
+    const existProtyleAttrElement = children.find((i) => i.classList.contains('protyle-attr'))
+    // 如果是思源 Node，则插入到 protyle-attr 之前
+    // 以防思源内部不能通过 lastElementChild 获取到 protyle-attr 元素
+    if (isNodeElement && existProtyleAttrElement) {
+      targetDom.insertBefore(result, existProtyleAttrElement)
+    } else {
+      targetDom.appendChild(result)
+    }
   }
   return result
 }

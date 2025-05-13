@@ -23,6 +23,7 @@ import {
 import { queryAllByDom } from './DOM'
 
 export const SiyuanSelectClassName = 'protyle-wysiwyg--select'
+export const SiyuanProtyleCustomClassName = 'protyle-custom'
 
 export enum SyFrontendTypes {
   // 桌面端
@@ -191,6 +192,8 @@ export enum SyNodeTypes {
   i = 'i',
   b = 'b',
   s = 's',
+
+  a = 'a',
 }
 
 export function getSyNodeType(node) {
