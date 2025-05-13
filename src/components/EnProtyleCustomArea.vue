@@ -192,7 +192,6 @@ const moveActualAreaToCustomArea = () => {
 const enable = () => {
   if (bothDefaultAndCustomSlot.value) {
     enWarn(`Please don't use both default and custom slot at the same time`)
-    return
   }
   registerDom()
   watchDomChange(matchActualAreaToCustomArea)
