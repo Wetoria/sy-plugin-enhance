@@ -114,7 +114,7 @@ import {
   onMounted,
   ref,
   watch,
-  watchEffect,
+  watchEffect
 } from 'vue'
 
 const commentInfoList = injectCommentInfoList()
@@ -149,6 +149,7 @@ const quickMakeCardForCommentBlock = (event: MouseEvent, item: { commentBlockId:
 const onDeleteComment = (item: { commentBlockId: string }) => {
   const blockId = item.commentBlockId
   // 先从列表中移除
+  commentListForCurrentProtyle.value = commentListForCurrentProtyle.value.filter((i) => i.commentBlockId !== blockId)
   selectedCommentIdList.value = selectedCommentIdList.value.filter((i) => i.commentBlockId !== blockId)
 
   // 确保 EnProtyle 已经销毁，再删除块
@@ -161,7 +162,7 @@ const onDeleteComment = (item: { commentBlockId: string }) => {
 
 const globalWindowData = injectGlobalWindowData()
 const commentListForCurrentProtyle = ref<EnCommentInfo[]>([])
-const minProtyleHeight = ref(0)
+
 watch(currentProtyle, (newValue, oldValue) => {
   if (newValue?.block.id !== oldValue?.block.id) {
     getCommentsForCurrentProtyle()
@@ -169,17 +170,22 @@ watch(currentProtyle, (newValue, oldValue) => {
 }, {
   deep: true,
 })
+watch(commentInfoList, () => {
+  getCommentsForCurrentProtyle()
+})
 
 const getCommentsForCurrentProtyle = async () => {
   const currentProtyleId = currentProtyle.value?.block.id
+  if (!currentProtyleId) {
+    return
+  }
   const isInEditor = globalWindowData.value.protyleList.find((i) => i.protyleBlockId === currentProtyleId)?.isEditorProtyle
+  // 只显示编辑区中的批注历史
   if (!isInEditor) {
     return
   }
   commentListForCurrentProtyle.value = commentInfoList.value.filter((i) => i.commentForDocId === currentProtyleId)
-  const wysiwygElement = currentProtyle.value.wysiwyg.element
-  const wysiwygHeight = wysiwygElement.clientHeight
-  minProtyleHeight.value = wysiwygHeight
+
   setTimeout(() => {
     calculateCardPosition()
   }, 0)
@@ -350,6 +356,17 @@ watchEffect(() => {
 const onClickComment = async (event: MouseEvent) => {
   let target = event.target as HTMLElement
 
+  const protyleContentElement = (event.target as HTMLElement).closest('.protyle-content')
+  if (!protyleContentElement) {
+    return
+  }
+  const isInEditor = globalWindowData.value.protyleList.find((i) => i.protyleContentEl === protyleContentElement)?.isEditorProtyle
+  if (!isInEditor) {
+    return
+  }
+
+  selectedCommentIdList.value = []
+
   const allCommentNodes = []
   while (target) {
     if (isCancelShowCommentListDom(target)) {
@@ -418,7 +435,6 @@ const onClickComment = async (event: MouseEvent) => {
   const queryCommentBlockIdSql = `select * from attributes where name = 'custom-en-comment-ref-id' and value in ('${idListWhichHasComment.map((i) => i.commentId).join("','")}')`
   const commentBlockIdRes = await sql(queryCommentBlockIdSql)
 
-  selectedCommentIdList.value = []
   idListWhichHasComment.forEach((id) => {
     const commentBlockId = commentBlockIdRes.find((i) => i.value === id.commentId)?.block_id
     if (commentBlockId) {

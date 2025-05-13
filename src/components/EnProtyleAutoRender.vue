@@ -60,6 +60,9 @@ const destroyProtyle = () => {
     protyleRenderAreaRef.value.innerHTML = `<div></div>`
   }
 }
+onBeforeUnmount(() => {
+  destroyProtyle()
+})
 
 const renderProtyle = () => {
   if (!props.blockId || !protyleVisible.value) {
