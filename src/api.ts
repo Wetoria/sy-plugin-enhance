@@ -427,9 +427,6 @@ export async function putFile(path: string, isDir: boolean, file: any) {
   const form = new FormData()
   form.append("path", path)
   form.append("isDir", isDir.toString())
-  // Copyright (c) 2023, terwer.
-  // https://github.com/terwer/siyuan-plugin-importer/blob/v1.4.1/src/api/kernel-api.ts
-  form.append("modTime", Math.floor(Date.now() / 1000).toString())
   form.append("file", file)
   const url = "/api/file/putFile"
   return request(url, form)
@@ -556,4 +553,13 @@ export async function performSync(): Promise<number> {
 export async function flushTransactions(): Promise<any> {
   const url = "/api/sqlite/flushTransaction"
   return request(url, {})
+}
+
+
+export async function unzip(zipPath: string, path: string) {
+  const url = "/api/archive/unzip"
+  return request(url, {
+    zipPath,
+    path,
+  })
 }

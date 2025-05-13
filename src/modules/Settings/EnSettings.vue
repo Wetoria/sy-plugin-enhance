@@ -109,6 +109,14 @@
           使用说明：
           <a href="https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse">{{ plugin.version ? `v${plugin.version}` : '' }}</a>
         </span>
+        <EnButtonIcon
+          @click="checkNewUpdate"
+        >
+          <icon-cloud-download />
+          <template #prompt>
+            检查新版本
+          </template>
+        </EnButtonIcon>
         <span>
           问题反馈：
           <a href="https://qm.qq.com/q/uqtSkQUS8U">Q 群</a>、
@@ -120,6 +128,7 @@
 </template>
 
 <script setup lang="ts">
+import EnButtonIcon from '@/components/EnButtonIcon.vue'
 import EnDrawer from '@/components/EnDrawer.vue'
 import EnIconDragon from '@/components/EnIconDragon.vue'
 import { usePlugin } from '@/main'
@@ -148,6 +157,7 @@ import {
   settingRefKeysSorted,
   settingsRefMap,
 } from '@/modules/Settings/SettingsModuleControl'
+import { getNewPackageAndUnzip, hasNewVersion } from '@/modules/Settings/Version'
 
 
 import {
@@ -157,9 +167,11 @@ import {
 import { EN_EVENT_BUS_KEYS } from '@/utils/Constants'
 import { onCountClick } from '@/utils/DOM'
 import { enEventBus } from '@/utils/EnEventBus'
+import { Modal, Notification } from '@arco-design/web-vue'
 import {
   onBeforeUnmount,
   onMounted,
+  ref,
 } from 'vue'
 
 const plugin = usePlugin()
@@ -220,6 +232,39 @@ const {
 } = injectAuthStatus()
 const openAuthModal = () => {
   enEventBus.emit(EN_EVENT_BUS_KEYS.AUTH_OPEN_MODAL)
+}
+
+const hasNew = ref(false)
+const loading = ref(false)
+
+const updatePlugin = async () => {
+  loading.value = true
+  await getNewPackageAndUnzip()
+  loading.value = false
+}
+const checkNewUpdate = async () => {
+  loading.value = true
+  const data = await hasNewVersion()
+  loading.value = false
+  hasNew.value = data.hasNew
+  if (hasNew.value) {
+    Modal.success({
+      title: '叶归｜发现新版本',
+      content: `点击下载新版本${data.info.tag_name}`,
+      simple: false,
+      mask: false,
+      titleAlign: 'start',
+      hideCancel: false,
+      cancelText: '取消',
+      okText: '下载',
+      onCancel: () => {},
+      onOk: () => {
+        updatePlugin()
+      },
+    })
+  } else {
+    Notification.success('叶归｜当前已是最新版本')
+  }
 }
 </script>
 
