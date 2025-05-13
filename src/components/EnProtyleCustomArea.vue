@@ -56,6 +56,7 @@ const props = defineProps<IProps>()
 const enProtyleCustomAreaContainerOffset = 0
 
 interface IProps {
+  name?: string
   getTargetBlockDom: () => HTMLElement
   // 主要还是文档 doc 和思源 siyuan 占满了。系统级别的还是暂时不考虑了。
   fullScreen?: 'doc' | 'siyuan' | 'system' | undefined
@@ -104,6 +105,7 @@ const registerDom = () => {
     return
   }
   enProtyleCustomAreaDom.classList.add(enProtyleCustomAreaClassName)
+  enProtyleCustomAreaDom.classList.add(props.name)
   enProtyleCustomAreaDom.dataset.enTargetNodeId = dom.dataset.nodeId
   enProtyleCustomAreaDom.dataset.enId = `${count}`
   enProtyleCustomAreaRef.value = enProtyleCustomAreaDom
@@ -129,6 +131,7 @@ const registerDom = () => {
     parent,
   )
   enProtyleActualDom.classList.add(enProtyleActualAreaClassName)
+  enProtyleActualDom.classList.add(props.name)
   enProtyleActualDom.dataset.enTargetNodeId = dom.dataset.nodeId
   enProtyleActualDom.dataset.enId = `${count}`
   enProtyleActualAreaRef.value = enProtyleActualDom

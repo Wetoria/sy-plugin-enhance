@@ -114,6 +114,12 @@
         </template>
       </template>
     </EnParagraphBlockAttrContainer>
+
+    <EnParagraphLinkCard
+      v-if="useCustomCard"
+    />
+
+
     <!-- <template
       v-for="item of testTagListRef"
       :key="item.loopKey"
@@ -134,9 +140,12 @@ import {
   useGlobalData,
   useModule,
 } from '@/modules/EnModuleControl/ModuleProvide'
+import { provideParagraphOnlyLink } from '@/modules/ParagraphBlock/EnParagraphBlock'
 import EnParagraphBlockAttrContainer from '@/modules/ParagraphBlock/EnParagraphBlockAttrContainer.vue'
 import EnParagraphBlockTime from '@/modules/ParagraphBlock/EnParagraphBlockTime.vue'
 import EnParagraphBlockTimeDiff from '@/modules/ParagraphBlock/EnParagraphBlockTimeDiff.vue'
+import EnParagraphLinkCard from '@/modules/ParagraphBlock/EnParagraphLinkCard.vue'
+
 // import EnParagraphSuperTagContainer from '@/modules/ParagraphBlock/EnParagraphSuperTagContainer.vue'
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
 import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue'
@@ -152,9 +161,12 @@ import {
   EN_MODULE_LIST,
   EN_STYLE_KEYS,
 } from '@/utils/Constants'
-import { queryAllByDom } from '@/utils/DOM'
+import { isSameDomList, queryAllByDom } from '@/utils/DOM'
 import { useObserver } from '@/utils/elements/Observer'
-import { SyDomNodeTypes } from '@/utils/Siyuan'
+import {
+  SyDomNodeTypes,
+  SyNodeTypes,
+} from '@/utils/Siyuan'
 import {
   onBeforeUnmount,
   ref,
@@ -285,17 +297,44 @@ watch(paragraphListRef, () => {
   immediate: true,
 })
 
+// 👇 是否渲染自定义链接卡片 true 开启，false 关闭
+const useCustomCard = false
+const paragraphOnlyLinkList = ref<HTMLDivElement[]>([])
+
+if (useCustomCard) {
+  provideParagraphOnlyLink(paragraphOnlyLinkList)
+}
+const getParagraphOnlyLinkList = (paragraphList: HTMLDivElement[]) => {
+  return paragraphList.filter((dom) => {
+    const editDiv = dom.firstElementChild
+    if (!editDiv) return false
+    const childNodes = Array.from(editDiv.childNodes)
+    const filterBlankTextNode = childNodes.filter((child) => child.textContent.trim() !== '')
+    const childSpanNodes = childNodes.filter((i) => i.nodeName === 'SPAN')
+    const linkSpanNodes = childSpanNodes.filter((i: HTMLSpanElement) => {
+      const typeAttr = i.dataset.type
+      const typelist = typeAttr.split(/\s+/g)
+      return typelist.find((i) => i === SyNodeTypes.a)
+    })
+    const isSame = filterBlankTextNode.length === linkSpanNodes.length
+    return linkSpanNodes.length && isSame
+  })
+}
 const handler = debounce(() => {
   const targetParagraphList = queryAllByDom(document.body, `.protyle:not(.EnDisableProtyleEnhance) div[data-type="${SyDomNodeTypes.NodeParagraph}"]`) as HTMLDivElement[]
 
-  const currentSet = new Set(paragraphListRef.value)
+  if (useCustomCard) {
+    const targetParagraphOnlyLinkList = getParagraphOnlyLinkList(targetParagraphList)
 
-  if (currentSet.size === targetParagraphList.length
-    && targetParagraphList.every((dom) => currentSet.has(dom))) {
-    return
+    if (!isSameDomList([...paragraphOnlyLinkList.value], targetParagraphOnlyLinkList)) {
+      paragraphOnlyLinkList.value = targetParagraphOnlyLinkList
+    }
   }
 
-  paragraphListRef.value = targetParagraphList
+  if (!isSameDomList([...paragraphListRef.value], targetParagraphList)) {
+    paragraphListRef.value = targetParagraphList
+  }
+
 }, 200)
 
 const {

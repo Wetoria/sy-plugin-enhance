@@ -411,3 +411,14 @@ export const calculateElementIsInTargetElement = (element: HTMLElement, targetEl
 
   return isIn
 }
+
+export const isSameDomList = (domList1: HTMLElement[], domList2: HTMLElement[]) => {
+  if (domList1.length !== domList2.length) {
+    return false
+  }
+  return domList1.every((dom) => {
+    return !!domList2.find((i) => i.isSameNode(dom))
+  }) && domList2.every((dom) => {
+    return !!domList1.find((i) => i.isSameNode(dom))
+  })
+}
