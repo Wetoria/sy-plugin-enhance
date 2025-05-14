@@ -1,3 +1,4 @@
+import { isInVueInstance } from '@/utils'
 import {
   onReceiveSyncData,
   sendSyncData,
@@ -9,7 +10,7 @@ import {
 
 
 export function useSyncDataWith<T>(
-  namespace: string,
+  namespace: Namespace,
   source: Ref<T, any>,
   options?: {
     custom?: (data: T) => void
@@ -36,6 +37,10 @@ export function useSyncDataWith<T>(
     changeDontSyncFlag(false)
   }
 
+  const isInVue = isInVueInstance()
+  if (!isInVue) {
+    enWarn(`You are using useSyncDataWith in a non-Vue environment.`)
+  }
 
 
   // 监听 source 的变化

@@ -1,16 +1,11 @@
+import { isInVueInstance } from '@/utils'
 import { saveData } from '@/utils/DataManager'
+import { getModuleStorageKey } from '@/utils/GlobalModule'
 import { createVuePromiseQueue } from '@/utils/promiseQueue'
 import { toggleSiyuanSync } from '@/utils/Siyuan'
-import { Namespace } from '@/utils/SyncData'
 import { Notification } from '@arco-design/web-vue'
 import { watchDebounced } from '@vueuse/core'
 import { ref, Ref } from 'vue'
-
-export function getModuleStorageKey(namespace: Namespace) {
-  // 前缀 SEP 不能改，否则旧版本的数据会有问题
-  return `SEP-${namespace}`
-}
-
 
 
 async function checkAndSyncSiyuan() {
@@ -55,6 +50,11 @@ export function useSavedData<T>(
 
   const needSave = () => {
     dontSaveFlag = false
+  }
+
+  const isInVue = isInVueInstance()
+  if (!isInVue) {
+    enWarn(`You are using useSavedData in a non-Vue environment.`)
   }
 
   watchDebounced(

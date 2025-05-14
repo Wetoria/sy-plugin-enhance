@@ -4,6 +4,7 @@ import {
   debounce as lodashDebounce,
 } from 'lodash-es'
 import {
+  getCurrentInstance,
   onMounted,
   ref,
 } from 'vue'
@@ -108,4 +109,9 @@ export function generateUUIDWithTimestamp() {
   const shortUUID = generateShortUUID()
   const time = dayjs().format('YYYYMMDDHHmmss')
   return `${time}-${shortUUID}`
+}
+
+
+export function isInVueInstance() {
+  return !!getCurrentInstance()
 }
