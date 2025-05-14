@@ -1,9 +1,12 @@
-import { injectLocal, provideLocal } from '@vueuse/core'
+import {
+  injectLocal,
+  provideLocal,
+} from '@vueuse/core'
 import chalk from 'chalk'
 import { getCurrentInstance } from 'vue'
 
 const prefix = '[SEP by Wetoria]'
-let isDeveloping = false
+const isDeveloping = false
 
 
 export const setLogContextEnabled = (enabled: boolean) => {
@@ -50,10 +53,8 @@ window.enLog = enLog
 
 export function enWarn(...args: [string, ...any[]]) {
   const [first, ...rest] = args
-  console.groupCollapsed(`${chalk.bgYellowBright.yellow(` ${prefix} ${first} `)}`)
-  if (rest.length > 0) {
-    console.warn(...rest)
-  }
+  console.groupCollapsed(`${chalk.bgYellowBright.yellow(` ${prefix} `)} ${first}`, ...rest)
+  console.trace()
   console.groupEnd()
 }
 export function getColorStringWarn(text: string) {
@@ -69,10 +70,8 @@ window.enWarn = enWarn
 
 export function enError(...args: [string, ...any[]]) {
   const [first, ...rest] = args
-  console.groupCollapsed(`${chalk.bgRed.whiteBright(` ${prefix} ${first} `)}`)
-  if (rest.length > 0) {
-    console.error(...rest)
-  }
+  console.groupCollapsed(`${chalk.bgRed.whiteBright(` ${prefix} `)} ${first}`, ...rest)
+  console.trace()
   console.groupEnd()
 }
 export function getColorStringError(text: string) {
@@ -90,10 +89,8 @@ export function enSuccess(...args: [string, ...any[]]) {
   if (cannotLog())
     return
   const [first, ...rest] = args
-  console.groupCollapsed(`${chalk.bgGreen.whiteBright(` ${prefix} ${first} `)}`, ...rest)
-  if (rest.length > 0) {
-    console.trace()
-  }
+  console.groupCollapsed(`${chalk.bgGreen.whiteBright(` ${prefix} `)} ${first}`, ...rest)
+  console.trace()
   console.groupEnd()
 }
 export function getColorStringSuccess(text: string) {
