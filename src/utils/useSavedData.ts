@@ -1,4 +1,3 @@
-import { isInVueInstance } from '@/utils'
 import { saveData } from '@/utils/DataManager'
 import { getModuleStorageKey } from '@/utils/GlobalModule'
 import { createVuePromiseQueue } from '@/utils/promiseQueue'
@@ -32,9 +31,13 @@ const saveStatusMap = ref<{
   }
 }>({})
 
+
+/**
+ * 仅负责发送和接收需要保存的数据
+ */
 export function useSavedData<T>(
   namespace: Namespace,
-  source: Ref<T, any>,
+  source: Ref<T>,
   options?: {
     debounce?: number
     maxWait?: number
@@ -55,12 +58,28 @@ export function useSavedData<T>(
     dontSaveFlag = false
   }
 
-  const isInVue = isInVueInstance()
-  if (!isInVue) {
-    enWarn(`You are using useSavedData with namespace [${enErrorLogText(namespace)}] in a non-Vue environment.`)
+  const save = () => {
+    let saveStatus = saveStatusMap.value[namespace]
+    if (!saveStatus) {
+      saveStatus = {
+        saving: false,
+        saved: false,
+      }
+      saveStatusMap.value[namespace] = saveStatus
+    }
+
+    const storageKey = getModuleStorageKey(namespace)
+
+    queue.addPromise(namespace, async () => {
+      saveStatus.saved = false
+      saveStatus.saving = true
+      await saveData(storageKey, source.value)
+      saveStatus.saved = true
+      saveStatus.saving = false
+    })
   }
 
-  watchDebounced(
+  const unwatchSave = watchDebounced(
     source,
     () => {
       if (dontSaveFlag) {
@@ -68,24 +87,7 @@ export function useSavedData<T>(
         return
       }
 
-      let saveStatus = saveStatusMap.value[namespace]
-      if (!saveStatus) {
-        saveStatus = {
-          saving: false,
-          saved: false,
-        }
-        saveStatusMap.value[namespace] = saveStatus
-      }
-
-      const storageKey = getModuleStorageKey(namespace)
-
-      queue.addPromise(namespace, async () => {
-        saveStatus.saved = false
-        saveStatus.saving = true
-        await saveData(storageKey, source.value)
-        saveStatus.saved = true
-        saveStatus.saving = false
-      })
+      save()
 
     },
     {
@@ -98,5 +100,7 @@ export function useSavedData<T>(
   return {
     dontSave,
     needSave,
+    save,
+    unwatchSave,
   }
 }

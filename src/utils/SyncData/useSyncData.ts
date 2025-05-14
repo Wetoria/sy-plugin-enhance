@@ -1,4 +1,3 @@
-import { isInVueInstance } from '@/utils'
 import {
   onReceiveSyncData,
   sendSyncData,
@@ -8,10 +7,12 @@ import {
   Ref,
 } from 'vue'
 
-
+/**
+ * 仅负责发送和接收需要同步的数据
+ */
 export function useSyncDataWith<T>(
   namespace: Namespace,
-  source: Ref<T, any>,
+  source: Ref<T>,
   options?: {
     custom?: (data: T) => void
     debounce?: number
@@ -37,15 +38,10 @@ export function useSyncDataWith<T>(
     changeDontSyncFlag(false)
   }
 
-  const isInVue = isInVueInstance()
-  if (!isInVue) {
-    enWarn(`You are using useSyncDataWith with namespace [${enErrorLogText(namespace)}] in a non-Vue environment.`)
-  }
-
 
   // 监听 source 的变化
   // debounced，避免频繁发送数据
-  watchDebounced(
+  const unwatchSync = watchDebounced(
     source,
     () => {
 
@@ -92,5 +88,6 @@ export function useSyncDataWith<T>(
   return {
     needSync,
     dontSync,
+    unwatchSync,
   }
 }
