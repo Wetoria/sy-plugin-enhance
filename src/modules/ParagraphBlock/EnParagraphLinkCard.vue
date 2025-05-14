@@ -1631,8 +1631,6 @@ defineExpose({
 .enParagraphLinkCardArea {
   position: relative;
   width: 100%;
-  padding: 8px 0;
-  margin-top: 4px;
   overflow: hidden;
   user-select: none;
 }
