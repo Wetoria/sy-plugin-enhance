@@ -4,7 +4,9 @@ import {
   saveData,
 } from '@/utils/DataManager'
 import { toggleSiyuanSync } from '@/utils/Siyuan'
-import { useSyBroadcast } from '@/utils/websocket/useSyBroadcast'
+import {
+  useSyncDataChannel,
+} from '@/utils/SyncData/useSyncDataChannel'
 import chalk from 'chalk'
 import {
   cloneDeep,
@@ -14,13 +16,18 @@ import {
   Ref,
   ref,
   watch,
-  watchEffect,
 } from 'vue'
 import {
   enError,
   enLog,
   getColorStringWarn,
 } from './Log'
+
+const syncDataSocket = useSyncDataChannel<EnSyncModuleData<any>>({
+  onDataChange(data) {
+    parseSyncDataAndCheck(data)
+  },
+})
 
 /**
  * 同步模块的初始化配置
@@ -64,20 +71,17 @@ export type EnSyncModuleDataRef<T> = Ref<EnSyncModuleData<T>>
  * @field loaded - 是否加载完成
  * @field loadingFlag - 提示是否加载的定时器 id
  */
-interface EnSyncModule<T> {
+interface EnSyncModule<T> extends Omit<EnSyncModuleProps<T>, 'defaultData' | 'namespace'> {
   dataRef: EnSyncModuleDataRef<T>
   unwatch: () => void
 
-  needSync?: EnSyncModuleProps<T>['needSync']
   // 为 true 则不发送更新
   doNotSync?: boolean
 
 
-  needSave?: EnSyncModuleProps<T>['needSave']
   // 不保存的标记，为 true 则不调用思源插件的保存逻辑
   doNotSave?: boolean
 
-  autoLoad?: boolean
   loaded?: boolean
   loading?: boolean
   loadingFlag?: any
@@ -112,33 +116,10 @@ const getNamespaceLogString = (namespace: string) => {
 }
 
 
-// #region socket logics
-
-const socketRef = ref<WebSocket>()
-const socketIsOpen = () => {
-  return socketRef.value && socketRef.value?.readyState == WebSocket.OPEN
-}
-const socketIsClosed = () => !socketIsOpen()
 
 
-/**
- * 同步模块的数据消息结构
- * @field appId - 当前 app 的 appId
- * @field namespace - 当前同步的数据的命名空间
- * @field data - 当前同步的数据
- */
-interface EnSyncModuleDataMsg<T> {
-  // 当前 app 的 appId
-  appId: string
 
-  // 当前同步的数据的命名空间
-  namespace: Namespace
-
-  // 当前同步的数据
-  data: EnSyncModuleData<T>
-}
-
-const getSyncDataByWebSocket = (msg: EnSyncModuleDataMsg<any>) => {
+const getSyncDataByWebSocket = (msg: SyncDataMsg<EnSyncModuleData<any>>) => {
   const mapData = getModuleByNamespace(msg.namespace)
 
   // 标记相关逻辑
@@ -168,8 +149,7 @@ const sendToSyncByData = <T>(namespace: string, data: EnSyncModuleData<T>) => {
     return
   }
 
-  const msgData: EnSyncModuleDataMsg<T> = {
-    appId: window.siyuan.ws.app.appId,
+  const msgData: SyncDataMsg<EnSyncModuleData<T>> = {
     namespace,
     data,
   }
@@ -201,12 +181,12 @@ export const saveModuleDataByNamespace = async (namespace: Namespace) => {
   }
 
   if (!mapData.needSave) {
-    enLog(`Module ${getNamespaceLogString(namespace)} do not need to save. Cancel to save.`)
+    enLog(`Module ${getNamespaceLogString(namespace)} do not need to save. Cancel save.`)
     return
   }
 
   if (mapData.doNotSave) {
-    enLog(`Module ${getNamespaceLogString(namespace)} marked as doNotSave. Cancel to save.`)
+    enLog(`Module ${getNamespaceLogString(namespace)} marked as doNotSave. Cancel save.`)
     mapData.doNotSave = false
     return
   }
@@ -245,20 +225,19 @@ export function useSyncModuleData<T>({
     unwatch: () => {},
   }
   syncDataRefMap[namespace] = mapData
-  dataRef.value = getInitModuleData(defaultData)
+  const initModuleData = getInitModuleData(defaultData)
+  dataRef.value = initModuleData
 
   if (needSave && autoLoad) {
     // 标记模块没有加载
     mapData.loadingFlag = setTimeout(() => {
       if (!mapData.loaded) {
-        enWarn(`${getColorStringWarn(`Module ${getNamespaceLogString(namespace)} was not loaded from file. You seem forget to load it.`)}`)
+        enError(`${getColorStringWarn(`Module ${getNamespaceLogString(namespace)} was not loaded from file. You seem forget to load it.`)}`)
       }
     }, 5000)
   }
 
   enLog(`${getColorStringWarn('Module registered:')} ${getNamespaceLogString(namespace)}.`)
-  enLog(`Module map data is: `, syncDataRefMap)
-  enLog(`The Module data is: `, JSON.parse(JSON.stringify(dataRef.value)))
 
 
 
@@ -410,22 +389,7 @@ export function unuseModuleByNamespace(namespace: string) {
 }
 
 
-const parseSyncDataAndCheck = (socketData: string) => {
-  let data = null
-  try {
-    data = JSON.parse(socketData)
-  } catch (err) {
-    enWarn(`Sync data parse error, cancel handling.`, err.message)
-    return
-  }
-  if (!data) {
-    enWarn(`No data need to be handle.`)
-    return
-  }
-  if (data.appId == window.siyuan.ws.app.appId) {
-    enLog(`Is sent by current app. Not need to be handled.`)
-    return
-  }
+const parseSyncDataAndCheck = (data: SyncDataMsg<EnSyncModuleData<any>>) => {
 
   const exist = syncDataRefMap[data.namespace]
   if (!exist) {
@@ -435,11 +399,3 @@ const parseSyncDataAndCheck = (socketData: string) => {
 
   getSyncDataByWebSocket(data)
 }
-
-const syncDataSocket = useSyBroadcast('SEP-data-sync-channel')
-
-watchEffect(() => {
-  const socketData = syncDataSocket.data.value
-  enLog(`Received sync data: `, socketData)
-  parseSyncDataAndCheck(socketData)
-})

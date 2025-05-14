@@ -41,8 +41,9 @@ import {
 } from '@/utils/EventBusHooks'
 import {
   loadModuleDataByNamespace,
-  syncDataRefMap
+  syncDataRefMap,
 } from '@/utils/SyncData'
+import { syncDataSocket } from '@/utils/SyncData/useSyncDataChannel'
 import {
   computed,
   onBeforeUnmount,
@@ -265,8 +266,11 @@ const unmarkAll = () => {
   moduleDataLoaded.value = false
 }
 
+const syncSocketIsReady = computed(() => {
+  return syncDataSocket.isOpen.value
+})
 const allIsReady = computed(() => {
-  return moduleDataLoaded.value
+  return syncSocketIsReady.value && moduleDataLoaded.value
 })
 
 const autoLoadModuleData = async () => {
@@ -276,6 +280,7 @@ const autoLoadModuleData = async () => {
     // 需要保存，并且是自动保存的，但是没有加载的模块
     return module.needSave && module.autoLoad && !module.loaded
   })
+
   if (!needLoadNamespaces.length) {
     moduleDataLoaded.value = true
     return
@@ -285,9 +290,11 @@ const autoLoadModuleData = async () => {
 }
 
 onMounted(() => {
+  syncDataSocket.open()
   autoLoadModuleData()
 })
 onBeforeUnmount(() => {
+  syncDataSocket.close()
   unmarkAll()
 })
 
