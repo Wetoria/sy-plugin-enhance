@@ -40,10 +40,8 @@ import {
   useSiyuanNotebookUnmount,
 } from '@/utils/EventBusHooks'
 import {
-  closeWebsocket,
-  initWebsocket,
   loadModuleDataByNamespace,
-  syncDataRefMap,
+  syncDataRefMap
 } from '@/utils/SyncData'
 import {
   computed,
@@ -260,17 +258,15 @@ watchEffect(() => {
 
 // #region 模块数据控制逻辑
 
-const wsInited = ref(false)
 const moduleDataLoaded = ref(false)
 
 
 const unmarkAll = () => {
-  wsInited.value = false
   moduleDataLoaded.value = false
 }
 
 const allIsReady = computed(() => {
-  return wsInited.value && moduleDataLoaded.value
+  return moduleDataLoaded.value
 })
 
 const autoLoadModuleData = async () => {
@@ -289,13 +285,9 @@ const autoLoadModuleData = async () => {
 }
 
 onMounted(() => {
-  initWebsocket().then(() => {
-    wsInited.value = true
-  })
   autoLoadModuleData()
 })
 onBeforeUnmount(() => {
-  closeWebsocket()
   unmarkAll()
 })
 

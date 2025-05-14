@@ -4,6 +4,7 @@ import {
   saveData,
 } from '@/utils/DataManager'
 import { toggleSiyuanSync } from '@/utils/Siyuan'
+import { useSyBroadcast } from '@/utils/websocket/useSyBroadcast'
 import chalk from 'chalk'
 import {
   cloneDeep,
@@ -13,6 +14,7 @@ import {
   Ref,
   ref,
   watch,
+  watchEffect,
 } from 'vue'
 import {
   enError,
@@ -136,35 +138,19 @@ interface EnSyncModuleDataMsg<T> {
   data: EnSyncModuleData<T>
 }
 
-const getSyncDataByWebSocket = (event) => {
-  try {
-    const msg = JSON.parse(event.data) as EnSyncModuleDataMsg<any>
-    enLog(
-      `${getColorStringWarn('Received module data of')} [${getNamespaceLogString(msg.namespace)}] from other device: `,
-      JSON.parse(JSON.stringify(msg.data)),
-    )
-    // 当前 app 的数据不处理
-    if (msg.appId == window.siyuan.ws.app.appId) {
-      return
-    }
+const getSyncDataByWebSocket = (msg: EnSyncModuleDataMsg<any>) => {
+  const mapData = getModuleByNamespace(msg.namespace)
 
-    const mapData = getModuleByNamespace(msg.namespace)
-    if (!mapData)
-      return
-
-    // 标记相关逻辑
-    markAsDoNotSave(msg.namespace)
-    markAsDoNotSync(msg.namespace)
-    const mapDataRef = mapData.dataRef
-    mapDataRef.value = msg.data
-  } catch (err) {
-    enError(err)
-  }
+  // 标记相关逻辑
+  markAsDoNotSave(msg.namespace)
+  markAsDoNotSync(msg.namespace)
+  const mapDataRef = mapData.dataRef
+  mapDataRef.value = msg.data
 }
 
 const sendToSyncByData = <T>(namespace: string, data: EnSyncModuleData<T>) => {
   // 如果 socket 未连接，则不处理
-  if (socketIsClosed()) {
+  if (!syncDataSocket.isOpen.value) {
     enWarn(`${getColorStringWarn(`Socket is closed. Can not send module data:`)} ${getNamespaceLogString(namespace)}`)
     return
   }
@@ -189,63 +175,9 @@ const sendToSyncByData = <T>(namespace: string, data: EnSyncModuleData<T>) => {
   }
   enLog(`${getColorStringWarn('Ready to send module')} ${getNamespaceLogString(namespace)} data to sync: `, JSON.parse(JSON.stringify(msgData)))
   const msgStr = JSON.stringify(msgData)
-  socketRef.value.send(msgStr)
+  syncDataSocket.send(msgStr)
 }
 
-
-let connecting = false
-export const initWebsocket = () => {
-  return new Promise((resolve) => {
-    if (socketIsOpen()) {
-      resolve(socketRef.value)
-      return
-    }
-
-    if (connecting) {
-      return
-    }
-
-    const wsUrl = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws/broadcast?channel=SEP-data-sync-channel`
-    connecting = true
-    const socket = new WebSocket(wsUrl)
-    socketRef.value = socket
-
-    socket.onopen = () => {
-      enSuccess('Sync Data Websocket Channel Ready.')
-      connecting = false
-
-      resolve(socketRef.value)
-    }
-
-    socket.onmessage = getSyncDataByWebSocket
-
-    socket.onerror = function () {
-      connecting = false
-
-      initWebsocket().then(() => {
-        resolve(socketRef.value)
-      })
-    }
-  })
-}
-
-export const closeWebsocket = () => {
-  if (socketIsOpen()) {
-    if (socketRef.value) {
-      socketRef.value.onopen = null
-      socketRef.value.onmessage = null
-      socketRef.value.onerror = null
-      socketRef.value.onclose = null
-
-      socketRef.value.close()
-      socketRef.value = null
-
-      connecting = false
-    }
-  }
-}
-
-// #endregion socket logics
 
 
 function getInitModuleData(defaultData) {
@@ -476,3 +408,38 @@ export function unuseModuleByNamespace(namespace: string) {
   mapData.unwatch()
   delete syncDataRefMap[namespace]
 }
+
+
+const parseSyncDataAndCheck = (socketData: string) => {
+  let data = null
+  try {
+    data = JSON.parse(socketData)
+  } catch (err) {
+    enWarn(`Sync data parse error, cancel handling.`, err.message)
+    return
+  }
+  if (!data) {
+    enWarn(`No data need to be handle.`)
+    return
+  }
+  if (data.appId == window.siyuan.ws.app.appId) {
+    enLog(`Is sent by current app. Not need to be handled.`)
+    return
+  }
+
+  const exist = syncDataRefMap[data.namespace]
+  if (!exist) {
+    enWarn(`Module was not registered: ${getNamespaceLogString(data.namespace)}`)
+    return
+  }
+
+  getSyncDataByWebSocket(data)
+}
+
+const syncDataSocket = useSyBroadcast('SEP-data-sync-channel')
+
+watchEffect(() => {
+  const socketData = syncDataSocket.data.value
+  enLog(`Received sync data: `, socketData)
+  parseSyncDataAndCheck(socketData)
+})
