@@ -5,7 +5,10 @@ import { createVuePromiseQueue } from '@/utils/promiseQueue'
 import { toggleSiyuanSync } from '@/utils/Siyuan'
 import { Notification } from '@arco-design/web-vue'
 import { watchDebounced } from '@vueuse/core'
-import { ref, Ref } from 'vue'
+import {
+  ref,
+  Ref,
+} from 'vue'
 
 
 async function checkAndSyncSiyuan() {
@@ -54,7 +57,7 @@ export function useSavedData<T>(
 
   const isInVue = isInVueInstance()
   if (!isInVue) {
-    enWarn(`You are using useSavedData in a non-Vue environment.`)
+    enWarn(`You are using useSavedData with namespace [${enErrorLogText(namespace)}] in a non-Vue environment.`)
   }
 
   watchDebounced(
@@ -76,14 +79,13 @@ export function useSavedData<T>(
 
       const storageKey = getModuleStorageKey(namespace)
 
-      queue.addPromise(namespace, () => new Promise(async (resolve) => {
+      queue.addPromise(namespace, async () => {
         saveStatus.saved = false
         saveStatus.saving = true
         await saveData(storageKey, source.value)
         saveStatus.saved = true
         saveStatus.saving = false
-        resolve(true)
-      }))
+      })
 
     },
     {

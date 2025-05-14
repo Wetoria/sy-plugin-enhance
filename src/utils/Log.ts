@@ -65,6 +65,7 @@ export function enWarnLogText(text: string) {
   return chalk.bold.yellow(text)
 }
 window.enWarn = enWarn
+window.enWarnLogText = enWarnLogText
 
 
 
@@ -82,7 +83,7 @@ export function enErrorLogText(text: string) {
   return chalk.bold.redBright(text)
 }
 window.enError = enError
-
+window.enErrorLogText = enErrorLogText
 
 
 
@@ -101,7 +102,7 @@ export function enSuccessLogText(text: string) {
   return chalk.bold.greenBright(text)
 }
 window.enSuccess = enSuccess
-
+window.enSuccessLogText = enSuccessLogText
 
 
 

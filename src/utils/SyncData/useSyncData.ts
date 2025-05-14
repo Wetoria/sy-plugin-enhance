@@ -39,7 +39,7 @@ export function useSyncDataWith<T>(
 
   const isInVue = isInVueInstance()
   if (!isInVue) {
-    enWarn(`You are using useSyncDataWith in a non-Vue environment.`)
+    enWarn(`You are using useSyncDataWith with namespace [${enErrorLogText(namespace)}] in a non-Vue environment.`)
   }
 
 
