@@ -1,10 +1,12 @@
+
 import { useSyncDataWith } from '@/utils/SyncData/useSyncData'
+import { useSavedData } from '@/utils/useSavedData'
 import {
   ref,
   watchEffect,
 } from 'vue'
 
-export function useTestSyncData() {
+export function useTestSaveAndSyncData() {
 
   const testRef = ref({
     name: 'test',
@@ -16,18 +18,14 @@ export function useTestSyncData() {
   })
 
   const {
-    needSync,
+    dontSave,
+    needSave,
+  } = useSavedData('test', testRef)
+
+  const {
     dontSync,
-  } = useSyncDataWith('test', testRef, {
-    custom: (data) => {
-      console.log('custom', data)
-      if (data.name === 'test4') {
-        console.log('放弃更改')
-      } else {
-        testRef.value = data
-      }
-    },
-  })
+    needSync,
+  } = useSyncDataWith('test', testRef)
 
   const need = () => {
     testRef.value.name = 'test1'
@@ -35,8 +33,18 @@ export function useTestSyncData() {
   }
 
   const dont = () => {
+    dontSave()
     dontSync()
     testRef.value.name = 'test3'
+  }
+
+  const markDontSave = () => {
+    dontSave()
+    testRef.value.name = 'test5'
+  }
+  const markDontSync = () => {
+    dontSync()
+    testRef.value.name = 'test6'
   }
 
   const afterMark = () => {
@@ -46,10 +54,14 @@ export function useTestSyncData() {
 
   return {
     refData: testRef,
-    needSync,
+    dontSave,
+    needSave,
     dontSync,
+    needSync,
     need,
     dont,
     afterMark,
+    markDontSave,
+    markDontSync,
   }
 }
