@@ -103,6 +103,9 @@ watchConfigChanged(
 
 <style lang="scss">
 html[data-en_enabled_module~="EnBackgroundImg"] {
+  .QYLmobile {
+    backdrop-filter: brightness(0.1);
+  }
   .enBackground {
     background-repeat: no-repeat;
     background-attachment: fixed;
