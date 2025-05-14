@@ -1,12 +1,13 @@
 import {
   injectLocal,
   provideLocal,
+  useStorage,
 } from '@vueuse/core'
 import chalk from 'chalk'
 import { getCurrentInstance } from 'vue'
 
 const prefix = '[SEP by Wetoria]'
-const isDeveloping = false
+const isDeveloping = useStorage('en-debugging', false)
 
 
 export const setLogContextEnabled = (enabled: boolean) => {
@@ -27,7 +28,7 @@ const canLog = () => {
   const isInVue = !!getCurrentInstance()
   const isNotInVue = !isInVue
   if (isNotInVue) {
-    return isDeveloping
+    return isDeveloping.value
   }
   const enabled = injectLocal('enLog', false)
   return enabled
