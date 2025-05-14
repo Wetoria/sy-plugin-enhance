@@ -223,6 +223,7 @@ interface EnModuleParagraphBlock extends EnModule {
   defaultBlockType: 'created' | 'updated'
 
   alwaysShowYMD: boolean
+  enableLinkCard: boolean
 
   // enableBlockLock: boolean
   // autoLockTimeDiff: number
