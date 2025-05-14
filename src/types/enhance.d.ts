@@ -1,12 +1,23 @@
 type Noop = () => void
 
+type Namespace = string
+
 interface Window {
+  enLog: typeof import('@/utils/Log').enLog
+  enWarn: typeof import('@/utils/Log').enWarn
+  enError: typeof import('@/utils/Log').enError
+  enSuccess: typeof import('@/utils/Log').enSuccess
   enEnableLogContext: () => void
   enDisableLogContext: () => void
   enWarnLogText: (text: string) => string
   enErrorLogText: (text: string) => string
   enSuccessLogText: (text: string) => string
 }
+const enLog: typeof import('@/utils/Log').enLog
+const enWarn: typeof import('@/utils/Log').enWarn
+const enError: typeof import('@/utils/Log').enError
+const enSuccess: typeof import('@/utils/Log').enSuccess
+
 const enEnableLogContext = () => {}
 const enDisableLogContext = () => {}
 const enWarnLogText = (text: string) => text

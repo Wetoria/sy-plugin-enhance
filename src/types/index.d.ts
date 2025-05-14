@@ -125,11 +125,6 @@ interface Window {
     languages: any
   }
 
-  enLog: typeof console.log
-  enWarn: typeof console.warn
-  enError: typeof console.error
-  enSuccess: typeof console.log
-
   SEP_GLOBAL: {
     functions: {
       [key: string]: (...args: any[]) => any
@@ -165,8 +160,3 @@ interface LifeLogItem {
   created: string
   updated: string
 }
-
-const enLog: typeof console.log
-const enWarn: typeof console.warn
-const enError: typeof console.error
-const enSuccess: typeof console.log
