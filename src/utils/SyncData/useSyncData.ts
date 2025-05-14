@@ -13,12 +13,16 @@ export function useSyncDataWith<T>(
   source: Ref<T, any>,
   options?: {
     custom?: (data: T) => void
+    debounce?: number
+    maxWait?: number
   },
 ) {
   let dontSyncFlag = false
 
   const {
     custom,
+    debounce = 100,
+    maxWait = 500,
   } = options || {}
 
   const changeDontSyncFlag = (value: boolean) => {
@@ -54,8 +58,8 @@ export function useSyncDataWith<T>(
     },
     {
       deep: true,
-      debounce: 300,
-      maxWait: 1000,
+      debounce,
+      maxWait,
     },
   )
 
