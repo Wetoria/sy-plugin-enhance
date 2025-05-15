@@ -215,7 +215,7 @@ import {
   onBeforeUnmount,
   onMounted,
   ref,
-  watch,
+  watch
 } from 'vue'
 
 // 获取插件实例
@@ -276,38 +276,100 @@ const loadBlockCardStatus = async (dom: HTMLElement) => {
 }
 
 // 刷新所有段落链接的卡片状态
-const refreshAllLinkCards = async () => {
-  console.log('刷新所有链接卡片状态...')
-  
+const refreshAllLinkCards = async (forceFullRefresh = false) => {
   try {
-    // 清空当前状态
-    blockCardStatusMap.value = {}
+    // 保存旧的状态用于对比
+    const oldStatusMap = {...blockCardStatusMap.value}
     
-    // 重新检查所有段落链接
-    for (const item of paragraphOnlyLinkList.value) {
-      if (isValidCardBlock(item)) {
-        const nodeId = item.dataset.nodeId
-        if (nodeId) {
-          // 获取块属性
-          const blockAttrs = await getBlockAttrs(nodeId)
-          // 更新状态映射
-          blockCardStatusMap.value[nodeId] = blockAttrs && blockAttrs[CARD_ATTR_NAME] === 'true'
+    // 获取当前编辑区域
+    const activeProtyle = document.querySelector('.protyle-wysiwyg.protyle-wysiwyg--attr') as HTMLElement
+    
+    // 如果不是强制全刷新，则使用增量刷新策略
+    if (!forceFullRefresh && Object.keys(oldStatusMap).length > 0) {
+      // 仅处理当前可见的和当前编辑区域中的链接
+      const visibleLinks = paragraphOnlyLinkList.value.filter(item => {
+        // 如果已经在文档中，检查是否在可视区域内或当前编辑区域中
+        if (item.isConnected) {
+          // 当前编辑区域中的链接
+          if (activeProtyle && activeProtyle.contains(item)) {
+            return true
+          }
+          
+          // 可视区域内的链接
+          const rect = item.getBoundingClientRect()
+          if (rect.top >= -200 && rect.bottom <= window.innerHeight + 200) {
+            return true
+          }
+        }
+        return false
+      })
 
-          // 如果是卡片，预加载必要数据
-          if (blockCardStatusMap.value[nodeId]) {
-            if (getLinkType(item) === 'block-ref') {
-              const blockId = getBlockRefId(item)
-              if (blockId) {
-                // 强制刷新块信息
-                delete blockInfoMap.value[blockId]
-                await loadBlockInfo(blockId)
+      // 对于可见链接，检查状态
+      for (const item of visibleLinks) {
+        if (isValidCardBlock(item)) {
+          const nodeId = item.dataset.nodeId
+          if (nodeId) {
+            // 获取块属性
+            const blockAttrs = await getBlockAttrs(nodeId)
+            // 更新状态映射
+            blockCardStatusMap.value[nodeId] = blockAttrs && blockAttrs[CARD_ATTR_NAME] === 'true'
+
+            // 如果状态发生变化且是卡片，预加载必要数据
+            if (blockCardStatusMap.value[nodeId] && oldStatusMap[nodeId] !== blockCardStatusMap.value[nodeId]) {
+              if (getLinkType(item) === 'block-ref') {
+                const blockId = getBlockRefId(item)
+                if (blockId) {
+                  // 强制刷新块信息
+                  delete blockInfoMap.value[blockId]
+                  await loadBlockInfo(blockId)
+                }
+              } else if (getLinkType(item) === 'normal-link') {
+                const url = getLinkUrl(item)
+                if (url) {
+                  // 强制刷新链接元数据
+                  delete linksMetaData.value[url]
+                  await fetchLinkMetadata(url, true)
+                }
               }
-            } else if (getLinkType(item) === 'normal-link') {
-              const url = getLinkUrl(item)
-              if (url) {
-                // 强制刷新链接元数据
-                delete linksMetaData.value[url]
-                await fetchLinkMetadata(url, true)
+            }
+          }
+        }
+      }
+      
+      // 对于不在可见区域的链接，保留原有状态，除非强制刷新
+      for (const nodeId in oldStatusMap) {
+        if (!(nodeId in blockCardStatusMap.value)) {
+          blockCardStatusMap.value[nodeId] = oldStatusMap[nodeId]
+        }
+      }
+    } else {
+      // 全量刷新（初始化或强制刷新时）
+      blockCardStatusMap.value = {}
+      
+      // 处理所有链接
+      for (const item of paragraphOnlyLinkList.value) {
+        if (isValidCardBlock(item)) {
+          const nodeId = item.dataset.nodeId
+          if (nodeId) {
+            // 获取块属性
+            const blockAttrs = await getBlockAttrs(nodeId)
+            // 更新状态映射
+            blockCardStatusMap.value[nodeId] = blockAttrs && blockAttrs[CARD_ATTR_NAME] === 'true'
+
+            // 如果是卡片，预加载必要数据
+            if (blockCardStatusMap.value[nodeId]) {
+              if (getLinkType(item) === 'block-ref') {
+                const blockId = getBlockRefId(item)
+                if (blockId) {
+                  delete blockInfoMap.value[blockId]
+                  await loadBlockInfo(blockId)
+                }
+              } else if (getLinkType(item) === 'normal-link') {
+                const url = getLinkUrl(item)
+                if (url) {
+                  delete linksMetaData.value[url]
+                  await fetchLinkMetadata(url, true)
+                }
               }
             }
           }
@@ -320,7 +382,6 @@ const refreshAllLinkCards = async () => {
     blockInfoMap.value = { ...blockInfoMap.value }
     linksMetaData.value = { ...linksMetaData.value }
 
-    console.log('卡片状态刷新完成', Object.keys(blockCardStatusMap.value).length, '个链接')
   } catch (error) {
     console.error('刷新卡片状态失败:', error)
   }
@@ -719,7 +780,6 @@ const fetchLinkMetadata = async (url: string, forceLoad = false) => {
       image: tempImage || '',
     }
 
-    console.log('成功获取链接元数据:', url, linksMetaData.value[url])
   } catch (error) {
     console.error('获取网页元数据错误:', error)
   }
@@ -753,7 +813,6 @@ const handleBilibiliMetadata = async (url: string) => {
               description: videoData.desc || '暂无简介',
               image: videoData.pic || '',
             }
-            console.log('成功获取B站视频元数据:', linksMetaData.value[url])
             return true
           }
         } catch (parseError) {
@@ -993,7 +1052,6 @@ const loadBlockInfo = async (blockId: string) => {
       banner,
     }
 
-    console.log('块信息:', blockId, blockInfoMap.value[blockId])
   } catch (error) {
     console.error('获取块信息失败:', error)
     blockInfoMap.value[blockId] = {
@@ -1095,7 +1153,6 @@ const refreshBlockInfo = async (blockId: string) => {
     // 触发视图更新
     blockInfoMap.value = { ...blockInfoMap.value }
     
-    console.log('刷新块信息完成:', blockId)
   } catch (error) {
     console.error('刷新块信息失败:', error)
   }
@@ -1112,6 +1169,32 @@ const navigateToBlock = (blockId: string) => {
     Message.error('无法导航到块')
   }
 }
+
+// 监听段落列表变化，当列表长度改变时重新检查卡片状态
+watch(() => paragraphOnlyLinkList.value.length, (newLength, oldLength) => {
+  if (newLength > 0) {
+    if (Object.keys(blockCardStatusMap.value).length === 0) {
+      // 如果没有状态数据，需要全量初始化
+      refreshAllLinkCards(true)
+    } else if (newLength > oldLength) {
+      // 只有新增链接时，只检查新链接
+      const newLinksStartIndex = Math.max(0, oldLength - 1) // 从旧长度-1开始（防止边界情况）
+      
+      // 异步处理新链接
+      setTimeout(async () => {
+        for (let i = newLinksStartIndex; i < newLength; i++) {
+          const item = paragraphOnlyLinkList.value[i]
+          if (item && isValidCardBlock(item)) {
+            const nodeId = item.dataset.nodeId
+            if (nodeId && blockCardStatusMap.value[nodeId] === undefined) {
+              await loadBlockCardStatus(item)
+            }
+          }
+        }
+      }, 100)
+    }
+  }
+})
 
 // 监听块列表变化，加载新块的信息
 watch(paragraphOnlyLinkList, () => {
@@ -1384,166 +1467,6 @@ const refreshBlockCardStatus = async (nodeId: string) => {
   }
 }
 
-// 观察DOM变化，以便及时刷新卡片状态
-onMounted(() => {
-  // 创建一个MutationObserver来观察块属性变化
-  const observer = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-      if (mutation.type === 'attributes'
-        && mutation.attributeName === 'data-temp-refresh'
-        && mutation.target instanceof HTMLElement) {
-
-        const target = mutation.target as HTMLElement
-        const nodeId = target.dataset.nodeId
-
-        if (nodeId) {
-          // 当检测到temp-refresh属性变化时，立即刷新块状态
-          refreshBlockCardStatus(nodeId).then((isCard) => {
-            console.log('刷新块状态', nodeId, isCard ? '显示卡片' : '不显示卡片')
-          })
-        }
-      }
-    })
-  })
-
-  // 观察整个文档
-  observer.observe(document.body, {
-    attributes: true,
-    attributeFilter: ['data-temp-refresh'],
-    subtree: true,
-  })
-
-  // 添加事件监听，防止卡片区域被编辑
-  document.addEventListener('compositionstart', preventEditInCard, true)
-  document.addEventListener('compositionupdate', preventEditInCard, true)
-  document.addEventListener('compositionend', preventEditInCard, true)
-  document.addEventListener('keydown', preventEditInCard, true)
-  document.addEventListener('input', preventEditInCard, true)
-
-  // 监听思源的刷新事件
-  const eventBusElement = document.getElementById('eventBus')
-  if (eventBusElement) {
-    const handleSiyuanEvent = async (event: any) => {
-      const detail = event.detail
-      if (!detail) return
-      
-      // 处理各种需要刷新的事件
-      if (
-        detail.cmd === 'reloadProtyle' ||
-        detail.cmd === 'refreshAttributeView' ||
-        detail.cmd === 'setAttr' ||
-        detail.cmd === 'rename' ||
-        detail.cmd === 'updateAttr' ||
-        detail.cmd === 'refreshBacklink' ||
-        detail.cmd === 'transactions' ||
-        detail.cmd === 'unmount' ||
-        detail.cmd === 'mount'
-      ) {
-        console.log('检测到思源事件，准备重新加载卡片状态:', detail.cmd)
-        
-        // 如果是属性相关的更新，需要立即刷新相关块
-        if (detail.cmd === 'setAttr' || detail.cmd === 'updateAttr') {
-          // 获取受影响的块ID
-          const blockId = detail.data?.id
-          if (blockId) {
-            // 立即刷新这个块的信息
-            await refreshBlockInfo(blockId)
-            // 查找并刷新引用了这个块的卡片
-            paragraphOnlyLinkList.value.forEach(async (item) => {
-              if (getLinkType(item) === 'block-ref' && getBlockRefId(item) === blockId) {
-                const nodeId = item.dataset.nodeId
-                if (nodeId) {
-                  await refreshBlockCardStatus(nodeId)
-                }
-              }
-            })
-          }
-        }
-
-        // 使用防抖处理完整刷新，避免频繁刷新
-        if (window.cardRefreshTimer) {
-          clearTimeout(window.cardRefreshTimer)
-        }
-        window.cardRefreshTimer = setTimeout(async () => {
-          await refreshAllLinkCards()
-          // 额外检查并刷新所有块引用卡片
-          for (const item of paragraphOnlyLinkList.value) {
-            if (getLinkType(item) === 'block-ref') {
-              const blockId = getBlockRefId(item)
-              if (blockId) {
-                // 强制刷新块信息
-                delete blockInfoMap.value[blockId]
-                await loadBlockInfo(blockId)
-              }
-            }
-          }
-        }, 300)
-      }
-    }
-
-    // 添加事件监听
-    eventBusElement.addEventListener('click', handleSiyuanEvent)
-    // 保存事件处理函数以便后续移除
-    ;(window as any).__cardEventHandler = handleSiyuanEvent
-  }
-
-  // 监听window的focus事件，可能表示从其他窗口返回
-  window.addEventListener('focus', () => {
-    // 检查如果blockCardStatusMap为空但paragraphOnlyLinkList不为空，则刷新卡片
-    if (Object.keys(blockCardStatusMap.value).length === 0
-      && paragraphOnlyLinkList.value.length > 0) {
-      refreshAllLinkCards()
-    }
-  })
-
-  // 额外监听F5键刷新事件（备用方案）
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'F5' || (event.ctrlKey && event.key === 'r')) {
-      console.log('检测到F5刷新键，即将刷新...')
-      // 使用setTimeout确保在页面实际刷新后执行
-      setTimeout(() => {
-        refreshAllLinkCards()
-      }, 500)
-    }
-  })
-
-  // 组件销毁时清理
-  onBeforeUnmount(() => {
-    // 清除定时器
-    if (window.cardRefreshTimer) {
-      clearTimeout(window.cardRefreshTimer)
-    }
-
-    // 移除事件监听
-    document.removeEventListener('compositionstart', preventEditInCard, true)
-    document.removeEventListener('compositionupdate', preventEditInCard, true)
-    document.removeEventListener('compositionend', preventEditInCard, true)
-    document.removeEventListener('keydown', preventEditInCard, true)
-    document.removeEventListener('input', preventEditInCard, true)
-
-    // 移除思源事件监听
-    const eventBusElement = document.getElementById('eventBus')
-    if (eventBusElement && (window as any).__cardEventHandler) {
-      eventBusElement.removeEventListener('click', (window as any).__cardEventHandler)
-      delete (window as any).__cardEventHandler
-    }
-
-    // 移除window事件监听
-    window.removeEventListener('focus', () => {})
-  })
-
-  // 初始化时强制刷新一次所有卡片状态
-  refreshAllLinkCards()
-})
-
-// 监听段落列表变化，当列表长度改变时重新检查卡片状态
-watch(() => paragraphOnlyLinkList.value.length, (newLength, oldLength) => {
-  if (newLength > 0 && (newLength !== oldLength || Object.keys(blockCardStatusMap.value).length === 0)) {
-    console.log('段落链接列表变更，刷新卡片状态', oldLength, '->', newLength)
-    refreshAllLinkCards()
-  }
-})
-
 // 阻止在卡片区域内的编辑操作
 const preventEditInCard = (event: Event) => {
   const target = event.target as HTMLElement
@@ -1570,10 +1493,223 @@ const preventEditInCard = (event: Event) => {
   }
 }
 
+// 特殊处理退格键的全局事件监听
+const handleBackspaceKey = (event: KeyboardEvent) => {
+  // 只处理退格键事件
+  if (event.key !== 'Backspace') return
+  
+  // 获取当前活动的编辑区域
+  const protyle = document.querySelector('.protyle-wysiwyg.protyle-wysiwyg--attr') as HTMLElement
+  if (!protyle) return
+  
+  // 获取光标所在的块
+  const selection = window.getSelection()
+  if (!selection || selection.rangeCount === 0) return
+  
+  const range = selection.getRangeAt(0)
+  const currentBlock = range.startContainer.parentElement?.closest('[data-node-id]') as HTMLElement
+  if (!currentBlock || !currentBlock.dataset.nodeId) return
+  
+  // 检查上一个块是否为卡片块
+  const prevBlock = currentBlock.previousElementSibling as HTMLElement
+  if (!prevBlock || !prevBlock.dataset.nodeId) return
+  
+  // 检查前一个块是否为卡片
+  if (blockCardStatusMap.value[prevBlock.dataset.nodeId]) {
+    // 检查当前块是否为空
+    const isEmpty = currentBlock.textContent?.trim() === '' || 
+                    currentBlock.querySelector('.protyle-attr')?.textContent?.trim() === currentBlock.textContent?.trim()
+    
+    // 如果当前块为空且光标在块起始位置，阻止默认退格行为
+    if (isEmpty && range.startOffset === 0) {
+      // 阻止事件默认行为，防止卡片渲染消失
+      event.preventDefault()
+      event.stopPropagation()
+    }
+  }
+}
+
 // 添加事件处理函数防止编辑器操作
 const preventEditingEvents = (e: MouseEvent) => {
   e.stopPropagation()
 }
+
+// 在组件挂载和卸载时添加或移除全局事件
+onMounted(() => {
+  // 创建一个MutationObserver来观察块属性变化
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.type === 'attributes'
+        && mutation.attributeName === 'data-temp-refresh'
+        && mutation.target instanceof HTMLElement) {
+
+        const target = mutation.target as HTMLElement
+        const nodeId = target.dataset.nodeId
+
+        if (nodeId) {
+          // 当检测到temp-refresh属性变化时，立即刷新块状态
+          refreshBlockCardStatus(nodeId).then((isCard) => {
+          })
+        }
+      }
+    })
+  })
+
+  // 观察整个文档
+  observer.observe(document.body, {
+    attributes: true,
+    attributeFilter: ['data-temp-refresh'],
+    subtree: true,
+  })
+
+  // 添加事件监听，防止卡片区域被编辑
+  document.addEventListener('compositionstart', preventEditInCard, true)
+  document.addEventListener('compositionupdate', preventEditInCard, true)
+  document.addEventListener('compositionend', preventEditInCard, true)
+  document.addEventListener('keydown', preventEditInCard, true)
+  document.addEventListener('input', preventEditInCard, true)
+  
+  // 添加退格键全局监听
+  document.addEventListener('keydown', handleBackspaceKey, true)
+
+  // 监听思源的刷新事件
+  const eventBusElement = document.getElementById('eventBus')
+  if (eventBusElement) {
+    const handleSiyuanEvent = async (event: any) => {
+      const detail = event.detail
+      if (!detail) return
+      
+      // 处理各种需要刷新的事件
+      if (
+        detail.cmd === 'reloadProtyle' ||
+        detail.cmd === 'refreshAttributeView' ||
+        detail.cmd === 'setAttr' ||
+        detail.cmd === 'rename' ||
+        detail.cmd === 'updateAttr' ||
+        detail.cmd === 'refreshBacklink' ||
+        detail.cmd === 'transactions' ||
+        detail.cmd === 'unmount' ||
+        detail.cmd === 'mount'
+      ) {
+        // 判断事件类型，有选择性地刷新
+        const shouldFullRefresh = [
+          'reloadProtyle',
+          'unmount',
+          'mount'
+        ].includes(detail.cmd)
+        
+        // 处理特定块的属性修改
+        if (detail.cmd === 'setAttr' || detail.cmd === 'updateAttr') {
+          // 获取受影响的块ID
+          const blockId = detail.data?.id
+          if (blockId) {
+            // 立即刷新这个块的信息
+            await refreshBlockInfo(blockId)
+            
+            // 只刷新引用了这个块的卡片
+            let hasUpdatedReferences = false
+            for (const item of paragraphOnlyLinkList.value) {
+              if (getLinkType(item) === 'block-ref' && getBlockRefId(item) === blockId) {
+                const nodeId = item.dataset.nodeId
+                if (nodeId) {
+                  await refreshBlockCardStatus(nodeId)
+                  hasUpdatedReferences = true
+                }
+              }
+            }
+            
+            // 如果已经更新了引用，不需要再触发全局刷新
+            if (hasUpdatedReferences) {
+              return
+            }
+          }
+        }
+        
+        // 处理事务类型的更新，判断是否需要刷新卡片
+        if (detail.cmd === 'transactions') {
+          // 检查事务是否涉及到编辑操作
+          const isOnlyTextEdit = detail.data?.length > 0 && 
+                                detail.data.every((tx: any) => 
+                                  tx.doOperations?.every((op: any) => 
+                                    op.action === 'update' && 
+                                    op.data?.indexOf('<span data-type="a"') === -1 && 
+                                    op.data?.indexOf('<span data-type="block-ref"') === -1
+                                  )
+                                )
+          
+          // 如果只是普通文本编辑，不刷新卡片
+          if (isOnlyTextEdit) {
+            return
+          }
+        }
+
+        // 使用防抖处理刷新
+        if (window.cardRefreshTimer) {
+          clearTimeout(window.cardRefreshTimer)
+        }
+        
+        window.cardRefreshTimer = setTimeout(async () => {
+          // 根据事件类型决定是否进行全量刷新
+          await refreshAllLinkCards(shouldFullRefresh)
+        }, 300)
+      }
+    }
+
+    // 添加事件监听
+    eventBusElement.addEventListener('click', handleSiyuanEvent)
+    // 保存事件处理函数以便后续移除
+    ;(window as any).__cardEventHandler = handleSiyuanEvent
+  }
+
+  // 监听window的focus事件，可能表示从其他窗口返回
+  window.addEventListener('focus', () => {
+    // 检查如果blockCardStatusMap为空但paragraphOnlyLinkList不为空，则刷新卡片
+    if (Object.keys(blockCardStatusMap.value).length === 0
+      && paragraphOnlyLinkList.value.length > 0) {
+      refreshAllLinkCards(true) // 这种情况需要强制全量刷新
+    }
+  })
+
+  // 额外监听F5键刷新事件（备用方案）
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'F5' || (event.ctrlKey && event.key === 'r')) {
+      // 使用setTimeout确保在页面实际刷新后执行
+      setTimeout(() => {
+        refreshAllLinkCards(true) // 刷新按键需要强制全量刷新
+      }, 500)
+    }
+  })
+
+  // 初始化时强制刷新一次所有卡片状态
+  refreshAllLinkCards(true) // 初始化时需要强制全量刷新
+})
+
+onBeforeUnmount(() => {
+  // 清除定时器
+  if (window.cardRefreshTimer) {
+    clearTimeout(window.cardRefreshTimer)
+  }
+
+  // 移除事件监听
+  document.removeEventListener('compositionstart', preventEditInCard, true)
+  document.removeEventListener('compositionupdate', preventEditInCard, true)
+  document.removeEventListener('compositionend', preventEditInCard, true)
+  document.removeEventListener('keydown', preventEditInCard, true)
+  document.removeEventListener('input', preventEditInCard, true)
+  
+  // 移除退格键监听
+  document.removeEventListener('keydown', handleBackspaceKey, true)
+
+  // 移除思源事件监听
+  const eventBusElement = document.getElementById('eventBus')
+  if (eventBusElement && (window as any).__cardEventHandler) {
+    eventBusElement.removeEventListener('click', (window as any).__cardEventHandler)
+    delete (window as any).__cardEventHandler
+  }
+
+  // 移除window事件监听
+  window.removeEventListener('focus', () => {})
+})
 
 // 导出函数供其他组件使用
 defineExpose({
@@ -1589,6 +1725,7 @@ declare global {
     cardRefreshTimer: ReturnType<typeof setTimeout> | undefined
   }
 }
+
 </script>
 
 <style lang="scss" scoped>
