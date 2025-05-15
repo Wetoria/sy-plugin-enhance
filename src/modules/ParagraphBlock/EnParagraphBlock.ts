@@ -7,11 +7,12 @@ import {
   Ref,
 } from 'vue'
 
-export const provideParagraphOnlyLink = (list: Ref<HTMLDivElement[]>) => {
-  provideLocal('En_ParagraphOnlyLink', list)
+// 新的通用链接处理函数（包括纯链接和块引用）
+export const provideParagraphLinks = (list: Ref<HTMLDivElement[]>) => {
+  provideLocal('En_ParagraphLinks', list)
 }
 
-export const injectParagraphOnlyLink = (): Ref<HTMLDivElement[]> => {
-  const list = injectLocal('En_ParagraphOnlyLink', ref([])) as Ref<HTMLDivElement[]>
+export const injectParagraphLinks = (): Ref<HTMLDivElement[]> => {
+  const list = injectLocal('En_ParagraphLinks', ref([])) as Ref<HTMLDivElement[]>
   return list
 }

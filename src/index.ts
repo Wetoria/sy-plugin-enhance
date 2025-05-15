@@ -1,20 +1,21 @@
-import '@/utils/GlobalModule'
 import PluginInfoString from '@/../plugin.json'
+import '@/utils/GlobalModule'
 import '@/utils/Log'
+import {
+  getFrontend,
+  IObject,
+  Plugin
+} from "siyuan"
 import {
   destroy,
   init,
 } from './main'
-import {
-  getFrontend,
-  Plugin,
-} from "siyuan"
 
-import { SyFrontendTypes } from './utils/Siyuan'
-import { openSettings } from '@/modules/Settings/Settings'
 import { initDock } from '@/modules/EnLeafPanel/EnLeafPanel'
+import { openSettings } from '@/modules/Settings/Settings'
+import { SyFrontendTypes } from './utils/Siyuan'
 
-const DOCK_TYPE = 'sy_plugin_enhance_dock'
+
 
 let PluginInfo = {
   version: '',
@@ -28,6 +29,8 @@ const {
   version,
 } = PluginInfo
 
+
+
 export default class EnhancePlugin extends Plugin {
   public isMobile: boolean
   public isBrowser: boolean
@@ -36,9 +39,8 @@ export default class EnhancePlugin extends Plugin {
   public isInWindow: boolean
   public platform: SyFrontendTypes
   public readonly version = version
-  // @ts-expect-error fix siyuan i18n type doesn't match
-  declare readonly i18n: I18nType
-
+  // 修正类型声明
+  declare readonly i18n: IObject
   async onload() {
     const frontEnd = getFrontend()
     this.platform = frontEnd as SyFrontendTypes
@@ -59,7 +61,6 @@ export default class EnhancePlugin extends Plugin {
 
     // 初始化叶归侧边栏
     initDock(this)
-
     init(this)
   }
 

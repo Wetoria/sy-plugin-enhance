@@ -4,6 +4,9 @@ import {
   saveData,
 } from '@/utils/DataManager'
 import { toggleSiyuanSync } from '@/utils/Siyuan'
+import {
+  useSyncDataChannel,
+} from '@/utils/SyncData/useSyncDataChannel'
 import chalk from 'chalk'
 import {
   cloneDeep,
@@ -19,6 +22,12 @@ import {
   enLog,
   getColorStringWarn,
 } from './Log'
+
+const syncDataSocket = useSyncDataChannel<EnSyncModuleData<any>>({
+  onDataChange(data) {
+    parseSyncDataAndCheck(data)
+  },
+})
 
 /**
  * 同步模块的初始化配置
@@ -62,20 +71,17 @@ export type EnSyncModuleDataRef<T> = Ref<EnSyncModuleData<T>>
  * @field loaded - 是否加载完成
  * @field loadingFlag - 提示是否加载的定时器 id
  */
-interface EnSyncModule<T> {
+interface EnSyncModule<T> extends Omit<EnSyncModuleProps<T>, 'defaultData' | 'namespace'> {
   dataRef: EnSyncModuleDataRef<T>
   unwatch: () => void
 
-  needSync?: EnSyncModuleProps<T>['needSync']
   // 为 true 则不发送更新
   doNotSync?: boolean
 
 
-  needSave?: EnSyncModuleProps<T>['needSave']
   // 不保存的标记，为 true 则不调用思源插件的保存逻辑
   doNotSave?: boolean
 
-  autoLoad?: boolean
   loaded?: boolean
   loading?: boolean
   loadingFlag?: any
@@ -110,61 +116,22 @@ const getNamespaceLogString = (namespace: string) => {
 }
 
 
-// #region socket logics
-
-const socketRef = ref<WebSocket>()
-const socketIsOpen = () => {
-  return socketRef.value && socketRef.value?.readyState == WebSocket.OPEN
-}
-const socketIsClosed = () => !socketIsOpen()
 
 
-/**
- * 同步模块的数据消息结构
- * @field appId - 当前 app 的 appId
- * @field namespace - 当前同步的数据的命名空间
- * @field data - 当前同步的数据
- */
-interface EnSyncModuleDataMsg<T> {
-  // 当前 app 的 appId
-  appId: string
 
-  // 当前同步的数据的命名空间
-  namespace: Namespace
+const getSyncDataByWebSocket = (msg: SyncDataMsg<EnSyncModuleData<any>>) => {
+  const mapData = getModuleByNamespace(msg.namespace)
 
-  // 当前同步的数据
-  data: EnSyncModuleData<T>
-}
-
-const getSyncDataByWebSocket = (event) => {
-  try {
-    const msg = JSON.parse(event.data) as EnSyncModuleDataMsg<any>
-    enLog(
-      `${getColorStringWarn('Received module data of')} [${getNamespaceLogString(msg.namespace)}] from other device: `,
-      JSON.parse(JSON.stringify(msg.data)),
-    )
-    // 当前 app 的数据不处理
-    if (msg.appId == window.siyuan.ws.app.appId) {
-      return
-    }
-
-    const mapData = getModuleByNamespace(msg.namespace)
-    if (!mapData)
-      return
-
-    // 标记相关逻辑
-    markAsDoNotSave(msg.namespace)
-    markAsDoNotSync(msg.namespace)
-    const mapDataRef = mapData.dataRef
-    mapDataRef.value = msg.data
-  } catch (err) {
-    enError(err)
-  }
+  // 标记相关逻辑
+  markAsDoNotSave(msg.namespace)
+  markAsDoNotSync(msg.namespace)
+  const mapDataRef = mapData.dataRef
+  mapDataRef.value = msg.data
 }
 
 const sendToSyncByData = <T>(namespace: string, data: EnSyncModuleData<T>) => {
   // 如果 socket 未连接，则不处理
-  if (socketIsClosed()) {
+  if (!syncDataSocket.isOpen.value) {
     enWarn(`${getColorStringWarn(`Socket is closed. Can not send module data:`)} ${getNamespaceLogString(namespace)}`)
     return
   }
@@ -182,70 +149,15 @@ const sendToSyncByData = <T>(namespace: string, data: EnSyncModuleData<T>) => {
     return
   }
 
-  const msgData: EnSyncModuleDataMsg<T> = {
-    appId: window.siyuan.ws.app.appId,
+  const msgData: SyncDataMsg<EnSyncModuleData<T>> = {
     namespace,
     data,
   }
   enLog(`${getColorStringWarn('Ready to send module')} ${getNamespaceLogString(namespace)} data to sync: `, JSON.parse(JSON.stringify(msgData)))
   const msgStr = JSON.stringify(msgData)
-  socketRef.value.send(msgStr)
+  syncDataSocket.send(msgStr)
 }
 
-
-let connecting = false
-export const initWebsocket = () => {
-  return new Promise((resolve) => {
-    if (socketIsOpen()) {
-      resolve(socketRef.value)
-      return
-    }
-
-    if (connecting) {
-      return
-    }
-
-    const wsUrl = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws/broadcast?channel=SEP-data-sync-channel`
-    connecting = true
-    const socket = new WebSocket(wsUrl)
-    socketRef.value = socket
-
-    socket.onopen = () => {
-      enSuccess('Sync Data Websocket Channel Ready.')
-      connecting = false
-
-      resolve(socketRef.value)
-    }
-
-    socket.onmessage = getSyncDataByWebSocket
-
-    socket.onerror = function () {
-      connecting = false
-
-      initWebsocket().then(() => {
-        resolve(socketRef.value)
-      })
-    }
-  })
-}
-
-export const closeWebsocket = () => {
-  if (socketIsOpen()) {
-    if (socketRef.value) {
-      socketRef.value.onopen = null
-      socketRef.value.onmessage = null
-      socketRef.value.onerror = null
-      socketRef.value.onclose = null
-
-      socketRef.value.close()
-      socketRef.value = null
-
-      connecting = false
-    }
-  }
-}
-
-// #endregion socket logics
 
 
 function getInitModuleData(defaultData) {
@@ -269,12 +181,12 @@ export const saveModuleDataByNamespace = async (namespace: Namespace) => {
   }
 
   if (!mapData.needSave) {
-    enLog(`Module ${getNamespaceLogString(namespace)} do not need to save. Cancel to save.`)
+    enLog(`Module ${getNamespaceLogString(namespace)} do not need to save. Cancel save.`)
     return
   }
 
   if (mapData.doNotSave) {
-    enLog(`Module ${getNamespaceLogString(namespace)} marked as doNotSave. Cancel to save.`)
+    enLog(`Module ${getNamespaceLogString(namespace)} marked as doNotSave. Cancel save.`)
     mapData.doNotSave = false
     return
   }
@@ -313,20 +225,19 @@ export function useSyncModuleData<T>({
     unwatch: () => {},
   }
   syncDataRefMap[namespace] = mapData
-  dataRef.value = getInitModuleData(defaultData)
+  const initModuleData = getInitModuleData(defaultData)
+  dataRef.value = initModuleData
 
   if (needSave && autoLoad) {
     // 标记模块没有加载
     mapData.loadingFlag = setTimeout(() => {
       if (!mapData.loaded) {
-        enWarn(`${getColorStringWarn(`Module ${getNamespaceLogString(namespace)} was not loaded from file. You seem forget to load it.`)}`)
+        enError(`${getColorStringWarn(`Module ${getNamespaceLogString(namespace)} was not loaded from file. You seem forget to load it.`)}`)
       }
     }, 5000)
   }
 
   enLog(`${getColorStringWarn('Module registered:')} ${getNamespaceLogString(namespace)}.`)
-  enLog(`Module map data is: `, syncDataRefMap)
-  enLog(`The Module data is: `, JSON.parse(JSON.stringify(dataRef.value)))
 
 
 
@@ -475,4 +386,16 @@ export function unuseModuleByNamespace(namespace: string) {
   const mapData = getModuleByNamespace(namespace)
   mapData.unwatch()
   delete syncDataRefMap[namespace]
+}
+
+
+const parseSyncDataAndCheck = (data: SyncDataMsg<EnSyncModuleData<any>>) => {
+
+  const exist = syncDataRefMap[data.namespace]
+  if (!exist) {
+    enWarn(`Module was not registered: ${getNamespaceLogString(data.namespace)}`)
+    return
+  }
+
+  getSyncDataByWebSocket(data)
 }

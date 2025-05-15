@@ -1,10 +1,11 @@
 
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
+import { useSiyuanEvent } from '@/utils/EventBusHooks'
+
 import {
   createApp,
   reactive,
 } from 'vue'
-
 import VPlugin from '.'
 import AppVue from './App.vue'
 
@@ -25,6 +26,9 @@ function loadVueApp() {
 export async function init(plugin: VPlugin) {
   window.SEP_GLOBAL.pluginRef = reactive(plugin)
   loadVueApp()
+  useSiyuanEvent('lock-screen', () => {
+    destroy()
+  })
 }
 
 export function destroy() {

@@ -1,9 +1,13 @@
-import { injectLocal, provideLocal } from '@vueuse/core'
+import {
+  injectLocal,
+  provideLocal,
+  useStorage,
+} from '@vueuse/core'
 import chalk from 'chalk'
 import { getCurrentInstance } from 'vue'
 
 const prefix = '[SEP by Wetoria]'
-let isDeveloping = false
+const isDeveloping = useStorage('en-debugging', false)
 
 
 export const setLogContextEnabled = (enabled: boolean) => {
@@ -24,7 +28,7 @@ const canLog = () => {
   const isInVue = !!getCurrentInstance()
   const isNotInVue = !isInVue
   if (isNotInVue) {
-    return isDeveloping
+    return isDeveloping.value
   }
   const enabled = injectLocal('enLog', false)
   return enabled
@@ -50,10 +54,8 @@ window.enLog = enLog
 
 export function enWarn(...args: [string, ...any[]]) {
   const [first, ...rest] = args
-  console.groupCollapsed(`${chalk.bgYellowBright.yellow(` ${prefix} ${first} `)}`)
-  if (rest.length > 0) {
-    console.warn(...rest)
-  }
+  console.groupCollapsed(`${chalk.bgYellowBright.yellow(` ${prefix} `)} ${first}`, ...rest)
+  console.trace()
   console.groupEnd()
 }
 export function getColorStringWarn(text: string) {
@@ -63,16 +65,15 @@ export function enWarnLogText(text: string) {
   return chalk.bold.yellow(text)
 }
 window.enWarn = enWarn
+window.enWarnLogText = enWarnLogText
 
 
 
 
 export function enError(...args: [string, ...any[]]) {
   const [first, ...rest] = args
-  console.groupCollapsed(`${chalk.bgRed.whiteBright(` ${prefix} ${first} `)}`)
-  if (rest.length > 0) {
-    console.error(...rest)
-  }
+  console.groupCollapsed(`${chalk.bgRed.whiteBright(` ${prefix} `)} ${first}`, ...rest)
+  console.trace()
   console.groupEnd()
 }
 export function getColorStringError(text: string) {
@@ -82,7 +83,7 @@ export function enErrorLogText(text: string) {
   return chalk.bold.redBright(text)
 }
 window.enError = enError
-
+window.enErrorLogText = enErrorLogText
 
 
 
@@ -90,10 +91,8 @@ export function enSuccess(...args: [string, ...any[]]) {
   if (cannotLog())
     return
   const [first, ...rest] = args
-  console.groupCollapsed(`${chalk.bgGreen.whiteBright(` ${prefix} ${first} `)}`, ...rest)
-  if (rest.length > 0) {
-    console.trace()
-  }
+  console.groupCollapsed(`${chalk.bgGreen.whiteBright(` ${prefix} `)} ${first}`, ...rest)
+  console.trace()
   console.groupEnd()
 }
 export function getColorStringSuccess(text: string) {
@@ -103,7 +102,7 @@ export function enSuccessLogText(text: string) {
   return chalk.bold.greenBright(text)
 }
 window.enSuccess = enSuccess
-
+window.enSuccessLogText = enSuccessLogText
 
 
 

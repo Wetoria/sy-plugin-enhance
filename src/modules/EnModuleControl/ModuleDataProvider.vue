@@ -40,11 +40,10 @@ import {
   useSiyuanNotebookUnmount,
 } from '@/utils/EventBusHooks'
 import {
-  closeWebsocket,
-  initWebsocket,
   loadModuleDataByNamespace,
   syncDataRefMap,
 } from '@/utils/SyncData'
+import { syncDataSocket } from '@/utils/SyncData/useSyncDataChannel'
 import {
   computed,
   onBeforeUnmount,
@@ -260,17 +259,18 @@ watchEffect(() => {
 
 // #region 模块数据控制逻辑
 
-const wsInited = ref(false)
 const moduleDataLoaded = ref(false)
 
 
 const unmarkAll = () => {
-  wsInited.value = false
   moduleDataLoaded.value = false
 }
 
+const syncSocketIsReady = computed(() => {
+  return syncDataSocket.isOpen.value
+})
 const allIsReady = computed(() => {
-  return wsInited.value && moduleDataLoaded.value
+  return syncSocketIsReady.value && moduleDataLoaded.value
 })
 
 const autoLoadModuleData = async () => {
@@ -280,6 +280,7 @@ const autoLoadModuleData = async () => {
     // 需要保存，并且是自动保存的，但是没有加载的模块
     return module.needSave && module.autoLoad && !module.loaded
   })
+
   if (!needLoadNamespaces.length) {
     moduleDataLoaded.value = true
     return
@@ -289,13 +290,11 @@ const autoLoadModuleData = async () => {
 }
 
 onMounted(() => {
-  initWebsocket().then(() => {
-    wsInited.value = true
-  })
+  syncDataSocket.open()
   autoLoadModuleData()
 })
 onBeforeUnmount(() => {
-  closeWebsocket()
+  syncDataSocket.close()
   unmarkAll()
 })
 

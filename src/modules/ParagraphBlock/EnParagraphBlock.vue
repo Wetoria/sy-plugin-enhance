@@ -22,6 +22,22 @@
     </EnSettingsItem>
     <EnSettingsItem>
       <div>
+        启用链接卡片
+      </div>
+      <template #desc>
+        <div>
+          将纯文本链接段落或纯块引用段落转换为美观的卡片样式。
+        </div>
+        <div>
+          需要右键点击段落，选择转换为卡片样式。
+        </div>
+      </template>
+      <template #opt>
+        <a-switch v-model="moduleOptions.enableLinkCard" />
+      </template>
+    </EnSettingsItem>
+    <EnSettingsItem>
+      <div>
         是否一直显示年月日
       </div>
       <template #desc>
@@ -139,8 +155,11 @@ import {
   injectAuthStatus,
   useGlobalData,
   useModule,
+  watchConfigEnableStatus,
 } from '@/modules/EnModuleControl/ModuleProvide'
-import { provideParagraphOnlyLink } from '@/modules/ParagraphBlock/EnParagraphBlock'
+import {
+  provideParagraphLinks,
+} from '@/modules/ParagraphBlock/EnParagraphBlock'
 import EnParagraphBlockAttrContainer from '@/modules/ParagraphBlock/EnParagraphBlockAttrContainer.vue'
 import EnParagraphBlockTime from '@/modules/ParagraphBlock/EnParagraphBlockTime.vue'
 import EnParagraphBlockTimeDiff from '@/modules/ParagraphBlock/EnParagraphBlockTimeDiff.vue'
@@ -161,13 +180,17 @@ import {
   EN_MODULE_LIST,
   EN_STYLE_KEYS,
 } from '@/utils/Constants'
-import { isSameDomList, queryAllByDom } from '@/utils/DOM'
+import {
+  isSameDomList,
+  queryAllByDom,
+} from '@/utils/DOM'
 import { useObserver } from '@/utils/elements/Observer'
 import {
   SyDomNodeTypes,
   SyNodeTypes,
 } from '@/utils/Siyuan'
 import {
+  computed,
   onBeforeUnmount,
   ref,
   watch,
@@ -189,6 +212,7 @@ const {
     defaultBlockType: 'created',
 
     alwaysShowYMD: false,
+    enableLinkCard: false,
 
     // enableBlockLock: false,
     // autoLockTimeDiff: 5 * 60,
@@ -297,25 +321,45 @@ watch(paragraphListRef, () => {
   immediate: true,
 })
 
-// 👇 是否渲染自定义链接卡片 true 开启，false 关闭
-const useCustomCard = false
+// 👇 是否渲染自定义链接卡片
+const useCustomCard = computed(() => moduleOptions.value.enableLinkCard)
 const paragraphOnlyLinkList = ref<HTMLDivElement[]>([])
 
-if (useCustomCard) {
-  provideParagraphOnlyLink(paragraphOnlyLinkList)
-}
+// 在组件初始化时直接提供依赖（setup 阶段），而不是在 watch 回调中
+provideParagraphLinks(paragraphOnlyLinkList)
+
+watchConfigEnableStatus(
+  () => useCustomCard.value,
+  () => {
+    handler()
+
+    return () => {
+      // 如果禁用了链接卡片功能，清空列表
+      paragraphOnlyLinkList.value = []
+    }
+  },
+)
+
 const getParagraphOnlyLinkList = (paragraphList: HTMLDivElement[]) => {
+  const targetTypeList = [
+    SyNodeTypes.a,
+    'block-ref',
+  ]
   return paragraphList.filter((dom) => {
     const editDiv = dom.firstElementChild
     if (!editDiv) return false
     const childNodes = Array.from(editDiv.childNodes)
     const filterBlankTextNode = childNodes.filter((child) => child.textContent.trim() !== '')
     const childSpanNodes = childNodes.filter((i) => i.nodeName === 'SPAN')
+
+    // 过滤出链接和块引用节点
     const linkSpanNodes = childSpanNodes.filter((i: HTMLSpanElement) => {
       const typeAttr = i.dataset.type
+      if (!typeAttr) return false
       const typelist = typeAttr.split(/\s+/g)
-      return typelist.find((i) => i === SyNodeTypes.a)
+      return targetTypeList.some((type) => typelist.includes(type))
     })
+
     const isSame = filterBlankTextNode.length === linkSpanNodes.length
     return linkSpanNodes.length && isSame
   })
@@ -323,11 +367,16 @@ const getParagraphOnlyLinkList = (paragraphList: HTMLDivElement[]) => {
 const handler = debounce(() => {
   const targetParagraphList = queryAllByDom(document.body, `.protyle:not(.EnDisableProtyleEnhance) div[data-type="${SyDomNodeTypes.NodeParagraph}"]`) as HTMLDivElement[]
 
-  if (useCustomCard) {
+  if (useCustomCard.value) {
     const targetParagraphOnlyLinkList = getParagraphOnlyLinkList(targetParagraphList)
 
     if (!isSameDomList([...paragraphOnlyLinkList.value], targetParagraphOnlyLinkList)) {
       paragraphOnlyLinkList.value = targetParagraphOnlyLinkList
+    }
+  } else {
+    // 如果禁用了链接卡片功能，清空列表
+    if (paragraphOnlyLinkList.value.length > 0) {
+      paragraphOnlyLinkList.value = []
     }
   }
 
@@ -373,6 +422,7 @@ const disableAll = () => {
   document.documentElement.style.removeProperty(EN_STYLE_KEYS.enTimeFontSize)
   moduleEnableStatusSwitcher(EN_MODULE_LIST.EN_PARAGRAPH_BLOCK)
 }
+
 onBeforeUnmount(() => {
   disableAll()
 })
