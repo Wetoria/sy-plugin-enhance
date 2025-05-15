@@ -30,6 +30,11 @@ export function useSiyuanEventProtyleDestroy(cb: (event: any) => void): offSiyua
   return useSiyuanEvent('destroy-protyle', cb)
 }
 
+export function useSiyuanClickBlockIcon(cb: (event: any) => void): offSiyuanEvent {
+  return useSiyuanEvent('click-blockicon', cb)
+}
+
+
 export function useSiyuanEventWsMain(cb: (event: any) => void): offSiyuanEvent {
   return useSiyuanEvent('ws-main', cb)
 }

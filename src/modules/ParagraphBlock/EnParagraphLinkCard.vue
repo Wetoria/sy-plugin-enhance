@@ -1,4 +1,5 @@
 <template>
+  <EnParagraphLinkCardBlockMenu />
   <template
     v-for="(item, index) of paragraphOnlyLinkList"
     :key="`${item.dataset.nodeId}-${index}`"
@@ -208,6 +209,7 @@ import {
 import EnProtyleCustomArea from '@/components/EnProtyleCustomArea.vue'
 import { usePlugin } from '@/main'
 import { injectParagraphLinks } from '@/modules/ParagraphBlock/EnParagraphBlock'
+import EnParagraphLinkCardBlockMenu from '@/modules/ParagraphBlock/EnParagraphLinkCardBlockMenu.vue'
 import { Message } from '@arco-design/web-vue'
 import {
   onBeforeUnmount,

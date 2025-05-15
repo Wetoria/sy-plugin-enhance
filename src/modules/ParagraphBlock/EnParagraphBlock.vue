@@ -133,7 +133,6 @@
 
     <EnParagraphLinkCard
       v-if="useCustomCard"
-      ref="linkCardRef"
     />
 
 
@@ -153,11 +152,14 @@
 <script setup lang="ts">
 import { usePlugin } from '@/main'
 import {
-    injectAuthStatus,
-    useGlobalData,
-    useModule,
+  injectAuthStatus,
+  useGlobalData,
+  useModule,
+  watchConfigEnableStatus,
 } from '@/modules/EnModuleControl/ModuleProvide'
-import { provideParagraphLinks, provideParagraphOnlyLink } from '@/modules/ParagraphBlock/EnParagraphBlock'
+import {
+  provideParagraphLinks,
+} from '@/modules/ParagraphBlock/EnParagraphBlock'
 import EnParagraphBlockAttrContainer from '@/modules/ParagraphBlock/EnParagraphBlockAttrContainer.vue'
 import EnParagraphBlockTime from '@/modules/ParagraphBlock/EnParagraphBlockTime.vue'
 import EnParagraphBlockTimeDiff from '@/modules/ParagraphBlock/EnParagraphBlockTimeDiff.vue'
@@ -167,29 +169,31 @@ import EnParagraphLinkCard from '@/modules/ParagraphBlock/EnParagraphLinkCard.vu
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
 import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue'
 import {
-    debounce,
-    generateUUIDWithTimestamp,
-    moduleEnableStatusSwitcher,
+  debounce,
+  generateUUIDWithTimestamp,
+  moduleEnableStatusSwitcher,
 } from '@/utils'
 
 
 import {
-    EN_CONSTANTS,
-    EN_MODULE_LIST,
-    EN_STYLE_KEYS,
+  EN_CONSTANTS,
+  EN_MODULE_LIST,
+  EN_STYLE_KEYS,
 } from '@/utils/Constants'
-import { isSameDomList, queryAllByDom } from '@/utils/DOM'
+import {
+  isSameDomList,
+  queryAllByDom,
+} from '@/utils/DOM'
 import { useObserver } from '@/utils/elements/Observer'
 import {
-    SyDomNodeTypes,
-    SyNodeTypes,
+  SyDomNodeTypes,
+  SyNodeTypes,
 } from '@/utils/Siyuan'
 import {
-    computed,
-    onBeforeUnmount,
-    onMounted,
-    ref,
-    watch,
+  computed,
+  onBeforeUnmount,
+  ref,
+  watch,
 } from 'vue'
 
 const plugin = usePlugin()
@@ -322,36 +326,40 @@ const useCustomCard = computed(() => moduleOptions.value.enableLinkCard)
 const paragraphOnlyLinkList = ref<HTMLDivElement[]>([])
 
 // 在组件初始化时直接提供依赖（setup 阶段），而不是在 watch 回调中
-provideParagraphOnlyLink(paragraphOnlyLinkList)
 provideParagraphLinks(paragraphOnlyLinkList)
 
-// 只在 watch 中处理列表的更新，而不是提供依赖
-watch(() => useCustomCard.value, (newVal) => {
-  if (!newVal) {
-    // 如果禁用了链接卡片功能，清空列表
-    paragraphOnlyLinkList.value = []
-  } else {
-    // 如果启用了功能，重新扫描一次
+watchConfigEnableStatus(
+  () => useCustomCard.value,
+  () => {
     handler()
-  }
-}, { immediate: true })
+
+    return () => {
+      // 如果禁用了链接卡片功能，清空列表
+      paragraphOnlyLinkList.value = []
+    }
+  },
+)
 
 const getParagraphOnlyLinkList = (paragraphList: HTMLDivElement[]) => {
+  const targetTypeList = [
+    SyNodeTypes.a,
+    'block-ref',
+  ]
   return paragraphList.filter((dom) => {
     const editDiv = dom.firstElementChild
     if (!editDiv) return false
     const childNodes = Array.from(editDiv.childNodes)
     const filterBlankTextNode = childNodes.filter((child) => child.textContent.trim() !== '')
     const childSpanNodes = childNodes.filter((i) => i.nodeName === 'SPAN')
-    
+
     // 过滤出链接和块引用节点
     const linkSpanNodes = childSpanNodes.filter((i: HTMLSpanElement) => {
       const typeAttr = i.dataset.type
       if (!typeAttr) return false
       const typelist = typeAttr.split(/\s+/g)
-      return typelist.includes(SyNodeTypes.a) || typelist.includes('block-ref')
+      return targetTypeList.some((type) => typelist.includes(type))
     })
-    
+
     const isSame = filterBlankTextNode.length === linkSpanNodes.length
     return linkSpanNodes.length && isSame
   })
@@ -404,20 +412,9 @@ const unwatchBlockTimeFontSize = watch(() => moduleOptions.value.blockTimeFontSi
   immediate: true,
 })
 
-// 监听链接卡片功能开关变化，立即触发一次段落重新扫描
-const unwatchEnableLinkCard = watch(() => moduleOptions.value.enableLinkCard, () => {
-  if (moduleOptions.value.enabled) {
-    // 如果模块启用中，手动触发一次扫描以响应设置变化
-    handler()
-  }
-}, {
-  immediate: true
-})
-
 const disableAll = () => {
   unwatchEnableParagraphBlock()
   unwatchBlockTimeFontSize()
-  unwatchEnableLinkCard()
 
   removeRecordedParagraphList()
   removeAllParagraphBlockAttrContainer()
@@ -426,17 +423,8 @@ const disableAll = () => {
   moduleEnableStatusSwitcher(EN_MODULE_LIST.EN_PARAGRAPH_BLOCK)
 }
 
-onMounted(() => {
-  // 移除菜单注册代码
-  // cleanupBlockMenu = registerBlockLinkCardMenu()
-})
-
 onBeforeUnmount(() => {
   disableAll()
-  // 移除清理代码
-  // if (cleanupBlockMenu) {
-  //   cleanupBlockMenu()
-  // }
 })
 </script>
 

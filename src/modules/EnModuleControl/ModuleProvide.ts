@@ -269,12 +269,12 @@ type DisableFunction = Noop
  */
 export function watchConfigEnableStatus(
   enableStatusGetter: () => boolean,
-  onEnabled: () => (DisableFunction),
+  onEnabled: (value: any, oldValue: any) => (DisableFunction),
 ) {
   let disableFunction: DisableFunction = null
-  watch(enableStatusGetter, (value) => {
+  watch(enableStatusGetter, (value, oldValue) => {
     if (value) {
-      disableFunction = onEnabled()
+      disableFunction = onEnabled(value, oldValue)
     } else {
       disableFunction?.()
     }
