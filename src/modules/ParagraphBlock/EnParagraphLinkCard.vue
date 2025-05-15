@@ -278,21 +278,52 @@ const loadBlockCardStatus = async (dom: HTMLElement) => {
 // 刷新所有段落链接的卡片状态
 const refreshAllLinkCards = async () => {
   console.log('刷新所有链接卡片状态...')
-  // 清空当前状态
-  blockCardStatusMap.value = {}
-
-  // 延迟一点时间确保DOM已完全加载
-  setTimeout(async () => {
+  
+  try {
+    // 清空当前状态
+    blockCardStatusMap.value = {}
+    
     // 重新检查所有段落链接
-    if (paragraphOnlyLinkList.value.length > 0) {
-      for (const item of paragraphOnlyLinkList.value) {
-        if (isValidCardBlock(item)) {
-          await loadBlockCardStatus(item)
+    for (const item of paragraphOnlyLinkList.value) {
+      if (isValidCardBlock(item)) {
+        const nodeId = item.dataset.nodeId
+        if (nodeId) {
+          // 获取块属性
+          const blockAttrs = await getBlockAttrs(nodeId)
+          // 更新状态映射
+          blockCardStatusMap.value[nodeId] = blockAttrs && blockAttrs[CARD_ATTR_NAME] === 'true'
+
+          // 如果是卡片，预加载必要数据
+          if (blockCardStatusMap.value[nodeId]) {
+            if (getLinkType(item) === 'block-ref') {
+              const blockId = getBlockRefId(item)
+              if (blockId) {
+                // 强制刷新块信息
+                delete blockInfoMap.value[blockId]
+                await loadBlockInfo(blockId)
+              }
+            } else if (getLinkType(item) === 'normal-link') {
+              const url = getLinkUrl(item)
+              if (url) {
+                // 强制刷新链接元数据
+                delete linksMetaData.value[url]
+                await fetchLinkMetadata(url, true)
+              }
+            }
+          }
         }
       }
-      console.log('卡片状态刷新完成', paragraphOnlyLinkList.value.length, '个链接')
     }
-  }, 200)
+
+    // 触发视图更新
+    blockCardStatusMap.value = { ...blockCardStatusMap.value }
+    blockInfoMap.value = { ...blockInfoMap.value }
+    linksMetaData.value = { ...linksMetaData.value }
+
+    console.log('卡片状态刷新完成', Object.keys(blockCardStatusMap.value).length, '个链接')
+  } catch (error) {
+    console.error('刷新卡片状态失败:', error)
+  }
 }
 
 // 设置块为卡片（添加或移除属性）
@@ -1054,11 +1085,20 @@ const isUnicodeEmoji = (text: string) => {
 const refreshBlockInfo = async (blockId: string) => {
   if (!blockId) return
 
-  // 重置块信息
-  delete blockInfoMap.value[blockId]
-
-  // 重新加载
-  await loadBlockInfo(blockId)
+  try {
+    // 强制清除缓存
+    delete blockInfoMap.value[blockId]
+    
+    // 重新加载块信息
+    await loadBlockInfo(blockId)
+    
+    // 触发视图更新
+    blockInfoMap.value = { ...blockInfoMap.value }
+    
+    console.log('刷新块信息完成:', blockId)
+  } catch (error) {
+    console.error('刷新块信息失败:', error)
+  }
 }
 
 // 导航到块
@@ -1383,12 +1423,68 @@ onMounted(() => {
   // 监听思源的刷新事件
   const eventBusElement = document.getElementById('eventBus')
   if (eventBusElement) {
-    eventBusElement.addEventListener('click', (event) => {
-      if ((event as any).detail && (event as any).detail.cmd === 'reloadProtyle') {
-        console.log('检测到思源刷新事件，准备重新加载卡片状态')
-        refreshAllLinkCards()
+    const handleSiyuanEvent = async (event: any) => {
+      const detail = event.detail
+      if (!detail) return
+      
+      // 处理各种需要刷新的事件
+      if (
+        detail.cmd === 'reloadProtyle' ||
+        detail.cmd === 'refreshAttributeView' ||
+        detail.cmd === 'setAttr' ||
+        detail.cmd === 'rename' ||
+        detail.cmd === 'updateAttr' ||
+        detail.cmd === 'refreshBacklink' ||
+        detail.cmd === 'transactions' ||
+        detail.cmd === 'unmount' ||
+        detail.cmd === 'mount'
+      ) {
+        console.log('检测到思源事件，准备重新加载卡片状态:', detail.cmd)
+        
+        // 如果是属性相关的更新，需要立即刷新相关块
+        if (detail.cmd === 'setAttr' || detail.cmd === 'updateAttr') {
+          // 获取受影响的块ID
+          const blockId = detail.data?.id
+          if (blockId) {
+            // 立即刷新这个块的信息
+            await refreshBlockInfo(blockId)
+            // 查找并刷新引用了这个块的卡片
+            paragraphOnlyLinkList.value.forEach(async (item) => {
+              if (getLinkType(item) === 'block-ref' && getBlockRefId(item) === blockId) {
+                const nodeId = item.dataset.nodeId
+                if (nodeId) {
+                  await refreshBlockCardStatus(nodeId)
+                }
+              }
+            })
+          }
+        }
+
+        // 使用防抖处理完整刷新，避免频繁刷新
+        if (window.cardRefreshTimer) {
+          clearTimeout(window.cardRefreshTimer)
+        }
+        window.cardRefreshTimer = setTimeout(async () => {
+          await refreshAllLinkCards()
+          // 额外检查并刷新所有块引用卡片
+          for (const item of paragraphOnlyLinkList.value) {
+            if (getLinkType(item) === 'block-ref') {
+              const blockId = getBlockRefId(item)
+              if (blockId) {
+                // 强制刷新块信息
+                delete blockInfoMap.value[blockId]
+                await loadBlockInfo(blockId)
+              }
+            }
+          }
+        }, 300)
       }
-    })
+    }
+
+    // 添加事件监听
+    eventBusElement.addEventListener('click', handleSiyuanEvent)
+    // 保存事件处理函数以便后续移除
+    ;(window as any).__cardEventHandler = handleSiyuanEvent
   }
 
   // 监听window的focus事件，可能表示从其他窗口返回
@@ -1411,9 +1507,12 @@ onMounted(() => {
     }
   })
 
-  // 组件销毁时断开观察
+  // 组件销毁时清理
   onBeforeUnmount(() => {
-    observer.disconnect()
+    // 清除定时器
+    if (window.cardRefreshTimer) {
+      clearTimeout(window.cardRefreshTimer)
+    }
 
     // 移除事件监听
     document.removeEventListener('compositionstart', preventEditInCard, true)
@@ -1424,8 +1523,9 @@ onMounted(() => {
 
     // 移除思源事件监听
     const eventBusElement = document.getElementById('eventBus')
-    if (eventBusElement) {
-      eventBusElement.removeEventListener('click', () => {})
+    if (eventBusElement && (window as any).__cardEventHandler) {
+      eventBusElement.removeEventListener('click', (window as any).__cardEventHandler)
+      delete (window as any).__cardEventHandler
     }
 
     // 移除window事件监听
@@ -1482,6 +1582,13 @@ defineExpose({
   refreshBlockCardStatus,
   refreshAllLinkCards,
 })
+
+// 在script setup的开头添加类型声明
+declare global {
+  interface Window {
+    cardRefreshTimer: ReturnType<typeof setTimeout> | undefined
+  }
+}
 </script>
 
 <style lang="scss" scoped>
@@ -1750,6 +1857,11 @@ defineExpose({
   width: 100%;
   overflow: hidden;
   user-select: none;
+
+  // 隐藏原始内容
+  & + [contenteditable="true"] {
+    display: none;
+  }
 }
 
 // 添加用于阻止编辑的全局样式
@@ -1773,5 +1885,12 @@ defineExpose({
 .link-card,
 .block-ref-card {
   pointer-events: auto !important;
+}
+
+// 隐藏原始链接内容
+div[custom-en-link-card="true"] {
+  > [contenteditable="true"] {
+    display: none;
+  }
 }
 </style>
