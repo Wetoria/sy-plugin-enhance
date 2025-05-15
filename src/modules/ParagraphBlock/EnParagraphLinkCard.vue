@@ -1383,12 +1383,46 @@ onMounted(() => {
   // 监听思源的刷新事件
   const eventBusElement = document.getElementById('eventBus')
   if (eventBusElement) {
-    eventBusElement.addEventListener('click', (event) => {
-      if ((event as any).detail && (event as any).detail.cmd === 'reloadProtyle') {
-        console.log('检测到思源刷新事件，准备重新加载卡片状态')
-        refreshAllLinkCards()
+    const handleSiyuanEvent = (event: any) => {
+      const detail = event.detail
+      if (!detail) return
+      
+      // 处理各种需要刷新的事件
+      if (
+        detail.cmd === 'reloadProtyle' ||
+        detail.cmd === 'refreshAttributeView' ||
+        detail.cmd === 'setAttr' ||
+        detail.cmd === 'rename' ||
+        detail.cmd === 'updateAttr' ||
+        detail.cmd === 'refreshBacklink' ||
+        detail.cmd === 'transactions' ||
+        detail.cmd === 'unmount' ||
+        detail.cmd === 'mount'
+      ) {
+        console.log('检测到思源事件，准备重新加载卡片状态:', detail.cmd)
+        // 使用setTimeout确保DOM已更新
+        setTimeout(() => {
+          refreshAllLinkCards()
+          // 如果是属性相关的更新，还需要刷新块信息
+          if (detail.cmd === 'setAttr' || detail.cmd === 'updateAttr') {
+            // 遍历所有块引用卡片并刷新其信息
+            for (const item of paragraphOnlyLinkList.value) {
+              if (getLinkType(item) === 'block-ref') {
+                const blockId = getBlockRefId(item)
+                if (blockId) {
+                  refreshBlockInfo(blockId)
+                }
+              }
+            }
+          }
+        }, 100)
       }
-    })
+    }
+
+    // 添加事件监听
+    eventBusElement.addEventListener('click', handleSiyuanEvent)
+    // 保存事件处理函数以便后续移除
+    ;(window as any).__cardEventHandler = handleSiyuanEvent
   }
 
   // 监听window的focus事件，可能表示从其他窗口返回
@@ -1750,6 +1784,11 @@ defineExpose({
   width: 100%;
   overflow: hidden;
   user-select: none;
+
+  // 隐藏原始内容
+  & + [contenteditable="true"] {
+    display: none;
+  }
 }
 
 // 添加用于阻止编辑的全局样式
@@ -1773,5 +1812,12 @@ defineExpose({
 .link-card,
 .block-ref-card {
   pointer-events: auto !important;
+}
+
+// 隐藏原始链接内容
+div[custom-en-link-card="true"] {
+  > [contenteditable="true"] {
+    display: none;
+  }
 }
 </style>
