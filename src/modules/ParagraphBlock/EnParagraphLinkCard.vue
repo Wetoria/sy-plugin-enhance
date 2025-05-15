@@ -215,7 +215,7 @@ import {
   onBeforeUnmount,
   onMounted,
   ref,
-  watch,
+  watch
 } from 'vue'
 
 // 获取插件实例
@@ -277,7 +277,8 @@ const loadBlockCardStatus = async (dom: HTMLElement) => {
 
 // 刷新所有段落链接的卡片状态
 const refreshAllLinkCards = async () => {
-  console.log('刷新所有链接卡片状态...')
+  // 移除日志输出
+  // console.log('刷新所有链接卡片状态...')
   
   try {
     // 清空当前状态
@@ -320,7 +321,8 @@ const refreshAllLinkCards = async () => {
     blockInfoMap.value = { ...blockInfoMap.value }
     linksMetaData.value = { ...linksMetaData.value }
 
-    console.log('卡片状态刷新完成', Object.keys(blockCardStatusMap.value).length, '个链接')
+    // 移除日志输出
+    // console.log('卡片状态刷新完成', Object.keys(blockCardStatusMap.value).length, '个链接')
   } catch (error) {
     console.error('刷新卡片状态失败:', error)
   }
@@ -719,7 +721,8 @@ const fetchLinkMetadata = async (url: string, forceLoad = false) => {
       image: tempImage || '',
     }
 
-    console.log('成功获取链接元数据:', url, linksMetaData.value[url])
+    // 移除日志输出
+    // console.log('成功获取链接元数据:', url, linksMetaData.value[url])
   } catch (error) {
     console.error('获取网页元数据错误:', error)
   }
@@ -753,7 +756,8 @@ const handleBilibiliMetadata = async (url: string) => {
               description: videoData.desc || '暂无简介',
               image: videoData.pic || '',
             }
-            console.log('成功获取B站视频元数据:', linksMetaData.value[url])
+            // 移除日志输出
+            // console.log('成功获取B站视频元数据:', linksMetaData.value[url])
             return true
           }
         } catch (parseError) {
@@ -993,7 +997,8 @@ const loadBlockInfo = async (blockId: string) => {
       banner,
     }
 
-    console.log('块信息:', blockId, blockInfoMap.value[blockId])
+    // 移除日志输出
+    // console.log('块信息:', blockId, blockInfoMap.value[blockId])
   } catch (error) {
     console.error('获取块信息失败:', error)
     blockInfoMap.value[blockId] = {
@@ -1095,7 +1100,8 @@ const refreshBlockInfo = async (blockId: string) => {
     // 触发视图更新
     blockInfoMap.value = { ...blockInfoMap.value }
     
-    console.log('刷新块信息完成:', blockId)
+    // 移除日志输出
+    // console.log('刷新块信息完成:', blockId)
   } catch (error) {
     console.error('刷新块信息失败:', error)
   }
@@ -1384,7 +1390,74 @@ const refreshBlockCardStatus = async (nodeId: string) => {
   }
 }
 
-// 观察DOM变化，以便及时刷新卡片状态
+// 阻止在卡片区域内的编辑操作
+const preventEditInCard = (event: Event) => {
+  const target = event.target as HTMLElement
+
+  // 检查事件目标是否在卡片区域内
+  if (target && (
+    target.closest('.enParagraphLinkCardArea')
+    || target.closest('.link-card-container')
+    || target.closest('[data-editable="false"]')
+  )) {
+    // 阻止事件传播和默认行为
+    event.stopPropagation()
+    event.preventDefault()
+
+    // 如果是键盘事件，且是Tab或者Esc键，允许事件继续传播
+    if (event instanceof KeyboardEvent) {
+      if (event.key === 'Tab' || event.key === 'Escape') {
+        // 不阻止Tab和Esc键，允许用户正常导航
+        return
+      }
+    }
+
+    return false
+  }
+}
+
+// 特殊处理退格键的全局事件监听
+const handleBackspaceKey = (event: KeyboardEvent) => {
+  // 只处理退格键事件
+  if (event.key !== 'Backspace') return
+  
+  // 获取当前活动的编辑区域
+  const protyle = document.querySelector('.protyle-wysiwyg.protyle-wysiwyg--attr') as HTMLElement
+  if (!protyle) return
+  
+  // 获取光标所在的块
+  const selection = window.getSelection()
+  if (!selection || selection.rangeCount === 0) return
+  
+  const range = selection.getRangeAt(0)
+  const currentBlock = range.startContainer.parentElement?.closest('[data-node-id]') as HTMLElement
+  if (!currentBlock || !currentBlock.dataset.nodeId) return
+  
+  // 检查上一个块是否为卡片块
+  const prevBlock = currentBlock.previousElementSibling as HTMLElement
+  if (!prevBlock || !prevBlock.dataset.nodeId) return
+  
+  // 检查前一个块是否为卡片
+  if (blockCardStatusMap.value[prevBlock.dataset.nodeId]) {
+    // 检查当前块是否为空
+    const isEmpty = currentBlock.textContent?.trim() === '' || 
+                    currentBlock.querySelector('.protyle-attr')?.textContent?.trim() === currentBlock.textContent?.trim()
+    
+    // 如果当前块为空且光标在块起始位置，阻止默认退格行为
+    if (isEmpty && range.startOffset === 0) {
+      // 阻止事件默认行为，防止卡片渲染消失
+      event.preventDefault()
+      event.stopPropagation()
+    }
+  }
+}
+
+// 添加事件处理函数防止编辑器操作
+const preventEditingEvents = (e: MouseEvent) => {
+  e.stopPropagation()
+}
+
+// 在组件挂载和卸载时添加或移除全局事件
 onMounted(() => {
   // 创建一个MutationObserver来观察块属性变化
   const observer = new MutationObserver((mutations) => {
@@ -1399,7 +1472,8 @@ onMounted(() => {
         if (nodeId) {
           // 当检测到temp-refresh属性变化时，立即刷新块状态
           refreshBlockCardStatus(nodeId).then((isCard) => {
-            console.log('刷新块状态', nodeId, isCard ? '显示卡片' : '不显示卡片')
+            // 移除日志输出
+            // console.log('刷新块状态', nodeId, isCard ? '显示卡片' : '不显示卡片')
           })
         }
       }
@@ -1419,6 +1493,9 @@ onMounted(() => {
   document.addEventListener('compositionend', preventEditInCard, true)
   document.addEventListener('keydown', preventEditInCard, true)
   document.addEventListener('input', preventEditInCard, true)
+  
+  // 添加退格键全局监听
+  document.addEventListener('keydown', handleBackspaceKey, true)
 
   // 监听思源的刷新事件
   const eventBusElement = document.getElementById('eventBus')
@@ -1439,7 +1516,8 @@ onMounted(() => {
         detail.cmd === 'unmount' ||
         detail.cmd === 'mount'
       ) {
-        console.log('检测到思源事件，准备重新加载卡片状态:', detail.cmd)
+        // 移除调试日志
+        // console.log('检测到思源事件，准备重新加载卡片状态:', detail.cmd)
         
         // 如果是属性相关的更新，需要立即刷新相关块
         if (detail.cmd === 'setAttr' || detail.cmd === 'updateAttr') {
@@ -1499,7 +1577,8 @@ onMounted(() => {
   // 额外监听F5键刷新事件（备用方案）
   document.addEventListener('keydown', (event) => {
     if (event.key === 'F5' || (event.ctrlKey && event.key === 'r')) {
-      console.log('检测到F5刷新键，即将刷新...')
+      // 移除调试日志
+      // console.log('检测到F5刷新键，即将刷新...')
       // 使用setTimeout确保在页面实际刷新后执行
       setTimeout(() => {
         refreshAllLinkCards()
@@ -1507,73 +1586,45 @@ onMounted(() => {
     }
   })
 
-  // 组件销毁时清理
-  onBeforeUnmount(() => {
-    // 清除定时器
-    if (window.cardRefreshTimer) {
-      clearTimeout(window.cardRefreshTimer)
-    }
-
-    // 移除事件监听
-    document.removeEventListener('compositionstart', preventEditInCard, true)
-    document.removeEventListener('compositionupdate', preventEditInCard, true)
-    document.removeEventListener('compositionend', preventEditInCard, true)
-    document.removeEventListener('keydown', preventEditInCard, true)
-    document.removeEventListener('input', preventEditInCard, true)
-
-    // 移除思源事件监听
-    const eventBusElement = document.getElementById('eventBus')
-    if (eventBusElement && (window as any).__cardEventHandler) {
-      eventBusElement.removeEventListener('click', (window as any).__cardEventHandler)
-      delete (window as any).__cardEventHandler
-    }
-
-    // 移除window事件监听
-    window.removeEventListener('focus', () => {})
-  })
-
   // 初始化时强制刷新一次所有卡片状态
   refreshAllLinkCards()
+})
+
+onBeforeUnmount(() => {
+  // 清除定时器
+  if (window.cardRefreshTimer) {
+    clearTimeout(window.cardRefreshTimer)
+  }
+
+  // 移除事件监听
+  document.removeEventListener('compositionstart', preventEditInCard, true)
+  document.removeEventListener('compositionupdate', preventEditInCard, true)
+  document.removeEventListener('compositionend', preventEditInCard, true)
+  document.removeEventListener('keydown', preventEditInCard, true)
+  document.removeEventListener('input', preventEditInCard, true)
+  
+  // 移除退格键监听
+  document.removeEventListener('keydown', handleBackspaceKey, true)
+
+  // 移除思源事件监听
+  const eventBusElement = document.getElementById('eventBus')
+  if (eventBusElement && (window as any).__cardEventHandler) {
+    eventBusElement.removeEventListener('click', (window as any).__cardEventHandler)
+    delete (window as any).__cardEventHandler
+  }
+
+  // 移除window事件监听
+  window.removeEventListener('focus', () => {})
 })
 
 // 监听段落列表变化，当列表长度改变时重新检查卡片状态
 watch(() => paragraphOnlyLinkList.value.length, (newLength, oldLength) => {
   if (newLength > 0 && (newLength !== oldLength || Object.keys(blockCardStatusMap.value).length === 0)) {
-    console.log('段落链接列表变更，刷新卡片状态', oldLength, '->', newLength)
+    // 移除日志输出
+    // console.log('段落链接列表变更，刷新卡片状态', oldLength, '->', newLength)
     refreshAllLinkCards()
   }
 })
-
-// 阻止在卡片区域内的编辑操作
-const preventEditInCard = (event: Event) => {
-  const target = event.target as HTMLElement
-
-  // 检查事件目标是否在卡片区域内
-  if (target && (
-    target.closest('.enParagraphLinkCardArea')
-    || target.closest('.link-card-container')
-    || target.closest('[data-editable="false"]')
-  )) {
-    // 阻止事件传播和默认行为
-    event.stopPropagation()
-    event.preventDefault()
-
-    // 如果是键盘事件，且是Tab或者Esc键，允许事件继续传播
-    if (event instanceof KeyboardEvent) {
-      if (event.key === 'Tab' || event.key === 'Escape') {
-        // 不阻止Tab和Esc键，允许用户正常导航
-        return
-      }
-    }
-
-    return false
-  }
-}
-
-// 添加事件处理函数防止编辑器操作
-const preventEditingEvents = (e: MouseEvent) => {
-  e.stopPropagation()
-}
 
 // 导出函数供其他组件使用
 defineExpose({
@@ -1589,6 +1640,7 @@ declare global {
     cardRefreshTimer: ReturnType<typeof setTimeout> | undefined
   }
 }
+
 </script>
 
 <style lang="scss" scoped>
