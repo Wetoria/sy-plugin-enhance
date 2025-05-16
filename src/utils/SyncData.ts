@@ -2,11 +2,13 @@ import { debounce } from '@/utils'
 import {
   loadData,
   saveData,
-} from '@/utils/DataManager'
-import { toggleSiyuanSync } from '@/utils/Siyuan'
+} from '@/utils/DataManager/api'
 import {
-  useSyncDataChannel,
-} from '@/utils/SyncData/useSyncDataChannel'
+  onReceiveSyncData,
+  sendSyncData,
+  syncDataSocketOpened,
+} from '@/utils/DataManager/useSyncDataChannel'
+import { toggleSiyuanSync } from '@/utils/Siyuan'
 import chalk from 'chalk'
 import {
   cloneDeep,
@@ -22,12 +24,6 @@ import {
   enLog,
   getColorStringWarn,
 } from './Log'
-
-const syncDataSocket = useSyncDataChannel<EnSyncModuleData<any>>({
-  onDataChange(data) {
-    parseSyncDataAndCheck(data)
-  },
-})
 
 /**
  * 同步模块的初始化配置
@@ -131,7 +127,7 @@ const getSyncDataByWebSocket = (msg: SyncDataMsg<EnSyncModuleData<any>>) => {
 
 const sendToSyncByData = <T>(namespace: string, data: EnSyncModuleData<T>) => {
   // 如果 socket 未连接，则不处理
-  if (!syncDataSocket.isOpen.value) {
+  if (!syncDataSocketOpened.value) {
     enWarn(`${getColorStringWarn(`Socket is closed. Can not send module data:`)} ${getNamespaceLogString(namespace)}`)
     return
   }
@@ -154,8 +150,7 @@ const sendToSyncByData = <T>(namespace: string, data: EnSyncModuleData<T>) => {
     data,
   }
   enLog(`${getColorStringWarn('Ready to send module')} ${getNamespaceLogString(namespace)} data to sync: `, JSON.parse(JSON.stringify(msgData)))
-  const msgStr = JSON.stringify(msgData)
-  syncDataSocket.send(msgStr)
+  sendSyncData(msgData)
 }
 
 
@@ -399,3 +394,5 @@ const parseSyncDataAndCheck = (data: SyncDataMsg<EnSyncModuleData<any>>) => {
 
   getSyncDataByWebSocket(data)
 }
+
+onReceiveSyncData(parseSyncDataAndCheck)

@@ -1,4 +1,4 @@
-import { useSyncDataWith } from '@/utils/SyncData/useSyncData'
+import { useSyncDataWith } from '@/utils/DataManager/useDataSyncer'
 import {
   ref,
   watchEffect,

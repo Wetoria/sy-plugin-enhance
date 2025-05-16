@@ -1,4 +1,4 @@
-import { saveData } from '@/utils/DataManager'
+import { saveData } from '@/utils/DataManager/api'
 import { getModuleStorageKey } from '@/utils/GlobalModule'
 import { createVuePromiseQueue } from '@/utils/promiseQueue'
 import { toggleSiyuanSync } from '@/utils/Siyuan'

@@ -1,5 +1,8 @@
 import { useSyBroadcast } from '@/utils/websocket/useSyBroadcast'
-import { watch } from 'vue'
+import {
+  computed,
+  watch,
+} from 'vue'
 
 
 // 创建全局唯一的同步数据 ws 通道
@@ -7,6 +10,10 @@ export const syncDataSocket = useSyBroadcast('SEP-data-sync-channel', {
   immediate: false,
 })
 // window.syncDataSocket = syncDataSocket
+
+export const syncDataSocketOpened = computed(() => {
+  return syncDataSocket.isOpen.value
+})
 
 export function sendSyncData<T>(data: SyncDataMsg<T>) {
   const msgData = Object.assign({

@@ -1,4 +1,4 @@
-import { useAsyncPluginData } from '@/utils/usePluginData'
+import { useAsyncPluginData } from '@/utils/DataManager/useDataLoader'
 import {
   ref,
   watchEffect,

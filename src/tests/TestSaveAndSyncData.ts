@@ -1,6 +1,6 @@
 
-import { useSyncDataWith } from '@/utils/SyncData/useSyncData'
-import { useSavedData } from '@/utils/useSavedData'
+import { useSavedData } from '@/utils/DataManager/useDataSaver'
+import { useSyncDataWith } from '@/utils/DataManager/useDataSyncer'
 import {
   ref,
   watchEffect,

@@ -1,4 +1,4 @@
-import { loadData } from '@/utils/DataManager'
+import { loadData } from '@/utils/DataManager/api'
 import { getModuleStorageKey } from '@/utils/GlobalModule'
 import { Notification } from '@arco-design/web-vue'
 import {

@@ -39,6 +39,7 @@ import {
   EN_CONSTANTS,
   EN_MODULE_LIST,
 } from '@/utils/Constants'
+import { syncDataSocket } from '@/utils/DataManager/useSyncDataChannel'
 import {
   useSiyuanNotebookMount,
   useSiyuanNotebookUnmount,
@@ -47,7 +48,6 @@ import {
   loadModuleDataByNamespace,
   syncDataRefMap,
 } from '@/utils/SyncData'
-import { syncDataSocket } from '@/utils/SyncData/useSyncDataChannel'
 import {
   computed,
   onBeforeUnmount,
