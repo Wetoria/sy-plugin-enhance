@@ -5,7 +5,7 @@
     ref="protyleContainerRef"
     class="fullContent EnProtyleContainer"
     :class="{
-      'EnProtyleContainerVisible': protyleVisible,
+      EnProtyleContainerVisible: protyleVisible,
     }"
     :style="{
       minHeight: `${containerMinHeight}px`,
@@ -34,7 +34,7 @@ import {
   onBeforeUnmount,
   onMounted,
   ref,
-  watch
+  watch,
 } from 'vue'
 
 
@@ -107,11 +107,9 @@ const renderProtyle = () => {
 
 const blockDom = ref<string>()
 const containerMinHeight = ref(0)
-let noNeedUpdateProtyleMinHeight = ref(false)
 const getBlockDomForBlockId = async (blockId: string) => {
   const blockDomRes = await getBlockDOM(blockId)
   blockDom.value = blockDomRes.dom
-  noNeedUpdateProtyleMinHeight.value = true
   updateProtyleMinHeight()
 }
 const updateProtyleMinHeight = debounce(() => {
