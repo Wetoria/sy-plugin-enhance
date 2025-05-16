@@ -846,15 +846,38 @@ const getBlockRefId = (dom: HTMLElement) => {
 
 // 获取块引用信息
 const loadBlockInfo = async (blockId: string) => {
-  if (!blockId || blockInfoMap.value[blockId]) return
+  if (!blockId) return
 
+  // 初始化加载状态
   blockInfoMap.value[blockId] = {
     loading: true,
   }
 
   try {
     // 获取块基本信息
-    const blockData = await getBlockByID(blockId)
+    let blockData = await getBlockByID(blockId)
+    
+    // 如果获取失败，尝试重试几次（对新创建的块很有用）
+    if (!blockData) {
+      // 延迟重试
+      await new Promise(resolve => setTimeout(resolve, 100))
+      blockData = await getBlockByID(blockId)
+      
+      // 如果仍然失败，再试一次
+      if (!blockData) {
+        await new Promise(resolve => setTimeout(resolve, 200))
+        blockData = await getBlockByID(blockId)
+      }
+    }
+    
+    // 如果最终无法获取块数据
+    if (!blockData) {
+      blockInfoMap.value[blockId] = {
+        loading: false,
+        error: new Error('无法获取块数据，可能是块刚创建尚未完成'),
+      }
+      return
+    }
 
     // 获取更完整的文档信息（包括图标）
     let docInfo = null
@@ -1589,7 +1612,8 @@ onMounted(() => {
         detail.cmd === 'refreshBacklink' ||
         detail.cmd === 'transactions' ||
         detail.cmd === 'unmount' ||
-        detail.cmd === 'mount'
+        detail.cmd === 'mount' ||
+        detail.cmd === 'insert'  // 添加insert事件监听
       ) {
         // 判断事件类型，有选择性地刷新
         const shouldFullRefresh = [
@@ -1625,6 +1649,38 @@ onMounted(() => {
           }
         }
         
+        // 特殊处理插入操作，可能是新创建的块引用
+        if (detail.cmd === 'insert') {
+          // 设置较短的延迟，给思源一点时间写入数据库
+          setTimeout(() => {
+            // 查找新插入的块引用
+            const newBlockRefs = document.querySelectorAll('span[data-type="block-ref"]:not([data-processed="true"])')
+            if (newBlockRefs.length > 0) {
+              newBlockRefs.forEach(async (ref) => {
+                // 标记为已处理
+                ref.setAttribute('data-processed', 'true')
+                const blockId = ref.getAttribute('data-id')
+                if (blockId) {
+                  // 强制刷新块信息
+                  delete blockInfoMap.value[blockId]
+                  await loadBlockInfo(blockId)
+                  
+                  // 更新状态
+                  blockInfoMap.value = { ...blockInfoMap.value }
+                  
+                  // 找到所属的段落块
+                  const paragraphBlock = ref.closest('[data-node-id]') as HTMLElement
+                  if (paragraphBlock && paragraphBlock.dataset.nodeId) {
+                    // 刷新该块的卡片状态
+                    await refreshBlockCardStatus(paragraphBlock.dataset.nodeId)
+                    blockCardStatusMap.value = { ...blockCardStatusMap.value }
+                  }
+                }
+              })
+            }
+          }, 100)
+        }
+        
         // 处理事务类型的更新，判断是否需要刷新卡片
         if (detail.cmd === 'transactions') {
           // 检查事务是否涉及到编辑操作
@@ -1640,6 +1696,31 @@ onMounted(() => {
           // 如果只是普通文本编辑，不刷新卡片
           if (isOnlyTextEdit) {
             return
+          }
+          
+          // 检查是否包含块引用
+          const hasBlockRef = detail.data?.some((tx: any) => 
+            tx.doOperations?.some((op: any) => 
+              op.data?.indexOf('<span data-type="block-ref"') > -1
+            )
+          )
+          
+          // 如果包含块引用，需要立即处理新创建的块引用
+          if (hasBlockRef) {
+            setTimeout(() => {
+              // 查找新的块引用
+              const allBlockRefs = document.querySelectorAll('span[data-type="block-ref"]')
+              allBlockRefs.forEach(async (ref) => {
+                const blockId = ref.getAttribute('data-id')
+                if (blockId && !blockInfoMap.value[blockId]) {
+                  // 加载块信息
+                  await loadBlockInfo(blockId)
+                }
+              })
+              
+              // 更新状态
+              blockInfoMap.value = { ...blockInfoMap.value }
+            }, 50)
           }
         }
 
