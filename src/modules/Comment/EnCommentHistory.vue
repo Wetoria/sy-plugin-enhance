@@ -24,6 +24,7 @@
                 :key="item.commentBlockId"
                 class="historyCommentListItemCard"
                 :data-en_comment_for_node_id="item.commentForNodeId"
+                :data-en_comment_id="item.commentId"
                 :class="[
                   selectedCommentIdList.find((i) => i.commentBlockId === item.commentBlockId) ? 'selected' : '',
                 ]"
@@ -388,12 +389,12 @@ const onClickComment = async (event: MouseEvent) => {
 
   isLoading.value = false
   setTimeout(() => {
-    scrollToFirstSelectedCard(idListWhichHasComment[idListWhichHasComment.length - 1].commentForNodeId)
+    scrollToFirstSelectedCard(idListWhichHasComment[0].commentId)
   }, 0)
 }
 
-const scrollToFirstSelectedCard = (commentBlockId: string) => {
-  const firstSelectedCard = historyCommentListRef.value?.querySelector(`[data-en_comment_for_node_id="${commentBlockId}"]`) as HTMLDivElement
+const scrollToFirstSelectedCard = (commentId: string) => {
+  const firstSelectedCard = historyCommentListRef.value?.querySelector(`[data-en_comment_id="${commentId}"]`) as HTMLDivElement
   if (!firstSelectedCard) {
     return
   }
@@ -401,22 +402,6 @@ const scrollToFirstSelectedCard = (commentBlockId: string) => {
   firstSelectedCard.scrollIntoView({
     behavior: 'smooth',
   })
-
-  // const protyleContentElement = currentProtyle.value.contentElement
-
-  // const enDockElement = historyCommentListRef.value.closest('.EnDockContent') as HTMLElement
-
-  // const targetNodeElement = protyleContentElement.querySelector(`[data-node-id="${firstSelectedCard.dataset.en_comment_for_node_id}"]`)
-  // if (!targetNodeElement) {
-  //   return
-  // }
-
-  // const targetNodeElementRect = targetNodeElement.getBoundingClientRect()
-  // const firstSelectedCardRect = firstSelectedCard.getBoundingClientRect()
-
-  // const offset = targetNodeElementRect.top - firstSelectedCardRect.top
-
-  // enDockElement.scrollTop -= offset
 }
 onMounted(() => {
   document.addEventListener('click', onClickComment, true)
@@ -499,6 +484,11 @@ onBeforeUnmount(() => {
             border-top-left-radius: var(--b3-border-radius);
             border-top-right-radius: var(--b3-border-radius);
             background-color: rgb(var(--en-comment-highlight-color-base));
+          }
+
+          .arco-card-body,
+          .protyle-content {
+            background-color: rgb(var(--en-comment-highlight-color-base), .1);
           }
         }
 
