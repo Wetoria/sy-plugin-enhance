@@ -268,6 +268,13 @@ interface EnModuleComment extends EnModule {
   commentWrapMode: 'NodeList' | 'NodeSuperBlock'
 }
 
+/**
+ * 批注信息
+ * @field commentId 批注id
+ * @field commentForDocId 批注目标文档id
+ * @field commentForNodeId 批注目标块id
+ * @field commentBlockId 写下批注的块id
+ */
 interface EnCommentInfo {
   // 批注id
   commentId: string

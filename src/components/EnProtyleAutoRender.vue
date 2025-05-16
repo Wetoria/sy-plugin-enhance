@@ -5,7 +5,7 @@
     ref="protyleContainerRef"
     class="fullContent EnProtyleContainer"
     :class="{
-      'EnProtyleContainerVisible': protyleVisible,
+      EnProtyleContainerVisible: containerIsVisible,
     }"
     :style="{
       minHeight: `${containerMinHeight}px`,
@@ -24,8 +24,10 @@
 import { getBlockDOM } from '@/api'
 import { usePlugin } from '@/main'
 import { debounce } from '@/utils'
-import { calculateElementIsInTargetElement } from '@/utils/DOM'
-import { useResizeObserver } from '@vueuse/core'
+import {
+  useElementVisibility,
+  useResizeObserver,
+} from '@vueuse/core'
 import {
   IProtyleOptions,
   Protyle,
@@ -42,7 +44,6 @@ const props = defineProps<{
   blockId: string
   disableEnhance?: boolean
   options?: IProtyleOptions
-  targetElement?: HTMLElement | (() => HTMLElement)
 }>()
 const emits = defineEmits<{
   after: [protyle: Protyle]
@@ -66,7 +67,7 @@ onBeforeUnmount(() => {
 })
 
 const renderProtyle = () => {
-  if (!props.blockId || !protyleVisible.value) {
+  if (!props.blockId) {
     destroyProtyle()
     return
   }
@@ -107,11 +108,9 @@ const renderProtyle = () => {
 
 const blockDom = ref<string>()
 const containerMinHeight = ref(0)
-let noNeedUpdateProtyleMinHeight = ref(false)
 const getBlockDomForBlockId = async (blockId: string) => {
   const blockDomRes = await getBlockDOM(blockId)
   blockDom.value = blockDomRes.dom
-  noNeedUpdateProtyleMinHeight.value = true
   updateProtyleMinHeight()
 }
 const updateProtyleMinHeight = debounce(() => {
@@ -134,11 +133,6 @@ const updateProtyleMinHeight = debounce(() => {
 
   // 计算完成，移除 protyle 的 html
   protyleRenderAreaRef.value?.removeChild(div)
-
-  // 检查 protyle 是否可见
-  setTimeout(() => {
-    checkProtyleVisible()
-  }, 100)
 })
 
 useResizeObserver(protyleContainerRef, () => {
@@ -146,23 +140,9 @@ useResizeObserver(protyleContainerRef, () => {
 })
 
 
-
-const protyleVisible = ref(false)
-const checkProtyleVisible = () => {
-  const targetElement = typeof props.targetElement === 'function' ? props.targetElement() : props.targetElement
-  if (!targetElement) {
-    return
-  }
-  protyleVisible.value = calculateElementIsInTargetElement(
-    protyleContainerRef.value,
-    targetElement,
-    {
-      offset: 0,
-    },
-  )
-}
-watch(protyleVisible, () => {
-  if (protyleVisible.value) {
+const containerIsVisible = useElementVisibility(protyleContainerRef)
+watch(containerIsVisible, () => {
+  if (containerIsVisible.value) {
     renderProtyle()
   } else {
     destroyProtyle()
@@ -179,7 +159,6 @@ watch(props, () => {
 
 defineExpose({
   protyleRef,
-  checkProtyleVisible,
 })
 
 </script>

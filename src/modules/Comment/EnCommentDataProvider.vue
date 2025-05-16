@@ -3,7 +3,10 @@
 </template>
 
 <script setup lang="ts">
-import { flushTransactions, sql } from '@/api'
+import {
+  flushTransactions,
+  sql,
+} from '@/api'
 import {
   EN_COMMENT_KEYS,
   getNodeIdByCommentId,
@@ -91,7 +94,7 @@ const getAllCommentIds = async () => {
   `
   const res = await sql(sqlStmt)
   commentIdList.value = res.map((i) => i.value)
-  commentInfoList.value = res.map((i) => {
+  const newCommentInfoList = res.map((i) => {
     return {
       commentId: i.value,
       commentForDocId: i.comment_for_doc_id,
@@ -99,6 +102,10 @@ const getAllCommentIds = async () => {
       commentBlockId: i.block_id,
     }
   })
+  const isSame = commentInfoList.value.length === newCommentInfoList.length && commentInfoList.value.every((i) => newCommentInfoList.some((j) => j.commentId === i.commentId))
+  if (!isSame) {
+    commentInfoList.value = newCommentInfoList
+  }
 }
 
 

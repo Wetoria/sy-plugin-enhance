@@ -5,7 +5,6 @@
     title="历史批注"
     autoOpen
     type="EnCommentHistory"
-    @scroll="handleScroll"
   >
     <div
       class="enCommentListContainerContent"
@@ -25,6 +24,7 @@
                 :key="item.commentBlockId"
                 class="historyCommentListItemCard"
                 :data-en_comment_for_node_id="item.commentForNodeId"
+                :data-en_comment_id="item.commentId"
                 :class="[
                   selectedCommentIdList.find((i) => i.commentBlockId === item.commentBlockId) ? 'selected' : '',
                 ]"
@@ -61,14 +61,12 @@
                   </a-popconfirm>
                 </div>
                 <EnProtyleAutoRender
+                  :key="item.commentBlockId"
                   :blockId="item.commentBlockId"
                   :options="{
                     action: [],
                   }"
                   disableEnhance
-                  ref="enProtyleRefList"
-                  :targetElement="getEnDockContentElement"
-                  @after="calculateCardPosition"
                 />
               </a-card>
             </div>
@@ -90,6 +88,7 @@
 <script setup lang="ts">
 import {
   deleteBlock,
+  getBlockDOM,
   sql,
 } from '@/api'
 import EnBlockJumper from '@/components/EnBlockJumper.vue'
@@ -97,7 +96,6 @@ import EnButtonIcon from '@/components/EnButtonIcon.vue'
 import EnDock from '@/components/EnDock/EnDock.vue'
 import EnProtyleAutoRender from '@/components/EnProtyleAutoRender.vue'
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
-import { usePlugin } from '@/main'
 import {
   EN_COMMENT_KEYS,
   getNodeIdByCommentId,
@@ -107,9 +105,7 @@ import {
   isCommentNode,
 } from '@/modules/Comment/Comment'
 import { injectGlobalWindowData } from '@/modules/EnModuleControl/ModuleProvide'
-import { debounce } from '@/utils'
 import { useRegisterStyle } from '@/utils/DOM'
-import { useSiyuanEventLoadedProtyleDynamic } from '@/utils/EventBusHooks'
 import { useCurrentProtyle } from '@/utils/Siyuan'
 import { quickMakeCard } from '@/utils/Siyuan/Card'
 import {
@@ -118,7 +114,7 @@ import {
   onMounted,
   ref,
   watch,
-  watchEffect
+  watchEffect,
 } from 'vue'
 
 const commentInfoList = injectCommentInfoList()
@@ -190,9 +186,47 @@ const getCommentsForCurrentProtyle = async () => {
   }
   commentListForCurrentProtyle.value = commentInfoList.value.filter((i) => i.commentForDocId === currentProtyleId)
 
-  setTimeout(() => {
-    calculateCardPosition()
-  }, 0)
+  sortCommentListForCurrentProtyle()
+}
+
+const sortCommentListForCurrentProtyle = async () => {
+  const currentProtyleDomRes = await getBlockDOM(currentProtyle.value.block.id)
+  const currentProtyleDom = new DOMParser().parseFromString(currentProtyleDomRes.dom, 'text/html')
+
+  commentListForCurrentProtyle.value.sort((a, b) => {
+    const aTargetNodeElement =
+      currentProtyleDom.querySelector(`[data-type~="${a.commentId}"]`)
+      || currentProtyleDom.querySelector(`[custom-en-comment-id~="${a.commentId}"]`)
+    const bTargetNodeElement =
+      currentProtyleDom.querySelector(`[data-type~="${b.commentId}"]`)
+      || currentProtyleDom.querySelector(`[custom-en-comment-id~="${b.commentId}"]`)
+
+    if (!aTargetNodeElement || !bTargetNodeElement) {
+      return 0
+    }
+
+    // 如果 a 是 b 的祖先元素（包括父子关系），返回 -1
+    if (bTargetNodeElement.contains(aTargetNodeElement)) {
+      return -1
+    }
+    if (aTargetNodeElement.contains(bTargetNodeElement)) {
+      return 1
+    }
+
+    // 使用 compareDocumentPosition 比较两个元素的位置
+    const position = aTargetNodeElement.compareDocumentPosition(bTargetNodeElement)
+
+    // 如果 a 在 b 之前，返回 -1
+    if (position & Node.DOCUMENT_POSITION_FOLLOWING) {
+      return -1
+    }
+    // 如果 a 在 b 之后，返回 1
+    if (position & Node.DOCUMENT_POSITION_PRECEDING) {
+      return 1
+    }
+    // 如果位置相同，返回 0
+    return 0
+  })
 }
 
 const onClickCommentItem = (item: Omit<EnCommentInfo, 'commentForDocId'>) => {
@@ -201,108 +235,7 @@ const onClickCommentItem = (item: Omit<EnCommentInfo, 'commentForDocId'>) => {
 
 
 const historyCommentListRef = ref<HTMLDivElement>()
-const plugin = usePlugin()
 
-const calculateCardPosition = debounce(() => {
-  if (plugin.isMobile || !historyCommentListRef.value) {
-    return
-  }
-
-  const gap = 10
-
-  const protyleContentElement = currentProtyle.value.contentElement
-  const protyleContentElementRect = protyleContentElement.getBoundingClientRect()
-
-
-  const historyListRect = historyCommentListRef.value.getBoundingClientRect()
-
-  // 修正 top 偏移
-  const fixedTopOffset = protyleContentElementRect.top - historyListRect.top
-
-  const cardElements = Array.from(historyCommentListRef.value.querySelectorAll('.historyCommentListItemCard')) as HTMLElement[]
-  // 这里需要对每个 card 做个排序先
-
-
-  // cardElements.forEach((cardElement: HTMLElement) => {
-  //   const commentForNodeId = cardElement.dataset.en_comment_for_node_id
-  //   const targetNodeElement = protyleContentElement.querySelector(`[data-node-id="${commentForNodeId}"]`)
-  //   if (!targetNodeElement) {
-  //     const removedOffset = cardElement.getBoundingClientRect().height + gap
-  //     cardElement.style.top = `-${removedOffset}px`
-  //     cardElement.dataset.en_comment_top_offset = `-${removedOffset}`
-  //     cardElement.dataset.en_comment_target_top_offset = `-${removedOffset}`
-  //     return
-  //   }
-
-  //   const targetNodeElementRect = targetNodeElement.getBoundingClientRect()
-
-  //   const topOffset = targetNodeElementRect.top - protyleContentElementRect.top + protyleContentElement.scrollTop
-
-  //   const cardOffset = topOffset + fixedTopOffset
-  //   cardElement.style.top = `${cardOffset}px`
-  //   cardElement.dataset.en_comment_top_offset = `${cardOffset}`
-  //   cardElement.dataset.en_comment_target_top_offset = `${cardOffset}`
-  // })
-
-  // cardElements.sort((a: HTMLElement, b: HTMLElement) => {
-  //   const aTopOffset = a.dataset.en_comment_top_offset
-  //   const bTopOffset = b.dataset.en_comment_top_offset
-  //   return Number(aTopOffset || Infinity) - Number(bTopOffset || Infinity)
-  // })
-
-  commentListForCurrentProtyle.value.sort((a, b) => {
-    const aTargetNodeElement = protyleContentElement.querySelector(`[data-node-id="${a.commentForNodeId}"]`)
-    const aTargetInlineNodeElement = protyleContentElement.querySelector(`[data-type~="${a.commentId}"]`)
-    const bTargetNodeElement = protyleContentElement.querySelector(`[data-node-id="${b.commentForNodeId}"]`)
-    const bTargetInlineNodeElement = protyleContentElement.querySelector(`[data-type~="${b.commentId}"]`)
-
-    const aTarget = aTargetNodeElement || aTargetInlineNodeElement
-    const bTarget = bTargetNodeElement || bTargetInlineNodeElement
-
-    if (!bTarget && !aTarget) {
-      return 0
-    }
-
-    if (!bTarget) {
-      return -1
-    }
-
-    if (!aTarget) {
-      return 1
-    }
-
-    const aTargetRect = aTarget.getBoundingClientRect()
-    const bTargetRect = bTarget.getBoundingClientRect()
-
-    return aTargetRect.top - bTargetRect.top || aTargetRect.left - bTargetRect.left
-  })
-
-  // let preBottom = fixedTopOffset
-
-  // nextTick(() => {
-  //   cardElements.forEach((element) => {
-  //     const currentTop = Number(element.dataset.en_comment_top_offset)
-  //     if (!element.dataset.en_comment_top_offset || currentTop < 0) {
-  //       return
-  //     }
-
-  //     const newTop = preBottom + gap
-
-  //     if (currentTop < newTop) {
-  //       element.style.top = `${newTop}px`
-  //       element.dataset.en_comment_top_offset = `${newTop}`
-
-  //       preBottom = newTop + element.getBoundingClientRect().height
-  //     } else {
-  //       preBottom = currentTop + element.getBoundingClientRect().height
-  //     }
-  //   })
-  // })
-}, 300)
-
-useSiyuanEventLoadedProtyleDynamic(() => {
-  calculateCardPosition()
-})
 
 const selectedCommentIdList = ref<Array<{
   // 评论的目标块中的 id
@@ -456,12 +389,12 @@ const onClickComment = async (event: MouseEvent) => {
 
   isLoading.value = false
   setTimeout(() => {
-    scrollToFirstSelectedCard(idListWhichHasComment[idListWhichHasComment.length - 1].commentForNodeId)
+    scrollToFirstSelectedCard(idListWhichHasComment[0].commentId)
   }, 0)
 }
 
-const scrollToFirstSelectedCard = (commentBlockId: string) => {
-  const firstSelectedCard = historyCommentListRef.value?.querySelector(`[data-en_comment_for_node_id="${commentBlockId}"]`) as HTMLDivElement
+const scrollToFirstSelectedCard = (commentId: string) => {
+  const firstSelectedCard = historyCommentListRef.value?.querySelector(`[data-en_comment_id="${commentId}"]`) as HTMLDivElement
   if (!firstSelectedCard) {
     return
   }
@@ -469,22 +402,6 @@ const scrollToFirstSelectedCard = (commentBlockId: string) => {
   firstSelectedCard.scrollIntoView({
     behavior: 'smooth',
   })
-
-  // const protyleContentElement = currentProtyle.value.contentElement
-
-  // const enDockElement = historyCommentListRef.value.closest('.EnDockContent') as HTMLElement
-
-  // const targetNodeElement = protyleContentElement.querySelector(`[data-node-id="${firstSelectedCard.dataset.en_comment_for_node_id}"]`)
-  // if (!targetNodeElement) {
-  //   return
-  // }
-
-  // const targetNodeElementRect = targetNodeElement.getBoundingClientRect()
-  // const firstSelectedCardRect = firstSelectedCard.getBoundingClientRect()
-
-  // const offset = targetNodeElementRect.top - firstSelectedCardRect.top
-
-  // enDockElement.scrollTop -= offset
 }
 onMounted(() => {
   document.addEventListener('click', onClickComment, true)
@@ -495,16 +412,6 @@ onBeforeUnmount(() => {
 
 // #endregion 点击评论，显示历史评论列表
 
-
-const enProtyleRefList = ref([])
-const getEnDockContentElement = () => {
-  return historyCommentListRef.value?.closest('.EnDockContent') as HTMLElement
-}
-const handleScroll = () => {
-  enProtyleRefList.value.forEach((enProtyleRef) => {
-    enProtyleRef.checkProtyleVisible()
-  })
-}
 </script>
 
 <style lang="scss" scoped>
@@ -577,6 +484,11 @@ const handleScroll = () => {
             border-top-left-radius: var(--b3-border-radius);
             border-top-right-radius: var(--b3-border-radius);
             background-color: rgb(var(--en-comment-highlight-color-base));
+          }
+
+          .arco-card-body,
+          .protyle-content {
+            background-color: rgb(var(--en-comment-highlight-color-base), .1);
           }
         }
 

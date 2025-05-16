@@ -107,8 +107,8 @@
       <div class="enSettingsFooter">
         <span>
           使用说明：
-          <a href="https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse">{{ plugin.version ? `v${plugin.version}` : '' }}</a>
         </span>
+        <a href="https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse">{{ plugin.version ? `v${plugin.version}` : '' }}</a>
         <EnButtonIcon
           @click="checkNewUpdate"
         >
@@ -119,12 +119,40 @@
         </EnButtonIcon>
         <span>
           问题反馈：
-          <a href="https://qm.qq.com/q/uqtSkQUS8U">Q 群</a>、
-          <a href="https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse#share-OKS2dR19WopKDqxWUWlcfI7tn3G">其他</a>
         </span>
+        <a href="https://qm.qq.com/q/uqtSkQUS8U">Q 群</a>、
+        <a href="https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse#share-OKS2dR19WopKDqxWUWlcfI7tn3G">其他</a>
       </div>
     </template>
   </EnDrawer>
+  <a-modal
+    v-model:visible="updateModalVisible"
+    title="叶归｜更新成功"
+    title-align="start"
+    cancelText="取消"
+    :mask="false"
+    okText="刷新"
+    @ok="onUpdateModalOk"
+  >
+    <div>
+      是否刷新思源重启叶归插件？
+    </div>
+  </a-modal>
+  <a-modal
+    v-model:visible="downloadPromptModalVisible"
+    title="叶归｜发现新版本"
+    title-align="start"
+    :mask="false"
+    okText="下载"
+    @ok="updatePlugin"
+  >
+    <div>
+      点击下载新版本
+      <a-link @click="openUpdateHistory">
+        {{ downloadPromptModalData.tag_name }}
+      </a-link>（点击版本号可查看更新记录）
+    </div>
+  </a-modal>
 </template>
 
 <script setup lang="ts">
@@ -167,7 +195,7 @@ import {
 import { EN_EVENT_BUS_KEYS } from '@/utils/Constants'
 import { onCountClick } from '@/utils/DOM'
 import { enEventBus } from '@/utils/EnEventBus'
-import { Modal, Notification } from '@arco-design/web-vue'
+import { Notification } from '@arco-design/web-vue'
 import {
   onBeforeUnmount,
   onMounted,
@@ -237,34 +265,57 @@ const openAuthModal = () => {
 const hasNew = ref(false)
 const loading = ref(false)
 
-const updatePlugin = async () => {
-  loading.value = true
-  await getNewPackageAndUnzip()
-  loading.value = false
+
+const updateModalVisible = ref(false)
+const onUpdateModalOk = () => {
+  window.location.reload()
 }
+const updatePlugin = async () => {
+  Notification.info({
+    id: 'EnDownloading',
+    title: '叶归',
+    content: '正在下载新版本...',
+    duration: 0,
+  })
+  loading.value = true
+  try {
+    await getNewPackageAndUnzip()
+    Notification.success({
+      id: 'EnDownloading',
+      title: '叶归',
+      content: '新版本下载成功',
+      duration: 2000,
+    });
+    updateModalVisible.value = true
+  } catch (error) {
+    Notification.error({
+      id: 'EnDownloading',
+      title: '叶归',
+      content: '新版本下载失败',
+      duration: 2000,
+    });
+  } finally {
+    loading.value = false
+  }
+}
+const downloadPromptModalVisible = ref(false)
+const downloadPromptModalData = ref({
+  tag_name: '',
+})
 const checkNewUpdate = async () => {
   loading.value = true
   const data = await hasNewVersion()
   loading.value = false
   hasNew.value = data.hasNew
   if (hasNew.value) {
-    Modal.success({
-      title: '叶归｜发现新版本',
-      content: `点击下载新版本${data.info.tag_name}`,
-      simple: false,
-      mask: false,
-      titleAlign: 'start',
-      hideCancel: false,
-      cancelText: '取消',
-      okText: '下载',
-      onCancel: () => {},
-      onOk: () => {
-        updatePlugin()
-      },
-    })
+    downloadPromptModalVisible.value = true
+    downloadPromptModalData.value = data.info
   } else {
     Notification.success('叶归｜当前已是最新版本')
   }
+}
+const openUpdateHistory = () => {
+  window.open('https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse#share-P4SGd3uxZoATu8xSHB5ci0cqndb', '_blank')
 }
 </script>
 

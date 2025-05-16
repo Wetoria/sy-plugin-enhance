@@ -71,12 +71,11 @@ const props = defineProps<{
 }>()
 
 
-const plugin = usePlugin()
-
 const emits = defineEmits<{
   scroll: [event: Event]
 }>()
 
+const plugin = usePlugin()
 
 let clicked = false
 const open = defineModel<boolean>('open', { required: false })
@@ -214,6 +213,7 @@ const handleScroll = (event) => {
   display: flex;
   align-items: center;
   border-bottom: 1px solid var(--b3-border-color);
+  min-height: 30px;
 }
 </style>
 
