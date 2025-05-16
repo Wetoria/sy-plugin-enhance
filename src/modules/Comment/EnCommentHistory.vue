@@ -204,6 +204,14 @@ const sortCommentListForCurrentProtyle = async () => {
       return 0
     }
 
+    // 如果 a 是 b 的祖先元素（包括父子关系），返回 -1
+    if (bTargetNodeElement.contains(aTargetNodeElement)) {
+      return -1
+    }
+    if (aTargetNodeElement.contains(bTargetNodeElement)) {
+      return 1
+    }
+
     // 使用 compareDocumentPosition 比较两个元素的位置
     const position = aTargetNodeElement.compareDocumentPosition(bTargetNodeElement)
 
