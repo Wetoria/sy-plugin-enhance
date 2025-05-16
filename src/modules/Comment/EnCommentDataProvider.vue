@@ -7,21 +7,20 @@ import {
   flushTransactions,
   sql,
 } from '@/api'
+import { useProtyleList } from '@/global/ProtyleList'
 import {
   EN_COMMENT_KEYS,
   getNodeIdByCommentId,
   provideCommentIdList,
   provideCommentInfoList,
 } from '@/modules/Comment/Comment'
-import { injectGlobalWindowData } from '@/modules/EnModuleControl/ModuleProvide'
 import { debounce } from '@/utils'
 import { useSiyuanEventTransactions } from '@/utils/EventBusHooks'
 import {
-  computed,
   onBeforeUnmount,
   onMounted,
   ref,
-  watch,
+  watch
 } from 'vue'
 
 
@@ -32,10 +31,7 @@ const commentInfoList = ref<EnCommentInfo[]>([])
 provideCommentInfoList(commentInfoList)
 
 
-const globalWindowData = injectGlobalWindowData()
-const protyleContentRefList = computed<IProtyleObserverItem[]>(() => {
-  return globalWindowData.value.protyleList
-})
+const protyleContentRefList = useProtyleList()
 
 const getAllCommentIds = async () => {
   await flushTransactions()

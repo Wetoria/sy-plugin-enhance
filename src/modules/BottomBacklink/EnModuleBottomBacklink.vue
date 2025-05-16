@@ -96,12 +96,12 @@
 
 <script setup lang="ts">
 import { request } from '@/api'
+import { useProtyleList } from '@/global/ProtyleList'
 import { usePlugin } from '@/main'
 import RenderArea from '@/modules/BottomBacklink/RenderArea.vue'
 import { getCurrentDocTitleDomByDom } from '@/modules/DailyNote/DailyNote'
 import {
-  injectGlobalWindowData,
-  useModule,
+  useModule
 } from '@/modules/EnModuleControl/ModuleProvide'
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
 import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue'
@@ -195,9 +195,8 @@ const onModuleDisable = () => {
   plugin.protyleSlash = plugin.protyleSlash.filter((item) => item.id !== insertBacklinkTOCSlash.id)
 }
 
-const globalWindowData = injectGlobalWindowData()
-
-const protyleContentRefList = computed(() => globalWindowData.value.protyleList.filter((item) => item.isEditorProtyle || item.isFlashCardProtyle))
+const protyleList = useProtyleList()
+const protyleContentRefList = computed(() => protyleList.value.filter((item) => item.isEditorProtyle || item.isFlashCardProtyle))
 </script>
 
 <style lang="scss" scoped>

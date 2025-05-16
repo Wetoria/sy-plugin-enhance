@@ -96,6 +96,7 @@ import EnButtonIcon from '@/components/EnButtonIcon.vue'
 import EnDock from '@/components/EnDock/EnDock.vue'
 import EnProtyleAutoRender from '@/components/EnProtyleAutoRender.vue'
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
+import { useProtyleList } from '@/global/ProtyleList'
 import {
   EN_COMMENT_KEYS,
   getNodeIdByCommentId,
@@ -104,7 +105,6 @@ import {
   isCancelShowCommentListDom,
   isCommentNode,
 } from '@/modules/Comment/Comment'
-import { injectGlobalWindowData } from '@/modules/EnModuleControl/ModuleProvide'
 import { useRegisterStyle } from '@/utils/DOM'
 import { useCurrentProtyle } from '@/utils/Siyuan'
 import { quickMakeCard } from '@/utils/Siyuan/Card'
@@ -160,7 +160,7 @@ const onDeleteComment = (item: { commentBlockId: string }) => {
   })
 }
 
-const globalWindowData = injectGlobalWindowData()
+const protyleList = useProtyleList()
 const commentListForCurrentProtyle = ref<EnCommentInfo[]>([])
 
 watch(currentProtyle, (newValue, oldValue) => {
@@ -179,7 +179,7 @@ const getCommentsForCurrentProtyle = async () => {
   if (!currentProtyleId) {
     return
   }
-  const isInEditor = globalWindowData.value.protyleList.find((i) => i.protyleBlockId === currentProtyleId)?.isEditorProtyle
+  const isInEditor = protyleList.value.find((i) => i.protyleBlockId === currentProtyleId)?.isEditorProtyle
   // 只显示编辑区中的批注历史
   if (!isInEditor) {
     return
@@ -301,7 +301,7 @@ const onClickComment = async (event: MouseEvent) => {
   if (!protyleContentElement) {
     return
   }
-  const isInEditor = globalWindowData.value.protyleList.find((i) => i.protyleContentEl === protyleContentElement)?.isEditorProtyle
+  const isInEditor = protyleList.value.find((i) => i.protyleContentEl === protyleContentElement)?.isEditorProtyle
   if (!isInEditor) {
     return
   }

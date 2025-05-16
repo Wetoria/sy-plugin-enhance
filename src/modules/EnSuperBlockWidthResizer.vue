@@ -15,8 +15,8 @@
 </template>
 
 <script setup lang="ts">
+import { useProtyleList } from '@/global/ProtyleList'
 import { usePlugin } from '@/main'
-import { injectGlobalWindowData } from '@/modules/EnModuleControl/ModuleProvide'
 import { generateUUIDWithTimestamp } from '@/utils'
 import {
   onCountClick,
@@ -80,7 +80,7 @@ watch(superBlockListRef, () => {
   appendResizer()
 })
 
-const globalWindowData = injectGlobalWindowData()
+const protyleList = useProtyleList()
 const handler = debounce(() => {
   const targetParagraphList = queryAllByDom(
     document.body,
@@ -96,12 +96,12 @@ const handler = debounce(() => {
     return
   }
 
-  const protyleList = globalWindowData.value.protyleList.filter(
+  const list = protyleList.value.filter(
     (item) => item.isEditorProtyle || item.isFlashCardProtyle || item.isInDialog,
   )
   superBlockListRef.value = targetParagraphList.filter((superBlock) => {
     const protyleOfSuperBlock = superBlock.closest('.protyle')
-    return protyleList.find((item) => item.protyleEl === protyleOfSuperBlock)
+    return list.find((item) => item.protyleEl === protyleOfSuperBlock)
   })
 }, 300)
 

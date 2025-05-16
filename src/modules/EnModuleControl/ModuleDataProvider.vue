@@ -20,9 +20,9 @@
 
 <script setup lang="ts">
 import { lsNotebooks } from '@/api'
+import EnProtyleObserver from '@/global/ProtyleObserver/EnProtyleObserver.vue'
 import { usePlugin } from '@/main'
 import EnAuth from '@/modules/EnModuleControl/EnAuth.vue'
-import EnProtyleObserver from '@/modules/EnModuleControl/EnProtyleObserver.vue'
 import {
   provideAuthModule,
   provideAuthStatus,
@@ -111,8 +111,6 @@ const globalWindowDataModule = useGlobalData<GlobalWindowData>(EN_CONSTANTS.GLOB
     isInEnWindow: isInEnWindow(),
 
     loadingLifeLogData: false,
-
-    protyleList: [],
   },
   needSave: false,
   needSync: false,
