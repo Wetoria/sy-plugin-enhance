@@ -509,10 +509,6 @@ onBeforeUnmount(() => {
 </style>
 
 <style lang="scss">
-:root {
-  --en-comment-highlight-color-base: 240, 182, 34;
-}
-
 .EnDock_EnCommentHistory {
   .EnDockContent {
     scrollbar-width: thin;

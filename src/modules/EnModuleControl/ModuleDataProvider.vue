@@ -1,17 +1,21 @@
 <template>
-  <div v-if="allIsReady">
-    <EnAuth />
-    <EnProtyleObserver />
-    <slot
-      v-bind="{
-        isFree,
-        isNotFree,
-        isPro,
-        isVip,
-        isPermanent,
-      }"
-    ></slot>
-  </div>
+  <a-config-provider
+    size="mini"
+  >
+    <div v-if="allIsReady">
+      <EnAuth />
+      <EnProtyleObserver />
+      <slot
+        v-bind="{
+          isFree,
+          isNotFree,
+          isPro,
+          isVip,
+          isPermanent,
+        }"
+      ></slot>
+    </div>
+  </a-config-provider>
 </template>
 
 <script setup lang="ts">

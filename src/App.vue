@@ -1,31 +1,21 @@
+<!-- App.vue 仅负责提供全局的显示区域 -->
+<!-- 其他逻辑全都封装至 ModuleControl 中 -->
 <template>
-  <a-config-provider
-    size="mini"
+  <div
+    id="SyEnhancerApp"
+    class="SyEnhancerApp"
   >
     <div
-      id="SyEnhancerApp"
-      class="SyEnhancerApp"
+      id="SyEnhancerAppDisplayArea"
+      class="displayArea"
     >
       <div
-        id="SyEnhancerAppDisplayArea"
-        class="displayArea"
-      >
-        <div
-          ref="EnProtyleUtilAreaRef"
-          class="EnProtyleUtilArea"
-        ></div>
-        <ModuleControl />
-      </div>
-      <div
-        id="SyEnhancerAppHiddenArea"
-        class="hiddenArea"
-      >
-
-      </div>
-
-      <!-- <FixedDocArea v-if="!plugin.isMobile" /> -->
+        ref="EnProtyleUtilAreaRef"
+        class="EnProtyleUtilArea"
+      ></div>
+      <ModuleControl />
     </div>
-  </a-config-provider>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -42,50 +32,7 @@ registerGlobalObserver()
 </script>
 
 <style lang="scss">
-:root {
-  --sky-blue: #00bfff;
-  --sky-blue-blur: #00bfff7f;
-
-  --en-gap: var(--b3-border-radius);
-  // --b3-theme-background: #000;
-}
-
-.flexRow,
-.row {
-  display: flex;
-  gap: var(--en-gap);
-}
-
-.flexColumn {
-  display: flex;
-  flex-direction: column;
-  gap: var(--en-gap);
-}
-
-.flexCenter {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.flexJustifyCenter {
-  display: flex;
-  justify-content: center;
-}
-
-.flexAlignCenter {
-  display: flex;
-  align-items: center;
-}
-.enGap {
-  display: flex;
-  gap: var(--en-gap);
-}
-
-.fullContent {
-  width: 100%;
-  height: 100%;
-}
+@use '/src/styles/index.scss';
 
 #enApp {
   width: 100vw;
@@ -113,8 +60,7 @@ registerGlobalObserver()
   display: flex;
   flex-wrap: nowrap;
 
-  .displayArea,
-  .hiddenArea {
+  .displayArea {
     width: 100%;
     height: 100%;
     pointer-events: none;
@@ -128,10 +74,6 @@ registerGlobalObserver()
     .EnProtyleUtilArea {
       pointer-events: auto;
     }
-  }
-
-  .hiddenArea {
-    display: none;
   }
 }
 
