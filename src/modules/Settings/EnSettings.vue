@@ -185,7 +185,10 @@ import {
   settingRefKeysSorted,
   settingsRefMap,
 } from '@/modules/Settings/SettingsModuleControl'
-import { getNewPackageAndUnzip, hasNewVersion } from '@/modules/Settings/Version'
+import {
+  getNewPackageAndUnzip,
+  hasNewVersion,
+} from '@/modules/Settings/Version'
 
 
 import {
@@ -285,7 +288,7 @@ const updatePlugin = async () => {
       title: '叶归',
       content: '新版本下载成功',
       duration: 2000,
-    });
+    })
     updateModalVisible.value = true
   } catch (error) {
     Notification.error({
@@ -293,7 +296,7 @@ const updatePlugin = async () => {
       title: '叶归',
       content: '新版本下载失败',
       duration: 2000,
-    });
+    })
   } finally {
     loading.value = false
   }
@@ -304,7 +307,14 @@ const downloadPromptModalData = ref({
 })
 const checkNewUpdate = async () => {
   loading.value = true
+  const { close } = Notification.info({
+    id: 'EnCheckingUpdate',
+    title: '叶归',
+    content: '正在检查新版本...',
+    duration: 2000,
+  })
   const data = await hasNewVersion()
+  close()
   loading.value = false
   hasNew.value = data.hasNew
   if (hasNew.value) {
