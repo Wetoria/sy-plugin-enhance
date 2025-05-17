@@ -7,7 +7,7 @@
   >
     <template #title>
       <div>
-        历史批注
+        批注列表
         <a-tooltip>
           <SyIcon name="iconInfo" style="color: rgb(var(--warning-6));" />
           <template #content>
@@ -16,7 +16,7 @@
                 为避免数据异常，请勿剪切、拖拽、移动列表中的批注
               </div>
               <div>
-                如有需要，请跳转至批注所在文档，再进行操作
+                如有需要，请跳转至批注所在文档，并关闭批注列表，再进行操作
               </div>
             </div>
           </template>
@@ -99,7 +99,12 @@
               class="flexCenter"
               style="padding: 10px 16px;"
             >
-              请点击编辑区的一篇文档
+              <div v-if="!currentProtyle?.block?.id">
+                请点击编辑区的一篇文档
+              </div>
+              <div v-else>
+                当前文档未找到批注记录
+              </div>
             </div>
           </template>
         </a-spin>
@@ -459,6 +464,8 @@ onBeforeUnmount(() => {
 
     .protyle-wysiwyg {
       padding: 2px 6px !important;
+      padding-left: 18px !important;
+      padding-right: 12px !important;
     }
   }
 

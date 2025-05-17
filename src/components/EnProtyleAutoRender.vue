@@ -7,9 +7,6 @@
     :class="{
       EnProtyleContainerVisible: containerIsVisible,
     }"
-    :style="{
-      minHeight: `${containerMinHeight}px`,
-    }"
   >
     <div
       ref="protyleRenderAreaRef"
@@ -21,12 +18,9 @@
 </template>
 
 <script setup lang="ts">
-import { getBlockDOM } from '@/api'
 import { usePlugin } from '@/main'
-import { debounce } from '@/utils'
 import {
-  useElementVisibility,
-  useResizeObserver,
+  useElementVisibility
 } from '@vueuse/core'
 import {
   IProtyleOptions,
@@ -34,7 +28,6 @@ import {
 } from 'siyuan'
 import {
   onBeforeUnmount,
-  onMounted,
   ref,
   watch
 } from 'vue'
@@ -106,38 +99,38 @@ const renderProtyle = () => {
   emits('afterRender', protyleRef.value)
 }
 
-const blockDom = ref<string>()
-const containerMinHeight = ref(0)
-const getBlockDomForBlockId = async (blockId: string) => {
-  const blockDomRes = await getBlockDOM(blockId)
-  blockDom.value = blockDomRes.dom
-  updateProtyleMinHeight()
-}
-const updateProtyleMinHeight = debounce(() => {
-  const div = document.createElement('div')
-  div.innerHTML = `
-    <div class="protyle">
-      <div class="protyle-content">
-        <div class="protyle-wysiwyg">
-          ${blockDom.value}
-        </div>
-      </div>
-    </div>
-  `
-  div.style.opacity = '0'
-  const protyleDom = div.firstElementChild as HTMLDivElement
+// const blockDom = ref<string>()
+// const containerMinHeight = ref(0)
+// const getBlockDomForBlockId = async (blockId: string) => {
+//   const blockDomRes = await getBlockDOM(blockId)
+//   blockDom.value = blockDomRes.dom
+//   updateProtyleMinHeight()
+// }
+// const updateProtyleMinHeight = debounce(() => {
+//   const div = document.createElement('div')
+//   div.innerHTML = `
+//     <div class="protyle">
+//       <div class="protyle-content">
+//         <div class="protyle-wysiwyg">
+//           ${blockDom.value}
+//         </div>
+//       </div>
+//     </div>
+//   `
+//   div.style.opacity = '0'
+//   const protyleDom = div.firstElementChild as HTMLDivElement
 
-  // 插入并获取 protyle 内容的高度
-  protyleRenderAreaRef.value?.appendChild(div)
-  containerMinHeight.value = protyleDom.clientHeight
+//   // 插入并获取 protyle 内容的高度
+//   protyleRenderAreaRef.value?.appendChild(div)
+//   containerMinHeight.value = protyleDom.clientHeight
 
-  // 计算完成，移除 protyle 的 html
-  protyleRenderAreaRef.value?.removeChild(div)
-})
+//   // 计算完成，移除 protyle 的 html
+//   protyleRenderAreaRef.value?.removeChild(div)
+// })
 
-useResizeObserver(protyleContainerRef, () => {
-  updateProtyleMinHeight()
-})
+// useResizeObserver(protyleContainerRef, () => {
+//   updateProtyleMinHeight()
+// })
 
 
 const containerIsVisible = useElementVisibility(protyleContainerRef)
@@ -149,13 +142,13 @@ watch(containerIsVisible, () => {
   }
 })
 
-onMounted(() => {
-  getBlockDomForBlockId(props.blockId)
-})
+// onMounted(() => {
+//   getBlockDomForBlockId(props.blockId)
+// })
 
-watch(props, () => {
-  getBlockDomForBlockId(props.blockId)
-})
+// watch(props, () => {
+//   getBlockDomForBlockId(props.blockId)
+// })
 
 defineExpose({
   protyleRef,
