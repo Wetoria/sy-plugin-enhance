@@ -1,4 +1,4 @@
-import { useAsyncPluginData } from '@/utils/DataManager/useDataLoader'
+import { useDataLoaderWith } from '@/utils/DataManager/useDataLoader'
 import {
   ref,
   watchEffect,
@@ -12,7 +12,7 @@ export function testAsyncData() {
     isReady,
     load,
     onInit,
-  } = useAsyncPluginData('test', data)
+  } = useDataLoaderWith('test', data)
 
   onInit(() => {
     console.log('onInit')

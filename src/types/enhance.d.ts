@@ -39,7 +39,7 @@ interface EnAuthStatus {
   computedLevel: (level: number | string, provideParent?: boolean) => ComputedRef<boolean>
 }
 
-type EnBlockAppendMode = 'All' | 'targetDoc' | 'targetBlock' | 'currentDoc' | 'currentBlock'
+type EnBlockAppendMode = 'All' | 'targetDoc' | 'targetBlock' | 'currentDoc' | 'currentBlock' | 'subDoc'
 
 interface EnSettings {
   isDebugging: boolean

@@ -9,7 +9,7 @@ import {
 export const syncDataSocket = useSyBroadcast('SEP-data-sync-channel', {
   immediate: false,
 })
-// window.syncDataSocket = syncDataSocket
+window.syncDataSocket = syncDataSocket
 
 export const syncDataSocketOpened = computed(() => {
   return syncDataSocket.isOpen.value

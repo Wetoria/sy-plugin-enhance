@@ -1,5 +1,5 @@
 
-import { useSavedData } from '@/utils/DataManager/useDataSaver'
+import { useDataSaverWith } from '@/utils/DataManager/useDataSaver'
 import { useSyncDataWith } from '@/utils/DataManager/useDataSyncer'
 import {
   ref,
@@ -20,7 +20,7 @@ export function useTestSaveAndSyncData() {
   const {
     dontSave,
     needSave,
-  } = useSavedData('test', testRef)
+  } = useDataSaverWith('test', testRef)
 
   const {
     dontSync,

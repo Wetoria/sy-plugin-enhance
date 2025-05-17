@@ -35,7 +35,7 @@ const saveStatusMap = ref<{
 /**
  * 仅负责发送和接收需要保存的数据
  */
-export function useSavedData<T>(
+export function useDataSaverWith<T>(
   namespace: Namespace,
   source: Ref<T>,
   options?: {

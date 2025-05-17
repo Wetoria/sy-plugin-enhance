@@ -6,7 +6,7 @@ import {
   ref,
 } from 'vue'
 
-export function useAsyncPluginData<T>(
+export function useDataLoaderWith<T>(
   namespace: Namespace,
   source: Ref<T>,
   options?: {
