@@ -3,8 +3,10 @@ import { vitePluginForArco } from "@arco-plugins/vite-vue"
 import vue from "@vitejs/plugin-vue"
 import fg from "fast-glob"
 import minimist from "minimist"
+// eslint-disable-next-line perfectionist/sort-imports
 import { resolve } from "node:path"
 import livereload from "rollup-plugin-livereload"
+import Components from "unplugin-vue-components/vite"
 import {
   defineConfig,
   loadEnv,
@@ -58,6 +60,7 @@ export default defineConfig(({
 
     plugins: [
       vue(),
+      Components(),
       vitePluginForArco({
         style: true,
         modifyVars: {
