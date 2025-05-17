@@ -2,10 +2,27 @@
   <EnDock
     v-model:open="popoverVisible"
     icon="iconEnComment"
-    title="历史批注"
     autoOpen
     type="EnCommentHistory"
   >
+    <template #title>
+      <div>
+        历史批注
+        <a-tooltip>
+          <SyIcon name="iconInfo" style="color: rgb(var(--warning-6));" />
+          <template #content>
+            <div class="flexColumn">
+              <div>
+                为避免数据异常，请勿剪切、拖拽、移动列表中的批注
+              </div>
+              <div>
+                如有需要，请跳转至批注所在文档，再进行操作
+              </div>
+            </div>
+          </template>
+        </a-tooltip>
+      </div>
+    </template>
     <div
       class="enCommentListContainerContent"
     >
@@ -34,6 +51,12 @@
                     :blockId="item.commentForNodeId"
                     @click="onClickCommentItem(item)"
                   />
+                  <EnBlockJumper
+                    :blockId="item.commentBlockId"
+                    style="color: rgb(var(--success-6));"
+                  >
+                    跳转批注所在文档
+                  </EnBlockJumper>
                   <EnButtonIcon
                     type="text"
                     @click="(event) => quickMakeCardForCommentBlock(event, item)"

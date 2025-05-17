@@ -3,13 +3,14 @@
     type="text"
     class="EnBlockJumper"
     @click="jumpToBlock"
+    v-bind="$attrs"
   >
     <SyIcon
       name="iconOpen"
       :size="10"
     />
     <template #prompt>
-      跳转原文
+      <slot>跳转原文</slot>
     </template>
   </EnButtonIcon>
 </template>
