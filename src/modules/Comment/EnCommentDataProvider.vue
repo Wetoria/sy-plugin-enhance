@@ -34,7 +34,6 @@ provideCommentInfoList(commentInfoList)
 const protyleContentRefList = useProtyleList()
 
 const getAllCommentIds = async () => {
-  await flushTransactions()
   const protyleBlockIdList = protyleContentRefList.value.map((i) => i.protyleBlockId)
 
   if (!protyleBlockIdList.length) {
@@ -106,14 +105,17 @@ const getAllCommentIds = async () => {
 
 
 
-const debouncedGetAllCommentIds = debounce(getAllCommentIds, 1000)
+const debouncedGetAllCommentIds = debounce(async () => {
+  await flushTransactions()
+  getAllCommentIds()
+}, 1000)
 
 watch(protyleContentRefList, () => {
   debouncedGetAllCommentIds()
 }, { immediate: true })
 
 onMounted(() => {
-  debouncedGetAllCommentIds()
+  getAllCommentIds()
 })
 
 const offTransactions = useSiyuanEventTransactions(() => {
