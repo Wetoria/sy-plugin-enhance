@@ -90,8 +90,6 @@ const globalDataModule = useGlobalData<GlobalData>(EN_CONSTANTS.GLOBAL_DATA, {
 
     quickNoteMode: ['targetBlock', 'targetDoc'],
     whiteBoardMode: ['All', 'targetBlock', 'targetDoc'],
-    // commentMode: ['currentDoc', 'targetDoc', 'targetBlock'],
-    commentMode: [],
   },
   needSave: false,
 })
