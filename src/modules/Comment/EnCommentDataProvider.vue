@@ -112,10 +112,13 @@ const debouncedGetAllCommentIds = debounce(async () => {
 
 watch(protyleContentRefList, () => {
   debouncedGetAllCommentIds()
-}, { immediate: true })
+}, {
+  immediate: true,
+  deep: true,
+})
 
 onMounted(() => {
-  getAllCommentIds()
+  debouncedGetAllCommentIds()
 })
 
 const offTransactions = useSiyuanEventTransactions(() => {
