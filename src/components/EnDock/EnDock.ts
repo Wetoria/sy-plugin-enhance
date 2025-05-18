@@ -1,46 +1,113 @@
 import { usePlugin } from '@/main'
 import { Custom } from 'siyuan'
-import { ref, Ref } from 'vue'
+import {
+  ref,
+} from 'vue'
 
-const docks: {
-  [key: string]: Ref<{
-    dockRef: Custom,
-    open: boolean,
-    width: number,
-  }>
+
+export enum EnDockTypes {
+  Common = 'Common',
+  CommentHistory = 'CommentHistory',
+}
+
+export type EnDockType = keyof typeof EnDockTypes
+
+export const EnDockMap: {
+  [key in EnDockType]?: {
+    custom: Custom
+    element: HTMLElement
+    open: boolean
+  }
 } = {}
 
-export const addDock = (options) => {
-  const plugin = usePlugin()
-  const key = `${plugin.name}_${options.type}`
 
-  const exist = docks[key]
-  if (exist) {
-    return exist.value
+const NeedRegisterDockTypes = [
+  {
+    type: EnDockTypes.CommentHistory,
+    icon: 'iconEnComment',
+    title: '叶归｜批注记录',
+  },
+]
+
+export function getEnDockType(key: EnDockType) {
+  const plugin = usePlugin()
+  return `${plugin.name}_EnDock_${key}`
+}
+
+export const registerDock = () => {
+  const plugin = usePlugin()
+
+  if (plugin.isMobile) {
+    return
   }
 
-  const result = ref({
-    open: false,
-    dockRef: null,
-    width: 0,
+  const dockTypes = []
+  NeedRegisterDockTypes.forEach((config) => {
+    const key = getEnDockType(config.type)
+    let item = EnDockMap[key]
+    if (!item) {
+      EnDockMap[key] = item = ref({
+        custom: null,
+        element: null,
+        open: false,
+      })
+    }
+    plugin.addDock({
+      type: `_EnDock_${config.type}`,
+      config: {
+        position: 'RightTop',
+        size: {
+          width: 300,
+          height: 0,
+        },
+        icon: config.icon,
+        title: config.title,
+      },
+      data: {},
+      init(custom) {
+        item.value.custom = custom as any as Custom
+        item.value.element = custom.element
+        //
+        item.value.open = true
+      },
+      resize() {
+
+      },
+      destroy() {
+        item.value.custom = null
+        item.value.element = null
+        item.value.open = false
+        delete EnDockMap[key]
+      }
+    })
+
+    dockTypes.push(key)
   })
 
-  plugin.addDock({
-    ...options,
-    init(custom) {
-      result.value.dockRef = custom as any as Custom
-    },
-    resize() {
-      result.value.dockRef = this as any as Custom
 
-      const rect = this.element.getBoundingClientRect()
-      const isOpened = rect.width > 0
-      result.value.open = isOpened
-      result.value.width = rect.width
-    },
-  })
+  document.addEventListener('click', (event) => {
+    let target = event.target as HTMLElement
 
-  docks[key] = result
-  return result.value
+    let dockEntryKey = null
+    while(target) {
+      if (target.dataset.type && dockTypes.includes(target.dataset.type)) {
+        dockEntryKey = target.dataset.type
+        break
+      }
+      target = target.parentElement
+    }
+
+    if (!dockEntryKey) {
+      return
+    }
+
+    const item = EnDockMap[dockEntryKey]
+    // 采用 capture 的方式，切换 dock 的 open 状态
+    // 这样可以通过后续触发的 init 事件，强制将 open 状态设置为 true
+    // 后续点击切换时，一切状态都是正常的
+    if (item) {
+      item.value.open = !item.value.open
+    }
+  }, true)
 }
 

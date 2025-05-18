@@ -2,8 +2,7 @@
   <EnDock
     v-model:open="popoverVisible"
     icon="iconEnComment"
-    autoOpen
-    type="EnCommentHistory"
+    type="CommentHistory"
   >
     <template #title>
       <div>
@@ -136,6 +135,7 @@ import {
   isCancelShowCommentListDom,
   isCommentNode,
 } from '@/modules/Comment/Comment'
+import { debounce } from '@/utils'
 import { useRegisterStyle } from '@/utils/DOM'
 import { useCurrentProtyle } from '@/utils/Siyuan'
 import { quickMakeCard } from '@/utils/Siyuan/Card'
@@ -144,8 +144,7 @@ import {
   onBeforeUnmount,
   onMounted,
   ref,
-  watch,
-  watchEffect,
+  watchEffect
 } from 'vue'
 
 const commentInfoList = injectCommentInfoList()
@@ -164,21 +163,9 @@ const currentProtyle = useCurrentProtyle()
 const protyleList = useProtyleList()
 const commentListForCurrentProtyle = ref<EnCommentInfo[]>([])
 
-
 // #region 👇 获取当前文档的批注记录并排序
 
-watch(currentProtyle, (newValue, oldValue) => {
-  if (newValue?.block.id !== oldValue?.block.id) {
-    getCommentsForCurrentProtyle()
-  }
-}, {
-  deep: true,
-})
-watch(commentInfoList, () => {
-  getCommentsForCurrentProtyle()
-})
-
-const getCommentsForCurrentProtyle = async () => {
+const getCommentsForCurrentProtyle = debounce(async () => {
   const currentProtyleId = currentProtyle.value?.block.id
   if (!currentProtyleId) {
     return
@@ -191,7 +178,7 @@ const getCommentsForCurrentProtyle = async () => {
   commentListForCurrentProtyle.value = commentInfoList.value.filter((i) => i.commentForDocId === currentProtyleId)
 
   sortCommentListForCurrentProtyle()
-}
+}, 50)
 
 const sortCommentListForCurrentProtyle = async () => {
   const currentProtyleDomRes = await getBlockDOM(currentProtyle.value.block.id)
@@ -232,6 +219,13 @@ const sortCommentListForCurrentProtyle = async () => {
     return 0
   })
 }
+
+watchEffect(() => {
+  const currentProtyleId = currentProtyle.value?.block.id
+  if (popoverVisible.value && currentProtyleId && commentInfoList.value?.length) {
+    getCommentsForCurrentProtyle()
+  }
+})
 
 // #endregion 👆 获取当前文档的批注记录并排序
 

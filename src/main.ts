@@ -2,6 +2,7 @@
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import { useSiyuanEvent } from '@/utils/EventBusHooks'
 
+import { registerDock } from '@/components/EnDock/EnDock'
 import {
   createApp,
   reactive,
@@ -25,6 +26,7 @@ function loadVueApp() {
 
 export async function init(plugin: VPlugin) {
   window.SEP_GLOBAL.pluginRef = reactive(plugin)
+  registerDock()
   loadVueApp()
   useSiyuanEvent('lock-screen', () => {
     destroy()

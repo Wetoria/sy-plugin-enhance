@@ -10,7 +10,9 @@
     <template #title>
       <div>
         <EnSettingsItemAreaHeading>
-          <slot name="title">{{ title || '叶归' }}</slot>
+          <slot name="title">
+            {{ title || '叶归' }}
+          </slot>
         </EnSettingsItemAreaHeading>
       </div>
     </template>
@@ -33,7 +35,9 @@
         class="EnDockHeader"
       >
         <EnSettingsItemAreaHeading>
-          <slot name="title">{{ title || '叶归' }}</slot>
+          <slot name="title">
+            {{ title || '叶归' }}
+          </slot>
         </EnSettingsItemAreaHeading>
       </div>
       <div
@@ -47,27 +51,19 @@
 </template>
 
 <script setup lang="ts">
-import { addDock } from '@/components/EnDock/EnDock'
+import { EnDockMap, EnDockType, getEnDockType } from '@/components/EnDock/EnDock'
 import EnDrawer from '@/components/EnDrawer.vue'
 import { usePlugin } from '@/main'
 import EnSettingsItemAreaHeading from '@/modules/Settings/EnSettingsItemAreaHeading.vue'
-import { targetIsInnerOf } from '@/utils/DOM'
-import { useStorage } from '@vueuse/core'
-import { Custom } from 'siyuan'
 import {
   computed,
-  onBeforeUnmount,
-  onMounted,
   ref,
-  watch,
-  watchEffect,
+  watch
 } from 'vue'
 
 const props = defineProps<{
-  type: string
-  icon?: string
+  type: EnDockType
   title?: string
-  autoOpen?: boolean
 }>()
 
 
@@ -77,13 +73,74 @@ const emits = defineEmits<{
 
 const plugin = usePlugin()
 
-let clicked = false
+
+const drawerContainerRef = ref<HTMLDivElement>()
+
+
+
+const handleScroll = (event) => {
+  emits('scroll', event)
+}
+
+
+
+const dockType = computed(() => {
+  return `EnDock_${props.type}`
+})
+
+// #region 👇 从 DockManger 里取出相关对象
+
+const dock = EnDockMap[getEnDockType(props.type)]
+const dockOpen = computed(() => {
+  return dock.value?.open
+})
+const dockElement = computed(() => {
+  return dock.value?.custom?.element
+})
+
+// #endregion 👆 从 DockManger 里取出相关对象
+
+
 const open = defineModel<boolean>('open', { required: false })
-watch(open, (newValue) => {
-  if (props.autoOpen && newValue && !clicked) {
+let updateByInit = false
+if (dockOpen.value) {
+  updateByInit = true
+  open.value = dockOpen.value
+}
+
+let updateByModelValue = false
+let updateByDockManager = false
+// 绑定 open 状态
+watch(dockOpen, () => {
+  if (updateByModelValue) {
+    updateByModelValue = false
+    return
+  }
+
+  updateByDockManager = true
+  open.value = dockOpen.value
+}, {
+  immediate: true
+})
+
+
+watch(open, () => {
+  if (updateByInit) {
+    updateByInit = false
+    return
+  }
+  if (updateByDockManager) {
+    updateByDockManager = false
+    return
+  }
+  if (open.value) {
+    updateByModelValue = true
     openDock()
   }
+}, {
+  immediate: true,
 })
+
 const closeDrawer = () => {
   open.value = false
 }
@@ -105,89 +162,6 @@ const openDock = () => {
   clickDockItem()
 }
 
-// 卸载时如果打开了 dock，则点击一次，关闭 dock
-onBeforeUnmount(() => {
-  if (open.value) {
-    clickDockItem()
-  }
-})
-
-const recordClickDockItem = (event) => {
-  const target = event.target as HTMLElement
-  const key = `${plugin.name}_${dockType.value}`
-  const clickedId = targetIsInnerOf(target, (target) => {
-    return target.dataset.type === key
-  })
-  if (clickedId) {
-    clicked = true
-    setTimeout(() => {
-      clicked = false
-    }, 1000)
-  }
-}
-
-onMounted(() => {
-  document.addEventListener('click', recordClickDockItem)
-})
-
-onBeforeUnmount(() => {
-  document.removeEventListener('click', recordClickDockItem)
-})
-
-
-
-
-const dock = ref<{
-  dockRef: Custom
-  open: boolean
-  width: number
-}>({
-  dockRef: null,
-  open: false,
-  width: 0,
-})
-const dockElement = computed(() => {
-  return dock.value?.dockRef?.element
-})
-
-const dockType = computed(() => {
-  return `EnDock_${props.type}`
-})
-
-const drawerContainerRef = ref<HTMLDivElement>()
-const dockTypeStorage = useStorage(dockType.value, {
-  width: 300,
-})
-watchEffect(() => {
-  if (dock.value.open) {
-    dockTypeStorage.value.width = dock.value.width
-  }
-  open.value = dock.value.open
-})
-
-onMounted(() => {
-  if (!plugin.isMobile && props.type) {
-
-    dock.value = addDock({
-      type: `_${dockType.value}`,
-      config: {
-        position: 'RightTop',
-        size: {
-          width: dockTypeStorage.value.width,
-          height: 0,
-        },
-        icon: props.icon || 'iconEnLeaf2',
-        title: props.title || '叶归',
-      },
-      data: {},
-    })
-  }
-})
-
-
-const handleScroll = (event) => {
-  emits('scroll', event)
-}
 </script>
 
 <style lang="scss" scoped>
