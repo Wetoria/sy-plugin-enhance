@@ -1,7 +1,9 @@
-/* eslint-disable unused-imports/no-unused-vars */
+
 /**
  * Copyright (c) 2023 frostime. All rights reserved.
  */
+
+import { Config } from 'siyuan'
 
 /**
  * Frequently used data structures in SiYuan
@@ -123,6 +125,7 @@ interface Window {
     user: any
     ws: any
     languages: any
+    config: Config.IConf
   }
 
   SEP_GLOBAL: {
