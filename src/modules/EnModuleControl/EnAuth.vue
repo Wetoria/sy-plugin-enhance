@@ -73,10 +73,17 @@
           其他说明
         </a-divider>
         <a-typography-text>
-          1、购买订阅，请至 <a href="https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse#share-I2LpdCzwYohOsbx8KgpcJXtCnQc">如何订阅</a>。
+          1、购买订阅，请至
+          <EnUsageLink part="how_to_subscribe">
+            如何订阅
+          </EnUsageLink>。
         </a-typography-text>
         <a-typography-text>
-          2、版本升级，请至 <a href="https://simplest-frontend.feishu.cn/wiki/wikcnHmIs4HagSlJPiti2VESQEh#share-GT12dWEr9opouaxYW6wcpkiGn6c">联系作者</a> 了解补差价升级。
+          2、版本升级，请至
+          <EnUsageLink part="contact_author">
+            联系作者
+          </EnUsageLink>
+          了解补差价升级。
         </a-typography-text>
       </a-space>
     </div>
@@ -91,7 +98,7 @@
   </a-modal>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { request } from '@/api'
 import {
   injectAuth,
@@ -111,9 +118,6 @@ import {
   ref,
   watch,
 } from 'vue'
-</script>
-
-<script setup lang="ts">
 
 
 const authModuleData = injectAuth()

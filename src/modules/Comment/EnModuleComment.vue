@@ -13,6 +13,11 @@
       <template #desc>
         <div>
           选择批注创建内容的模式：添加至当前文档，或追加至笔记本的日记中。
+          <EnUsageLink
+            part="comment_mode"
+          >
+            详细说明
+          </EnUsageLink>
         </div>
         <div v-if="moduleOptions.targetId">
           已选择文档：
@@ -76,7 +81,12 @@
           自定义批注结构
         </div>
         <div>
-          具体使用请参考<a href="https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse#share-L5KvdeHBuoc3Uaxf9lgc5Pcenxb">使用说明</a>
+          具体使用请参考
+          <EnUsageLink
+            part="comment_structure"
+          >
+            使用说明
+          </EnUsageLink>
         </div>
         <div class="EnCommentStructureEditor">
           <a-textarea

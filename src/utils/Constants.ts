@@ -196,3 +196,22 @@ export enum EN_PROVIDE_KEYS {
   EN_COMMENT_OPTIONS = 'EN_COMMENT_OPTIONS',
   EN_COMMENT_ID_LIST = 'EN_COMMENT_ID_LIST',
 }
+
+
+
+
+
+export enum EN_CONTENT_ANCHOR_MAP {
+  leaves = '',
+
+  contact_author = 'https://simplest-frontend.feishu.cn/wiki/wikcnHmIs4HagSlJPiti2VESQEh#share-GT12dWEr9opouaxYW6wcpkiGn6c',
+
+  // TODO 目前是批注链接，需要增加相关说明并调整链接
+  comment_mode = 'https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse#share-KRVJdBMYuoa5iWxMRy7cOQQynqe',
+  comment_structure = 'https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse#share-XY4EdrNaOoqMTBxfoc1c0HlsnNc',
+
+  feedback = 'https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse#share-OKS2dR19WopKDqxWUWlcfI7tn3G',
+  how_to_subscribe = 'https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse#share-I2LpdCzwYohOsbx8KgpcJXtCnQc',
+
+  update_history = 'https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse#share-P4SGd3uxZoATu8xSHB5ci0cqndb',
+}
