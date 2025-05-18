@@ -9,7 +9,10 @@
       <div>
         批注列表
         <a-tooltip>
-          <SyIcon name="iconInfo" style="color: rgb(var(--warning-6));" />
+          <SyIcon
+            name="iconInfo"
+            style="color: rgb(var(--warning-6));"
+          />
           <template #content>
             <div class="flexColumn">
               <div>
@@ -151,45 +154,18 @@ const commentIdList = injectCommentIdList()
 const isLoading = ref(false)
 
 
-// #region 点击评论，显示历史评论列表
-
 const popoverVisible = ref(false)
+
+const historyCommentListRef = ref<HTMLDivElement>()
 
 
 const currentProtyle = useCurrentProtyle()
-const quickMakeCardForCommentBlock = (event: MouseEvent, item: { commentBlockId: string }) => {
-
-  const target = event.target as HTMLElement
-  const cardElement = target.closest('.historyCommentListItemCard')
-  if (!cardElement) {
-    return
-  }
-  const blockElement = cardElement.querySelector(`[data-node-id="${item.commentBlockId}"]`) as HTMLElement
-
-  if (!blockElement) {
-    return
-  }
-  // 点击块，好记录当前 Protyle
-  blockElement.click()
-  quickMakeCard(currentProtyle.value, [blockElement])
-}
-
-const onDeleteComment = (item: { commentBlockId: string }) => {
-  const blockId = item.commentBlockId
-  // 先从列表中移除
-  commentListForCurrentProtyle.value = commentListForCurrentProtyle.value.filter((i) => i.commentBlockId !== blockId)
-  selectedCommentIdList.value = selectedCommentIdList.value.filter((i) => i.commentBlockId !== blockId)
-
-  // 确保 EnProtyle 已经销毁，再删除块
-  // 否则会出现需要重建索引的问题
-  nextTick(() => {
-    // 调用思源 API 删除块
-    deleteBlock(blockId)
-  })
-}
 
 const protyleList = useProtyleList()
 const commentListForCurrentProtyle = ref<EnCommentInfo[]>([])
+
+
+// #region 👇 获取当前文档的批注记录并排序
 
 watch(currentProtyle, (newValue, oldValue) => {
   if (newValue?.block.id !== oldValue?.block.id) {
@@ -257,13 +233,54 @@ const sortCommentListForCurrentProtyle = async () => {
   })
 }
 
+// #endregion 👆 获取当前文档的批注记录并排序
+
+
+
+// #region 👇 批注记录，卡片按钮交互
+
+
+const quickMakeCardForCommentBlock = (event: MouseEvent, item: { commentBlockId: string }) => {
+
+  const target = event.target as HTMLElement
+  const cardElement = target.closest('.historyCommentListItemCard')
+  if (!cardElement) {
+    return
+  }
+  const blockElement = cardElement.querySelector(`[data-node-id="${item.commentBlockId}"]`) as HTMLElement
+
+  if (!blockElement) {
+    return
+  }
+  // 点击块，好记录当前 Protyle
+  blockElement.click()
+  quickMakeCard(currentProtyle.value, [blockElement])
+}
+
+const onDeleteComment = (item: { commentBlockId: string }) => {
+  const blockId = item.commentBlockId
+  // 先从列表中移除
+  commentListForCurrentProtyle.value = commentListForCurrentProtyle.value.filter((i) => i.commentBlockId !== blockId)
+  selectedCommentIdList.value = selectedCommentIdList.value.filter((i) => i.commentBlockId !== blockId)
+
+  // 确保 EnProtyle 已经销毁，再删除块
+  // 否则会出现需要重建索引的问题
+  nextTick(() => {
+  // 调用思源 API 删除块
+    deleteBlock(blockId)
+  })
+}
+
 const onClickCommentItem = (item: Omit<EnCommentInfo, 'commentForDocId'>) => {
   selectedCommentIdList.value = [item]
 }
 
+// #endregion 👆 批注记录，卡片按钮交互
 
-const historyCommentListRef = ref<HTMLDivElement>()
 
+
+
+// #region 点击评论，显示历史评论列表
 
 const selectedCommentIdList = ref<Array<{
   // 评论的目标块中的 id
@@ -274,52 +291,6 @@ const selectedCommentIdList = ref<Array<{
   // 写下评论的块 id：列表（旧版）、列表项（新版）
   commentBlockId: string
 }>>([])
-
-watchEffect(() => {
-
-  // 关闭历史批注窗口时，清空列表
-  if (!popoverVisible.value) {
-    selectedCommentIdList.value = []
-  }
-})
-
-const styleDomRef = useRegisterStyle('en-comment-target-block-style')
-watchEffect(() => {
-  const styleText = selectedCommentIdList.value.map((i) => {
-    return `
-      [data-node-id="${i.commentForNodeId}"] {
-        --en-comment-highlight-color: rgb(var(--en-comment-highlight-color-base)) !important;
-        --en-comment-highlight-background-color: rgba(var(--en-comment-highlight-color-base), .25) !important;
-
-        &[${EN_COMMENT_KEYS.commentIdInAttribute}~="${i.commentId}"] {
-
-          &[data-type="NodeParagraph"],
-          &[data-type="NodeHeading"],
-          [data-type="NodeParagraph"],
-          [data-type="NodeHeading"] {
-
-            & > div:first-child {
-              background-color: var(--en-comment-highlight-background-color) !important;
-              text-decoration-color: var(--en-comment-highlight-color) !important;
-
-              & *:not([data-type*="en-comment-id"]) {
-                text-decoration-color: var(--en-comment-highlight-color) !important;
-              }
-            }
-
-          }
-
-        }
-
-        [data-type~="${i.commentId}"] {
-          background-color: var(--en-comment-highlight-background-color) !important;
-          text-decoration-color: var(--en-comment-highlight-color) !important;
-        }
-      }
-    `
-  }).join('\n')
-  styleDomRef.value.textContent = styleText
-})
 
 
 const onClickComment = async (event: MouseEvent) => {
@@ -439,6 +410,64 @@ onBeforeUnmount(() => {
 })
 
 // #endregion 点击评论，显示历史评论列表
+
+
+
+watchEffect(() => {
+
+  // 关闭历史批注窗口时，清空列表
+  if (!popoverVisible.value) {
+    selectedCommentIdList.value = []
+    commentListForCurrentProtyle.value = []
+  }
+})
+
+
+
+// #region 👇 高亮显示原文和批注卡片
+
+
+const styleDomRef = useRegisterStyle('en-comment-target-block-style')
+watchEffect(() => {
+  const styleText = selectedCommentIdList.value.map((i) => {
+    return `
+      [data-node-id="${i.commentForNodeId}"] {
+        --en-comment-highlight-color: rgb(var(--en-comment-highlight-color-base)) !important;
+        --en-comment-highlight-background-color: rgba(var(--en-comment-highlight-color-base), .25) !important;
+
+        &[${EN_COMMENT_KEYS.commentIdInAttribute}~="${i.commentId}"] {
+
+          &[data-type="NodeParagraph"],
+          &[data-type="NodeHeading"],
+          [data-type="NodeParagraph"],
+          [data-type="NodeHeading"] {
+
+            & > div:first-child {
+              background-color: var(--en-comment-highlight-background-color) !important;
+              text-decoration-color: var(--en-comment-highlight-color) !important;
+
+              & *:not([data-type*="en-comment-id"]) {
+                text-decoration-color: var(--en-comment-highlight-color) !important;
+              }
+            }
+
+          }
+
+        }
+
+        [data-type~="${i.commentId}"] {
+          background-color: var(--en-comment-highlight-background-color) !important;
+          text-decoration-color: var(--en-comment-highlight-color) !important;
+        }
+      }
+    `
+  }).join('\n')
+  styleDomRef.value.textContent = styleText
+})
+
+
+// #endregion 👆 高亮显示原文和批注卡片
+
 
 </script>
 
