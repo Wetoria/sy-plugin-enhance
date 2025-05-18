@@ -52,18 +52,18 @@ interface GlobalModule extends EnSettings {}
 
 /**
  * 用于记录 protyle 的观察者
- * 
+ *
  * @field enLoopKey 插件内部标识，用于 v-for 的 key
- * 
+ *
  * @field protyleBlockId 块id
  * @field protyleEl 块元素
  * @field protyleContentEl 块内容元素
- * 
+ *
  * @field isFlashCardProtyle 是否是闪卡
  * @field isEditorProtyle 是否是编辑器
  * @field isInDialog 是否在对话框中
  * @field dialogEl 对话框元素
- * 
+ *
  * @field isDailyNote 是否是日记
  * @field dailyNoteValues 日记值
  */

@@ -3,8 +3,6 @@
  * Copyright (c) 2023 frostime. All rights reserved.
  */
 
-import { Config } from 'siyuan'
-
 /**
  * Frequently used data structures in SiYuan
  */
@@ -125,7 +123,7 @@ interface Window {
     user: any
     ws: any
     languages: any
-    config: Config.IConf
+    config: import('siyuan').Config.IConf
   }
 
   SEP_GLOBAL: {
