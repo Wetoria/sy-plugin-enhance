@@ -380,7 +380,7 @@ let recorded = false
 export function useCurrentProtyle() {
   const plugin = usePlugin()
   const recordCurrentProtyle = ({ detail }) => {
-    currentProtyle.value = null
+    // currentProtyle.value = null
     currentProtyle.value = detail?.protyle
   }
 

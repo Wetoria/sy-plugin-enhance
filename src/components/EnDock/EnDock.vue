@@ -102,12 +102,16 @@ const dockElement = computed(() => {
 
 
 const open = defineModel<boolean>('open', { required: false })
+let updateByInit = false
+if (dockOpen.value) {
+  updateByInit = true
+  open.value = dockOpen.value
+}
 
 let updateByModelValue = false
 let updateByDockManager = false
 // 绑定 open 状态
 watch(dockOpen, () => {
-  console.log('dock.value?.open, is ', dockOpen.value)
   if (updateByModelValue) {
     updateByModelValue = false
     return
@@ -115,11 +119,16 @@ watch(dockOpen, () => {
 
   updateByDockManager = true
   open.value = dockOpen.value
+}, {
+  immediate: true
 })
 
 
 watch(open, () => {
-  console.log('open', open.value)
+  if (updateByInit) {
+    updateByInit = false
+    return
+  }
   if (updateByDockManager) {
     updateByDockManager = false
     return
