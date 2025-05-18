@@ -10,7 +10,7 @@
       <div>
         创建模式
       </div>
-      <template #desc>
+      <!-- <template #desc>
         <div>
           选择批注创建内容的模式：添加至当前文档，或追加至笔记本的日记中。
           <EnUsageLink
@@ -27,7 +27,7 @@
             点击跳转至目标文档
           </a-link>
         </div>
-      </template>
+      </template> -->
       <template #opt>
         <div class="EnNotebookSelector">
           <EnBlockAppendModeSelector
@@ -272,7 +272,8 @@ const { computedLevel } = injectAuthStatus()
 const hasAuth = computedLevel(1, false)
 const commentMode = computed<EnBlockAppendMode[]>(() => {
   if (hasAuth.value) {
-    return ['currentDoc']
+    // return ['currentDoc']
+    return []
   }
   return []
 })
