@@ -2,6 +2,7 @@ import { getBlockDOM } from '@/api'
 import { debounce } from '@/utils'
 import { useResizeObserver } from '@vueuse/core'
 import {
+  onMounted,
   Ref,
   ref,
   watch,
@@ -46,10 +47,13 @@ export function useProtyleContentHeight(props: {
     props.containerRef.value?.removeChild(div)
   })
 
+  onMounted(() => {
+    getBlockDomForBlockId()
+  })
+
   watch(props, () => {
     getBlockDomForBlockId()
   }, {
-    immediate: true,
     deep: true,
   })
 
