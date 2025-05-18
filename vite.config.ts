@@ -60,7 +60,9 @@ export default defineConfig(({
 
     plugins: [
       vue(),
-      Components(),
+      Components({
+        dts: 'src/types/components.d.ts',
+      }),
       vitePluginForArco({
         style: true,
         modifyVars: {
