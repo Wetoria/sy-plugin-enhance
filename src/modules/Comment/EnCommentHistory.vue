@@ -2,10 +2,27 @@
   <EnDock
     v-model:open="popoverVisible"
     icon="iconEnComment"
-    title="历史批注"
     autoOpen
     type="EnCommentHistory"
   >
+    <template #title>
+      <div>
+        批注列表
+        <a-tooltip>
+          <SyIcon name="iconInfo" style="color: rgb(var(--warning-6));" />
+          <template #content>
+            <div class="flexColumn">
+              <div>
+                为避免数据异常，请勿剪切、拖拽、移动列表中的批注
+              </div>
+              <div>
+                如有需要，请跳转至批注所在文档，并关闭批注列表，再进行操作
+              </div>
+            </div>
+          </template>
+        </a-tooltip>
+      </div>
+    </template>
     <div
       class="enCommentListContainerContent"
     >
@@ -34,6 +51,12 @@
                     :blockId="item.commentForNodeId"
                     @click="onClickCommentItem(item)"
                   />
+                  <EnBlockJumper
+                    :blockId="item.commentBlockId"
+                    style="color: rgb(var(--success-6));"
+                  >
+                    跳转批注所在文档
+                  </EnBlockJumper>
                   <EnButtonIcon
                     type="text"
                     @click="(event) => quickMakeCardForCommentBlock(event, item)"
@@ -76,7 +99,12 @@
               class="flexCenter"
               style="padding: 10px 16px;"
             >
-              请点击编辑区的一篇文档
+              <div v-if="!currentProtyle?.block?.id">
+                请点击编辑区的一篇文档
+              </div>
+              <div v-else>
+                当前文档未找到批注记录
+              </div>
             </div>
           </template>
         </a-spin>
@@ -96,6 +124,7 @@ import EnButtonIcon from '@/components/EnButtonIcon.vue'
 import EnDock from '@/components/EnDock/EnDock.vue'
 import EnProtyleAutoRender from '@/components/EnProtyleAutoRender.vue'
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
+import { useProtyleList } from '@/global/ProtyleList'
 import {
   EN_COMMENT_KEYS,
   getNodeIdByCommentId,
@@ -104,7 +133,6 @@ import {
   isCancelShowCommentListDom,
   isCommentNode,
 } from '@/modules/Comment/Comment'
-import { injectGlobalWindowData } from '@/modules/EnModuleControl/ModuleProvide'
 import { useRegisterStyle } from '@/utils/DOM'
 import { useCurrentProtyle } from '@/utils/Siyuan'
 import { quickMakeCard } from '@/utils/Siyuan/Card'
@@ -160,7 +188,7 @@ const onDeleteComment = (item: { commentBlockId: string }) => {
   })
 }
 
-const globalWindowData = injectGlobalWindowData()
+const protyleList = useProtyleList()
 const commentListForCurrentProtyle = ref<EnCommentInfo[]>([])
 
 watch(currentProtyle, (newValue, oldValue) => {
@@ -179,7 +207,7 @@ const getCommentsForCurrentProtyle = async () => {
   if (!currentProtyleId) {
     return
   }
-  const isInEditor = globalWindowData.value.protyleList.find((i) => i.protyleBlockId === currentProtyleId)?.isEditorProtyle
+  const isInEditor = protyleList.value.find((i) => i.protyleBlockId === currentProtyleId)?.isEditorProtyle
   // 只显示编辑区中的批注历史
   if (!isInEditor) {
     return
@@ -301,7 +329,7 @@ const onClickComment = async (event: MouseEvent) => {
   if (!protyleContentElement) {
     return
   }
-  const isInEditor = globalWindowData.value.protyleList.find((i) => i.protyleContentEl === protyleContentElement)?.isEditorProtyle
+  const isInEditor = protyleList.value.find((i) => i.protyleContentEl === protyleContentElement)?.isEditorProtyle
   if (!isInEditor) {
     return
   }
@@ -436,6 +464,8 @@ onBeforeUnmount(() => {
 
     .protyle-wysiwyg {
       padding: 2px 6px !important;
+      padding-left: 18px !important;
+      padding-right: 12px !important;
     }
   }
 
@@ -509,10 +539,6 @@ onBeforeUnmount(() => {
 </style>
 
 <style lang="scss">
-:root {
-  --en-comment-highlight-color-base: 240, 182, 34;
-}
-
 .EnDock_EnCommentHistory {
   .EnDockContent {
     scrollbar-width: thin;

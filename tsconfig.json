@@ -42,6 +42,7 @@
     }
   ],
   "include": [
+    "components.d.ts",
     "tools/**/*.ts",
     "src/**/*.ts",
     "src/**/*.d.ts",

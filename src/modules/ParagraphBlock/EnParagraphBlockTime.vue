@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-import { injectGlobalWindowData } from '@/modules/EnModuleControl/ModuleProvide'
+import { useProtyleList } from '@/global/ProtyleList'
 import dayjs from 'dayjs'
 import {
   computed,
@@ -36,10 +36,7 @@ watchEffect(() => {
   showCreated.value = props.defaultBlockType === 'created'
 })
 
-const globalWindowData = injectGlobalWindowData()
-const protyleContentRefList = computed<IProtyleObserverItem[]>(() => {
-  return globalWindowData.value.protyleList
-})
+const protyleContentRefList = useProtyleList()
 
 const protyleRef = computed<IProtyleObserverItem>(() => {
   const protyleElement = props.pDom.closest('.protyle') as HTMLElement

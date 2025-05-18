@@ -1,4 +1,4 @@
-import { loadData } from '@/utils/DataManager'
+import { loadData } from '@/utils/DataManager/api'
 import { getModuleStorageKey } from '@/utils/GlobalModule'
 import { Notification } from '@arco-design/web-vue'
 import {
@@ -6,7 +6,7 @@ import {
   ref,
 } from 'vue'
 
-export function useAsyncPluginData<T>(
+export function useDataLoaderWith<T>(
   namespace: Namespace,
   source: Ref<T>,
   options?: {

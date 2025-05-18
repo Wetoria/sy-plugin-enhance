@@ -39,7 +39,7 @@ interface EnAuthStatus {
   computedLevel: (level: number | string, provideParent?: boolean) => ComputedRef<boolean>
 }
 
-type EnBlockAppendMode = 'All' | 'targetDoc' | 'targetBlock' | 'currentDoc' | 'currentBlock'
+type EnBlockAppendMode = 'All' | 'targetDoc' | 'targetBlock' | 'currentDoc' | 'currentBlock' | 'subDoc'
 
 interface EnSettings {
   isDebugging: boolean
@@ -50,7 +50,23 @@ interface EnSettings {
 interface GlobalModule extends EnSettings {}
 
 
-
+/**
+ * 用于记录 protyle 的观察者
+ * 
+ * @field enLoopKey 插件内部标识，用于 v-for 的 key
+ * 
+ * @field protyleBlockId 块id
+ * @field protyleEl 块元素
+ * @field protyleContentEl 块内容元素
+ * 
+ * @field isFlashCardProtyle 是否是闪卡
+ * @field isEditorProtyle 是否是编辑器
+ * @field isInDialog 是否在对话框中
+ * @field dialogEl 对话框元素
+ * 
+ * @field isDailyNote 是否是日记
+ * @field dailyNoteValues 日记值
+ */
 interface IProtyleObserverItem {
   // 插件内部标识，用于 v-for 的 key
   enLoopKey: string
@@ -76,7 +92,6 @@ interface GlobalData {
   openedNotebookList: Notebook[]
 
   quickNoteMode: Array<EnBlockAppendMode>
-  commentMode: Array<EnBlockAppendMode>
   whiteBoardMode: Array<EnBlockAppendMode>
 
 }
@@ -90,8 +105,6 @@ interface GlobalWindowData {
   isInEnWindow: boolean
 
   loadingLifeLogData: boolean
-
-  protyleList: IProtyleObserverItem[]
 }
 
 

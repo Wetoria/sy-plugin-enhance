@@ -1,5 +1,5 @@
 
-import { useSavedData } from '@/utils/useSavedData'
+import { useDataSaverWith } from '@/utils/DataManager/useDataSaver'
 import {
   ref,
   watchEffect,
@@ -19,7 +19,7 @@ export function useTestSaveData() {
   const {
     dontSave,
     needSave,
-  } = useSavedData('test', testRef)
+  } = useDataSaverWith('test', testRef)
 
   const need = () => {
     testRef.value.name = 'test1'

@@ -10,15 +10,15 @@
 </template>
 
 <script setup lang="ts">
-import { injectGlobalWindowData } from '@/modules/EnModuleControl/ModuleProvide'
+import { useProtyleList } from '@/global/ProtyleList'
 import EnLifeLogDailyNoteGraph from '@/modules/LifeLog/EnLifeLogDailyNoteGraph.vue'
 import {
   computed,
 } from 'vue'
 
-const globalWindowData = injectGlobalWindowData()
+const protyleList = useProtyleList()
 const protyleContentRefList = computed<IProtyleObserverItem[]>(() => {
-  return globalWindowData.value.protyleList.filter((item) => item.isDailyNote && item.isEditorProtyle)
+  return protyleList.value.filter((item) => item.isDailyNote && item.isEditorProtyle)
 })
 </script>
 

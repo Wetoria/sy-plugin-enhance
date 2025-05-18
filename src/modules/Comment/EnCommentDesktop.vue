@@ -17,7 +17,7 @@
               v-model="selectedNotebookId"
               v-model:targetId="targetId"
               :notebookList="openedNotebookList"
-              :mode="globalData.commentMode"
+              :mode="commentMode"
               showPrompt
               showTips
             >
@@ -85,6 +85,7 @@ import EnProtyle from '@/components/EnProtyle.vue'
 import {
   getCommentIdByNodeId,
   getCommentMdByConfig,
+  injectCommentMode,
 } from '@/modules/Comment/Comment'
 import {
   appendBlockIntoDailyNote,
@@ -141,6 +142,8 @@ const currentProtyle = useCurrentProtyle()
 
 const globalData = injectGlobalData()
 const openedNotebookList = computed(() => globalData.value.openedNotebookList)
+
+const commentMode = injectCommentMode()
 
 
 const {

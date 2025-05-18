@@ -53,7 +53,6 @@
       :trigger-props="{
         contentClass: 'EnBlockAppendModeSelectorTriggerContent',
       }"
-      @change="onSelectChange"
     >
       <a-option
         v-for="option of options"
@@ -75,8 +74,7 @@
 <script setup lang="ts">
 import { isAppendDailyNoteMode } from '@/utils/Block'
 import {
-  computed,
-  watchEffect,
+  computed
 } from 'vue'
 
 const props = defineProps<{
@@ -144,18 +142,6 @@ const options = computed(() => {
   })
 
   return result
-})
-
-const onSelectChange = () => {
-  targetId.value = ''
-}
-
-watchEffect(() => {
-  const isValid = options.value.find((item) => item.id === notebookId.value)
-  if (!isValid) {
-    notebookId.value = options.value[0]?.id
-    targetId.value = ''
-  }
 })
 </script>
 

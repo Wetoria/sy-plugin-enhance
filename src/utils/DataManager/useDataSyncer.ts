@@ -1,10 +1,10 @@
 import {
-  onReceiveSyncData,
-  sendSyncData,
-} from '@/utils/SyncData/useSyncDataChannel'
+    onReceiveSyncData,
+    sendSyncData,
+} from '@/utils/DataManager/useSyncDataChannel'
 import { watchDebounced } from '@vueuse/core'
 import {
-  Ref,
+    Ref,
 } from 'vue'
 
 /**

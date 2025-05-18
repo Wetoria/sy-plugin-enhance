@@ -1,6 +1,7 @@
 import { generateShortUUID } from '@/utils'
 import { EN_PROVIDE_KEYS } from '@/utils/Constants'
 import {
+  ComputedRef,
   inject,
   provide,
   Ref,
@@ -13,6 +14,16 @@ export function provideCommentOptions(commentOptions: WritableComputedRef<EnModu
 
 export function injectCommentOptions(): WritableComputedRef<EnModuleComment> {
   return inject(EN_PROVIDE_KEYS.EN_COMMENT_OPTIONS) as WritableComputedRef<EnModuleComment>
+}
+
+
+
+export function provideCommentMode(commentMode: ComputedRef<EnBlockAppendMode[]>) {
+  provide('en-comment-mode', commentMode)
+}
+
+export function injectCommentMode(): ComputedRef<EnBlockAppendMode[]> {
+  return inject('en-comment-mode') as ComputedRef<EnBlockAppendMode[]>
 }
 
 

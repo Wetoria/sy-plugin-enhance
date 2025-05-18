@@ -1,24 +1,28 @@
 <template>
-  <div v-if="allIsReady">
-    <EnAuth />
-    <EnProtyleObserver />
-    <slot
-      v-bind="{
-        isFree,
-        isNotFree,
-        isPro,
-        isVip,
-        isPermanent,
-      }"
-    ></slot>
-  </div>
+  <a-config-provider
+    size="mini"
+  >
+    <div v-if="allIsReady">
+      <EnAuth />
+      <EnProtyleObserver />
+      <slot
+        v-bind="{
+          isFree,
+          isNotFree,
+          isPro,
+          isVip,
+          isPermanent,
+        }"
+      ></slot>
+    </div>
+  </a-config-provider>
 </template>
 
 <script setup lang="ts">
 import { lsNotebooks } from '@/api'
+import EnProtyleObserver from '@/global/ProtyleObserver/EnProtyleObserver.vue'
 import { usePlugin } from '@/main'
 import EnAuth from '@/modules/EnModuleControl/EnAuth.vue'
-import EnProtyleObserver from '@/modules/EnModuleControl/EnProtyleObserver.vue'
 import {
   provideAuthModule,
   provideAuthStatus,
@@ -35,6 +39,7 @@ import {
   EN_CONSTANTS,
   EN_MODULE_LIST,
 } from '@/utils/Constants'
+import { syncDataSocket } from '@/utils/DataManager/useSyncDataChannel'
 import {
   useSiyuanNotebookMount,
   useSiyuanNotebookUnmount,
@@ -43,7 +48,6 @@ import {
   loadModuleDataByNamespace,
   syncDataRefMap,
 } from '@/utils/SyncData'
-import { syncDataSocket } from '@/utils/SyncData/useSyncDataChannel'
 import {
   computed,
   onBeforeUnmount,
@@ -86,8 +90,6 @@ const globalDataModule = useGlobalData<GlobalData>(EN_CONSTANTS.GLOBAL_DATA, {
 
     quickNoteMode: ['targetBlock', 'targetDoc'],
     whiteBoardMode: ['All', 'targetBlock', 'targetDoc'],
-    // commentMode: ['currentDoc', 'targetDoc', 'targetBlock'],
-    commentMode: [],
   },
   needSave: false,
 })
@@ -107,8 +109,6 @@ const globalWindowDataModule = useGlobalData<GlobalWindowData>(EN_CONSTANTS.GLOB
     isInEnWindow: isInEnWindow(),
 
     loadingLifeLogData: false,
-
-    protyleList: [],
   },
   needSave: false,
   needSync: false,

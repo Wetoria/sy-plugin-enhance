@@ -1,12 +1,12 @@
 <template>
   <EnIcons />
+  <ArcoTheme />
   <ModuleDataProvider v-if="moduleEnabled">
     <template
       #default="{
         isVip,
       }"
     >
-      <ArcoTheme />
       <EnSettings />
       <!-- 简单模块 -->
       <EnSiyuanEntry />

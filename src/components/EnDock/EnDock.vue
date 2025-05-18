@@ -10,7 +10,7 @@
     <template #title>
       <div>
         <EnSettingsItemAreaHeading>
-          {{ title }}
+          <slot name="title">{{ title || '叶归' }}</slot>
         </EnSettingsItemAreaHeading>
       </div>
     </template>
@@ -33,7 +33,7 @@
         class="EnDockHeader"
       >
         <EnSettingsItemAreaHeading>
-          {{ title }}
+          <slot name="title">{{ title || '叶归' }}</slot>
         </EnSettingsItemAreaHeading>
       </div>
       <div

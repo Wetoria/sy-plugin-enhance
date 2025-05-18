@@ -12,7 +12,12 @@
       </div>
       <template #desc>
         <div>
-          选择批注创建内容的模式：添加至目标块、当前块(文档)、或追加至笔记本的日记中。
+          选择批注创建内容的模式：添加至当前文档，或追加至笔记本的日记中。
+          <EnUsageLink
+            part="comment_mode"
+          >
+            详细说明
+          </EnUsageLink>
         </div>
         <div v-if="moduleOptions.targetId">
           已选择文档：
@@ -76,7 +81,12 @@
           自定义批注结构
         </div>
         <div>
-          具体使用请参考<a href="https://simplest-frontend.feishu.cn/docx/B3NndXHi7oLLXJxnxQmcczRsnse#share-L5KvdeHBuoc3Uaxf9lgc5Pcenxb">使用说明</a>
+          具体使用请参考
+          <EnUsageLink
+            part="comment_structure"
+          >
+            使用说明
+          </EnUsageLink>
         </div>
         <div class="EnCommentStructureEditor">
           <a-textarea
@@ -220,6 +230,7 @@ import EnBlockAppendModeSelector from '@/components/EnBlockAppendModeSelector.vu
 import EnColorPicker from '@/components/EnColorPicker.vue'
 import { usePlugin } from '@/main'
 import {
+  provideCommentMode,
   provideCommentOptions,
 } from '@/modules/Comment/Comment'
 
@@ -259,12 +270,14 @@ const {
 
 const { computedLevel } = injectAuthStatus()
 const hasAuth = computedLevel(1, false)
-const commentMode = computed(() => {
+const commentMode = computed<EnBlockAppendMode[]>(() => {
   if (hasAuth.value) {
-    return globalData.value.commentMode
+    return ['currentDoc']
   }
   return []
 })
+
+provideCommentMode(commentMode)
 
 const enableComment = computed(() => {
   return isNotFree.value && globalWindowData.value.isInSiyuanMain

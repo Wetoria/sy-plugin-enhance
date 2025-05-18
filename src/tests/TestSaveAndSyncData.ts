@@ -1,6 +1,6 @@
 
-import { useSyncDataWith } from '@/utils/SyncData/useSyncData'
-import { useSavedData } from '@/utils/useSavedData'
+import { useDataSaverWith } from '@/utils/DataManager/useDataSaver'
+import { useSyncDataWith } from '@/utils/DataManager/useDataSyncer'
 import {
   ref,
   watchEffect,
@@ -20,7 +20,7 @@ export function useTestSaveAndSyncData() {
   const {
     dontSave,
     needSave,
-  } = useSavedData('test', testRef)
+  } = useDataSaverWith('test', testRef)
 
   const {
     dontSync,

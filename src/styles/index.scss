@@ -1,0 +1,46 @@
+:root {
+  --sky-blue: #00bfff;
+  --sky-blue-blur: #00bfff7f;
+
+  --en-gap: var(--b3-border-radius);
+
+  // 评论高亮颜色
+  --en-comment-highlight-color-base: 240, 182, 34;
+}
+
+.flexRow,
+.row {
+  display: flex;
+  gap: var(--en-gap);
+}
+
+.flexColumn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--en-gap);
+}
+
+.flexCenter {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.flexJustifyCenter {
+  display: flex;
+  justify-content: center;
+}
+
+.flexAlignCenter {
+  display: flex;
+  align-items: center;
+}
+.enGap {
+  display: flex;
+  gap: var(--en-gap);
+}
+
+.fullContent {
+  width: 100%;
+  height: 100%;
+}
