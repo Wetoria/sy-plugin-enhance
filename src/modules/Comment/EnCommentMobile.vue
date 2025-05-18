@@ -150,7 +150,6 @@ import {
 } from '@/api'
 import EnDrawer from '@/components/EnDrawer.vue'
 import EnModal from '@/components/EnModal.vue'
-import EnNotebookSelector from '@/components/EnNotebookSelector.vue'
 import EnProtyle from '@/components/EnProtyle.vue'
 import {
   getCommentMdByConfig,

@@ -13,7 +13,6 @@ import {
   recordProtyleItemByProtyle,
   removeFromProtyleList,
   unbindAllProtyleItem,
-  useProtyleList,
 } from '@/global/ProtyleList'
 import { usePlugin } from '@/main'
 import { generateUUIDWithTimestamp } from '@/utils'
@@ -28,16 +27,9 @@ import {
 import {
   onBeforeUnmount,
   onMounted,
-  watchEffect,
 } from 'vue'
 
 const plugin = usePlugin()
-
-const protyleList = useProtyleList()
-
-watchEffect(() => {
-  console.log('protyleList', protyleList.value)
-})
 
 
 const recordProtyleContentOnInit = () => {
