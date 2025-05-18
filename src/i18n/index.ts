@@ -14,13 +14,23 @@ export enum locales {
 }
 type locale = keyof typeof locales
 
-export const fallbackLocale = 'zh_CN'
+// 如果忘记配置，默认使用英文
+export const fallbackLocale = locales.en_US
 
 type localeConfig = Partial<Record<locale, string>>
 export const enI18nConfig: Record<string, localeConfig> = {}
 
+const resultMap = new Map<string, string>()
+
 export const enI18n = new Proxy(enI18nConfig, {
   get(_, key: string) {
+    // 跳过 Vue 内部属性
+    if (key === '__v_isRef' || key === '__isVue') {
+      return undefined
+    }
+    if (resultMap.has(key)) {
+      return resultMap.get(key)
+    }
     const lang = window.siyuan.config.appearance.lang
     const config = enI18nConfig[key]
     if (!config) {
@@ -38,13 +48,19 @@ export const enI18n = new Proxy(enI18nConfig, {
       enWarn(`i18n value [${enWarnLogText(key)}] not found`)
       return key
     }
+    resultMap.set(key, i18nValue)
     return i18nValue
   },
 })
 
+const leaves = {
+  zh_CN: '叶归',
+  en_US: 'Fallen Leaves',
+}
 
-Object.assign(enI18nConfig, {
-  hello: {
-    zh_CN: '你好',
-  },
-})
+const configs = {
+  leaves,
+  pluginName: leaves,
+}
+
+Object.assign(enI18nConfig, configs)

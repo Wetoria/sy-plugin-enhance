@@ -13,7 +13,7 @@
           class="SyEnhancerDialogTitle"
           @click="onTitleClicked"
         >
-          {{ plugin.i18n.pluginName }}
+          {{ enI18n.pluginName }}
         </div>
         <a-button
           v-if="!settings.v && !authModuleData.lv"
@@ -164,6 +164,7 @@
 import EnButtonIcon from '@/components/EnButtonIcon.vue'
 import EnDrawer from '@/components/EnDrawer.vue'
 import EnIconDragon from '@/components/EnIconDragon.vue'
+import { enI18n } from '@/i18n'
 import { usePlugin } from '@/main'
 import {
   injectAuth,
