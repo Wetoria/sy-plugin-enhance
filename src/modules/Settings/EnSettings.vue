@@ -112,14 +112,7 @@
         <EnUsageLink part="leaves">
           {{ plugin.version ? `v${plugin.version}` : '' }}
         </EnUsageLink>
-        <EnButtonIcon
-          @click="checkNewUpdate"
-        >
-          <icon-cloud-download />
-          <template #prompt>
-            检查新版本
-          </template>
-        </EnButtonIcon>
+        <EnVersionChecker />
         <span>
           问题反馈：
         </span>
@@ -130,38 +123,9 @@
       </div>
     </template>
   </EnDrawer>
-  <a-modal
-    v-model:visible="updateModalVisible"
-    title="叶归｜更新成功"
-    title-align="start"
-    cancelText="取消"
-    :mask="false"
-    okText="刷新"
-    @ok="onUpdateModalOk"
-  >
-    <div>
-      是否刷新思源重启叶归插件？
-    </div>
-  </a-modal>
-  <a-modal
-    v-model:visible="downloadPromptModalVisible"
-    title="叶归｜发现新版本"
-    title-align="start"
-    :mask="false"
-    okText="下载"
-    @ok="updatePlugin"
-  >
-    <div>
-      点击下载新版本
-      <a-link @click="openUpdateHistory">
-        {{ downloadPromptModalData.tag_name }}
-      </a-link>（点击版本号可查看更新记录）
-    </div>
-  </a-modal>
 </template>
 
 <script setup lang="ts">
-import EnButtonIcon from '@/components/EnButtonIcon.vue'
 import EnDrawer from '@/components/EnDrawer.vue'
 import EnIconDragon from '@/components/EnIconDragon.vue'
 import { usePlugin } from '@/main'
@@ -170,6 +134,7 @@ import {
   injectAuthStatus,
   injectSettings,
 } from '@/modules/EnModuleControl/ModuleProvide'
+import EnVersionChecker from '@/modules/Settings/EnVersionChecker.vue'
 
 
 import {
@@ -190,10 +155,6 @@ import {
   settingRefKeysSorted,
   settingsRefMap,
 } from '@/modules/Settings/SettingsModuleControl'
-import {
-  getNewPackageAndUnzip,
-  hasNewVersion,
-} from '@/modules/Settings/Version'
 
 
 import {
@@ -201,16 +162,13 @@ import {
   removeCommand,
 } from '@/utils/Commands'
 import {
-  EN_CONTENT_ANCHOR_MAP,
   EN_EVENT_BUS_KEYS,
 } from '@/utils/Constants'
 import { onCountClick } from '@/utils/DOM'
 import { enEventBus } from '@/utils/EnEventBus'
-import { Notification } from '@arco-design/web-vue'
 import {
   onBeforeUnmount,
   onMounted,
-  ref,
 } from 'vue'
 
 const plugin = usePlugin()
@@ -273,68 +231,6 @@ const openAuthModal = () => {
   enEventBus.emit(EN_EVENT_BUS_KEYS.AUTH_OPEN_MODAL)
 }
 
-const hasNew = ref(false)
-const loading = ref(false)
-
-
-const updateModalVisible = ref(false)
-const onUpdateModalOk = () => {
-  window.location.reload()
-}
-const updatePlugin = async () => {
-  Notification.info({
-    id: 'EnDownloading',
-    title: '叶归',
-    content: '正在下载新版本...',
-    duration: 0,
-  })
-  loading.value = true
-  try {
-    await getNewPackageAndUnzip()
-    Notification.success({
-      id: 'EnDownloading',
-      title: '叶归',
-      content: '新版本下载成功',
-      duration: 2000,
-    })
-    updateModalVisible.value = true
-  } catch (error) {
-    Notification.error({
-      id: 'EnDownloading',
-      title: '叶归',
-      content: '新版本下载失败',
-      duration: 2000,
-    })
-  } finally {
-    loading.value = false
-  }
-}
-const downloadPromptModalVisible = ref(false)
-const downloadPromptModalData = ref({
-  tag_name: '',
-})
-const checkNewUpdate = async () => {
-  loading.value = true
-  const { close } = Notification.info({
-    id: 'EnCheckingUpdate',
-    title: '叶归',
-    content: '正在检查新版本...',
-    duration: 2000,
-  })
-  const data = await hasNewVersion()
-  close()
-  loading.value = false
-  hasNew.value = data.hasNew
-  if (hasNew.value) {
-    downloadPromptModalVisible.value = true
-    downloadPromptModalData.value = data.info
-  } else {
-    Notification.success('叶归｜当前已是最新版本')
-  }
-}
-const openUpdateHistory = () => {
-  window.open(EN_CONTENT_ANCHOR_MAP.update_history, '_blank')
-}
 </script>
 
 <style lang="scss" scoped>
