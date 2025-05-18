@@ -2,8 +2,7 @@
   <EnDock
     v-model:open="popoverVisible"
     icon="iconEnComment"
-    autoOpen
-    type="EnCommentHistory"
+    type="CommentHistory"
   >
     <template #title>
       <div>
@@ -166,7 +165,7 @@ const commentListForCurrentProtyle = ref<EnCommentInfo[]>([])
 
 
 // #region 👇 获取当前文档的批注记录并排序
-
+// 当前文档发生变化时，获取当前文档的批注记录
 watch(currentProtyle, (newValue, oldValue) => {
   if (newValue?.block.id !== oldValue?.block.id) {
     getCommentsForCurrentProtyle()
@@ -174,8 +173,19 @@ watch(currentProtyle, (newValue, oldValue) => {
 }, {
   deep: true,
 })
+
+// 批注记录发生变化时，更新当前文档的批注记录
 watch(commentInfoList, () => {
   getCommentsForCurrentProtyle()
+})
+
+// 开启批注列表时，如果当前文档的批注记录为空，则获取批注记录
+watch(popoverVisible, () => {
+  // 其实应该判断一下，currentProtyle.block.id 存在的情况下，才更新
+  // 但是由于后续 getCommentsForCurrentProtyle 会判断，就不在这里加了
+  if (popoverVisible.value && !commentListForCurrentProtyle.value.length) {
+    getCommentsForCurrentProtyle()
+  }
 })
 
 const getCommentsForCurrentProtyle = async () => {
