@@ -1,5 +1,17 @@
+import {
+  appendMDToBlockAndGetBlockId,
+  flushTransactions,
+  getBlockInfo,
+  getBlocksIndexes,
+  insertBlock,
+  sql,
+} from '@/api'
+import { enI18n } from '@/i18n'
+import { appendBlockIntoDailyNote } from '@/modules/DailyNote/DailyNote'
 import { generateShortUUID } from '@/utils'
 import { EN_PROVIDE_KEYS } from '@/utils/Constants'
+import { SyNodeTypes } from '@/utils/Siyuan'
+import { Notification } from '@arco-design/web-vue'
 import {
   ComputedRef,
   inject,
@@ -8,6 +20,20 @@ import {
   WritableComputedRef,
 } from 'vue'
 
+
+
+
+export enum EN_COMMENT_KEYS {
+  commentIdPrefix = 'en-comment-id',
+  commentIdInAttribute = 'custom-en-comment-id',
+  nodeCommentRefKey = 'custom-en-comment-ref-id',
+  commentContainerIdKey = 'custom-en-comment-container',
+}
+
+
+
+
+
 export function provideCommentOptions(commentOptions: WritableComputedRef<EnModuleComment>) {
   provide(EN_PROVIDE_KEYS.EN_COMMENT_OPTIONS, commentOptions)
 }
@@ -15,6 +41,8 @@ export function provideCommentOptions(commentOptions: WritableComputedRef<EnModu
 export function injectCommentOptions(): WritableComputedRef<EnModuleComment> {
   return inject(EN_PROVIDE_KEYS.EN_COMMENT_OPTIONS) as WritableComputedRef<EnModuleComment>
 }
+
+
 
 
 
@@ -28,11 +56,6 @@ export function injectCommentMode(): ComputedRef<EnBlockAppendMode[]> {
 
 
 
-export enum EN_COMMENT_KEYS {
-  commentIdPrefix = 'en-comment-id',
-  commentIdInAttribute = 'custom-en-comment-id',
-  nodeCommentRefKey = 'custom-en-comment-ref-id',
-}
 
 export function provideCommentInfoList(commentInfoList: Ref<EnCommentInfo[]>) {
   provide('en-comment-info-list', commentInfoList)
@@ -42,6 +65,9 @@ export function injectCommentInfoList(): Ref<EnCommentInfo[]> {
   return inject('en-comment-info-list')
 }
 
+
+
+
 export function provideCommentIdList(commentIdList: Ref<string[]>) {
   provide(EN_PROVIDE_KEYS.EN_COMMENT_ID_LIST, commentIdList)
 }
@@ -49,6 +75,10 @@ export function provideCommentIdList(commentIdList: Ref<string[]>) {
 export function injectCommentIdList(): Ref<string[]> {
   return inject(EN_PROVIDE_KEYS.EN_COMMENT_ID_LIST) as Ref<string[]>
 }
+
+
+
+
 
 // 根据 commentId 获取 nodeId
 export const getNodeIdByCommentId = (commentId: string) => {
@@ -252,4 +282,128 @@ export const getCommentMdByConfig = (config: {
   }
 
   return result
+}
+
+
+const commentContainerIdMap = Object.create(null)
+
+export const createCommentInto = async (
+  notebookId: string,
+  // 目前传递的是 currentProtyle.block.id
+  // 未来可能会改成支持任意块，所以取名 targetId
+  targetId: string,
+  commentMd: string,
+) => {
+  const isCreateInfoCurrentDoc = notebookId === 'currentDoc'
+
+  let finalTargetId = targetId
+  let appendCommentToBlockId = notebookId
+
+  if (isCreateInfoCurrentDoc) {
+    appendCommentToBlockId = targetId
+    // 检查要追加批注的块是否为文档块
+    const targetBlockInfo = await getBlockInfo(finalTargetId)
+    if (!targetBlockInfo) {
+      Notification.warning({
+        title: enI18n.pluginName as string,
+        content: '目标块不存在',
+      })
+      return
+    }
+
+    // 如果不是文档块，更新为文档块 id
+    if (targetBlockInfo.type !== SyNodeTypes.d) {
+      finalTargetId = targetBlockInfo.root_id
+    }
+
+    // 获取已经记录过的批注容器块 id，避免反复执行创建逻辑
+    appendCommentToBlockId = commentContainerIdMap[finalTargetId]
+
+    if (!appendCommentToBlockId) {
+      // 查询现有的批注容器块
+      const res = await sql(`
+        select
+          *
+        from
+          blocks b
+        where
+          root_id = '${finalTargetId}'
+          and type = '${SyNodeTypes.h}'
+          and ial like '%${EN_COMMENT_KEYS.commentContainerIdKey}%'
+      `)
+      appendCommentToBlockId = res[0]?.id
+
+      if (!appendCommentToBlockId) {
+        // 创建新的批注容器块
+        const res = await appendMDToBlockAndGetBlockId({
+          data: `## 批注\n{: ${EN_COMMENT_KEYS.commentContainerIdKey}=\"true\" }`,
+          parentID: finalTargetId,
+        })
+        appendCommentToBlockId = res
+
+        if (!appendCommentToBlockId) {
+          Notification.warning({
+            title: enI18n.pluginName as string,
+            content: '创建批注区域失败',
+          })
+          return
+        }
+        await flushTransactions()
+      }
+    }
+    commentContainerIdMap[finalTargetId] = appendCommentToBlockId
+  }
+
+
+  let commentNodeId = null
+  if (isCreateInfoCurrentDoc) {
+    // 这里的 appendCommentToBlockId 是批注容器块 id
+    // 也就是 ## 批注
+    // 但是由于 append 标题，是在标题下方，需要重新处理一下
+
+    let childBlockIds = await sql(`
+      select
+        id
+      from
+        blocks
+      where
+        parent_id = '${appendCommentToBlockId}'
+      `)
+
+    childBlockIds = childBlockIds.map((i) => i.id)
+    if (childBlockIds.length) {
+      const indexes = await getBlocksIndexes(childBlockIds)
+      const maxIndex = Math.max(...Object.values(indexes))
+      const maxIndexBlockId = Object.keys(indexes).find((i) => indexes[i] === maxIndex)
+      const res = await insertBlock(
+        'markdown',
+        commentMd,
+        undefined,
+        maxIndexBlockId,
+      )
+      commentNodeId = res[0]?.doOperations[0]?.id
+    } else {
+      commentNodeId = await appendMDToBlockAndGetBlockId({
+        data: commentMd,
+        parentID: appendCommentToBlockId,
+      })
+    }
+  } else {
+    const res = await appendBlockIntoDailyNote(
+      'markdown',
+      commentMd,
+      notebookId,
+    )
+    commentNodeId = res[0]?.doOperations[0]?.id
+  }
+
+  if (!commentNodeId) {
+    Notification.warning({
+      title: enI18n.pluginName as string,
+      content: '创建批注失败',
+    })
+    return ''
+  }
+
+  return commentNodeId
 }
