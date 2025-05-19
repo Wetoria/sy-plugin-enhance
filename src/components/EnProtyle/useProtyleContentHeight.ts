@@ -57,6 +57,13 @@ export function useProtyleContentHeight(props: {
     deep: true,
   })
 
+  const debouncedEmit = debounce((size: {
+    width: number
+    height: number
+  }) => {
+    props.onResize?.(size)
+  })
+
   let stopFunc = null
   const startResizeObserver = () => {
     const { stop } = useResizeObserver(props.renderAreaRef, (entries) => {
@@ -65,7 +72,7 @@ export function useProtyleContentHeight(props: {
         width,
         height,
       } = entry.contentRect
-      props.onResize?.({
+      debouncedEmit({
         width,
         height,
       })
