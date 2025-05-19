@@ -72,16 +72,16 @@
 </template>
 
 <script setup lang="ts">
-import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
+import SyIcon from '@/components/SiyuanTheme/SyIcon.vue';
 import {
   EnWhiteBoardConfig
-} from '@/modules/EnWhiteBoard/EnWhiteBoard'
+} from '@/modules/EnWhiteBoard/EnWhiteBoard';
 import {
   computed,
   onMounted,
   onUnmounted,
   ref,
-} from 'vue'
+} from 'vue';
 
 const props = defineProps<{
   needSider: boolean
@@ -200,13 +200,17 @@ const showSettingsDrawer = ref(false)
 
   .ToolbarArea.Top {
     --en-is-toolbar-top: 1;
+    flex-shrink: 0;
   }
   .ToolbarArea.Bottom {
     --en-is-toolbar-bottom: 1;
+    flex-shrink: 0;
   }
 
   .folderArea {
     flex: 1;
+    min-height: 0; // 防止内容溢出导致弹性盒子伸展
+    overflow: hidden; // 确保内容不会溢出此区域
   }
 
   .ToolbarArea {

@@ -219,7 +219,7 @@ export async function prependBlock(
 }
 
 export async function appendBlock(
-  dataType: DataType,
+  dataType: DataType = 'markdown',
   data: string,
   parentID: BlockId | DocumentId,
 ): Promise<IResdoOperations[]> {
@@ -231,6 +231,28 @@ export async function appendBlock(
   const url = "/api/block/appendBlock"
   return request(url, payload)
 }
+export async function appendMDToBlock(params: {
+  data: string
+  parentID: BlockId | DocumentId
+}) {
+  return appendBlock(
+    'markdown',
+    params.data,
+    params.parentID,
+  )
+}
+export async function appendMDToBlockAndGetBlockId(params: {
+  data: string
+  parentID: BlockId | DocumentId
+}) {
+  const res = await appendBlock(
+    'markdown',
+    params.data,
+    params.parentID,
+  )
+  return res[0]?.doOperations[0]?.id
+}
+
 export async function appendDailyNoteBlock(
   dataType: DataType,
   data: string,
@@ -298,6 +320,17 @@ export async function getChildBlocks(
     id,
   }
   const url = "/api/block/getChildBlocks"
+  return request(url, data)
+}
+export async function getBlocksIndexes(
+  ids: BlockId[],
+): Promise<{
+  [key: BlockId]: number
+}> {
+  const data = {
+    ids,
+  }
+  const url = "/api/block/getBlocksIndexes"
   return request(url, data)
 }
 

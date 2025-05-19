@@ -142,31 +142,27 @@
 
 <script setup lang="ts">
 import {
-  deleteBlock,
   flushTransactions,
   getBlockAttrs,
   setBlockAttrs,
-  sql,
+  sql
 } from '@/api'
 import EnDrawer from '@/components/EnDrawer.vue'
 import EnModal from '@/components/EnModal.vue'
 import EnProtyle from '@/components/EnProtyle.vue'
 import {
+  createCommentInto,
+  getCommentIdByNodeId,
   getCommentMdByConfig,
   getNodeIdByCommentId,
   injectCommentIdList,
 } from '@/modules/Comment/Comment'
-import {
-  appendBlockIntoDailyNote,
-} from '@/modules/DailyNote/DailyNote'
 import { EnNavMoreRef } from '@/modules/EnMobileNav.vue'
 import {
-  injectGlobalData,
-  useModule,
+  useModule
 } from '@/modules/EnModuleControl/ModuleProvide'
 import {
-  debounce,
-  generateShortUUID,
+  debounce
 } from '@/utils'
 import {
   EN_MODULE_LIST,
@@ -182,8 +178,7 @@ import { getColorStringWarn } from '@/utils/Log'
 import {
   getClosetSiyuanNodeByDom,
   SiyuanSelectClassName,
-  SyDomNodeTypes,
-  useCurrentProtyle,
+  useCurrentProtyle
 } from '@/utils/Siyuan'
 import { Notification } from '@arco-design/web-vue'
 import dayjs from 'dayjs'
@@ -196,8 +191,7 @@ import {
   onBeforeUnmount,
   onMounted,
   ref,
-  watch,
-  watchEffect,
+  watchEffect
 } from 'vue'
 
 const currentProtyle = useCurrentProtyle()
@@ -222,17 +216,9 @@ const adjustBtnsPosition = () => {
 
 const recordCurrentBlock = (event: MouseEvent) => {
   const target = event.target as HTMLElement
-  // while (target && !target.dataset.nodeId) {
-  //   target = target.parentElement as HTMLElement
-  // }
 
   lastClickedElement.value = currentClickedElement.value
   currentClickedElement.value = target
-  // if (target?.dataset.nodeId) {
-  //   currentClickedElement.value = target
-  // } else {
-  //   currentClickedElement.value = null
-  // }
 
   adjustBtnsPosition()
 }
@@ -342,11 +328,6 @@ const onClickSelectButton = () => {
   }
 }
 
-const globalData = injectGlobalData()
-const openedNotebookList = computed(() => globalData.value.openedNotebookList)
-
-// 是否默认新增一个输入的行
-const defaultInserNewLine = true
 
 const {
   moduleOptions,
@@ -391,21 +372,6 @@ const destoryProtyle = () => {
 
 const popoverVisible = ref(false)
 
-// #region 双击关闭评论窗口
-
-const isInCommentModal = (target: HTMLElement) => {
-  let targetElement = target
-  while (targetElement) {
-    if (targetElement.classList.contains('enCommentContainerModal')) {
-      return true
-    }
-    targetElement = targetElement.parentElement
-  }
-  return false
-}
-
-// #endregion 双击关闭评论窗口
-
 watchEffect(() => {
   if (popoverVisible.value) {
   } else {
@@ -419,67 +385,30 @@ watchEffect(() => {
 
 // #region 评论的业务逻辑相关
 
-// 根据 nodeId 生成 commentId
-const getCommentIdByNodeId = (nodeId: string) => {
-  const shortUUID = generateShortUUID()
-  return `en-comment-id-${nodeId}-${shortUUID}`
-}
-
 
 const lastCommentParams = ref({
   commentId: '',
   text: '',
 })
 
-watch(dailyNoteNotebookId, async () => {
-  if (popoverVisible.value) {
-    if (currentBlockId.value) {
-      // IMP 最好是移动，而不是删除以后再新建
-      await deleteBlock(currentBlockId.value)
-      createCommentIntoDailyNote(lastCommentParams.value.commentId, lastCommentParams.value.text)
-    }
-  }
-})
 
 // 根据 commentId 和文本在思源中创建评论，获取到新的评论 nodeId，用来在 protyle 中展示
 const newCommentNodeIdRef = ref()
 
 const createCommentIntoDailyNote = async (commentId: string, text: string) => {
   try {
-    const res = await appendBlockIntoDailyNote(
-      'markdown',
-      text,
+    const commnetNodeId = await createCommentInto(
       dailyNoteNotebookId.value,
+      currentProtyle.value.block.id,
+      text,
     )
-
-    const {
-      doOperations = [],
-    } = res[0]
-    const transaction = doOperations[0]
-    const {
-      id,
-      data,
-    } = transaction
-
-    let tempDom = document.createElement('div')
-    tempDom.innerHTML = data
-
-    tempDom = tempDom.firstElementChild as HTMLDivElement
-    const listItemNode = tempDom.firstElementChild as HTMLDivElement
-    const isListItemNode = listItemNode?.dataset.type === SyDomNodeTypes.NodeListItem
-
-    if (!isListItemNode) {
-      enWarn('Get List Item Node id Failed.')
-    }
-
-    const newCommentNodeId = isListItemNode ? listItemNode.dataset.nodeId : id
 
     lastCommentParams.value = {
       commentId,
       text,
     }
 
-    newCommentNodeIdRef.value = newCommentNodeId
+    newCommentNodeIdRef.value = commnetNodeId
     popoverVisible.value = true
   } catch (error) {
     stopMessage()
@@ -549,7 +478,7 @@ const startComment = async () => {
     // 如果未选择行内文字，则对单个块（段落块）进行评论
     if (selectionCopy.value.isCollapsed) {
       const nodeId = siyuanNode.dataset.nodeId
-      commentForSingleBlockByNodeId(nodeId, siyuanNode)
+      commentForSingleBlockByNodeId(nodeId)
       return
     }
     commentForInlineText()
@@ -559,7 +488,7 @@ const startComment = async () => {
   // 如果选中了 1 个 Block
   if (selectedNodes.length === 1) {
     const block = selectedNodes[0] as HTMLElement
-    commentForSingleBlockByNodeId(block.dataset.nodeId, block)
+    commentForSingleBlockByNodeId(block.dataset.nodeId)
     return
   }
 
@@ -583,7 +512,7 @@ const startComment = async () => {
     convertIntoSuperBlockAndComment(selectedNodes as HTMLElement[])
   } else {
     // 对单一的块进行评论
-    commentForSingleBlockByNodeId(parentNode.dataset.nodeId, parentNode)
+    commentForSingleBlockByNodeId(parentNode.dataset.nodeId)
   }
 }
 
@@ -638,12 +567,12 @@ const convertIntoSuperBlockAndComment = async (selectedNodes: HTMLElement[]) => 
   const off = useSiyuanDatabaseIndexCommit(debounce(async () => {
     enLog(`${getColorStringWarn(`Ready to comment for super block.`)}`)
     off()
-    await commentForSingleBlockByNodeId(superBlockId, superBlock)
+    await commentForSingleBlockByNodeId(superBlockId)
   }, 20))
 }
 
 // 对单个块进行评论
-const commentForSingleBlockByNodeId = async (nodeId: string, adjustTarget: HTMLElement) => {
+const commentForSingleBlockByNodeId = async (nodeId: string) => {
   const sqlStmt = `select * from blocks where id = '${nodeId}'`
   const mdRes = await sql(sqlStmt) as any[]
 
@@ -675,7 +604,6 @@ const commentForSingleBlockByNodeId = async (nodeId: string, adjustTarget: HTMLE
     blockContent,
     blockMarkdown,
   })
-  // await commentByCommentIdAndText(currentBlockCommentId, finalMd)
 }
 
 const commentForInlineText = async () => {
@@ -738,7 +666,6 @@ const commentForInlineText = async () => {
     blockContent: selectText,
     blockMarkdown: selectText,
   })
-  // await commentByCommentIdAndText(enCommentId, `((${nodeId} "${selectText}"))`)
   // 清理临时标记
 
   // 清理非子节点的标记（比如复制出来的情况）
@@ -835,7 +762,6 @@ const getCommentHistoryByDom = async (target: HTMLElement) => {
     return
   }
 
-  console.log('idListWhichHasComment is ', idListWhichHasComment)
   const queryCommentBlockIdSql = `
     select
       *
@@ -862,27 +788,9 @@ const getCommentHistoryByDom = async (target: HTMLElement) => {
   currentBlockId.value = ''
 }
 
-const onClickComment = async (event: MouseEvent) => {
-
-  if (commentEnabled.value) {
-    return
-  }
-
-  const target = event.target as HTMLElement
-
-  getCommentHistoryByDom(target)
-}
-
 const showCommentHistoryList = () => {
   getCommentHistoryByDom(currentClickedElement.value)
 }
-// onMounted(() => {
-//   document.addEventListener('click', onClickComment, true)
-// })
-// onBeforeUnmount(() => {
-//   document.removeEventListener('click', onClickComment, true)
-// })
-
 // #endregion 点击评论，显示历史评论列表
 
 </script>

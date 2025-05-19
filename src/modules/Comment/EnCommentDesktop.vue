@@ -12,29 +12,7 @@
           class="row flexAlignCenter"
           style="width: 100%;"
         >
-          <div>
-            <EnBlockAppendModeSelector
-              v-model="selectedNotebookId"
-              v-model:targetId="targetId"
-              :notebookList="openedNotebookList"
-              :mode="commentMode"
-              showPrompt
-              showTips
-            >
-              <template
-                v-if="isConfigValid"
-                #tipIcon
-              >
-                <icon-check-circle style="color: rgb(var(--success-6))" />
-              </template>
-              <template #prompt>
-                <div class="flexAlignCenter">
-                  添加评论
-                </div>
-                <a-divider direction="vertical" />
-              </template>
-            </EnBlockAppendModeSelector>
-          </div>
+          添加批注
         </div>
       </template>
       <div
@@ -73,31 +51,24 @@
 
 <script setup lang="ts">
 import {
-  deleteBlock,
   flushTransactions,
   getBlockAttrs,
   setBlockAttrs,
-  sql,
+  sql
 } from '@/api'
-import EnBlockAppendModeSelector from '@/components/EnBlockAppendModeSelector.vue'
 import EnModal from '@/components/EnModal.vue'
 import EnProtyle from '@/components/EnProtyle.vue'
 import {
+  createCommentInto,
   getCommentIdByNodeId,
   getCommentMdByConfig,
-  injectCommentMode,
 } from '@/modules/Comment/Comment'
 import {
-  appendBlockIntoDailyNote,
-} from '@/modules/DailyNote/DailyNote'
-import {
-  injectGlobalData,
   useModule,
 } from '@/modules/EnModuleControl/ModuleProvide'
 import {
   debounce,
 } from '@/utils'
-import { isAppendDailyNoteMode } from '@/utils/Block'
 import {
   addCommandInModule,
 } from '@/utils/Commands'
@@ -108,9 +79,8 @@ import {
 } from '@/utils/Constants'
 import {
   getSelectionCopy,
-  positionModalWithTranslate,
   targetIsInnerOf,
-  targetIsOutsideOf,
+  targetIsOutsideOf
 } from '@/utils/DOM'
 import {
   useSiyuanDatabaseIndexCommit,
@@ -119,7 +89,6 @@ import { getColorStringWarn } from '@/utils/Log'
 import { useMousePostion } from '@/utils/Mouse'
 import {
   getClosetSiyuanNodeByDom,
-  SyDomNodeTypes,
   useCurrentProtyle,
 } from '@/utils/Siyuan'
 import { quickMakeCard } from '@/utils/Siyuan/Card'
@@ -129,7 +98,6 @@ import {
   showMessage,
 } from 'siyuan'
 import {
-  computed,
   onBeforeUnmount,
   onMounted,
   ref,
@@ -140,16 +108,10 @@ import {
 const currentProtyle = useCurrentProtyle()
 
 
-const globalData = injectGlobalData()
-const openedNotebookList = computed(() => globalData.value.openedNotebookList)
-
-const commentMode = injectCommentMode()
-
 
 const {
   moduleOptions,
 } = useModule<EnModuleComment>(EN_MODULE_LIST.COMMENT)
-const dailyNoteNotebookId = computed(() => moduleOptions.value.notebookId)
 const selectedNotebookId = ref(moduleOptions.value.notebookId)
 const targetId = ref(moduleOptions.value.targetId)
 watch(() => moduleOptions.value.notebookId, () => {
@@ -157,9 +119,6 @@ watch(() => moduleOptions.value.notebookId, () => {
 })
 watch(() => moduleOptions.value.targetId, () => {
   targetId.value = moduleOptions.value.targetId
-})
-const isConfigValid = computed(() => {
-  return isAppendDailyNoteMode(selectedNotebookId.value) || targetId.value
 })
 
 
@@ -206,10 +165,6 @@ const onAfterRender = (protyle: Protyle) => {
 
     if (target) {
       clearInterval(flag)
-
-
-      adjustCommentModal()
-
 
       protyle.focusBlock(target, true)
 
@@ -283,26 +238,6 @@ watchEffect(() => {
   }
 })
 
-const adjustModalTargetRef = ref<HTMLElement>(null)
-const recordAdjustCommentModalTargetElement = (element: HTMLElement) => {
-  adjustModalTargetRef.value = element
-}
-
-const adjustCommentModal = () => {
-  const modal = document.querySelector('.enCommentContainerModal .enCommentContainer') as HTMLDivElement
-  if (!modal) {
-    return
-  }
-
-  modal.style.transform = `translate(${window.innerWidth}px, ${window.innerHeight}px)`
-  const {
-    translateX,
-    translateY,
-  } = positionModalWithTranslate(adjustModalTargetRef.value, modal)
-  const posY = translateY <= 32 ? 32 : translateY
-  modal.style.transform = `translate(${translateX}px, ${posY}px)`
-}
-
 // #endregion 评论 modal 窗口
 
 
@@ -315,60 +250,8 @@ const lastCommentParams = ref({
   text: '',
 })
 
-watch(dailyNoteNotebookId, async () => {
-  if (popoverVisible.value) {
-    if (currentBlockId.value) {
-      // IMP 最好是移动，而不是删除以后再新建
-      await deleteBlock(currentBlockId.value)
-      createCommentIntoDailyNote(lastCommentParams.value.commentId, lastCommentParams.value.text)
-    }
-  }
-})
-
 // 根据 commentId 和文本在思源中创建评论，获取到新的评论 nodeId，用来在 protyle 中展示
 const newCommentNodeIdRef = ref()
-
-const createCommentIntoDailyNote = async (commentId: string, text: string) => {
-  try {
-    const res = await appendBlockIntoDailyNote(
-      'markdown',
-      text,
-      dailyNoteNotebookId.value,
-    )
-
-    const {
-      doOperations = [],
-    } = res[0]
-    const transaction = doOperations[0]
-    const {
-      id,
-      data,
-    } = transaction
-
-    let tempDom = document.createElement('div')
-    tempDom.innerHTML = data
-
-    tempDom = tempDom.firstElementChild as HTMLDivElement
-    const listItemNode = tempDom.firstElementChild as HTMLDivElement
-    const isListItemNode = listItemNode?.dataset.type === SyDomNodeTypes.NodeListItem
-
-    if (!isListItemNode) {
-      enWarn('Get List Item Node id Failed.')
-    }
-
-    const newCommentNodeId = isListItemNode ? listItemNode.dataset.nodeId : id
-
-    lastCommentParams.value = {
-      commentId,
-      text,
-    }
-
-    newCommentNodeIdRef.value = newCommentNodeId
-    showCommentModal()
-  } catch (error) {
-    stopMessage()
-  }
-}
 
 const commentByConfig = async (config: {
   commentId: string
@@ -395,8 +278,22 @@ const commentByConfig = async (config: {
 }
 
 const commentByCommentIdAndText = async (commentId: string, text: string) => {
-  const mdText = text
-  await createCommentIntoDailyNote(commentId, mdText)
+  try {
+    const commnetNodeId = await createCommentInto(
+      selectedNotebookId.value,
+      currentProtyle.value.block.id,
+      text,
+    )
+    lastCommentParams.value = {
+      commentId,
+      text,
+    }
+
+    newCommentNodeIdRef.value = commnetNodeId
+    showCommentModal()
+  } catch (error) {
+    stopMessage()
+  }
 }
 
 // 当有新的评论 nodeId 时，更新当前的 blockId
@@ -433,7 +330,7 @@ const startComment = async () => {
     // 如果未选择行内文字，则对单个块（段落块）进行评论
     if (selectionCopy.value.isCollapsed) {
       const nodeId = siyuanNode.dataset.nodeId
-      commentForSingleBlockByNodeId(nodeId, siyuanNode)
+      commentForSingleBlockByNodeId(nodeId)
       return
     }
     commentForInlineText()
@@ -443,7 +340,7 @@ const startComment = async () => {
   // 如果选中了 1 个 Block
   if (selectedNodes.length === 1) {
     const block = selectedNodes[0] as HTMLElement
-    commentForSingleBlockByNodeId(block.dataset.nodeId, block)
+    commentForSingleBlockByNodeId(block.dataset.nodeId)
     return
   }
 
@@ -467,7 +364,7 @@ const startComment = async () => {
     convertIntoSuperBlockAndComment(selectedNodes as HTMLElement[])
   } else {
     // 对单一的块进行评论
-    commentForSingleBlockByNodeId(parentNode.dataset.nodeId, parentNode)
+    commentForSingleBlockByNodeId(parentNode.dataset.nodeId)
   }
 }
 
@@ -507,12 +404,12 @@ const convertIntoSuperBlockAndComment = async (selectedNodes: HTMLElement[]) => 
   const off = useSiyuanDatabaseIndexCommit(debounce(async () => {
     enLog(`${getColorStringWarn(`Ready to comment for super block.`)}`)
     off()
-    await commentForSingleBlockByNodeId(superBlockId, superBlock)
+    await commentForSingleBlockByNodeId(superBlockId)
   }, 20))
 }
 
 // 对单个块进行评论
-const commentForSingleBlockByNodeId = async (nodeId: string, adjustTarget: HTMLElement) => {
+const commentForSingleBlockByNodeId = async (nodeId: string) => {
   const sqlStmt = `select * from blocks where id = '${nodeId}'`
   const mdRes = await sql(sqlStmt) as any[]
 
@@ -544,10 +441,6 @@ const commentForSingleBlockByNodeId = async (nodeId: string, adjustTarget: HTMLE
     blockContent,
     blockMarkdown,
   })
-
-  if (adjustTarget) {
-    recordAdjustCommentModalTargetElement(adjustTarget)
-  }
 }
 
 const commentForInlineText = async () => {
@@ -628,10 +521,6 @@ const commentForInlineText = async () => {
     protyle?.toolbar?.setInlineMark(protyle, enCommentId, 'range')
   }
 
-  const firstComment = document.querySelector(`[data-type~="${enCommentId}"]`)
-  if (firstComment) {
-    recordAdjustCommentModalTargetElement(firstComment as HTMLElement)
-  }
   if (isReadonly) {
     contentEditableDiv.setAttribute('contenteditable', 'false')
   }
