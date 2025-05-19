@@ -1,9 +1,9 @@
 <template>
   <svg
     :style="{
-      fontSize: size,
-      width: size,
-      height: size,
+      fontSize: `${size}px`,
+      width: `${size}px`,
+      height: `${size}px`,
       color: disabled ? 'var(--b3-empty-color)' : undefined,
     }"
     class="enSyIcon"
