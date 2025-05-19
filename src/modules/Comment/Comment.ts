@@ -2,9 +2,9 @@ import {
   appendMDToBlockAndGetBlockId,
   flushTransactions,
   getBlockInfo,
-  getBlocksIndexes,
+  getChildBlocks,
   insertBlock,
-  sql,
+  sql
 } from '@/api'
 import { enI18n } from '@/i18n'
 import { appendBlockIntoDailyNote } from '@/modules/DailyNote/DailyNote'
@@ -358,28 +358,15 @@ export const createCommentInto = async (
   let commentNodeId = null
   if (isCreateInfoCurrentDoc) {
     // 这里的 appendCommentToBlockId 是批注容器块 id
-    // 也就是 ## 批注
-    // 但是由于 append 标题，是在标题下方，需要重新处理一下
+    const childBlocks = await getChildBlocks(appendCommentToBlockId)
+    if (childBlocks.length) {
+      const lastChild = childBlocks[childBlocks.length - 1]
 
-    let childBlockIds = await sql(`
-      select
-        id
-      from
-        blocks
-      where
-        parent_id = '${appendCommentToBlockId}'
-      `)
-
-    childBlockIds = childBlockIds.map((i) => i.id)
-    if (childBlockIds.length) {
-      const indexes = await getBlocksIndexes(childBlockIds)
-      const maxIndex = Math.max(...Object.values(indexes))
-      const maxIndexBlockId = Object.keys(indexes).find((i) => indexes[i] === maxIndex)
       const res = await insertBlock(
         'markdown',
         commentMd,
         undefined,
-        maxIndexBlockId,
+        lastChild.id,
       )
       commentNodeId = res[0]?.doOperations[0]?.id
     } else {
