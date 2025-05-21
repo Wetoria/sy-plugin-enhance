@@ -36,16 +36,9 @@
       <!-- TODO -->
       <EnModuleWhiteBoard />
 
-      <!-- 仅移动端 -->
-      <template v-if="plugin.isMobile">
-        <EnPWA />
-        <EnMobileNav />
 
-      </template>
+      <EnPWA />
 
-      <!-- 仅桌面端 -->
-      <template v-else>
-      </template>
     </template>
   </ModuleDataProvider>
 </template>
@@ -59,7 +52,6 @@ import EnModuleComment from '@/modules/Comment/EnModuleComment.vue'
 import EnModuleDailyNote from '@/modules/DailyNote/EnModuleDailyNote.vue'
 import EnFont from '@/modules/EnFontStyle/EnFont.vue'
 import EnFormatBrush from '@/modules/EnFormatBrush/EnFormatBrush.vue'
-import EnMobileNav from '@/modules/EnMobileNav.vue'
 import EnIcons from '@/modules/EnModuleControl/EnIcons.vue'
 import ModuleDataProvider from '@/modules/EnModuleControl/ModuleDataProvider.vue'
 import EnOthers from '@/modules/EnOthers.vue'

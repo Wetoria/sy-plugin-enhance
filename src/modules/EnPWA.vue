@@ -1,6 +1,6 @@
 <template>
   <Teleport
-    v-if="moduleOptions.enabled"
+    v-if="plugin.isMobile && globalWindowData.isStandalone && moduleOptions.enabled"
     to="html"
     disabled
   >
@@ -20,8 +20,8 @@
     </div>
   </Teleport>
   <EnSettingsTeleportModule
-    :name="moduleOptions.moduleName"
-    :display="moduleOptions.moduleDisplayName"
+    :name="EN_MODULE_LIST.PWA"
+    :display="EN_CONSTANTS.PWA_DISPLAY"
     :module="module"
   >
     <EnSettingsItem mode="vertical">
@@ -52,6 +52,22 @@
         />
       </template>
     </EnSettingsItem>
+    <EnSettingsItem>
+      <div>
+        启用思源工具栏适配
+      </div>
+      <template #desc>
+        <div>
+          启用后，可解决一些情况下思源移动端底部工具栏不出现的问题。
+        </div>
+        <div>
+          但也会在一些情况下，造成工具栏 + 菜单不能正常使用。
+        </div>
+      </template>
+      <template #opt>
+        <a-switch v-model="moduleOptions.enableSyToolbarFit" />
+      </template>
+    </EnSettingsItem>
   </EnSettingsTeleportModule>
 </template>
 
@@ -60,6 +76,7 @@ import { usePlugin } from '@/main'
 import {
   injectGlobalWindowData,
   useModule,
+  watchConfigEnableStatus,
 } from '@/modules/EnModuleControl/ModuleProvide'
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
 import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue'
@@ -84,6 +101,8 @@ const globalWindowData = injectGlobalWindowData()
 interface ISettingModuleOptions extends EnModule {
   statusBarHeight: number
   toolBarHeight: number
+
+  enableSyToolbarFit: boolean
 }
 
 const {
@@ -97,6 +116,8 @@ const {
 
     statusBarHeight: 56,
     toolBarHeight: 30,
+
+    enableSyToolbarFit: false,
   },
 })
 // #endregion 基本的模块配置
@@ -141,7 +162,10 @@ onMounted(() => {
   })
 })
 
-onViewportChange((newViewport) => {
+const viewportChangeCallback = (newViewport) => {
+  if (!plugin.isMobile) {
+    return
+  }
   if (newViewport.height != window.innerHeight) {
     // @ts-expect-error keyboardToolbar
     window.keyboardToolbar.style.top = `${newViewport.offsetTop + newViewport.height - 42}px`
@@ -149,7 +173,25 @@ onViewportChange((newViewport) => {
     // @ts-expect-error keyboardToolbar
     window.keyboardToolbar.style.top = 'unset'
   }
-})
+}
+
+let unwatchViewportChange = null
+if (plugin.isMobile) {
+  unwatchViewportChange = onViewportChange(viewportChangeCallback)
+}
+
+watchConfigEnableStatus(
+  () => moduleOptions.value.enableSyToolbarFit,
+  () => {
+    if (!plugin.isMobile) {
+      return
+    }
+    unwatchViewportChange = onViewportChange(viewportChangeCallback)
+    return () => {
+      unwatchViewportChange?.()
+    }
+  },
+)
 </script>
 
 <script lang="ts">
@@ -201,7 +243,7 @@ export function useViewport() {
 }
 export function onViewportChange(cb: (newViewport: any, oldViewport: any) => void) {
   useViewport()
-  watch(viewportRef, (newVal, oldVal) => {
+  return watch(viewportRef, (newVal, oldVal) => {
     cb(newVal, oldVal)
   }, {
     deep: true,
