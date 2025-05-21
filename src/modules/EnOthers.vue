@@ -78,6 +78,14 @@
 
     <EnSettingsItem>
       <div>
+        启用移动端导航栏
+      </div>
+      <template #opt>
+        <a-switch v-model="moduleOptions.enableMobileNav" />
+      </template>
+    </EnSettingsItem>
+    <!-- <EnSettingsItem>
+      <div>
         启用分栏宽度调整滑杆
       </div>
       <template #desc>
@@ -88,21 +96,22 @@
       <template #opt>
         <a-switch v-model="moduleOptions.enableSuperBlockWidthResizer" />
       </template>
-    </EnSettingsItem>
+    </EnSettingsItem> -->
   </EnSettingsTeleportModule>
-  <EnSuperBlockWidthResizer v-if="moduleOptions.enableSuperBlockWidthResizer" />
+  <!-- <EnSuperBlockWidthResizer v-if="moduleOptions.enableSuperBlockWidthResizer" /> -->
+  <EnMobileNav v-if="plugin.isMobile && moduleOptions.enableMobileNav" />
 </template>
 
 
 
 <script setup lang="ts">
 import { usePlugin } from '@/main'
+import EnMobileNav from '@/modules/EnMobileNav.vue'
 import {
   useModule,
   watchConfigChanged,
   watchConfigEnableStatus,
 } from '@/modules/EnModuleControl/ModuleProvide'
-import EnSuperBlockWidthResizer from '@/modules/EnSuperBlockWidthResizer.vue'
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
 import {
   moduleEnableStatusSwitcher,
@@ -125,6 +134,8 @@ interface ISettingModuleOptions extends EnModule {
   defaultImageWidth: number
   enableDailyNoteFirstBlockBg: boolean
 
+  enableMobileNav: boolean
+
   enableSuperBlockWidthResizer: boolean
 }
 
@@ -144,6 +155,8 @@ const {
     defaultImageWidth: 50,
     enableDailyNoteFirstBlockBg: false,
     enableSuperBlockWidthResizer: false,
+
+    enableMobileNav: false,
   },
 })
 
