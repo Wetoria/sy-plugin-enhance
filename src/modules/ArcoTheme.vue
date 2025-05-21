@@ -44,5 +44,10 @@ html {
   svg.arco-icon {
     fill: none;
   }
+
+  .arco-modal {
+    max-width: 90vw;
+    max-height: 90vh;
+  }
 }
 </style>
