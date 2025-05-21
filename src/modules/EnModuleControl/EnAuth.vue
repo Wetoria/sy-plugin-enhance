@@ -128,7 +128,7 @@ const expiration = computed(() => {
 
 // CF 代理
 const server1 = 'https://server.wetoria.vip'
-// CF 代理阿里云走frp
+// 云服务器
 const server2 = 'https://api.wetoria.vip'
 // IPV6 直连
 const ipv6Http = 'http://api.wetoria.cn'
@@ -136,10 +136,10 @@ const ipv6Http = 'http://api.wetoria.cn'
 const ipv6Https = 'https://api.wetoria.cn'
 
 const serverList = [
+  server2,
+  server1,
   ipv6Https,
   ipv6Http,
-  server1,
-  server2,
 ]
 
 const validServer = ref('')

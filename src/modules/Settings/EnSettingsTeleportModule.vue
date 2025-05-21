@@ -83,6 +83,8 @@ const props = defineProps<{
 
   noAuthMask?: boolean
   authLevel?: number | string
+
+  manual?: boolean
 }>()
 
 const emit = defineEmits(['moduleEnabled', 'moduleDisabled'])
@@ -153,6 +155,9 @@ const onModuleSwitch = (enabled) => {
     enLog('Module has no boolean options')
     return
   }
+  if (props.manual) {
+    return
+  }
   moduleBooleanOptionKeys.value.forEach((key) => {
     moduleData.value[key] = enabled
   })
@@ -192,6 +197,10 @@ onMounted(() => {
 
     // 如果模块没有子模块，则不需要进行开关控制
     if (!hasSubBooleanOptions.value) {
+      return
+    }
+
+    if (props.manual) {
       return
     }
 
