@@ -23,6 +23,7 @@
     :name="EN_MODULE_LIST.PWA"
     :display="EN_CONSTANTS.PWA_DISPLAY"
     :module="module"
+    manual
   >
     <EnSettingsItem mode="vertical">
       <div>
