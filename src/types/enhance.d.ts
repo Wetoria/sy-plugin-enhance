@@ -92,8 +92,6 @@ interface GlobalData {
   openedNotebookList: Notebook[]
 
   quickNoteMode: Array<EnBlockAppendMode>
-  whiteBoardMode: Array<EnBlockAppendMode>
-
 }
 
 interface GlobalWindowData {
