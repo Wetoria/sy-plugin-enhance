@@ -428,8 +428,8 @@ const {
     autoMergeToSuperBlock: true,
     autoMergeToSuperBlockDelay: 3,
 
-    cardWidthDefault: 345,
-    cardHeightDefault: 185,
+    cardWidthDefault: 260,
+    cardHeightDefault: 64,
 
     backgroundVariant: 'dots',
 
