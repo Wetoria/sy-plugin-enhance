@@ -428,8 +428,8 @@ const {
     autoMergeToSuperBlock: true,
     autoMergeToSuperBlockDelay: 3,
 
-    cardWidthDefault: 345,
-    cardHeightDefault: 185,
+    cardWidthDefault: 260,
+    cardHeightDefault: 64,
 
     backgroundVariant: 'dots',
 
@@ -530,9 +530,15 @@ watch(() => moduleOptions.value.enabled, () => {
 // 获取已打开的笔记本列表
 const globalData = injectGlobalData()
 const openedNotebookList = computed(() => globalData.value.openedNotebookList || [])
-const whiteBoardMode = computed<EnBlockAppendMode[]>(() =>
-  globalData.value.whiteBoardMode || (['All', 'targetBlock', 'targetDoc'] as EnBlockAppendMode[]),
-)
+
+const whiteBoardMode = computed<EnBlockAppendMode[]>(() =>{
+  if (hasAuth.value) {
+    return [
+      'currentDoc',
+    ]
+  }
+  return []
+})
 
 // 跳转到目标文档
 const openTargetDoc = () => {

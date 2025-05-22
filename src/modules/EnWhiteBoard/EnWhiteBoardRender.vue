@@ -456,7 +456,6 @@
 
 <script setup lang="ts">
 import { request } from '@/api'
-import { getNewDailyNoteBlockId } from '@/modules/DailyNote/DailyNote'
 import EnWhiteBoardViewModeSwitcher from '@/modules/EnWhiteBoard/components/EnWhiteBoardViewModeSwitcher.vue'
 import {
   EnWhiteBoardBlockDomTarget,
@@ -779,13 +778,9 @@ const createNewNode = (x: number, y: number) => {
     // 根据配置决定创建位置
     let blockId = ''
 
-    if (notebookId && targetId) {
-      // 使用目标块模式
-      blockId = await appendBlockInto(notebookId, targetId, '')
-    } else {
-      // 使用日记模式
-      blockId = await getNewDailyNoteBlockId()
-    }
+
+    blockId = await appendBlockInto(notebookId, targetId, '', props.data.nodeId)
+
 
     if (!blockId) {
       console.error('创建节点失败')

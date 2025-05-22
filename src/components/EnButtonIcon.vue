@@ -4,7 +4,10 @@
     @update:popupVisible="onPopupVisibleChange"
   >
     <template #content>
-      <slot name="prompt" />
+      <slot
+        v-if="hasPrompt"
+        name="prompt"
+      />
     </template>
     <a-button
       class="EnButtonIcon"
@@ -22,15 +25,26 @@
 
 <script setup lang="ts">
 import { usePlugin } from '@/main'
-import { ref } from 'vue'
+import {
+  computed,
+  ref,
+  useSlots,
+} from 'vue'
 
 const emit = defineEmits<{
   (e: 'click', event: MouseEvent): void | any
 }>()
 const plugin = usePlugin()
 const tooltipVisible = ref(false)
+const slots = useSlots()
+const hasPrompt = computed(() => {
+  return slots.prompt
+})
 const onPopupVisibleChange = (visible: boolean) => {
   if (plugin.isMobile) {
+    return
+  }
+  if (!hasPrompt.value) {
     return
   }
   tooltipVisible.value = visible
@@ -39,6 +53,7 @@ const onPopupVisibleChange = (visible: boolean) => {
 const onClick = (event: MouseEvent) => {
   emit('click', event)
 }
+
 </script>
 
 <style lang="scss" scoped>

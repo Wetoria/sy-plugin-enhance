@@ -678,10 +678,6 @@ const onHeightChanged = (height: number) => {
         cursor: var(--en-whiteboard-card-cursor);
       }
     }
-
-    :deep(.protyle-wysiwyg) {
-      padding-bottom: 16px !important;
-    }
   }
 
   .ProtyleToolbarArea {

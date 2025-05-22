@@ -639,9 +639,8 @@ const handleCurrentBlockChange = async (operations: IOperation[]) => {
       width: 100%;
       min-height: 100%;
       box-sizing: border-box;
-      padding: 16px 16px !important;
-      padding-right: 8px !important;
-      padding-bottom: 64px !important;
+      padding: 8px !important;
+      padding-right: 0px !important;
     }
   }
 
