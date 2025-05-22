@@ -23,7 +23,12 @@ export function getTransactionFirstBlockId(res: IResdoOperations[]) {
   return transaction?.id
 }
 
-export async function appendBlockInto(notebookId: string, targetId: string, text: string = '') {
+export async function appendBlockInto(
+  notebookId: string,
+  targetId: string,
+  text: string = '',
+  currentBlockId?: string,
+) {
   const isAppendDailyNote = isAppendDailyNoteMode(notebookId)
 
   if (isAppendDailyNote) {
@@ -63,12 +68,17 @@ export async function appendBlockInto(notebookId: string, targetId: string, text
   //   "type": "d",
   //   "updated": "20250116234645"
   // }
-  if (!targetId) {
+  if (!targetId && !currentBlockId) {
     showMessage('叶归｜请配置目标块 ID')
     return
   }
+
+  const isAppendCurrent = notebookId.startsWith('current')
+  const isAppendCurrentDoc = notebookId === 'currentDoc'
+  let appendTargetId = isAppendCurrent ? currentBlockId : targetId
+
   const blockInfoRes = await sql(
-    `select * from blocks where id = '${targetId}'`,
+    `select * from blocks where id = '${appendTargetId}'`,
   )
   const blockInfo = blockInfoRes[0]
   if (!blockInfo) {
@@ -76,14 +86,18 @@ export async function appendBlockInto(notebookId: string, targetId: string, text
     return
   }
 
+  if (isAppendCurrentDoc) {
+    appendTargetId = blockInfo.root_id
+  }
+
   // 超级块、文档、引用块，使用 append 模式
   const needAppend = isSyDocNode(blockInfo) || isSyQuoteNode(blockInfo) || isSySuperBlockNode(blockInfo) || isSyListItemNode(blockInfo)
 
-  if (needAppend) {
+  if (isAppendCurrentDoc || needAppend) {
     const res = await appendBlock(
       'markdown',
       text,
-      targetId,
+      appendTargetId,
     )
     return getTransactionFirstBlockId(res)
   }
@@ -92,7 +106,7 @@ export async function appendBlockInto(notebookId: string, targetId: string, text
     'markdown',
     text,
     undefined,
-    targetId,
+    appendTargetId,
   )
   return getTransactionFirstBlockId(res)
 }
