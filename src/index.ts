@@ -11,6 +11,7 @@ import {
   init,
 } from './main'
 
+import { initDock } from '@/modules/EnLeafPanel/EnLeafPanel'
 import { openSettings } from '@/modules/Settings/Settings'
 import { SyFrontendTypes } from './utils/Siyuan'
 
@@ -59,7 +60,7 @@ export default class EnhancePlugin extends Plugin {
     }
 
     // 初始化叶归侧边栏
-    // initDock(this)
+    initDock(this)
     init(this)
   }
 
