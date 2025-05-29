@@ -92,7 +92,12 @@
     <EnQuickNoteMobile />
   </template>
   <template v-else>
-    <EnQuickNote />
+    <template v-if="plugin.isElectron">
+      <EnQuickNote />
+    </template>
+    <template v-else>
+      <EnQuickNoteModal />
+    </template>
   </template>
 </template>
 
@@ -106,6 +111,7 @@ import {
 } from '@/modules/EnModuleControl/ModuleProvide'
 import EnQuickNote from '@/modules/QuickNote/EnQuickNote.vue'
 import EnQuickNoteMobile from '@/modules/QuickNote/EnQuickNoteMobile.vue'
+import EnQuickNoteModal from '@/modules/QuickNote/EnQuickNoteModal.vue'
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
 import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue'
 import {
