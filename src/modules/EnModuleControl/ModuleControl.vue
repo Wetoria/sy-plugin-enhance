@@ -74,6 +74,9 @@ import {
   EN_CONSTANTS,
 } from '@/utils/Constants'
 import {
+  Notification,
+} from '@arco-design/web-vue'
+import {
   onBeforeUnmount,
   onMounted,
   ref,
@@ -89,6 +92,11 @@ const enableCommand = {
   hotkey: "",
   callback: () => {
     moduleEnabled.value = !moduleEnabled.value
+    Notification.info({
+      title: `叶归`,
+      content: `已${moduleEnabled.value ? '开启' : '关闭'}所有功能`,
+      duration: 1000,
+    })
   },
 }
 onMounted(() => {

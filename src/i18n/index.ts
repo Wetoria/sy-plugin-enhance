@@ -51,7 +51,7 @@ export const enI18n = new Proxy(enI18nConfig, {
     resultMap.set(key, i18nValue)
     return i18nValue
   },
-})
+}) as typeof EnI18nType
 
 const leaves = {
   zh_CN: '叶归',

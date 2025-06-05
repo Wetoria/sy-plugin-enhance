@@ -9,6 +9,10 @@ declare interface I18nType {
   z_base: string
 }
 
+declare const EnI18nType: {
+  [K in keyof I18nType]: string
+}
+
 declare module "*.json" {
   const value: I18nType
   export default value

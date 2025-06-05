@@ -8,6 +8,8 @@ import {
 // 创建全局唯一的同步数据 ws 通道
 export const syncDataSocket = useSyBroadcast('SEP-data-sync-channel', {
   immediate: false,
+  autoReconnect: true,
+  autoClose: false,
 })
 window.syncDataSocket = syncDataSocket
 
