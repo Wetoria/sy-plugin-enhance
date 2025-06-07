@@ -144,97 +144,107 @@
         LifeLog 类型
       </div>
       <template #desc>
-        <div>
-          LifeLog 记录的类型，用于进行醒目提醒。主要分为四大类：
-        </div>
-        <EnDivider />
-        <div>
-          <a-space>
-            <div
-              :style="{
-                color: moduleOptions.lifelogTypes.fixed.baseColor,
-              }"
-            >
-              固定
-            </div>
-            <EnColorPicker
-              v-model="moduleOptions.lifelogTypes.fixed.baseColor"
-              type="bgColor"
-            />
-          </a-space>
-        </div>
-        <div>
-          必须要做的事情。比如吃饭、睡觉。
-        </div>
-        <EnLifeLogSettingTypeItem
-          :typeItem="moduleOptions.lifelogTypes.fixed"
-        />
-        <EnDivider />
-        <div>
-          <a-space>
-            <div
-              :style="{
-                color: moduleOptions.lifelogTypes.growth.baseColor,
-              }"
-            >
-              成长
-            </div>
-            <EnColorPicker
-              v-model="moduleOptions.lifelogTypes.growth.baseColor"
-              type="bgColor"
-            />
-          </a-space>
-        </div>
-        <div>
-          为个人成长而做的事情。比如学习、阅读、事业。
-        </div>
-        <EnLifeLogSettingTypeItem
-          :typeItem="moduleOptions.lifelogTypes.growth"
-        />
-        <EnDivider />
-        <div>
-          <a-space>
-            <div
-              :style="{
-                color: moduleOptions.lifelogTypes.work.baseColor,
-              }"
-            >
-              成长
-            </div>
-            <EnColorPicker
-              v-model="moduleOptions.lifelogTypes.work.baseColor"
-              type="bgColor"
-            />
-          </a-space>
-        </div>
-        <div>
-          为了生活不得不做的。比如工作。（注：个人事业不应归类于此）
-        </div>
-        <EnLifeLogSettingTypeItem
-          :typeItem="moduleOptions.lifelogTypes.work"
-        />
-        <EnDivider />
-        <div>
-          <a-space>
-            <div
-              :style="{
-                color: moduleOptions.lifelogTypes.waste.baseColor,
-              }"
-            >
-              荒废
-            </div>
-            <EnColorPicker
-              v-model="moduleOptions.lifelogTypes.waste.baseColor"
-              type="bgColor"
-            />
-          </a-space>
-        </div>
-        <div>
-          与成长无关的事情。不能单纯的将娱乐活动归于此类，比如有的人打游戏就是工作。
-        </div>
-        <EnLifeLogSettingTypeItem
-          :typeItem="moduleOptions.lifelogTypes.waste"
-        />
+        <template v-if="!moduleOptions.lifelogTypes">
+          <div>
+            未设置 LifeLog 类型，
+            <a-button @click="setDefaultLifelogTypes">
+              设置默认类型
+            </a-button>
+          </div>
+        </template>
+        <template v-else>
+          <div>
+            LifeLog 记录的类型，用于进行醒目提醒。主要分为四大类：
+          </div>
+          <EnDivider />
+          <div>
+            <a-space>
+              <div
+                :style="{
+                  color: moduleOptions.lifelogTypes.fixed.baseColor,
+                }"
+              >
+                固定
+              </div>
+              <EnColorPicker
+                v-model="moduleOptions.lifelogTypes.fixed.baseColor"
+                type="bgColor"
+              />
+            </a-space>
+          </div>
+          <div>
+            必须要做的事情。比如吃饭、睡觉。
+          </div>
+          <EnLifeLogSettingTypeItem
+            :typeItem="moduleOptions.lifelogTypes.fixed"
+          />
+          <EnDivider />
+          <div>
+            <a-space>
+              <div
+                :style="{
+                  color: moduleOptions.lifelogTypes.growth.baseColor,
+                }"
+              >
+                成长
+              </div>
+              <EnColorPicker
+                v-model="moduleOptions.lifelogTypes.growth.baseColor"
+                type="bgColor"
+              />
+            </a-space>
+          </div>
+          <div>
+            为个人成长而做的事情。比如学习、阅读、事业。
+          </div>
+          <EnLifeLogSettingTypeItem
+            :typeItem="moduleOptions.lifelogTypes.growth"
+          />
+          <EnDivider />
+          <div>
+            <a-space>
+              <div
+                :style="{
+                  color: moduleOptions.lifelogTypes.work.baseColor,
+                }"
+              >
+                成长
+              </div>
+              <EnColorPicker
+                v-model="moduleOptions.lifelogTypes.work.baseColor"
+                type="bgColor"
+              />
+            </a-space>
+          </div>
+          <div>
+            为了生活不得不做的。比如工作。（注：个人事业不应归类于此）
+          </div>
+          <EnLifeLogSettingTypeItem
+            :typeItem="moduleOptions.lifelogTypes.work"
+          />
+          <EnDivider />
+          <div>
+            <a-space>
+              <div
+                :style="{
+                  color: moduleOptions.lifelogTypes.waste.baseColor,
+                }"
+              >
+                荒废
+              </div>
+              <EnColorPicker
+                v-model="moduleOptions.lifelogTypes.waste.baseColor"
+                type="bgColor"
+              />
+            </a-space>
+          </div>
+          <div>
+            与成长无关的事情。不能单纯的将娱乐活动归于此类，比如有的人打游戏就是工作。
+          </div>
+          <EnLifeLogSettingTypeItem
+            :typeItem="moduleOptions.lifelogTypes.waste"
+          />
+        </template>
       </template>
     </EnSettingsItem>
 
@@ -293,7 +303,6 @@ import {
   onBeforeUnmount,
   onMounted,
   ref,
-  watchEffect,
 } from 'vue'
 import EnSettingsItem from '../../modules/Settings/EnSettingsItem.vue'
 import EnSettingsTeleportModule from '../../modules/Settings/EnSettingsTeleportModule.vue'
@@ -324,102 +333,104 @@ const {
 
 const useLifeLogDataControl = computed(() => moduleOptions.value.showLifeLogTimelineAtProtyleLeft)
 
+const setDefaultLifelogTypes = () => {
+  moduleOptions.value.lifelogTypes = {
+    fixed: {
+      baseColor: '#D3D3D3',
+      items: [
+        {
+          type: '固',
+          color: '#D3D3D3',
+        },
+        {
+          type: '固定',
+          color: '#D3D3D3',
+        },
+      ],
+    },
+    growth: {
+      baseColor: '#90EE90',
+      items: [
+        {
+          type: '增',
+          color: '#90EE90',
+        },
+        {
+          type: '学习',
+          color: '#90EE90',
+        },
+        {
+          type: '阅读',
+          color: '#90EE90',
+        },
+        {
+          type: '事业',
+          color: '#90EE90',
+        },
+      ],
+    },
+    work: {
+      baseColor: '#FFD700',
+      items: [
+        {
+          type: '工作',
+          color: '#FFD700',
+        },
+      ],
+    },
+    waste: {
+      baseColor: '#FF0000',
+      items: [
+        {
+          type: '荒废',
+          color: '#FF0000',
+        },
+        {
+          type: '废',
+          color: '#FF0000',
+        },
+        {
+          type: '娱乐',
+          color: '#FF0000',
+        },
+        {
+          type: '玩',
+          color: '#FF0000',
+        },
+      ],
+    },
+    other: {
+      baseColor: 'rgb(71, 255, 248)',
+      items: [
+        {
+          type: '家庭',
+          color: 'rgb(71, 255, 248)',
+        },
+        {
+          type: '家',
+          color: 'rgb(71, 255, 248)',
+        },
+        {
+          type: '朋友',
+          color: 'rgb(156, 123, 85)',
+        },
+        {
+          type: '友',
+          color: 'rgb(156, 123, 85)',
+        },
+      ],
+    },
+  }
+}
+
 // 重置模块数据后为 null，设置默认的 lifelogTypes
 // 不使用默认值的方式，是为了防止每次修改后，如果没有下面列出的类型，会自动添加。
-watchEffect(() => {
-  if (!moduleOptions.value.lifelogTypes) {
-    moduleOptions.value.lifelogTypes = {
-      fixed: {
-        baseColor: '#D3D3D3',
-        items: [
-          {
-            type: '固',
-            color: '#D3D3D3',
-          },
-          {
-            type: '固定',
-            color: '#D3D3D3',
-          },
-        ],
-      },
-      growth: {
-        baseColor: '#90EE90',
-        items: [
-          {
-            type: '增',
-            color: '#90EE90',
-          },
-          {
-            type: '学习',
-            color: '#90EE90',
-          },
-          {
-            type: '阅读',
-            color: '#90EE90',
-          },
-          {
-            type: '事业',
-            color: '#90EE90',
-          },
-        ],
-      },
-      work: {
-        baseColor: '#FFD700',
-        items: [
-          {
-            type: '工作',
-            color: '#FFD700',
-          },
-        ],
-      },
-      waste: {
-        baseColor: '#FF0000',
-        items: [
-          {
-            type: '荒废',
-            color: '#FF0000',
-          },
-          {
-            type: '废',
-            color: '#FF0000',
-          },
-          {
-            type: '娱乐',
-            color: '#FF0000',
-          },
-          {
-            type: '玩',
-            color: '#FF0000',
-          },
-        ],
-      },
-      other: {
-        baseColor: 'rgb(71, 255, 248)',
-        items: [
-          {
-            type: '家庭',
-            color: 'rgb(71, 255, 248)',
-          },
-          {
-            type: '家',
-            color: 'rgb(71, 255, 248)',
-          },
-          {
-            type: '朋友',
-            color: 'rgb(156, 123, 85)',
-          },
-          {
-            type: '友',
-            color: 'rgb(156, 123, 85)',
-          },
-        ],
-      },
-    }
-  }
-})
 // #endregion 基本的模块配置
 
 const flatLifelogTypes = computed(() => {
+  if (!moduleOptions.value.lifelogTypes) {
+    return []
+  }
   return [
     ...moduleOptions.value.lifelogTypes.fixed.items,
     ...moduleOptions.value.lifelogTypes.growth.items,
