@@ -1,20 +1,5 @@
 <template>
   <div>
-    <EnWindow
-      ref="enWinRef"
-      :windowTitle="winTitle"
-      createImmediate
-    >
-      <div
-        class="EnEVAWindowContainer"
-      >
-        <div
-          ref="EnEVAWinRef"
-        >
-
-        </div>
-      </div>
-    </EnWindow>
     <Teleport
       v-for="videoOrAudioAttrEl of videoAndAudioList"
       :key="videoOrAudioAttrEl.nodeId"
@@ -29,7 +14,6 @@
 
 <script setup lang="ts">
 import { usePlugin } from '@/main'
-import EnWindow, { isInWindow } from '@/modules/EnWindow.vue'
 import { debounce } from '@/utils'
 import { addCommand } from '@/utils/Commands'
 import { queryAllByDom } from '@/utils/DOM'
@@ -131,9 +115,6 @@ const recordVideoAndAudio = (video: HTMLVideoElement | HTMLAudioElement) => {
   }
   recordVideoOrAudioRef(video)
 }
-
-const waitKey = 'enWaitToSetTime'
-let waitToSetTime = localStorage.getItem(waitKey)
 
 const handler = () => {
   const videos = queryAllByDom(document.body, `video`)
@@ -450,55 +431,11 @@ const disable = () => {
 }
 
 
-const winTitle = 'EnVideoAndVudio'
-const inWindow = ref(isInWindow(winTitle))
-const enWinRef = ref()
-
-const protyleRef = ref<Protyle>()
-const EnEVAWinRef = ref()
-const initProtyle = async () => {
-  if (!inWindow.value) {
-    return
-  }
-  waitToSetTime = localStorage.getItem(waitKey)
-  if (!waitToSetTime) {
-    return
-  }
-
-  const data = JSON.parse(waitToSetTime)
-
-  if (protyleRef.value) {
-    protyleRef.value.destroy()
-  }
-
-  protyleRef.value = new Protyle(plugin.app, EnEVAWinRef.value, {
-    blockId: data.bid,
-    render: {
-      breadcrumb: false,
-    },
-    after(protyle) {
-      setVideoTime(data)
-      localStorage.removeItem(waitKey)
-      const contentElement = protyle.protyle.contentElement
-      contentElement.classList.toggle('EnDisableProtyleEnhance', true)
-      protyle.protyle.element.classList.toggle('EnEVAProtyle', true)
-    },
-  })
-}
 onMounted(() => {
   enable()
 })
 onBeforeUnmount(() => {
   disable()
-})
-onMounted(() => {
-  if (inWindow.value) {
-    const winRef = enWinRef.value.getWin()
-    winRef.on('show', () => {
-      initProtyle()
-    })
-  } else {
-  }
 })
 </script>
 
