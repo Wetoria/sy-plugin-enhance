@@ -166,6 +166,7 @@ export function markLifeLogBlock() {
     for (const opt of validParagraphList) {
       const blockAttrs = blockAttrsRes[opt.id]
 
+      // TODO 支持英文冒号
       let colonIndex = opt.contentWithoutTime.indexOf('：')
       colonIndex = colonIndex < 0 ? opt.contentWithoutTime.length : colonIndex
 

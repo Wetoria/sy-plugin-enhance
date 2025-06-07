@@ -11,7 +11,10 @@
     <div class="EnLifeLogCheckerContainer">
       <div v-if="onlyOneDateMatchedParagraphList.length">
         <div>
-          <a-typography-text bold type="primary">
+          <a-typography-text
+            bold
+            type="primary"
+          >
             可直接转换的块
           </a-typography-text>
         </div>
@@ -21,14 +24,17 @@
           class="row flexAlignCenter"
         >
           <icon-check-circle style="color: rgb(var(--success-6))" />
-          <span>{{ `${item.date} ${item.content}` }}</span>
+          <span>{{ `${item.date} ${item.markdown}` }}</span>
           <EnBlockJumper :block-id="item.id" />
         </div>
 
       </div>
       <div v-if="multipleDateMatchedParagraphList.length">
         <div>
-          <a-typography-text bold type="primary">
+          <a-typography-text
+            bold
+            type="primary"
+          >
             需要确认的块
           </a-typography-text>
         </div>
@@ -41,7 +47,7 @@
         >
           <div class="row flexAlignCenter">
             <icon-question-circle style="color: rgb(var(--orange-6))" />
-            <span>{{ `${item.content}` }}</span>
+            <span>{{ `${item.markdown}` }}</span>
             <EnBlockJumper :block-id="item.id" />
           </div>
 
@@ -49,7 +55,10 @@
             v-for="date in props.data.docDateMap[item.root_id]"
             :key="date"
           >
-            <a-radio v-model="item.date" :value="date">
+            <a-radio
+              v-model="item.date"
+              :value="date"
+            >
               {{ date }}
             </a-radio>
           </div>
@@ -57,7 +66,10 @@
       </div>
       <div>
         <div>
-          <a-typography-text bold type="primary">
+          <a-typography-text
+            bold
+            type="primary"
+          >
             无法转换的块
           </a-typography-text>
         </div>
@@ -75,7 +87,10 @@
         </div>
       </div>
       <div>
-        <a-button type="primary" @click="startConvert">
+        <a-button
+          type="primary"
+          @click="startConvert"
+        >
           开始转换
         </a-button>
       </div>
@@ -86,7 +101,10 @@
 <script setup lang="ts">
 import EnBlockJumper from '@/components/EnBlockJumper.vue'
 import EnModal from '@/components/EnModal.vue'
-import { convertLifeLogParagraph, lifelogKeyMap } from '@/modules/LifeLog/LifeLog'
+import {
+  convertLifeLogParagraph,
+  lifelogKeyMap,
+} from '@/modules/LifeLog/LifeLog'
 import { Message } from '@arco-design/web-vue'
 import dayjs from 'dayjs'
 import { computed } from 'vue'
@@ -99,13 +117,15 @@ const visible = defineModel<boolean>('visible')
 
 const canConvertParagraphList = computed(() => {
   return props.data?.paragraphList.filter((i) => {
-    return i.content === i.markdown
+    const contentStart = i.content.split('：')[0]
+    const markdownStart = i.markdown.split('：')[0]
+    return contentStart === markdownStart
   })
 })
 
 const cannotConvertParagraphList = computed(() => {
   return props.data?.paragraphList.filter((i) => {
-    return i.content !== i.markdown
+    return !canConvertParagraphList.value.some((j) => i == j)
   })
 })
 
