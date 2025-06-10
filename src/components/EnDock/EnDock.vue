@@ -51,14 +51,18 @@
 </template>
 
 <script setup lang="ts">
-import { EnDockMap, EnDockType, getEnDockType } from '@/components/EnDock/EnDock'
+import {
+  EnDockMap,
+  EnDockType,
+  getEnDockType,
+} from '@/components/EnDock/EnDock'
 import EnDrawer from '@/components/EnDrawer.vue'
 import { usePlugin } from '@/main'
 import EnSettingsItemAreaHeading from '@/modules/Settings/EnSettingsItemAreaHeading.vue'
 import {
   computed,
   ref,
-  watch
+  watch,
 } from 'vue'
 
 const props = defineProps<{
@@ -92,10 +96,10 @@ const dockType = computed(() => {
 
 const dock = EnDockMap[getEnDockType(props.type)]
 const dockOpen = computed(() => {
-  return dock.value?.open
+  return dock?.value?.open
 })
 const dockElement = computed(() => {
-  return dock.value?.custom?.element
+  return dock?.value?.custom?.element
 })
 
 // #endregion 👆 从 DockManger 里取出相关对象
@@ -120,7 +124,7 @@ watch(dockOpen, () => {
   updateByDockManager = true
   open.value = dockOpen.value
 }, {
-  immediate: true
+  immediate: true,
 })
 
 

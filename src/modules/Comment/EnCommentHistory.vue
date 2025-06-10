@@ -144,7 +144,7 @@ import {
   onBeforeUnmount,
   onMounted,
   ref,
-  watchEffect
+  watchEffect,
 } from 'vue'
 
 const commentInfoList = injectCommentInfoList()
@@ -383,7 +383,7 @@ const onClickComment = async (event: MouseEvent) => {
   isLoading.value = false
   setTimeout(() => {
     scrollToFirstSelectedCard(idListWhichHasComment[0].commentId)
-  }, 0)
+  }, 500)
 }
 
 const scrollToFirstSelectedCard = (commentId: string) => {
