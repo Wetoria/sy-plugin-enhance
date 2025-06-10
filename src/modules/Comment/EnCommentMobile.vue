@@ -145,7 +145,7 @@ import {
   flushTransactions,
   getBlockAttrs,
   setBlockAttrs,
-  sql
+  sql,
 } from '@/api'
 import EnDrawer from '@/components/EnDrawer.vue'
 import EnModal from '@/components/EnModal.vue'
@@ -159,10 +159,10 @@ import {
 } from '@/modules/Comment/Comment'
 import { EnNavMoreRef } from '@/modules/EnMobileNav.vue'
 import {
-  useModule
+  useModule,
 } from '@/modules/EnModuleControl/ModuleProvide'
 import {
-  debounce
+  debounce,
 } from '@/utils'
 import {
   EN_MODULE_LIST,
@@ -178,7 +178,7 @@ import { getColorStringWarn } from '@/utils/Log'
 import {
   getClosetSiyuanNodeByDom,
   SiyuanSelectClassName,
-  useCurrentProtyle
+  useCurrentProtyle,
 } from '@/utils/Siyuan'
 import { Notification } from '@arco-design/web-vue'
 import dayjs from 'dayjs'
@@ -191,7 +191,7 @@ import {
   onBeforeUnmount,
   onMounted,
   ref,
-  watchEffect
+  watchEffect,
 } from 'vue'
 
 const currentProtyle = useCurrentProtyle()
@@ -223,9 +223,13 @@ const recordCurrentBlock = (event: MouseEvent) => {
   adjustBtnsPosition()
 }
 
-const onSwitchProtyle = (event: any) => {
+const clearCurrentInfo = () => {
   lastClickedElement.value = null
   currentClickedElement.value = null
+}
+
+const onSwitchProtyle = () => {
+  clearCurrentInfo()
 }
 
 let offSwitchProtyle = null
@@ -238,6 +242,7 @@ const enable = (protyleContent: HTMLDivElement) => {
 }
 
 const disable = (protyleContent: HTMLDivElement) => {
+  clearCurrentInfo()
   document.removeEventListener('click', recordCurrentBlock)
 
   offSwitchProtyle?.()
