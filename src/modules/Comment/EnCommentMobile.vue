@@ -492,7 +492,7 @@ const startComment = async () => {
 
   // 如果选中了 1 个 Block
   if (selectedNodes.length === 1) {
-    const block = selectedNodes[0] as HTMLElement
+    const block = getClosetSiyuanNodeByDom(selectedNodes[0] as HTMLElement)
     commentForSingleBlockByNodeId(block.dataset.nodeId)
     return
   }
