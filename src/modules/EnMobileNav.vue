@@ -91,6 +91,17 @@
                   </div>
                 </a-doption>
                 <a-doption
+                  @click="refreshCurrentProtyle"
+                >
+                  <div class="flexAlignCenter enGap">
+                    <SyIcon
+                      name="iconRefresh"
+                      size="18"
+                    />
+                    刷新当前文档
+                  </div>
+                </a-doption>
+                <a-doption
                   @click="jumpToPrevDailyNote()"
                 >
                   <div class="flexAlignCenter enGap">
@@ -138,6 +149,7 @@
 import EnIconDragon from '@/components/EnIconDragon.vue'
 import EnIconLeaf2 from '@/components/EnIconLeaf2.vue'
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
+import { useProtyleList } from '@/global/ProtyleList'
 import { usePlugin } from '@/main'
 import {
   jumpToNextDailyNote,
@@ -155,6 +167,8 @@ import {
 } from '@/utils/DOM'
 import { enEventBus } from '@/utils/EnEventBus'
 import { useDocHistory } from '@/utils/History'
+import { useCurrentProtyle } from '@/utils/Siyuan'
+import { Notification } from '@arco-design/web-vue'
 import {
   computed,
   onBeforeMount,
@@ -259,6 +273,22 @@ const openSiyuanSettings = () => {
   if (toolbarMore) {
     toolbarMore.dispatchEvent(new MouseEvent('click'))
   }
+}
+
+const currentProtyle = useCurrentProtyle()
+const protyleList = useProtyleList()
+const refreshCurrentProtyle = () => {
+  const mobileEditorEl = document.getElementById('editor')
+  const mobileProtyle = protyleList.value.find((item) => item.protyleEl === mobileEditorEl)
+  if (mobileProtyle) {
+    mobileProtyle.protyle.getInstance().reload(false)
+    return
+  }
+  if (!currentProtyle.value) {
+    Notification.info('叶归｜请先点击当前文档')
+    return
+  }
+  currentProtyle.value.getInstance().reload(false)
 }
 
 

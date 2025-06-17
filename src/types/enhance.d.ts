@@ -71,6 +71,7 @@ interface IProtyleObserverItem {
   // 插件内部标识，用于 v-for 的 key
   enLoopKey: string
 
+  protyle?: import('siyuan').IProtyle
   protyleBlockId: string
   protyleEl: HTMLElement
   protyleContentEl: HTMLElement

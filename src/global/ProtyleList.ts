@@ -44,6 +44,7 @@ export const recordProtyleItemByProtyle = (protyle: IProtyle) => {
 
   const protyleItem: IProtyleObserverItem = {
     enLoopKey: generateUUIDWithTimestamp(),
+    protyle,
     protyleBlockId: protyle.block.id,
     protyleEl: protyle.element,
     protyleContentEl: protyle.contentElement,
