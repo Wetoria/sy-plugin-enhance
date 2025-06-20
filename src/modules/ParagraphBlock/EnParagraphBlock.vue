@@ -328,18 +328,6 @@ const paragraphOnlyLinkList = ref<HTMLDivElement[]>([])
 // 在组件初始化时直接提供依赖（setup 阶段），而不是在 watch 回调中
 provideParagraphLinks(paragraphOnlyLinkList)
 
-watchConfigEnableStatus(
-  () => useCustomCard.value,
-  () => {
-    handler()
-
-    return () => {
-      // 如果禁用了链接卡片功能，清空列表
-      paragraphOnlyLinkList.value = []
-    }
-  },
-)
-
 const getParagraphOnlyLinkList = (paragraphList: HTMLDivElement[]) => {
   const targetTypeList = [
     SyNodeTypes.a,
@@ -385,6 +373,18 @@ const handler = debounce(() => {
   }
 
 }, 200)
+
+watchConfigEnableStatus(
+  () => useCustomCard.value,
+  () => {
+    handler()
+
+    return () => {
+      // 如果禁用了链接卡片功能，清空列表
+      paragraphOnlyLinkList.value = []
+    }
+  },
+)
 
 const {
   observe,
