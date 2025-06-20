@@ -23,6 +23,11 @@ const props = defineProps<{
   title: string
   // 页签的图标
   icon?: string
+  // 页签的默认位置
+  // 不传入时，默认当前区域打开
+  // right，右侧分屏打开
+  // bottom，底部分屏打开
+  defaultPosition?: 'right' | 'bottom'
 }>()
 
 const emits = defineEmits<{
@@ -62,7 +67,7 @@ const open = (options: {
   position?: 'right' | 'bottom'
 } = {}) => {
   const {
-    position,
+    position = props.defaultPosition,
   } = options
   plugin.addTab({
     type: `_${props.name}`,
@@ -109,6 +114,13 @@ const open = (options: {
 const close = () => {
   openedTabRef.value?.close()
 }
+
+// 可在父组件手动调用 open 和 close 方法
+defineExpose({
+  open,
+  close,
+})
+
 
 watch(visible, (newVal) => {
   if (newVal) {
