@@ -26,6 +26,7 @@ declare module 'vue' {
     EnProtyleAutoRender: typeof import('./../components/EnProtyleAutoRender.vue')['default']
     EnProtyleCustomArea: typeof import('./../components/EnProtyleCustomArea.vue')['default']
     EnSyEmoji: typeof import('./../components/EnSyEmoji.vue')['default']
+    EnSyTab: typeof import('./../components/EnSyTab.vue')['default']
     EnTagsContainer: typeof import('./../components/EnTagsContainer.vue')['default']
     EnUsageLink: typeof import('./../components/EnUsageLink.vue')['default']
     FixedDocArea: typeof import('./../components/FixedDocArea.vue')['default']
