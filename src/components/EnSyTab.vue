@@ -16,16 +16,26 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue';
 
 
 const props = defineProps<{
+  // 用于区分每一个 tab 的 id
+  // 每一个打开的 tab，都需要一个自己单独的 id
   name: string
+  // 页签的标题
   title: string
+  // 页签的图标
   icon?: string
 }>()
 
 const emits = defineEmits<{
+  // tab 被初始化时触发的事件
+  // 一般不需要使用
   (e: 'init', custom: Custom): void
+  // tab 被打开时触发的事件
   (e: 'opened'): void
+  // tab 被 resize 时触发的事件
   (e: 'resize', custom: Custom): void
+  // tab 被关闭前触发的事件
   (e: 'beforeClose'): void
+  // tab 被关闭时触发的事件
   (e: 'closed'): void
 }>()
 
