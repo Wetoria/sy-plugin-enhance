@@ -80,7 +80,7 @@
                     >
                       <SyIcon name="iconTrashcan" />
                       <template #prompt>
-                        删除
+                        删除批注
                       </template>
                     </EnButtonIcon>
                   </a-popconfirm>
@@ -113,6 +113,76 @@
       </div>
     </div>
   </EnDock>
+  <EnModal
+    id="EnCommentHistoryModal"
+    v-model:visible="historyModalVisible"
+    class="enCommentHistoryContainerModal"
+    modal-class="enCommentHistoryContainer"
+    height="180"
+  >
+    <template #title>
+      <div>
+        叶归｜批注记录
+      </div>
+    </template>
+    <div
+      class="enCommentListContainerContent"
+    >
+      <div class="enCommentListContainerContentHistoryCommentList">
+        <div
+          ref="historyCommentListRef"
+          class="historyCommentList"
+          :style="{
+          }"
+        >
+          <a-card
+            v-for="item of selectedCommentIdList"
+            :key="item.commentBlockId"
+            class="historyCommentListItemCard"
+            :data-en_comment_for_node_id="item.commentForNodeId"
+            :data-en_comment_id="item.commentId"
+          >
+            <div class="historyCommentListItemOperations">
+              <EnBlockJumper
+                :blockId="item.commentForNodeId"
+              />
+              <EnBlockJumper
+                :blockId="item.commentBlockId"
+                style="color: rgb(var(--success-6));"
+              >
+                跳转批注所在文档
+              </EnBlockJumper>
+              <a-popconfirm
+                content="确定删除吗？"
+                position="tr"
+                type="error"
+                @ok="onDeleteComment(item)"
+              >
+                <EnButtonIcon
+                  type="text"
+                  status="danger"
+                >
+                  <SyIcon name="iconTrashcan" />
+                  <template #prompt>
+                    删除批注
+                  </template>
+                </EnButtonIcon>
+              </a-popconfirm>
+            </div>
+            <EnProtyleAutoRender
+              :key="item.commentBlockId"
+              :blockId="item.commentBlockId"
+              :options="{
+                action: [],
+              }"
+              disableEnhance
+            />
+          </a-card>
+        </div>
+      </div>
+    </div>
+
+  </EnModal>
 </template>
 
 <script setup lang="ts">
@@ -144,6 +214,7 @@ import {
   onBeforeUnmount,
   onMounted,
   ref,
+  watch,
   watchEffect,
 } from 'vue'
 
@@ -286,16 +357,20 @@ const selectedCommentIdList = ref<Array<{
   commentBlockId: string
 }>>([])
 
+const historyModalVisible = ref(false)
+
+watch(selectedCommentIdList, () => {
+  if (!selectedCommentIdList.value.length) {
+    historyModalVisible.value = false
+  }
+})
+
 
 const onClickComment = async (event: MouseEvent) => {
   let target = event.target as HTMLElement
 
   const protyleContentElement = (event.target as HTMLElement).closest('.protyle-content')
   if (!protyleContentElement) {
-    return
-  }
-  const isInEditor = protyleList.value.find((i) => i.protyleContentEl === protyleContentElement)?.isEditorProtyle
-  if (!isInEditor) {
     return
   }
 
@@ -378,12 +453,27 @@ const onClickComment = async (event: MouseEvent) => {
   })
 
 
-  popoverVisible.value = true
-
   isLoading.value = false
-  setTimeout(() => {
-    scrollToFirstSelectedCard(idListWhichHasComment[0].commentId)
-  }, 500)
+  // popoverVisible.value = true
+
+  const isInEditor = protyleList.value.find((i) => i.protyleContentEl === protyleContentElement)?.isEditorProtyle
+  if (isInEditor) {
+    // 点击编辑区的文档
+    // 检查 dock 是否打开，如果打开，就进行跳转
+    const timeout = commentListForCurrentProtyle.value?.length ? 200 : 700
+    if (popoverVisible.value) {
+      setTimeout(() => {
+        scrollToFirstSelectedCard(idListWhichHasComment[0].commentId)
+      }, timeout)
+    } else {
+      // 如果没开启，则弹窗显示
+      historyModalVisible.value = true
+    }
+
+  } else {
+    historyModalVisible.value = true
+  }
+
 }
 
 const scrollToFirstSelectedCard = (commentId: string) => {
