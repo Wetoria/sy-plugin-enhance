@@ -1,3 +1,5 @@
+import { configs } from '@/i18n/config'
+
 export enum locales {
   ar_SA = 'ar_SA',
   de_DE = 'de_DE',
@@ -18,7 +20,10 @@ type locale = keyof typeof locales
 export const fallbackLocale = locales.en_US
 
 type localeConfig = Partial<Record<locale, string>>
+
+
 export const enI18nConfig: Record<string, localeConfig> = {}
+Object.assign(enI18nConfig, configs)
 
 const resultMap = new Map<string, string>()
 
@@ -51,16 +56,4 @@ export const enI18n = new Proxy(enI18nConfig, {
     resultMap.set(key, i18nValue)
     return i18nValue
   },
-}) as typeof EnI18nType
-
-const leaves = {
-  zh_CN: '叶归',
-  en_US: 'Fallen Leaves',
-}
-
-const configs = {
-  leaves,
-  pluginName: leaves,
-}
-
-Object.assign(enI18nConfig, configs)
+}) as Record<keyof typeof configs, string>
