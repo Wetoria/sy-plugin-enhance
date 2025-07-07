@@ -269,6 +269,7 @@
 <script setup lang="ts">
 import EnColorPicker from '@/components/EnColorPicker.vue'
 import EnDivider from '@/components/EnDivider.vue'
+import { enI18n } from '@/i18n'
 import { usePlugin } from '@/main'
 import {
   useModule,
@@ -295,6 +296,11 @@ import {
   useRegisterStyle,
 } from '@/utils/DOM'
 import { enEventBus } from '@/utils/EnEventBus'
+import {
+  addSlash,
+  getSlashHtml,
+  removeSlash,
+} from '@/utils/Slash'
 import { Message } from '@arco-design/web-vue'
 import dayjs from 'dayjs'
 import { Protyle } from 'siyuan'
@@ -549,7 +555,7 @@ const insertCurrentTimeSlas = {
     'df now',
     'now',
   ],
-  html: `<div class="b3-list-item__first"><span class="b3-list-item__text">${'叶归｜插入当前时间'}</span></div>`,
+  html: getSlashHtml(enI18n.lifelogInsertCurrentTime),
   id: "enInsertCurrentTime",
   callback(protyle: Protyle) {
     const timestamp = dayjs().format('HH:mm')
@@ -557,10 +563,10 @@ const insertCurrentTimeSlas = {
   },
 }
 onMounted(() => {
-  plugin.protyleSlash.push(insertCurrentTimeSlas)
+  addSlash(insertCurrentTimeSlas)
 })
 onBeforeUnmount(() => {
-  plugin.protyleSlash = plugin.protyleSlash.filter((i) => i.id !== insertCurrentTimeSlas.id)
+  removeSlash(insertCurrentTimeSlas)
 })
 
 

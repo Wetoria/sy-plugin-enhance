@@ -130,6 +130,11 @@ import { debounce } from '@/utils'
 import { EN_MODULE_LIST } from '@/utils/Constants'
 import { queryAllByDom } from '@/utils/DOM'
 import { SyDomNodeTypes } from '@/utils/Siyuan'
+import {
+  addSlash,
+  getSlashHtml,
+  removeSlashById,
+} from '@/utils/Slash'
 import { Protyle } from 'siyuan'
 import {
   computed,
@@ -228,7 +233,7 @@ const slash = {
     'atc',
     "插入模板 - 康奈尔",
   ],
-  html: `<div class="b3-list-item__first"><span class="b3-list-item__text">${'叶归｜插入模板 - 康奈尔'}</span></div>`,
+  html: getSlashHtml('插入模板 - 康奈尔'),
   id: "enTemplateInsertCornell",
   callback(protyle: Protyle) {
     protyle.insert(`{{{row\n{{{col\n{{{row\n线索\n{: style="" }\n{: style="" }\n}}}\n{{{row\n笔记\n{: style="" }\n{: style="" }\n}}}\n}}}\n{{{row\n总结\n{: style="" }\n{: style="" }\n}}}\n}}}\n{: custom-iscornell="true" }`)
@@ -249,13 +254,13 @@ onMounted(() => {
     attributes: true,
   })
 
-  plugin.protyleSlash.push(slash)
+  addSlash(slash)
 })
 onBeforeUnmount(() => {
   observer?.disconnect()
   observer = null
 
-  plugin.protyleSlash = plugin.protyleSlash.filter((i) => i.id !== 'enTemplateInsertCornell')
+  removeSlashById('enTemplateInsertCornell')
 })
 
 
