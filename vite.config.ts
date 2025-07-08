@@ -1,9 +1,9 @@
+/* eslint-disable perfectionist/sort-imports */
 /* eslint-disable node/prefer-global/process */
 import { vitePluginForArco } from "@arco-plugins/vite-vue"
 import vue from "@vitejs/plugin-vue"
 import fg from "fast-glob"
 import minimist from "minimist"
-// eslint-disable-next-line perfectionist/sort-imports
 import { resolve } from "node:path"
 import livereload from "rollup-plugin-livereload"
 import Components from "unplugin-vue-components/vite"
@@ -13,8 +13,24 @@ import {
 } from "vite"
 import { viteStaticCopy } from "vite-plugin-static-copy"
 import zipPack from "vite-plugin-zip-pack"
+import { generateI18nFiles } from "./src/i18n/generate"
 
 const pluginInfo = require("./plugin.json")
+
+
+export function initI18nBeforeCopy() {
+  return {
+    name: 'init-i18n-before-copy',
+    buildStart() {
+      try {
+        // execSync('npx ts-node --esm ./src/i18n/generate.ts', { stdio: 'inherit' })
+        generateI18nFiles()
+      } catch (error) {
+        console.error('Failed to generate i18n files:', error)
+      }
+    },
+  }
+}
 
 export default defineConfig(({
   mode,
@@ -69,6 +85,7 @@ export default defineConfig(({
           'font-family': 'var(--b3-font-family)',
         },
       }),
+      // initI18nBeforeCopy(),
       viteStaticCopy({
         targets: [
           {
@@ -88,9 +105,13 @@ export default defineConfig(({
             dest: "./",
           },
           {
-            src: "./src/i18n/**",
+            src: "./src/i18n/*.json",
             dest: "./i18n/",
           },
+          // {
+          //   src: "./src/i18n/generated/*.json",
+          //   dest: "./i18n/",
+          // },
         ],
       }),
     ],

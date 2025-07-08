@@ -1,4 +1,3 @@
-/* eslint-disable perfectionist/sort-enums */
 export enum EN_CONSTANTS {
   AUTH = 'EnSettingsAuth',
 
