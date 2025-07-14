@@ -126,7 +126,7 @@
       </div>
     </template>
     <div
-      class="enCommentListContainerContent"
+      class="enCommentListContainerContent enCancelShowCommentListDom"
     >
       <div class="enCommentListContainerContentHistoryCommentList">
         <div
@@ -374,8 +374,6 @@ const onClickComment = async (event: MouseEvent) => {
     return
   }
 
-  selectedCommentIdList.value = []
-
   const allCommentNodes = []
   while (target) {
     if (isCancelShowCommentListDom(target)) {
@@ -386,6 +384,8 @@ const onClickComment = async (event: MouseEvent) => {
     }
     target = target.parentElement
   }
+
+  selectedCommentIdList.value = []
 
 
   if (!allCommentNodes.length) {

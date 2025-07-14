@@ -107,6 +107,10 @@ export function removeCommand(command: ICommand) {
     .filter((i) => i.langKey !== command.langKey)
 }
 
+/**
+ * 在模块中添加 Command，在模块卸载时，自动移除 Command
+ * @param command 命令
+ */
 export function addCommandInModule(command: ICommand) {
   onMounted(() => {
     addCommand(command)
