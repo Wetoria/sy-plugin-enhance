@@ -15,6 +15,7 @@ import {
 import Components from "unplugin-vue-components/vite"
 import {
   defineConfig,
+  Plugin,
 } from "vite"
 import { viteStaticCopy } from "vite-plugin-static-copy"
 import zipPack from "vite-plugin-zip-pack"
@@ -35,6 +36,20 @@ export function initI18nBeforeCopy() {
   }
 }
 
+
+function removeScopedStylePlugin(): Plugin {
+  return {
+    name: 'remove-scoped-style',
+    enforce: 'pre',
+    transform(code, id) {
+      if (id.endsWith('.vue')) {
+        // 更通用的正则
+        return code.replace(/<style([^>]*)scoped([^>]*)>/g, '<style$1$2>');
+      }
+      return code;
+    }
+  }
+}
 
 // 获取指定目录下的所有Vue文件作为入口点
 function getVueEntries(entryDir) {
@@ -94,6 +109,7 @@ export default defineConfig(({ mode }) => {
     },
 
     plugins: [
+      removeScopedStylePlugin(),
       vue(),
       Components({
         dts: 'src/types/components.d.ts',
@@ -147,7 +163,8 @@ export default defineConfig(({ mode }) => {
         ],
 
         // 主构建中不external vue，publish构建中external vue
-        external: ['siyuan', 'process', 'vue', '@arco-design/web-vue'],
+        // external: ['siyuan', 'process', 'vue', '@arco-design/web-vue'],
+        external: ['siyuan', 'process'],
 
         output: {
           exports: 'named',
