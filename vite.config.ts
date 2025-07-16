@@ -9,13 +9,12 @@ import livereload from "rollup-plugin-livereload"
 import Components from "unplugin-vue-components/vite"
 import {
   defineConfig,
-  loadEnv,
 } from "vite"
 import { viteStaticCopy } from "vite-plugin-static-copy"
 import zipPack from "vite-plugin-zip-pack"
+import { getDistDir } from './scripts/getDistDir'
 import { generateI18nFiles } from "./src/i18n/generate"
 
-const pluginInfo = require("./plugin.json")
 
 
 export function initI18nBeforeCopy() {
@@ -36,36 +35,16 @@ export default defineConfig(({
   mode,
 }) => {
 
-  console.log('mode=>', mode)
-  const env = loadEnv(mode, process.cwd())
-  const {
-    VITE_SIYUAN_WORKSPACE_PATH,
-    VITE_DEV_DIST_DIR,
-  } = env
-  console.log('env=>', env)
-
-
-  const siyuanWorkspacePath = VITE_SIYUAN_WORKSPACE_PATH
-  let devDistDir = './dev'
-  if (!siyuanWorkspacePath) {
-    console.log("\nSiyuan workspace path is not set.")
-  } else {
-    console.log(`\nSiyuan workspace path is set:\n${siyuanWorkspacePath}`)
-    devDistDir = `${siyuanWorkspacePath}/data/plugins/${pluginInfo.name}`
-  }
-  if (VITE_DEV_DIST_DIR) {
-    console.log(`\nDev dist dir is set:\n${VITE_DEV_DIST_DIR}`)
-    devDistDir = VITE_DEV_DIST_DIR
-  }
-  console.log(`\nPlugin will build to:\n${devDistDir}`)
+  const devDistDir = getDistDir(mode)
 
   const args = minimist(process.argv.slice(2))
   const isWatch = args.watch || args.w || false
-  const distDir = isWatch ? devDistDir : "./dist"
+  const isDeveloping = isWatch
+  const isProduction = !isDeveloping
+  const distDir = isDeveloping ? devDistDir : "./dist"
 
-  console.log()
-  console.log("isWatch=>", isWatch)
-  console.log("distDir=>", distDir)
+  console.log(`\nYour plugin will be built into the following directory:`)
+  console.log("\x1B[32m%s\x1B[0m", `\n${distDir}\n\n`)
 
   return {
     resolve: {
@@ -121,14 +100,14 @@ export default defineConfig(({
     // https://github.com/vitejs/vite/discussions/3058#discussioncomment-2115319
     // 在这里自定义变量
     define: {
-      "process.env.DEV_MODE": `"${isWatch}"`,
+      "process.env.DEV_MODE": `"${isDeveloping}"`,
       "process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV),
     },
 
     build: {
       // 输出路径
       outDir: distDir,
-      emptyOutDir: !isWatch,
+      emptyOutDir: isProduction,
 
       // 构建后是否生成 source map 文件
       sourcemap: false,
@@ -137,7 +116,7 @@ export default defineConfig(({
       // 或是用来指定是应用哪种混淆器
       // boolean | 'terser' | 'esbuild'
       // 不压缩，用于调试
-      minify: !isWatch,
+      minify: isProduction,
 
       lib: {
         // Could also be a dictionary or array of multiple entry points
@@ -148,7 +127,7 @@ export default defineConfig(({
       },
       rollupOptions: {
         plugins: [
-          ...(isWatch
+          ...(isDeveloping
             ? [
                 livereload(devDistDir),
                 {

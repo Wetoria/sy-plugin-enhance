@@ -16,10 +16,12 @@
     "release:patch": "node ./release.js --mode=patch",
     "release:minor": "node ./release.js --mode=minor",
     "release:major": "node ./release.js --mode=major",
-    "build": "npm run clear-normalize && vite build"
+    "build": "npm run clear-normalize && vite build",
+    "build:shared": "BUILD_TARGET=publish vite build --config vite.shared.config.js",
+    "build:all": "npm run build && npm run build:shared"
   },
   "dependencies": {
-    "@arco-design/web-vue": "^2.53.3",
+    "@arco-design/web-vue": "^2.57.0",
     "@vue-flow/additional-components": "^1.3.3",
     "@vue-flow/background": "^1.3.2",
     "@vue-flow/controls": "^1.1.2",
