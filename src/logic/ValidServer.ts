@@ -52,10 +52,10 @@ const getValidServer = async () => {
   }
 }
 let getValidServerFlag = null
-
+let binded = false
 export function useValidServer() {
 
-  if (!validServer.value) {
+  if (!binded) {
     onMounted(() => {
       getValidServer()
       if (getValidServerFlag) {
@@ -71,6 +71,7 @@ export function useValidServer() {
         clearInterval(getValidServerFlag)
       }
     })
+    binded = true
   }
 
   return {
