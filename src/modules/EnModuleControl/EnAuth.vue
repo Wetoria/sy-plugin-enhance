@@ -100,10 +100,12 @@
 
 <script setup lang="ts">
 import { request } from '@/api'
-import { useValidServer } from '@/logic/ValidServer'
 import {
   injectAuth,
   injectAuthStatus,
+} from '@/logic/Auth'
+import { useValidServer } from '@/logic/ValidServer'
+import {
   injectSettings,
 } from '@/modules/EnModuleControl/ModuleProvide'
 import {
@@ -251,10 +253,6 @@ const updateRequest = async (data, showMessage = true) => {
 }
 
 const updateByUser = async () => {
-  if (isPermanent.value) {
-    enLog('Auth subscription update canceled, current version is permanent')
-    return true
-  }
   if (!siyuanAccount.value.userId) {
     enLog('Auth subscription update canceled, userId is empty')
     return

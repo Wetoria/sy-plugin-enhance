@@ -26,10 +26,10 @@
           <a-tag
             v-if="isPermanent"
             color="gold"
+            style="cursor: pointer;"
+            @click="openAuthModal"
           >
-            <a-space>
-              <EnIconDragon />
-            </a-space>
+            <EnIconDragon />
           </a-tag>
           <a-tag
             v-else
@@ -129,10 +129,12 @@
 import EnDrawer from '@/components/EnDrawer.vue'
 import EnIconDragon from '@/components/EnIconDragon.vue'
 import { enI18n } from '@/i18n'
-import { usePlugin } from '@/main'
 import {
   injectAuth,
   injectAuthStatus,
+} from '@/logic/Auth'
+import { usePlugin } from '@/main'
+import {
   injectSettings,
 } from '@/modules/EnModuleControl/ModuleProvide'
 import EnVersionChecker from '@/modules/Settings/EnVersionChecker.vue'

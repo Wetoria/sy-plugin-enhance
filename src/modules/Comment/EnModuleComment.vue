@@ -228,6 +228,7 @@
 <script setup lang="ts">
 import EnBlockAppendModeSelector from '@/components/EnBlockAppendModeSelector.vue'
 import EnColorPicker from '@/components/EnColorPicker.vue'
+import { injectAuthStatus } from '@/logic/Auth'
 import { usePlugin } from '@/main'
 import {
   provideCommentMode,
@@ -240,7 +241,6 @@ import EnCommentHistory from '@/modules/Comment/EnCommentHistory.vue'
 import EnCommentMobile from '@/modules/Comment/EnCommentMobile.vue'
 import EnCommentStyle from '@/modules/Comment/EnCommentStyle.vue'
 import {
-  injectAuthStatus,
   injectGlobalData,
   injectGlobalWindowData,
   useModule,
@@ -266,9 +266,9 @@ const globalData = injectGlobalData()
 const openedNotebookList = computed(() => globalData.value.openedNotebookList)
 const {
   isNotFree,
+  computedLevel,
 } = injectAuthStatus()
 
-const { computedLevel } = injectAuthStatus()
 const hasAuth = computedLevel(1, false)
 const commentMode = computed<EnBlockAppendMode[]>(() => {
   if (hasAuth.value) {

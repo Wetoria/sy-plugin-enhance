@@ -59,7 +59,7 @@
 import {
   injectAuthStatus,
   injectParentAuth,
-} from '@/modules/EnModuleControl/ModuleProvide'
+} from '@/logic/Auth'
 import EnSettingsItemAreaHeading from '@/modules/Settings/EnSettingsItemAreaHeading.vue'
 import EnSettingsTeleport from '@/modules/Settings/EnSettingsTeleport.vue'
 import { resetModuleOptions } from '@/modules/Settings/SettingsModuleControl'

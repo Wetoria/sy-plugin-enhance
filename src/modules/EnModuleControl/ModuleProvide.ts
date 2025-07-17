@@ -11,7 +11,6 @@ import {
 import { cloneDeep } from 'lodash-es'
 import {
   computed,
-  ComputedRef,
   inject,
   onBeforeUnmount,
   onMounted,
@@ -27,7 +26,7 @@ export interface IGlobalData<T> {
   moduleOptions: WritableComputedRef<T>
 }
 
-type IGlobalDataOptions<T> = IGlobalData<T>['moduleOptions']
+export type IGlobalDataOptions<T> = IGlobalData<T>['moduleOptions']
 
 export function useGlobalData<T>(
   namespace: Namespace,
@@ -167,66 +166,6 @@ export function useGlobalWindowDataExternal(): IGlobalDataOptions<GlobalWindowDa
 }
 // #endregion 窗口的全局数据 GlobalWindowData，不需要保存，不需要同步
 
-
-
-// #region 权限模块
-
-/**
- * 注入权限模块
- */
-export function provideAuthModule(authModule: IGlobalData<EnAuth>) {
-  provide(`${EN_MODULE_LIST.AUTH}_module`, authModule)
-}
-export function injectAuthModule(): IGlobalData<EnAuth> {
-  const authModule = inject(`${EN_MODULE_LIST.AUTH}_module`) as IGlobalData<EnAuth>
-  return authModule
-}
-
-/**
- * 注入权限模块数据
- */
-export function injectAuth(): IGlobalDataOptions<EnAuth> {
-  const authModule = injectAuthModule()
-  return authModule.moduleOptions
-}
-
-export function useAuthExternal(): IGlobalDataOptions<EnAuth> {
-  const {
-    moduleOptions: auth,
-  } = useGlobalData<EnAuth>(EN_CONSTANTS.AUTH)
-  return auth
-}
-
-
-/**
- * 注入权限状态相关的变量
- */
-export function provideAuthStatus(authStatus: EnAuthStatus) {
-  provide('Auth_Status', authStatus)
-}
-export function injectAuthStatus(): EnAuthStatus {
-  const authStatus = inject('Auth_Status') as EnAuthStatus
-  return authStatus
-}
-
-/**
- * 提供父级权限
- *
- * 如果父级使用过 computedLevel, 则会自动注入父级权限
- *
- * 在 `TeleportModule` 中，则可以自动获取父级的权限
- */
-export function provideParentAuth(parentAuth: ComputedRef<boolean>) {
-  provide('parentAuth', parentAuth)
-}
-/**
- * 用于在 TeleportModule 中，自动获取父级的权限
- */
-export function injectParentAuth(): ComputedRef<boolean> {
-  const parentAuth = inject('parentAuth') as ComputedRef<boolean>
-  return parentAuth
-}
-// #endregion 权限模块
 
 // #endregion 👆 全局 inject 方法（方便后续不需要编写 TS 类型）
 

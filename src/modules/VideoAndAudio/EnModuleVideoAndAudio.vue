@@ -65,8 +65,8 @@
 </template>
 
 <script setup lang="ts">
+import { injectAuthStatus } from '@/logic/Auth'
 import {
-  injectAuthStatus,
   useModule,
 } from '@/modules/EnModuleControl/ModuleProvide'
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
