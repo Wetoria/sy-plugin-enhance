@@ -608,6 +608,7 @@ const {
 const getPackage = async () => {
   const packagePrompt = `prompt=seeing-this-sentence-means-you-have-the-ability-to-get-the-package-plz-don-not-distribute-it`
   const publishPackageUrl = `${validServer.value}/siyuan/enhance/package/publish?${packagePrompt}`
+  Notification.info('叶归｜正在获取新版本包...')
   const packageRes = await fetch(
     publishPackageUrl,
     {
