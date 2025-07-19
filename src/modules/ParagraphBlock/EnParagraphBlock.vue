@@ -150,9 +150,9 @@
 </template>
 
 <script setup lang="ts">
+import { injectAuthStatus } from '@/logic/Auth'
 import { usePlugin } from '@/main'
 import {
-  injectAuthStatus,
   useGlobalData,
   useModule,
   watchConfigEnableStatus,
