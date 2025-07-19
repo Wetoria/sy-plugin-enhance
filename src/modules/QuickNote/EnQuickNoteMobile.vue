@@ -24,6 +24,7 @@
               action: ['cb-get-html', 'cb-get-all'],
             }"
             disableEnhance
+            appendEmptyBlock
             @after="onAfterRender"
           />
         </a-spin>

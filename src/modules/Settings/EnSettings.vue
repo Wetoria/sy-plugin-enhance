@@ -26,10 +26,10 @@
           <a-tag
             v-if="isPermanent"
             color="gold"
+            style="cursor: pointer;"
+            @click="openAuthModal"
           >
-            <a-space>
-              <EnIconDragon />
-            </a-space>
+            <EnIconDragon />
           </a-tag>
           <a-tag
             v-else
@@ -129,10 +129,12 @@
 import EnDrawer from '@/components/EnDrawer.vue'
 import EnIconDragon from '@/components/EnIconDragon.vue'
 import { enI18n } from '@/i18n'
-import { usePlugin } from '@/main'
 import {
   injectAuth,
   injectAuthStatus,
+} from '@/logic/Auth'
+import { usePlugin } from '@/main'
+import {
   injectSettings,
 } from '@/modules/EnModuleControl/ModuleProvide'
 import EnVersionChecker from '@/modules/Settings/EnVersionChecker.vue'
@@ -204,11 +206,7 @@ const switchID = (time) => {
   settings.value.v = v
 }
 const entryOpenSettings = onCountClick((time) => {
-  if (time >= 11) {
-    switchID(time)
-  } else {
-    openSettings()
-  }
+  openSettings()
 })
 onMounted(() => {
   enEventBus.on(EN_EVENT_BUS_KEYS.SETTINGS_OPEN_ON_ENTRY, entryOpenSettings)

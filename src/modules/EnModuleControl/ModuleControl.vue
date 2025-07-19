@@ -39,6 +39,8 @@
 
       <EnPWA />
 
+      <EnModulePublish v-if="plugin.isElectron && !plugin.isInWindow" />
+
     </template>
   </ModuleDataProvider>
 </template>
@@ -60,6 +62,7 @@ import EnSiyuanEntry from '@/modules/EnSiyuanEntry.vue'
 import EnModuleWhiteBoard from '@/modules/EnWhiteBoard/EnModuleWhiteBoard.vue'
 import EnModuleLifeLog from '@/modules/LifeLog/EnModuleLifeLog.vue'
 import EnParagraphBlock from '@/modules/ParagraphBlock/EnParagraphBlock.vue'
+import EnModulePublish from '@/modules/Publish/EnModulePublish.vue'
 import EnModuleQuickNote from '@/modules/QuickNote/EnModuleQuickNote.vue'
 import EnSettings from '@/modules/Settings/EnSettings.vue'
 import TemplateEntry from '@/modules/Templates/TemplateEntry.vue'

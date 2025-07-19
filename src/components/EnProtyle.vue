@@ -26,6 +26,7 @@ const props = defineProps<{
   blockId: string
   disableEnhance?: boolean
   options?: IProtyleOptions
+  appendEmptyBlock?: boolean
 }>()
 const emits = defineEmits<{
   after: [protyle: Protyle]
@@ -71,6 +72,18 @@ const renderProtyle = () => {
           protyle.protyle.element.classList.toggle('EnDisableProtyleEnhance', true)
           protyle.protyle.contentElement.classList.toggle('EnDisableProtyleEnhance', true)
         }
+
+
+        if (props.appendEmptyBlock) {
+          // #region 👇 插入一个空的元素，防止删除了最后一个块以后，思源自动创建新块
+          const div = document.createElement('div')
+          div.classList.add('EnProtyleAutoEmptyBlock')
+          div.classList.add('protyle-custom')
+          protyle.protyle.wysiwyg.element.append(div)
+          // #endregion 👆 插入一个空的元素，防止删除了最后一个块以后，思源自动创建新块
+        }
+
+
         emits('after', protyle)
       },
       ...rest,

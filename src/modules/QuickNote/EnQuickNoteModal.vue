@@ -17,6 +17,7 @@
         >
           <EnProtyle
             :blockId="currentBlockId"
+            appendEmptyBlock
             @after-render="onAfterRender"
           />
         </div>

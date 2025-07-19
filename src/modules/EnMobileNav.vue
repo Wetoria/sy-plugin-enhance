@@ -57,12 +57,18 @@
             @click="entryOpenSettings"
           >
             <div class="NavItemIcon EnEntryIcon">
-              <EnIconLeaf2 v-if="!settings.v" size="16" />
-              <EnIconDragon v-else-if="settings.v === 1" size="16" />
               <SyIcon
-                v-else
+                v-if="isVip"
                 name="iconSuper"
                 size="18"
+              />
+              <EnIconDragon
+                v-else-if="isPermanent"
+                size="16"
+              />
+              <EnIconLeaf2
+                v-else
+                size="16"
               />
             </div>
           </div>
@@ -150,15 +156,12 @@ import EnIconDragon from '@/components/EnIconDragon.vue'
 import EnIconLeaf2 from '@/components/EnIconLeaf2.vue'
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 import { useProtyleList } from '@/global/ProtyleList'
+import { injectAuthStatus } from '@/logic/Auth'
 import { usePlugin } from '@/main'
 import {
   jumpToNextDailyNote,
   jumpToPrevDailyNote,
 } from '@/modules/DailyNote/DailyNote'
-import {
-  injectAuthStatus,
-  injectSettings,
-} from '@/modules/EnModuleControl/ModuleProvide'
 import { debounce } from '@/utils'
 import { EN_EVENT_BUS_KEYS } from '@/utils/Constants'
 import {
@@ -185,13 +188,13 @@ const plugin = usePlugin()
 
 const {
   isNotFree,
+  isVip,
+  isPermanent,
 } = injectAuthStatus()
 
 const entryOpenSettings = () => {
   enEventBus.emit(EN_EVENT_BUS_KEYS.SETTINGS_OPEN_ON_ENTRY)
 }
-
-const settings = injectSettings()
 
 const lastScrollTop = ref(0)
 const showToolBar = ref(true)

@@ -103,6 +103,9 @@ import { request } from '@/api'
 import {
   injectAuth,
   injectAuthStatus,
+} from '@/logic/Auth'
+import { useValidServer } from '@/logic/ValidServer'
+import {
   injectSettings,
 } from '@/modules/EnModuleControl/ModuleProvide'
 import {
@@ -126,65 +129,11 @@ const expiration = computed(() => {
   return authModuleData.value.expiration ? dayjs(authModuleData.value.expiration).format('YYYY-MM-DD HH:mm') : '--'
 })
 
-// CF 代理
-const server1 = 'https://server.wetoria.vip'
-// 云服务器
-const server2 = 'https://api.wetoria.vip'
-// IPV6 直连
-const ipv6Http = 'http://api.wetoria.cn'
-// IPV6 直连 HTTPS
-const ipv6Https = 'https://api.wetoria.cn'
 
-const serverList = [
-  server2,
-  server1,
-  ipv6Https,
-  ipv6Http,
-]
-
-const validServer = ref('')
-const getValidServerTimeout = 5
-const getValidServer = async () => {
-  for (const server of serverList) {
-    try {
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 1000 * getValidServerTimeout)
-
-      const res = await Promise.race([
-        fetch(`${server}/ping`, {
-          method: 'POST',
-          signal: controller.signal,
-        }),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Timeout')), 1000 * getValidServerTimeout),
-        ),
-      ])
-
-      clearTimeout(timeoutId)
-
-      if ((res as Response)?.ok) {
-        validServer.value = server
-        break
-      }
-    } catch (err) {
-      validServer.value = ''
-      continue
-    }
-  }
-}
-let getValidServerFlag = null
-onMounted(() => {
-  getValidServer()
-  getValidServerFlag = setInterval(() => {
-    getValidServer()
-    // 30分钟检查一次可用的服务器
-  }, 1000 * 60 * 30)
-})
-onBeforeUnmount(() => {
-  if (getValidServerFlag) {
-    clearInterval(getValidServerFlag)
-  }
-})
+const {
+  validServer,
+  getValidServer,
+} = useValidServer()
 
 
 const authModalVisible = ref(false)
@@ -269,7 +218,7 @@ const updateRequest = async (data, showMessage = true) => {
     }
 
     loading.value = true
-    const res = await request(`${validServer.value}${apiPath}?data=${JSON.stringify(data)}`, data)
+    const res = await request(`${validServer.value}${apiPath}`, data)
     loading.value = false
     if (!res) {
       enError('Update auth subscription error. response is empty')
@@ -304,10 +253,6 @@ const updateRequest = async (data, showMessage = true) => {
 }
 
 const updateByUser = async () => {
-  if (isPermanent.value) {
-    enLog('Auth subscription update canceled, current version is permanent')
-    return true
-  }
   if (!siyuanAccount.value.userId) {
     enLog('Auth subscription update canceled, userId is empty')
     return

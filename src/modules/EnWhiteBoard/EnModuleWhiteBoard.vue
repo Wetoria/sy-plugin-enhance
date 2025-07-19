@@ -361,9 +361,9 @@
 
 <script setup lang="ts">
 import EnBlockAppendModeSelector from '@/components/EnBlockAppendModeSelector.vue'
+import { injectAuthStatus } from '@/logic/Auth'
 import { usePlugin } from '@/main'
 import {
-  injectAuthStatus,
   injectGlobalData,
   useModule,
 } from '@/modules/EnModuleControl/ModuleProvide'
@@ -531,7 +531,7 @@ watch(() => moduleOptions.value.enabled, () => {
 const globalData = injectGlobalData()
 const openedNotebookList = computed(() => globalData.value.openedNotebookList || [])
 
-const whiteBoardMode = computed<EnBlockAppendMode[]>(() =>{
+const whiteBoardMode = computed<EnBlockAppendMode[]>(() => {
   if (hasAuth.value) {
     return [
       'currentDoc',

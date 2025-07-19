@@ -21,15 +21,16 @@
 <script setup lang="ts">
 import { lsNotebooks } from '@/api'
 import EnProtyleObserver from '@/global/ProtyleObserver/EnProtyleObserver.vue'
+import {
+  initAuthData,
+  injectAuthStatus,
+} from '@/logic/Auth'
 import { usePlugin } from '@/main'
 import EnAuth from '@/modules/EnModuleControl/EnAuth.vue'
 import {
-  provideAuthModule,
-  provideAuthStatus,
   provideGlobalDataModule,
   provideGlobalModule,
   provideGlobalWindowDataModule,
-  provideParentAuth,
   useGlobalData,
   watchConfigChanged,
 } from '@/modules/EnModuleControl/ModuleProvide'
@@ -37,7 +38,6 @@ import { isInEnWindow } from '@/modules/EnWindow.vue'
 import { moduleEnableStatusSwitcher } from '@/utils'
 import {
   EN_CONSTANTS,
-  EN_MODULE_LIST,
 } from '@/utils/Constants'
 import { syncDataSocket } from '@/utils/DataManager/useSyncDataChannel'
 import {
@@ -54,7 +54,6 @@ import {
   onMounted,
   ref,
   watch,
-  watchEffect,
 } from 'vue'
 
 
@@ -166,91 +165,15 @@ plugin.eventBus.on('sync-fail', () => {
 
 
 
-
-// #region 权限模块
-
-const authStorageKey = `en_a`
-const defaultAuthData = {
-  lv: 0,
-  expiration: null,
-}
-const storagedAuthData = localStorage.getItem(authStorageKey)
-if (storagedAuthData) {
-  const lv = storagedAuthData.slice(0, 3)
-  const expiration = storagedAuthData.slice(3)
-  defaultAuthData.lv = Number(lv)
-  defaultAuthData.expiration = Number(expiration)
-}
-
-const authModule = useGlobalData<EnAuth>(EN_MODULE_LIST.AUTH, {
-  defaultData: defaultAuthData,
-  needSave: false,
-})
-
-const { moduleOptions: authModuleData } = authModule
-provideAuthModule(authModule)
-
-watch(authModuleData, () => {
-  const {
-    lv,
-    expiration,
-  } = authModuleData.value
-  const prefix = `${lv}`.padStart(3, '0')
-  const suffix = `${expiration}`
-  localStorage.setItem(authStorageKey, `${prefix}${suffix}`)
-})
-
-const isFree = computed(() => {
-  return authModuleData.value.lv === 0 && settings.value.v === 0
-})
-const isNotFree = computed(() => !isFree.value)
-
-const isPro = computed(() => {
-  return settings.value.v === 1 || authModuleData.value.lv === 1
-})
-const isVip = computed(() => {
-  return settings.value.v === 2 || authModuleData.value.lv === 99
-})
-const isPermanent = computed(() => {
-  return !!settings.value.v && settings.value.v >= 1
-})
-
-const levelLabel = computed(() => {
-  const map = {
-    0: '普通版',
-    98: 'Inner',
-    99: 'Super',
-  }
-  return map[authModuleData.value.lv] || (authModuleData.value.lv ? `Lv. ${authModuleData.value.lv}` : '--')
-})
-
-const computedLevel = (level: number | string, provideParent = true) => {
-  const hasAuth = computed(() => {
-    return !level || authModuleData.value.lv >= Number(level) || settings.value.v >= 1
-  })
-  if (provideParent) {
-    provideParentAuth(hasAuth)
-  }
-  return hasAuth
-}
-
-provideAuthStatus({
+initAuthData(settings)
+const {
   isFree,
   isNotFree,
   isPro,
   isVip,
   isPermanent,
-  levelLabel,
-  computedLevel,
-})
+} = injectAuthStatus()
 
-watchEffect(() => {
-  if (settings.value.isDebugging) {
-    console.log(`Auth flag is isFree: ${isFree.value}, isPro: ${isPro.value}, isVip: ${isVip.value}, isNotFree: ${isNotFree.value}, isPermanent: ${isPermanent.value}`)
-  }
-})
-
-// #endregion 权限模块
 
 
 

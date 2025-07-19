@@ -156,6 +156,8 @@ import {
   getCommentMdByConfig,
   getNodeIdByCommentId,
   injectCommentIdList,
+  isCancelShowCommentListDom,
+  isCommentNode,
 } from '@/modules/Comment/Comment'
 import { EnNavMoreRef } from '@/modules/EnMobileNav.vue'
 import {
@@ -703,12 +705,6 @@ const commentListVisible = ref(false)
 watchEffect(() => {
   commentListVisible.value = !!selectedCommentIdList.value.length
 })
-const isCommentNode = (target: HTMLElement) => {
-  return target?.getAttribute('custom-en-comment-id') || target?.dataset?.type?.includes('en-comment-id')
-}
-const isCancelShowCommentListDom = (target: HTMLElement) => {
-  return target.classList.contains('enCancelShowCommentListDom')
-}
 
 const commentIdList = injectCommentIdList()
 const getCommentHistoryByDom = async (target: HTMLElement) => {

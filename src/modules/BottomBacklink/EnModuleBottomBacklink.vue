@@ -101,7 +101,7 @@ import { usePlugin } from '@/main'
 import RenderArea from '@/modules/BottomBacklink/RenderArea.vue'
 import { getCurrentDocTitleDomByDom } from '@/modules/DailyNote/DailyNote'
 import {
-  useModule
+  useModule,
 } from '@/modules/EnModuleControl/ModuleProvide'
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
 import EnSettingsTeleportModule from '@/modules/Settings/EnSettingsTeleportModule.vue'
@@ -109,6 +109,11 @@ import {
   EN_CONSTANTS,
   EN_MODULE_LIST,
 } from '@/utils/Constants'
+import {
+  addSlash,
+  getSlashHtml,
+  removeSlash,
+} from '@/utils/Slash'
 import {
   Protyle,
   showMessage,
@@ -160,7 +165,7 @@ const insertBacklinkTOCSlash = {
     '插入当前反链 MOC',
     'insert current moc',
   ],
-  html: `<div class="b3-list-item__first"><span class="b3-list-item__text">${'叶归｜插入当前反链 MOC'}</span></div>`,
+  html: getSlashHtml('插入当前反链 MOC'),
   id: 'enInsertMocCurrent',
   callback(protyle: Protyle) {
     const titleDom = getCurrentDocTitleDomByDom(protyle.protyle.contentElement)
@@ -189,10 +194,10 @@ const insertBacklinkTOCSlash = {
 }
 
 const onModuleEnable = () => {
-  plugin.protyleSlash.push(insertBacklinkTOCSlash)
+  addSlash(insertBacklinkTOCSlash)
 }
 const onModuleDisable = () => {
-  plugin.protyleSlash = plugin.protyleSlash.filter((item) => item.id !== insertBacklinkTOCSlash.id)
+  removeSlash(insertBacklinkTOCSlash)
 }
 
 const protyleList = useProtyleList()

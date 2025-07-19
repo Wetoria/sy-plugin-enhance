@@ -103,9 +103,9 @@
 
 <script setup lang="ts">
 import EnBlockAppendModeSelector from '@/components/EnBlockAppendModeSelector.vue'
+import { injectAuthStatus } from '@/logic/Auth'
 import { usePlugin } from '@/main'
 import {
-  injectAuthStatus,
   injectGlobalData,
   useModule,
 } from '@/modules/EnModuleControl/ModuleProvide'

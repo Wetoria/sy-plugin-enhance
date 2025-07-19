@@ -7,6 +7,9 @@
     "skipLibCheck": true
   },
   "include": [
+    "src/i18n/generate.ts",
+    "src/i18n/config.ts",
+    "scripts/getDistDir.ts",
     "vite.config.ts"
   ]
 }

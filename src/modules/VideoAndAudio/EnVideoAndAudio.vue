@@ -18,6 +18,11 @@ import { debounce } from '@/utils'
 import { addCommand } from '@/utils/Commands'
 import { queryAllByDom } from '@/utils/DOM'
 import {
+  batchAddSlash,
+  batchRemoveSlash,
+  getSlashHtml,
+} from '@/utils/Slash'
+import {
   EnVideoAndAudioUrlParams,
   URL_TYPE_MAP,
   urlSchemeCreator,
@@ -381,7 +386,7 @@ const protyleSlashList = [
       'aat',
       'charu',
     ],
-    html: `<div class="b3-list-item__first"><span class="b3-list-item__text">${'叶归｜插入当前视频/音频的时间戳（Markdown）'}</span><span class="b3-list-item__meta">🎥</span></div>`,
+    html: getSlashHtml('插入当前视频/音频的时间戳（Markdown）', '🎥'),
     id: "insertCurrentVideoOrAudioTimestamp",
     callback(protyle: Protyle) {
       const timestamp = getCurrentVideoTimeLinkMd()
@@ -413,7 +418,7 @@ const enable = () => {
     addCommand(command)
   })
 
-  plugin.protyleSlash.push(...protyleSlashList)
+  batchAddSlash(protyleSlashList)
 
   plugin.eventBus.on('click-blockicon', onOpenContextMenu)
   plugin.eventBus.on('open-siyuan-url-plugin', onOpenUrlScheme)
@@ -421,10 +426,7 @@ const enable = () => {
 
 const disable = () => {
   observer.disconnect()
-  plugin.protyleSlash = plugin.protyleSlash.filter((i) => {
-    const isTargetSlash = protyleSlashList.find((j) => j.id == i.id)
-    return !isTargetSlash
-  })
+  batchRemoveSlash(protyleSlashList)
   plugin.commands = plugin.commands.filter((i) => !commands.find((j) => j.langKey == i.langKey))
   plugin.eventBus.off('click-blockicon', onOpenContextMenu)
   plugin.eventBus.off('open-siyuan-url-plugin', onOpenUrlScheme)

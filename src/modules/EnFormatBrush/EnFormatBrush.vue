@@ -70,9 +70,9 @@
 </template>
 
 <script setup lang="ts">
+import { injectAuthStatus } from '@/logic/Auth'
 import { usePlugin } from '@/main'
 import {
-  injectAuthStatus,
   useModule,
 } from '@/modules/EnModuleControl/ModuleProvide'
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
@@ -253,7 +253,7 @@ const escapeEvent = (event) => {
     event.preventDefault()
     event.stopImmediatePropagation()
     event.stopPropagation()
-    // eslint-disable-next-line ts/no-use-before-define
+
     cancelBrush()
   }
 }
@@ -265,7 +265,7 @@ const pasteStyleOnMouseUp = () => {
     return
   }
   setTimeout(() => {
-    // eslint-disable-next-line ts/no-use-before-define
+
     pasteCurrentStyle()
   }, 30)
 }

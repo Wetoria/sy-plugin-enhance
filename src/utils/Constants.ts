@@ -1,4 +1,3 @@
-/* eslint-disable perfectionist/sort-enums */
 export enum EN_CONSTANTS {
   AUTH = 'EnSettingsAuth',
 
@@ -54,6 +53,11 @@ export enum EN_CONSTANTS {
 
   EN_PARAGRAPH_BLOCK = 'EnParagraphBlock',
   EN_PARAGRAPH_BLOCK_DISPLAY = '段落块相关',
+
+
+  EN_PUBLISH = 'EnPublish',
+  EN_PUBLISH_DISPLAY = '在线分享',
+
 
   EN_SERVER = 'EnServer',
   EN_SERVER_DISPLAY = 'API 服务',
@@ -164,6 +168,8 @@ export enum EN_MODULE_LIST {
   PWA = EN_CONSTANTS.PWA,
 
   QUICK_NOTE = EN_CONSTANTS.QUICK_NOTE,
+
+  EN_PUBLISH = EN_CONSTANTS.EN_PUBLISH,
 
   EN_SERVER = EN_CONSTANTS.EN_SERVER,
 
