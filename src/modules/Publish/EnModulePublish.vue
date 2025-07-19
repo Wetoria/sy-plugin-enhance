@@ -279,13 +279,47 @@ const startPublishService = () => {
       nuxtProject.kill()
     }
 
-    const { spawn } = require('node:child_process')
-    nuxtProject = spawn('node', [`${workspacePath}${entryPath}`], {
-      cwd: `${workspacePath}${configBasePath}`,
+    // 检查是否在 Electron 环境中
+    if (typeof require === 'undefined') {
+      console.error('Node.js require 不可用，可能不在 Electron 环境中')
+      Notification.error('叶归｜在线分享功能需要 Electron 环境')
+      return
+    }
+
+    const { fork } = require('node:child_process')
+    const fs = require('node:fs')
+    const path = require('node:path')
+
+    const fullEntryPath = path.join(workspacePath, entryPath)
+    const fullCwdPath = path.join(workspacePath, configBasePath)
+
+    console.log('启动在线分享服务:', {
+      entryPath: fullEntryPath,
+      cwd: fullCwdPath,
+      port: moduleOptions.value.defaultPort,
+    })
+
+    // 检查入口文件是否存在
+    if (!fs.existsSync(fullEntryPath)) {
+      console.error('入口文件不存在:', fullEntryPath)
+      Notification.error('叶归｜在线分享服务文件不存在，请先安装')
+      return
+    }
+
+    // 确保工作目录存在
+    if (!fs.existsSync(fullCwdPath)) {
+      console.log('创建工作目录:', fullCwdPath)
+      fs.mkdirSync(fullCwdPath, { recursive: true })
+    }
+
+    // 使用 fork 启动 Node.js 进程
+    nuxtProject = fork(fullEntryPath, [], {
+      cwd: fullCwdPath,
       env: {
         ...process.env,
         NITRO_PORT: moduleOptions.value.defaultPort,
       },
+      stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
     })
 
     nuxtProject.on('error', (error) => {
@@ -304,8 +338,6 @@ const startPublishService = () => {
       }
     })
 
-
-    // 捕获错误输出
     nuxtProject.stderr.on('data', (data) => {
       console.error('子进程错误输出:', data.toString())
       if (data.toString().includes('Error: listen EADDRINUSE')) {
@@ -322,9 +354,19 @@ const startPublishService = () => {
         Notification.error('叶归｜在线分享功能已关闭')
       }
     })
+
+    // 监听 IPC 消息
+    nuxtProject.on('message', (message) => {
+      console.log('收到子进程消息:', message)
+      if (message && message.type === 'ready') {
+        onStartSuccess()
+      }
+    })
+
     publishAddr.value = `http://${location.hostname}:${moduleOptions.value.defaultPort}`
   } catch (error) {
     console.error('startPublishService error is ', error)
+    Notification.error(`叶归｜在线分享功能启动失败: ${error.message}`)
     stopPublish()
   }
 }
