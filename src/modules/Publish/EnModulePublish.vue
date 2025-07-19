@@ -287,6 +287,13 @@ const startPublishService = () => {
         NITRO_PORT: moduleOptions.value.defaultPort,
       },
     })
+
+    nuxtProject.on('error', (error) => {
+      console.error('子进程启动错误:', error)
+      Notification.error('叶归｜在线分享功能启动失败')
+      stopPublish()
+    })
+
     console.log('nuxtProject.value is ', nuxtProject)
     window.nuxtProject = nuxtProject
 
