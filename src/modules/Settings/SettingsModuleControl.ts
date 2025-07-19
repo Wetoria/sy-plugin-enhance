@@ -59,6 +59,7 @@ export const resetAllModule = () => {
 const moduleOrder = [
   EN_MODULE_LIST.DAILY_NOTE,
   EN_MODULE_LIST.QUICK_NOTE,
+  EN_MODULE_LIST.EN_PUBLISH,
   'EnComment',
   'EnBottomBacklink',
   'EnLifeLog',
