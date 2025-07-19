@@ -86,6 +86,9 @@
             用于将地址映射到在线分享服务。根目录请使用 home
           </div>
           <div>
+            你也可以使用 /siyuan/blocks/:blockId 来访问任意块(:blockId 部分为块 ID)
+          </div>
+          <div>
             例如：about 映射到 20250426112627-dvxroxk
           </div>
           <div>
@@ -95,7 +98,7 @@
           <div
             v-for="key in Object.keys(pageMap)"
             :key="key"
-            style="display: flex; gap: 8px; align-items: center; padding: 8px;"
+            style="display: flex; gap: 2px; align-items: center;"
           >
             <div style="flex: 1;">
               <a-typography-text>
@@ -120,6 +123,9 @@
                 :size="10"
               />
             </EnButtonIcon>
+            <EnBlockJumper
+              :block-id="pageMap[key]"
+            />
             <EnButtonIcon
               status="danger"
               @click="removePageMapItem(key as string)"
