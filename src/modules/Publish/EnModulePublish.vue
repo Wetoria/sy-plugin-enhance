@@ -550,22 +550,24 @@ const enablePublish = async () => {
       return
     }
 
-    const conf = await getFile(configPath)
-    if (!conf || conf.code == 404) {
-      const baseConfig = {
-        base_siyuan: location.origin,
-        token: window.siyuan.config.api.token,
-      }
-      saveConfig(baseConfig)
+
+    // 每次启动，以当前思源信息写入 config
+    const baseConfig = {
+      base_siyuan: location.origin,
+      token: window.siyuan.config.api.token,
     }
+    saveConfig(baseConfig)
+
+
     const pageMapRes = await getFile(pageMapPath)
-    console.log('pageMapRes is ', pageMapRes)
+    // 判断是否存在 pageMap.json，不存在则创建空对象
     if (!pageMapRes || pageMapRes.code == 404) {
       savePageMap({})
     } else {
+      // 如果已经存在，则以 pageMap.json 内容为准
       pageMap.value = pageMapRes
     }
-    console.log('pageMap is ', pageMap.value)
+
     startPublishService()
   } catch (error) {
     console.error('enablePublish error is ', error)
