@@ -11,7 +11,6 @@
       <div class="enSettingsTitle row flexCenter">
         <div
           class="SyEnhancerDialogTitle"
-          @click="onTitleClicked"
         >
           {{ enI18n.pluginName }}
         </div>
@@ -142,11 +141,9 @@ import EnVersionChecker from '@/modules/Settings/EnVersionChecker.vue'
 
 import {
   closeSettingsPanel,
-  enSettingsMainContentRef,
   openSettings,
   settingsVisible,
   switchSettingsDisplay,
-  useDebugSwitcher,
 } from '@/modules/Settings/Settings'
 
 import {
@@ -172,6 +169,7 @@ import { enEventBus } from '@/utils/EnEventBus'
 import {
   onBeforeUnmount,
   onMounted,
+  ref,
 } from 'vue'
 
 const plugin = usePlugin()
@@ -192,19 +190,13 @@ onBeforeUnmount(() => {
   removeCommand(command)
 })
 
+
+const enSettingsMainContentRef = ref<HTMLDivElement>()
+
 // #region 离线模式下的权限控制
 
 const settings = injectSettings()
-const switchID = (time) => {
-  let v = settings.value.v
-  if (time >= 11 && time < 20) {
-    v = v > 0 ? 0 : 1
-  } else if (time >= 20) {
-    v = 2
-  }
-  settings.value.l = settings.value.v
-  settings.value.v = v
-}
+
 const entryOpenSettings = onCountClick((time) => {
   openSettings()
 })
@@ -218,7 +210,6 @@ onBeforeUnmount(() => {
 
 // #endregion 离线模式下的权限控制
 
-const { onTitleClicked } = useDebugSwitcher()
 
 
 const authModuleData = injectAuth()

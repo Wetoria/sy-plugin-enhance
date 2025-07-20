@@ -1,4 +1,8 @@
-import PluginInfoString from '@/../plugin.json'
+import {
+  NOTE,
+  NOTE_ZH_CN,
+  version,
+} from '@/../plugin.json'
 import '@/utils/GlobalModule'
 import '@/utils/Log'
 import {
@@ -15,22 +19,6 @@ import {
 import { openSettings } from '@/modules/Settings/Settings'
 import { SyFrontendTypes } from './utils/Siyuan'
 
-
-
-let PluginInfo = {
-  version: '',
-}
-try {
-  PluginInfo = PluginInfoString
-} catch (err) {
-  console.log('err is ', err)
-}
-const {
-  version,
-} = PluginInfo
-
-
-
 export default class EnhancePlugin extends Plugin {
   public isMobile: boolean
   public isBrowser: boolean
@@ -39,6 +27,8 @@ export default class EnhancePlugin extends Plugin {
   public isInWindow: boolean
   public platform: SyFrontendTypes
   public readonly version = version
+  public readonly NOTE_ZH_CN = NOTE_ZH_CN
+  public readonly NOTE = NOTE
   // 修正类型声明
   declare readonly i18n: IObject
   async onload() {
