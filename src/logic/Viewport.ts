@@ -1,35 +1,68 @@
-import { ref } from 'vue'
+import {
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  watch,
+} from 'vue'
 
-const ViewportInfo = ref({
-  top: 0,
-  left: 0,
-  width: 0,
-  height: 0,
-  scale: 1,
-})
-export function useViewportInfo() {
-  return ViewportInfo
+let listened = false
+export enum viewportKeys {
+  height = 'height',
+  offsetLeft = 'offsetLeft',
+  offsetTop = 'offsetTop',
+  onresize = 'onresize',
+  onscroll = 'onscroll',
+  pageLeft = 'pageLeft',
+  pageTop = 'pageTop',
+  scale = 'scale',
+  width = 'width',
 }
 
-function updateViewportInfo(target: VisualViewport) {
-  ViewportInfo.value = {
-    top: target.offsetTop,
-    left: target.offsetLeft,
-    width: target.width,
-    height: target.height,
-    scale: target.height,
-  }
-}
+const viewportRef = ref<{
+  [key in viewportKeys]: any;
+}>({} as any)
+export function useViewport() {
+  let pendingUpdate = false
+  let latestViewportData: any = null
 
-export function listenerViewport() {
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', (event) => {
-      const target = event.target as VisualViewport
-      updateViewportInfo(target)
+  function viewportHandler() {
+    // 总是获取最新的视口数据
+    latestViewportData = {}
+    Object.values(viewportKeys).forEach((key) => {
+      latestViewportData[key] = window.visualViewport[key]
     })
-    window.visualViewport.addEventListener('scroll', (event) => {
-      const target = event.target as VisualViewport
-      updateViewportInfo(target)
+
+    if (pendingUpdate) return
+    pendingUpdate = true
+
+    requestAnimationFrame(() => {
+      pendingUpdate = false
+      // 使用最新获取的数据更新响应式引用
+      Object.assign(viewportRef.value, latestViewportData)
     })
   }
+  onMounted(() => {
+    if (!listened) {
+      window.visualViewport.addEventListener('scroll', viewportHandler)
+      window.visualViewport.addEventListener('resize', viewportHandler)
+      listened = true
+    }
+  })
+  onBeforeUnmount(() => {
+    if (listened) {
+      window.visualViewport.removeEventListener('scroll', viewportHandler)
+      window.visualViewport.removeEventListener('resize', viewportHandler)
+    }
+  })
+  viewportHandler()
+  return viewportRef
+}
+export function onViewportChange(cb: (newViewport: any, oldViewport: any) => void) {
+  useViewport()
+  return watch(viewportRef, (newVal, oldVal) => {
+    cb(newVal, oldVal)
+  }, {
+    deep: true,
+    immediate: true,
+  })
 }
