@@ -1,7 +1,11 @@
 // 打开的笔记本列表
 // const openedNotebookList = ref([])
 
-import { request } from '@/api'
+import {
+  deleteBlock,
+  request,
+  sql,
+} from '@/api'
 import { usePlugin } from '@/main'
 import {
   IGlobalData,
@@ -96,8 +100,7 @@ async function getCurrentDocAttr(currentDocId) {
 }
 
 async function getSlideDailyNote(next = true, newDate: string) {
-  const data = {
-    stmt: `
+  const data = `
     select distinct B.* from blocks as B join attributes as A
     on B.id = A.block_id
     where A.name like 'custom-dailynote-%'
@@ -105,15 +108,21 @@ async function getSlideDailyNote(next = true, newDate: string) {
     order by
       A.value ${next ? "asc" : "desc"}
     limit 1
-    `,
-  }
-  const url = "/api/query/sql"
-  return request(url, data).then((data) => {
+  `
+  return sql(data).then((data) => {
     if (data && data.length === 1) {
       return data[0]
     }
     return null
   })
+}
+
+export async function jumpToTodayDailyNote() {
+  const todayDailyNoteBlockId = await getNewDailyNoteBlockId()
+  openDocById(todayDailyNoteBlockId)
+  setTimeout(() => {
+    deleteBlock(todayDailyNoteBlockId)
+  }, 1000 * 0.5)
 }
 
 export async function jumpToPrevDailyNote() {
@@ -128,11 +137,11 @@ export function getCurrentDocTitleDomByDom(dom: HTMLElement) {
   const plugin = usePlugin()
   const currentDocTitleDom: HTMLDivElement = plugin.isMobile
     ? dom.querySelector(
-      "#editor:not(.fn__none) .protyle-background",
-    )
+        "#editor:not(.fn__none) .protyle-background",
+      )
     : dom.querySelector(
-      ".protyle:not(.fn__none) .protyle-title",
-    )
+        ".protyle:not(.fn__none) .protyle-title",
+      )
   return currentDocTitleDom
 }
 
@@ -141,11 +150,11 @@ async function jumpTo(next = true) {
 
   const currentDocTitleDom: HTMLDivElement = plugin.isMobile
     ? document.querySelector(
-      "#editor:not(.fn__none) .protyle-background",
-    )
+        "#editor:not(.fn__none) .protyle-background",
+      )
     : document.querySelector(
-      ".protyle:not(.fn__none) .protyle-title",
-    )
+        ".protyle:not(.fn__none) .protyle-title",
+      )
   if (!currentDocTitleDom) {
     showMessage("请先打开一篇文档")
     return
