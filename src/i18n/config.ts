@@ -58,9 +58,9 @@ export const configs = {
 
   refreshSiyuan: {
     zh_CN: '刷新思源',
-    en_US: 'Refresh Siyuan',
+    en_US: 'Refresh SiYuan',
   },
-}
+} satisfies Record<string, localeConfig>
 
 export type I18nConfigKeys = keyof typeof configs
 export type I18nConfig = typeof configs
