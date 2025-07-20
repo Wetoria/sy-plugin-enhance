@@ -177,10 +177,6 @@ const viewportChangeCallback = (newViewport) => {
 }
 
 let unwatchViewportChange = null
-if (plugin.isMobile) {
-  unwatchViewportChange = onViewportChange(viewportChangeCallback)
-}
-
 watchConfigEnableStatus(
   () => moduleOptions.value.enableSyToolbarFit,
   () => {
