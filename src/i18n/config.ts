@@ -55,6 +55,11 @@ export const configs = {
     zh_CN: '插入当前时间',
     en_US: 'Insert current time',
   },
+
+  refreshSiyuan: {
+    zh_CN: '刷新思源',
+    en_US: 'Refresh Siyuan',
+  },
 }
 
 export type I18nConfigKeys = keyof typeof configs

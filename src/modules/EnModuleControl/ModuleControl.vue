@@ -90,8 +90,8 @@ import {
 // 关闭时，应当几乎跟没开启插件一个效果
 const moduleEnabled = ref(true)
 const enableCommand = {
-  langKey: EN_COMMAND_KEYS.EN_PLUGIN_SWITCH,
-  langText: EN_CONSTANTS.EN_PLUGIN_SWITCH_DISPLAY,
+  langKey: EN_COMMAND_KEYS.EN_PLUGIN_SWITCH as string,
+  langText: EN_CONSTANTS.EN_PLUGIN_SWITCH_DISPLAY as string,
   hotkey: "",
   callback: () => {
     moduleEnabled.value = !moduleEnabled.value
@@ -107,6 +107,23 @@ onMounted(() => {
 })
 onBeforeUnmount(() => {
   removeCommand(enableCommand)
+})
+
+
+const refreshSiyuanCommand = {
+  langKey: EN_COMMAND_KEYS.EN_PLUGIN_REFRESH_SIYUAN as string,
+  langText: EN_CONSTANTS.EN_PLUGIN_REFRESH_SIYUAN_DISPLAY as string,
+  hotkey: "⇧⌘R",
+  callback: () => {
+    window.location.reload()
+  },
+}
+
+onMounted(() => {
+  addCommand(refreshSiyuanCommand)
+})
+onBeforeUnmount(() => {
+  removeCommand(refreshSiyuanCommand)
 })
 
 const plugin = usePlugin()
