@@ -74,7 +74,10 @@
           </div>
 
           <!-- 更多内容 -->
-          <a-dropdown position="tr">
+          <a-dropdown
+            position="tr"
+            :popup-max-height="500"
+          >
             <div class="NavItem">
               <div class="NavItemIcon">
                 <icon-menu size="18" />
@@ -105,6 +108,17 @@
                       size="18"
                     />
                     刷新当前文档
+                  </div>
+                </a-doption>
+                <a-doption
+                  @click="jumpToTodayDailyNote()"
+                >
+                  <div class="flexAlignCenter enGap">
+                    <SyIcon
+                      name="iconCalendar"
+                      size="18"
+                    />
+                    今天
                   </div>
                 </a-doption>
                 <a-doption
@@ -161,6 +175,7 @@ import { usePlugin } from '@/main'
 import {
   jumpToNextDailyNote,
   jumpToPrevDailyNote,
+  jumpToTodayDailyNote,
 } from '@/modules/DailyNote/DailyNote'
 import { debounce } from '@/utils'
 import { EN_EVENT_BUS_KEYS } from '@/utils/Constants'
