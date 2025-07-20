@@ -107,8 +107,8 @@
 </template>
 
 <script setup lang="ts">
+import { useViewport } from '@/logic/Viewport'
 import { usePlugin } from '@/main'
-import { useViewport } from '@/modules/EnPWA.vue'
 import {
   useEventListener,
 } from '@vueuse/core'
