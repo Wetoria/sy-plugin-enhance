@@ -73,6 +73,7 @@
 </template>
 
 <script setup lang="ts">
+import { onViewportChange } from '@/logic/Viewport'
 import { usePlugin } from '@/main'
 import {
   injectGlobalWindowData,
@@ -86,10 +87,7 @@ import {
   EN_MODULE_LIST,
 } from '@/utils/Constants'
 import {
-  onBeforeUnmount,
   onMounted,
-  ref,
-  watch,
   watchEffect,
 } from 'vue'
 
@@ -189,64 +187,6 @@ watchConfigEnableStatus(
     }
   },
 )
-</script>
-
-<script lang="ts">
-let listened = false
-export enum viewportKeys {
-  height = 'height',
-  offsetLeft = 'offsetLeft',
-  offsetTop = 'offsetTop',
-  onresize = 'onresize',
-  onscroll = 'onscroll',
-  pageLeft = 'pageLeft',
-  pageTop = 'pageTop',
-  scale = 'scale',
-  width = 'width',
-}
-
-const viewportRef = ref<{
-  [key in viewportKeys]: any;
-}>({} as any)
-export function useViewport() {
-  let pendingUpdate = false
-  function viewportHandler() {
-    if (pendingUpdate) return
-    pendingUpdate = true
-
-    requestAnimationFrame(() => {
-      pendingUpdate = false
-
-      Object.values(viewportKeys).forEach((key) => {
-        viewportRef.value[key] = window.visualViewport[key]
-      })
-    })
-  }
-  onMounted(() => {
-    if (!listened) {
-      window.visualViewport.addEventListener('scroll', viewportHandler)
-      window.visualViewport.addEventListener('resize', viewportHandler)
-      listened = true
-    }
-  })
-  onBeforeUnmount(() => {
-    if (listened) {
-      window.visualViewport.removeEventListener('scroll', viewportHandler)
-      window.visualViewport.removeEventListener('resize', viewportHandler)
-    }
-  })
-  viewportHandler()
-  return viewportRef
-}
-export function onViewportChange(cb: (newViewport: any, oldViewport: any) => void) {
-  useViewport()
-  return watch(viewportRef, (newVal, oldVal) => {
-    cb(newVal, oldVal)
-  }, {
-    deep: true,
-    immediate: true,
-  })
-}
 </script>
 
 <style lang="scss">
