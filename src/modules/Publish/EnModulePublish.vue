@@ -70,110 +70,6 @@
         />
       </template>
     </EnSettingsItem>
-    <EnSettingsItem
-      v-if="moduleOptions.enabled"
-      mode="vertical"
-    >
-      <div>
-        页面映射
-      </div>
-      <template #desc>
-        <a-space
-          direction="vertical"
-          style="width: 100%"
-        >
-          <div>
-            用于将地址映射到在线分享服务。根目录请使用 home
-          </div>
-          <div>
-            你也可以使用 /siyuan/blocks/:blockId 来访问任意块(:blockId 部分为块 ID)
-          </div>
-          <div>
-            例如：about 映射到 20250426112627-dvxroxk
-          </div>
-          <div>
-            注：api 和 resources 开头的 path 会被自动忽略
-          </div>
-          <!-- 现有的页面映射条目（值可编辑） -->
-          <div
-            v-for="key in Object.keys(pageMap)"
-            :key="key"
-            style="display: flex; gap: 2px; align-items: center;"
-          >
-            <div style="flex: 1;">
-              <a-typography-text>
-                <strong>{{ key }}</strong>
-              </a-typography-text>
-            </div>
-            <div style="flex: 1;">
-              <a-input
-                v-model="pageMap[key]"
-                placeholder="请输入对应的块 ID"
-                @change="savePageMapData"
-              />
-            </div>
-            <EnButtonIcon
-              @click="openPageInBrowser(key as string)"
-            >
-              <template #prompt>
-                查看页面
-              </template>
-              <SyIcon
-                name="iconOpen"
-                :size="10"
-              />
-            </EnButtonIcon>
-            <EnBlockJumper
-              :block-id="pageMap[key]"
-            />
-            <EnButtonIcon
-              status="danger"
-              @click="removePageMapItem(key as string)"
-            >
-              <template #prompt>
-                删除
-              </template>
-              <icon-delete />
-            </EnButtonIcon>
-          </div>
-
-          <!-- 添加新条目的输入框 -->
-          <div style="display: flex; gap: 8px; align-items: flex-start;">
-            <div style="flex: 1;">
-              <a-input
-                v-model="newPath"
-                placeholder="请输入新的地址路径 (如: about 或 /about)"
-                :status="getPathValidationStatus(newPath)"
-                @keyup.enter="addPageMapItem"
-              />
-              <div
-                v-if="getPathValidationError(newPath)"
-                style="color: rgb(var(--danger-6)); font-size: 12px; margin-top: 4px;"
-              >
-                {{ getPathValidationError(newPath) }}
-              </div>
-            </div>
-            <div style="flex: 1;">
-              <a-input
-                v-model="newBlockId"
-                placeholder="请输入对应的块 ID"
-                @keyup.enter="addPageMapItem"
-              />
-            </div>
-            <a-button
-              type="primary"
-              :disabled="!canAddNewItem"
-              @click="addPageMapItem"
-            >
-              <template #icon>
-                <icon-plus />
-              </template>
-              添加
-            </a-button>
-          </div>
-        </a-space>
-      </template>
-    </EnSettingsItem>
   </EnSettingsTeleportModule>
 </template>
 
@@ -199,7 +95,6 @@ import {
   Notification,
 } from '@arco-design/web-vue'
 import {
-  computed,
   nextTick,
   onBeforeUnmount,
   ref,
@@ -251,14 +146,6 @@ const handleChange = () => {
 }
 
 
-// const switchEnabledStatus = (enabled: boolean) => {
-//   if (enabled) {
-//     enablePublish()
-//   } else {
-//     disablePublish()
-//   }
-// }
-
 let nuxtProject = null
 
 const onStartSuccess = () => {
@@ -275,7 +162,7 @@ const stopPublish = () => {
 
 
 const workspacePath = window?.siyuan?.config?.system?.workspaceDir
-const configBasePath = '/conf/en_publish'
+const baseCwdPath = '/conf/en_publish'
 const basePublishPath = `/data/plugins/sy-plugin-enhance/publish`
 
 const entryPath = `${basePublishPath}/server/index.mjs`
@@ -297,7 +184,7 @@ const startPublishService = () => {
     const path = require('node:path')
 
     const fullEntryPath = path.join(workspacePath, entryPath)
-    const fullCwdPath = path.join(workspacePath, configBasePath)
+    const fullCwdPath = path.join(workspacePath, baseCwdPath)
 
     console.log('启动在线分享服务:', {
       entryPath: fullEntryPath,
@@ -324,6 +211,10 @@ const startPublishService = () => {
       env: {
         ...process.env,
         NITRO_PORT: moduleOptions.value.defaultPort,
+        NITRO_BASE: fullCwdPath,
+        NODE_ENV: 'production',
+        // 确保模块解析使用 Node 模式
+        ELECTRON_RUN_AS_NODE: '1',
       },
       stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
     })
@@ -378,7 +269,7 @@ const startPublishService = () => {
 }
 
 
-const configPath = `${configBasePath}/config.json`
+const configPath = `${baseCwdPath}/configs/siyuan.json`
 const saveConfig = async (conf: any) => {
   const configBlob = new Blob([JSON.stringify(conf, null, 2)], {
     type: 'application/json',
@@ -386,158 +277,6 @@ const saveConfig = async (conf: any) => {
   await putFile(configPath, false, configBlob)
 }
 
-const pageMap = ref<Record<string, string>>({})
-const newPath = ref('')
-const newBlockId = ref('')
-
-// 校验路径是否有效
-const isValidPath = (path: string): boolean => {
-  if (!path) {
-    return false
-  }
-
-  // 标准化路径（去掉开头的 /）
-  const normalizedPath = path.startsWith('/') ? path.slice(1) : path
-
-  // 检查是否以 api 或 resources 开头
-  if (normalizedPath.startsWith('api') || normalizedPath.startsWith('resources')) {
-    return false
-  }
-
-  return true
-}
-
-// 检查路径是否重复
-const isPathDuplicate = (path: string, originalKey?: string): boolean => {
-  // 如果是编辑现有条目，排除自身
-  const existingKeys = Object.keys(pageMap.value).filter((key) => key !== originalKey)
-  return existingKeys.includes(path)
-}
-
-// 获取路径校验状态
-const getPathValidationStatus = (path: string): 'error' | undefined => {
-  if (!path) return undefined
-
-  if (!isValidPath(path) || isPathDuplicate(path)) {
-    return 'error'
-  }
-
-  return undefined
-}
-
-// 获取路径校验错误信息
-const getPathValidationError = (path: string): string => {
-  if (!path) return ''
-
-  // 标准化路径（去掉开头的 /）
-  const normalizedPath = path.startsWith('/') ? path.slice(1) : path
-
-  if (normalizedPath.startsWith('api')) {
-    return '路径不能以 api 开头（无论是否有前缀 /）'
-  }
-
-  if (normalizedPath.startsWith('resources')) {
-    return '路径不能以 resources 开头（无论是否有前缀 /）'
-  }
-
-  if (isPathDuplicate(path)) {
-    return '路径已存在'
-  }
-
-  return ''
-}
-
-// 检查是否可以添加新条目
-const canAddNewItem = computed(() => {
-  return newPath.value
-    && newBlockId.value
-    && isValidPath(newPath.value)
-    && !isPathDuplicate(newPath.value)
-})
-
-// 处理页面映射 key 变更
-const handlePageMapKeyChange = (oldKey: string, newKey: string) => {
-  if (oldKey === newKey) return
-
-  // 校验新 key
-  if (!isValidPath(newKey)) {
-    Notification.error('路径格式不正确')
-    return
-  }
-
-  // 标准化路径（去掉开头的 /）
-  const processedNewKey = newKey.startsWith('/') ? newKey.slice(1) : newKey
-
-  if (isPathDuplicate(newKey, oldKey)) {
-    Notification.error('路径已存在')
-    return
-  }
-
-  // 更新 pageMap
-  const value = pageMap.value[oldKey]
-  delete pageMap.value[oldKey]
-  pageMap.value[processedNewKey] = value
-
-  savePageMapData()
-}
-
-// 添加新的页面映射条目
-const addPageMapItem = () => {
-  if (!canAddNewItem.value) {
-    return
-  }
-
-  // 标准化路径（去掉开头的 /）
-  const processedPath = newPath.value.startsWith('/') ? newPath.value.slice(1) : newPath.value
-
-  console.log('addPageMapItem ', newPath.value, newBlockId.value, 'processed:', processedPath)
-  pageMap.value[processedPath] = newBlockId.value
-
-  // 清空输入框
-  newPath.value = ''
-  newBlockId.value = ''
-
-  savePageMapData()
-  Notification.success('页面映射已添加')
-}
-
-// 删除页面映射条目
-const removePageMapItem = (key: string) => {
-  delete pageMap.value[key]
-  savePageMapData()
-  Notification.success('页面映射已删除')
-}
-
-// 保存页面映射数据
-const savePageMapData = async () => {
-  try {
-    await savePageMap(pageMap.value)
-  } catch (error) {
-    console.error('保存页面映射失败:', error)
-    Notification.error('保存页面映射失败')
-  }
-}
-
-// 在浏览器中打开页面
-const openPageInBrowser = (key: string) => {
-  if (!publishAddr.value) {
-    Notification.error('在线分享服务未启动')
-    return
-  }
-
-  // 如果key是home，则使用根路径
-  const path = key === 'home' ? '' : key
-  const url = `${publishAddr.value}/${path}`
-  window.open(url, '_blank')
-}
-
-const pageMapPath = `${configBasePath}/pageMap.json`
-const savePageMap = async (pageMap: any) => {
-  const pageMapBlob = new Blob([JSON.stringify(pageMap, null, 2)], {
-    type: 'application/json',
-  })
-  await putFile(pageMapPath, false, pageMapBlob)
-}
 
 const enablePublish = async () => {
   console.log('enablePublish ')
@@ -555,18 +294,9 @@ const enablePublish = async () => {
     const baseConfig = {
       base_siyuan: location.origin,
       token: window.siyuan.config.api.token,
+      setByEnPlugin: true,
     }
     saveConfig(baseConfig)
-
-
-    const pageMapRes = await getFile(pageMapPath)
-    // 判断是否存在 pageMap.json，不存在则创建空对象
-    if (!pageMapRes || pageMapRes.code == 404) {
-      savePageMap({})
-    } else {
-      // 如果已经存在，则以 pageMap.json 内容为准
-      pageMap.value = pageMapRes
-    }
 
     startPublishService()
   } catch (error) {
