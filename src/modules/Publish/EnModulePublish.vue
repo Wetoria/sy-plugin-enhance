@@ -294,6 +294,7 @@ const enablePublish = async () => {
     const baseConfig = {
       base_siyuan: location.origin,
       token: window.siyuan.config.api.token,
+      workspacePath,
       setByEnPlugin: true,
     }
     saveConfig(baseConfig)
