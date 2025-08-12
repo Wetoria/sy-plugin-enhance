@@ -60,6 +60,11 @@ export const configs = {
     zh_CN: '刷新思源',
     en_US: 'Refresh SiYuan',
   },
+
+  EnParagraphBlock_BlockTime_Toggle: {
+    zh_CN: '显示/隐藏块时间',
+    en_US: 'Show or Hide block time',
+  },
 } satisfies Record<string, localeConfig>
 
 export type I18nConfigKeys = keyof typeof configs

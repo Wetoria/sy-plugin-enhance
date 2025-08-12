@@ -150,6 +150,7 @@
 </template>
 
 <script setup lang="ts">
+import { enI18n } from '@/i18n'
 import { injectAuthStatus } from '@/logic/Auth'
 import { usePlugin } from '@/main'
 import {
@@ -173,6 +174,7 @@ import {
   generateUUIDWithTimestamp,
   moduleEnableStatusSwitcher,
 } from '@/utils'
+import { addCommandInModule } from '@/utils/Commands'
 
 
 import {
@@ -425,6 +427,16 @@ const disableAll = () => {
 
 onBeforeUnmount(() => {
   disableAll()
+})
+
+
+addCommandInModule({
+  langKey: 'EnParagraphBlock_BlockTime_Toggle',
+  langText: enI18n.EnParagraphBlock_BlockTime_Toggle,
+  hotkey: '',
+  callback: () => {
+    moduleOptions.value.enableBlockTime = !moduleOptions.value.enableBlockTime
+  },
 })
 </script>
 
