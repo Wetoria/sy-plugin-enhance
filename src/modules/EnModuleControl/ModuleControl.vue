@@ -113,7 +113,7 @@ onBeforeUnmount(() => {
 const refreshSiyuanCommand = {
   langKey: EN_COMMAND_KEYS.EN_PLUGIN_REFRESH_SIYUAN as string,
   langText: EN_CONSTANTS.EN_PLUGIN_REFRESH_SIYUAN_DISPLAY as string,
-  hotkey: "⇧⌘R",
+  hotkey: "",
   callback: () => {
     window.location.reload()
   },
