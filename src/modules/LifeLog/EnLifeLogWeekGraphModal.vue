@@ -333,6 +333,9 @@ const lifeLogWeekGraphModalVisible = ref(false)
 const openLifeLogWeekGraphModal = () => {
   lifeLogWeekGraphModalVisible.value = true
 }
+const closeLifeLogWeekGraphModal = () => {
+  lifeLogWeekGraphModalVisible.value = false
+}
 
 const splitedLifelogRecords = injectSplitedLifeLogRecords()
 const graphRecords = computed(() => {
@@ -351,7 +354,7 @@ const graphRecordsByDate = computed(() => {
   return result
 })
 
-const openModalByDateList = (data) => {
+const openModalByDateList = (data?: { dateList: string[] }) => {
   const {
     dateList: dateListParams,
   } = data || {}
@@ -405,7 +408,11 @@ const openLifeLogModalCommand = {
   langText: EN_CONSTANTS.LIFELOG_OPEN_GRAPH_MODAL_DISPLAY as string,
   hotkey: "",
   callback: () => {
-    openLifeLogWeekGraphModal()
+    if (lifeLogWeekGraphModalVisible.value) {
+      closeLifeLogWeekGraphModal()
+    } else {
+      openModalByDateList()
+    }
   },
 }
 onMounted(() => {
