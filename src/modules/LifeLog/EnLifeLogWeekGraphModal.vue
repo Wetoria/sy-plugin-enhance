@@ -73,7 +73,7 @@
           />
         </a-tooltip>
         <a-tooltip
-          content="统计图表"
+          content="展示当前时间范围内的统计结果"
         >
           <a-button
             :type="showStatistics ? 'primary' : 'outline'"
@@ -137,7 +137,7 @@
             <div class="EnLifeLogStatisticsArea">
               <div class="statistics-header">
                 <div class="statistics-title">
-                  统计图表
+                  统计
                 </div>
                 <a-button
                   size="small"
@@ -192,7 +192,7 @@
         >
           <div class="statistics-header">
             <div class="statistics-title">
-              统计图表
+              统计
             </div>
             <a-button
               size="small"
