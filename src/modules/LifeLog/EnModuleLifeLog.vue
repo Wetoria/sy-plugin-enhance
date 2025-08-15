@@ -208,7 +208,7 @@
                   color: moduleOptions.lifelogTypes.work.baseColor,
                 }"
               >
-                成长
+                工作
               </div>
               <EnColorPicker
                 v-model="moduleOptions.lifelogTypes.work.baseColor"
@@ -244,6 +244,31 @@
           <EnLifeLogSettingTypeItem
             :typeItem="moduleOptions.lifelogTypes.waste"
           />
+          <EnDivider />
+          <div>
+            <a-space>
+              <div
+                :style="{
+                  color: moduleOptions.lifelogTypes.other.baseColor,
+                }"
+              >
+                其他
+              </div>
+              <EnColorPicker
+                v-model="moduleOptions.lifelogTypes.other.baseColor"
+                type="bgColor"
+              />
+            </a-space>
+          </div>
+          <div>
+            其他未分类、或不知道怎么分类的事情，都可以先放到这里。
+          </div>
+          <div>
+            你可以随时调整它们（从该类下删除，再在工作、增等类型下新增）。
+          </div>
+          <EnLifeLogSettingTypeItem
+            :typeItem="moduleOptions.lifelogTypes.other"
+          />
         </template>
       </template>
     </EnSettingsItem>
@@ -270,7 +295,6 @@
 import EnColorPicker from '@/components/EnColorPicker.vue'
 import EnDivider from '@/components/EnDivider.vue'
 import { enI18n } from '@/i18n'
-import { usePlugin } from '@/main'
 import {
   useModule,
   watchConfigChanged,
@@ -313,9 +337,6 @@ import {
 import EnSettingsItem from '../../modules/Settings/EnSettingsItem.vue'
 import EnSettingsTeleportModule from '../../modules/Settings/EnSettingsTeleportModule.vue'
 
-
-// TODO 增加slash菜单选择LifeLog类型
-const plugin = usePlugin()
 
 // #region 基本的模块配置
 
