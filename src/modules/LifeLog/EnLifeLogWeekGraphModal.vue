@@ -38,11 +38,10 @@
               居中显示今天
             </div>
             <div v-if="!containsToday">
-              当前范围不包含今天
+              当前范围不包含今天，将会加载并跳转
             </div>
           </template>
           <a-button
-            :disabled="!containsToday"
             @click="goToToday"
           >
             今天
@@ -265,6 +264,7 @@ import { enEventBus } from '@/utils/EnEventBus'
 import dayjs from 'dayjs'
 import {
   computed,
+  nextTick,
   onBeforeUnmount,
   onMounted,
   ref,
@@ -281,6 +281,19 @@ const globalWindowData = injectGlobalWindowData()
 const plugin = usePlugin()
 
 const dateRange = ref([])
+
+const disableWatchUpdateDateRange = ref(false)
+const updateDateRange = (dateList: string[], isImmediately = false) => {
+  if (isImmediately) {
+    disableWatchUpdateDateRange.value = true
+    enEventBus.emit(EN_EVENT_BUS_KEYS.LIFELOG_LOAD_RECORDS_BY_DATE_LIST_IMMEDIATELY, dateList)
+  }
+  dateRange.value = [
+    dateList[0],
+    dateList[dateList.length - 1],
+  ]
+}
+
 const dateList = computed(() => {
   const dates = []
   const startDate = dayjs(dateRange.value[0])
@@ -317,18 +330,46 @@ const selectNextPeriod = () => {
 
 const EnLifeLogWeekGraphModalContainerRef = ref()
 const goToToday = () => {
-  const todayCell = EnLifeLogWeekGraphModalContainerRef.value.querySelector('.DateRow .DateColumn .Cell .Today')
-  if (!todayCell) {
-    return
+  if (containsToday.value) {
+    // 如果包含今天，滚动到今天的位置
+    const todayCell = EnLifeLogWeekGraphModalContainerRef.value.querySelector('.DateRow .DateColumn .Cell .Today')
+    if (!todayCell) {
+      return
+    }
+    const enWeekGraphEl = todayCell.closest('.EnWeekGraph')
+    const dateColumnEl = todayCell.closest('.DateColumn')
+    const enWeekGraphRect = enWeekGraphEl.getBoundingClientRect()
+    const dateColumnRect = dateColumnEl.getBoundingClientRect()
+    enWeekGraphEl.scrollTo({
+      left: dateColumnEl.offsetLeft - (enWeekGraphRect.width / 2) + (dateColumnRect.width / 2),
+      behavior: 'smooth',
+    })
+  } else {
+    // 如果不包含今天，加载今天开始的最新七天数据
+    const today = dayjs().format(lifelogKeyMap.YYYY_MM_DD)
+    const sevenDaysAgo = dayjs().subtract(6, 'day').format(lifelogKeyMap.YYYY_MM_DD)
+    updateDateRange([sevenDaysAgo, today], true)
+
+    // 监听一次数据变动，在数据加载完成后跳转至今日
+    const unwatch = watch(graphRecords, () => {
+      // 数据加载完成后，跳转至今日
+      nextTick(() => {
+        const todayCell = EnLifeLogWeekGraphModalContainerRef.value.querySelector('.DateRow .DateColumn .Cell .Today')
+        if (todayCell) {
+          const enWeekGraphEl = todayCell.closest('.EnWeekGraph')
+          const dateColumnEl = todayCell.closest('.DateColumn')
+          const enWeekGraphRect = enWeekGraphEl.getBoundingClientRect()
+          const dateColumnRect = dateColumnEl.getBoundingClientRect()
+          enWeekGraphEl.scrollTo({
+            left: dateColumnEl.offsetLeft - (enWeekGraphRect.width / 2) + (dateColumnRect.width / 2),
+            behavior: 'smooth',
+          })
+        }
+      })
+      // 只监听一次，完成后取消监听
+      unwatch()
+    }, { once: true })
   }
-  const enWeekGraphEl = todayCell.closest('.EnWeekGraph')
-  const dateColumnEl = todayCell.closest('.DateColumn')
-  const enWeekGraphRect = enWeekGraphEl.getBoundingClientRect()
-  const dateColumnRect = dateColumnEl.getBoundingClientRect()
-  enWeekGraphEl.scrollTo({
-    left: dateColumnEl.offsetLeft - (enWeekGraphRect.width / 2) + (dateColumnRect.width / 2),
-    behavior: 'smooth',
-  })
 }
 
 const lifeLogWeekGraphModalVisible = ref(false)
@@ -393,7 +434,11 @@ onMounted(() => {
 })
 watch(dateRange, () => {
   if (dateRange.value[0] && dateRange.value[1]) {
-    enEventBus.emit(EN_EVENT_BUS_KEYS.LIFELOG_LOAD_RECORDS_BY_DATE_LIST, [...dateRange.value])
+    if (disableWatchUpdateDateRange.value) {
+      disableWatchUpdateDateRange.value = false
+    } else {
+      enEventBus.emit(EN_EVENT_BUS_KEYS.LIFELOG_LOAD_RECORDS_BY_DATE_LIST, [...dateRange.value])
+    }
   }
 })
 

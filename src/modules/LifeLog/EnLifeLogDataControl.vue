@@ -301,6 +301,9 @@ onMounted(() => {
   enEventBus.on(EN_EVENT_BUS_KEYS.LIFELOG_LOAD_RECORDS_BY_DATE_LIST, debounce((dateList: string[]) => {
     loadDataByDateList(dateList)
   }, 1500))
+  enEventBus.on(EN_EVENT_BUS_KEYS.LIFELOG_LOAD_RECORDS_BY_DATE_LIST_IMMEDIATELY, (dateList: string[]) => {
+    loadDataByDateList(dateList)
+  })
 })
 </script>
 
