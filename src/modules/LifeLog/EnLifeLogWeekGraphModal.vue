@@ -408,7 +408,7 @@ const openModalByDateList = (data?: { dateList: string[] }) => {
   let temp = []
   if (!dateListParams) {
     temp = [
-      dayjs().subtract(7, 'days').format(lifelogKeyMap.YYYY_MM_DD),
+      dayjs().subtract(6, 'days').format(lifelogKeyMap.YYYY_MM_DD),
       dayjs().format(lifelogKeyMap.YYYY_MM_DD),
     ]
   } else {
