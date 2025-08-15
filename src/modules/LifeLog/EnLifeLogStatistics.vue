@@ -6,6 +6,7 @@
       :pagination="false"
       :bordered="true"
       size="small"
+      summary
       class="statistics-table"
       :scroll="{
         x: 'max-content',
@@ -83,6 +84,8 @@
               fontVariantNumeric: 'tabular-nums',
               fontWeight: record.isCategory ? '600' : 'normal',
               color: record.isCategory ? 'var(--b3-theme-primary)' : 'var(--b3-theme-on-surface)',
+              fontSize: '11px',
+              opacity: '0.7',
             }"
           >
             {{ record[date] || 0 }}条
@@ -90,12 +93,72 @@
           <span
             :style="{
               fontVariantNumeric: 'tabular-nums',
-              fontSize: '11px',
+              fontSize: '12px',
+              fontWeight: '500',
               color: 'var(--b3-theme-on-surface-variant)',
             }"
           >
             {{ formatTimeFromSeconds(getDateTimeTotal(record, date)) }}
           </span>
+        </div>
+      </template>
+
+      <!-- 统计行 -->
+      <template #summary-cell="{ column }">
+        <div
+          :style="{
+            fontVariantNumeric: 'tabular-nums',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            width: '100%',
+            height: '100%',
+            fontWeight: '600',
+            color: 'var(--b3-theme-primary)',
+            backgroundColor: 'var(--b3-theme-surface)',
+          }"
+        >
+          <template v-if="column.dataIndex === 'type'">
+            总计
+          </template>
+          <template v-else-if="column.dataIndex === 'total'">
+            {{ getSummaryTotalCount() }}条
+          </template>
+          <template v-else-if="column.dataIndex === 'timeTotal'">
+            {{ formatTimeFromSeconds(getSummaryTimeTotal()) }}
+          </template>
+          <template v-else>
+            <!-- 日期列 -->
+            <div
+              :style="{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: '2px',
+              }"
+            >
+              <span
+                :style="{
+                  fontSize: '11px',
+                  color: 'var(--b3-theme-on-surface-variant)',
+                  opacity: '0.7',
+                }"
+              >
+                {{ getSummaryDateCount(column.dataIndex) }}条
+              </span>
+              <span
+                :style="{
+                  fontVariantNumeric: 'tabular-nums',
+                  fontSize: '12px',
+                  fontWeight: '500',
+                  color: 'var(--b3-theme-primary)',
+                }"
+              >
+                {{ formatTimeFromSeconds(getSummaryDateTimeTotal(column.dataIndex)) }}
+              </span>
+            </div>
+          </template>
         </div>
       </template>
     </a-table>
@@ -230,6 +293,41 @@ const getDateTimeTotal = (record: any, date: string) => {
   }
 
   return timeTotal
+}
+
+// 获取总计数量（统计行）
+const getSummaryTotalCount = () => {
+  return tableData.value.reduce((sum, record) => {
+    return sum + getTotalCount(record)
+  }, 0)
+}
+
+// 获取总计时间（统计行）
+const getSummaryTimeTotal = () => {
+  return tableData.value.reduce((sum, record) => {
+    // 只计算子类型行的时间，避免重复计算
+    if (!record.isCategory) {
+      return sum + getTimeTotal(record)
+    }
+    return sum
+  }, 0)
+}
+
+// 获取指定日期的总计数量（统计行）
+const getSummaryDateCount = (date: string) => {
+  return tableData.value.reduce((sum, record) => {
+    return sum + (record[date] || 0)
+  }, 0)
+}
+
+// 获取指定日期的总计时间（统计行）
+const getSummaryDateTimeTotal = (date: string) => {
+  const recordsForDate = props.graphRecordsByDate[date] || []
+
+  // 计算所有记录的时间总和
+  return recordsForDate.reduce((sum, record) => {
+    return sum + (record.diff || 0)
+  }, 0)
 }
 
 // 生成表格列配置
