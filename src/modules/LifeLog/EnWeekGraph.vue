@@ -11,6 +11,7 @@
         v-for="(date, index) in dateList"
         :key="`${date}-${index}`"
         class="Column DateColumn"
+        :data-date="date"
       >
         <div class="Cell">
           <slot :name="`dateRowDateColumnCell-${date}`">
@@ -35,6 +36,7 @@
         v-for="(date, index) in dateList"
         :key="`${date}-${index}`"
         class="Column DateColumn"
+        :data-date="date"
       >
 
       </div>
@@ -65,6 +67,7 @@
         :key="`${date}-${index}`"
         class="Column DateColumn"
         style="height: var(--en-week-graph-timeline-area-height);"
+        :data-date="date"
       >
         <div class="PromptArea">
           <div

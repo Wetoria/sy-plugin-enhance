@@ -77,7 +77,9 @@
             width: '100%',
             height: '100%',
             gap: '2px',
+            cursor: 'pointer',
           }"
+          @click="scrollToDate(date)"
         >
           <span
             :style="{
@@ -177,7 +179,12 @@ interface Props {
   graphRecordsByDate: Record<string, any[]>
 }
 
+interface Emits {
+  (e: 'scrollToDate', date: string): void
+}
+
 const props = defineProps<Props>()
+const emit = defineEmits<Emits>()
 
 const {
   moduleOptions,
@@ -481,6 +488,11 @@ const tableData = computed(() => {
 
   return result
 })
+
+// 滚动到指定日期
+const scrollToDate = (date: string) => {
+  emit('scrollToDate', date)
+}
 </script>
 
 <style lang="scss" scoped>

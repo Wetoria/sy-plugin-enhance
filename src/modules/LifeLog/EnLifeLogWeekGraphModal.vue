@@ -152,6 +152,7 @@
                 <EnLifeLogStatistics
                   :date-list="dateList"
                   :graph-records-by-date="graphRecordsByDate"
+                  @scroll-to-date="scrollToDate"
                 />
               </div>
             </div>
@@ -207,6 +208,7 @@
             <EnLifeLogStatistics
               :date-list="dateList"
               :graph-records-by-date="graphRecordsByDate"
+              @scroll-to-date="scrollToDate"
             />
           </div>
         </div>
@@ -401,6 +403,21 @@ const timelineHeight = ref(2000)
 const showStatistics = ref(false)
 const toggleStatistics = () => {
   showStatistics.value = !showStatistics.value
+}
+
+const scrollToDate = (date: string) => {
+  const targetCell = EnLifeLogWeekGraphModalContainerRef.value.querySelector(`.DateRow .DateColumn[data-date="${date}"] .Cell`)
+  if (!targetCell) {
+    return
+  }
+  const enWeekGraphEl = targetCell.closest('.EnWeekGraph')
+  const dateColumnEl = targetCell.closest('.DateColumn')
+  const enWeekGraphRect = enWeekGraphEl.getBoundingClientRect()
+  const dateColumnRect = dateColumnEl.getBoundingClientRect()
+  enWeekGraphEl.scrollTo({
+    left: dateColumnEl.offsetLeft - (enWeekGraphRect.width / 2) + (dateColumnRect.width / 2),
+    behavior: 'smooth',
+  })
 }
 
 const openLifeLogModalCommand = {
