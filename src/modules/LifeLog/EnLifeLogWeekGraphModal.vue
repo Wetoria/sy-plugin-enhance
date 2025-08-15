@@ -265,6 +265,7 @@ import {
   EN_MODULE_LIST,
 } from '@/utils/Constants'
 import { enEventBus } from '@/utils/EnEventBus'
+import { useLocalStorage } from '@vueuse/core'
 import dayjs from 'dayjs'
 import {
   computed,
@@ -446,10 +447,10 @@ watch(dateRange, () => {
   }
 })
 
-const columnWidth = ref(130)
-const timelineHeight = ref(2000)
+const columnWidth = useLocalStorage('en-lifelog-column-width', 130)
+const timelineHeight = useLocalStorage('en-lifelog-timeline-height', 2000)
+const showStatistics = useLocalStorage('en-lifelog-show-statistics', false)
 
-const showStatistics = ref(false)
 const toggleStatistics = () => {
   showStatistics.value = !showStatistics.value
 }
