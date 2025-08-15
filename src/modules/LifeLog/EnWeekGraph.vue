@@ -269,7 +269,7 @@ const isWeekend = (dateStr: string) => {
     z-index: 3;
     flex-shrink: 0;
 
-    .Cell {
+    .Cell:not(:empty) {
       height: 100%;
       padding: 4px 8px;
     }
@@ -277,6 +277,7 @@ const isWeekend = (dateStr: string) => {
 
   .DateRow {
     min-height: var(--en-week-graph-daterow-height);
+    z-index: 4;
   }
 
   .PromptColumn {
@@ -470,6 +471,10 @@ const isWeekend = (dateStr: string) => {
   // 周末列样式
   .DateColumn.weekend {
     background-color: var(--b3-theme-surface-light);
+
+    .Cell {
+      background-color: var(--b3-theme-surface-light);
+    }
   }
 }
 </style>
