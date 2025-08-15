@@ -208,7 +208,7 @@
                   color: moduleOptions.lifelogTypes.work.baseColor,
                 }"
               >
-                成长
+                工作
               </div>
               <EnColorPicker
                 v-model="moduleOptions.lifelogTypes.work.baseColor"
@@ -243,6 +243,31 @@
           </div>
           <EnLifeLogSettingTypeItem
             :typeItem="moduleOptions.lifelogTypes.waste"
+          />
+          <EnDivider />
+          <div>
+            <a-space>
+              <div
+                :style="{
+                  color: moduleOptions.lifelogTypes.other.baseColor,
+                }"
+              >
+                其他
+              </div>
+              <EnColorPicker
+                v-model="moduleOptions.lifelogTypes.other.baseColor"
+                type="bgColor"
+              />
+            </a-space>
+          </div>
+          <div>
+            其他未分类、或不知道怎么分类的事情，都可以先放到这里。
+          </div>
+          <div>
+            你可以随时调整它们（从该类下删除，再在工作、增等类型下新增）。
+          </div>
+          <EnLifeLogSettingTypeItem
+            :typeItem="moduleOptions.lifelogTypes.other"
           />
         </template>
       </template>
