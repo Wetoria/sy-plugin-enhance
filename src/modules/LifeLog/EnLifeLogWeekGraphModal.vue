@@ -107,10 +107,62 @@
         v-if="!plugin.isMobile"
         class="EnLifeLogDesktopLayout"
       >
-        <!-- 左侧：周图表区域 -->
+        <a-split
+          v-if="showStatistics"
+          class="split-container"
+          :min="0.3"
+          :max="0.7"
+        >
+          <template #first>
+            <!-- 左侧：周图表区域 -->
+            <div class="EnLifeLogWeekGraphArea">
+              <EnWeekGraph
+                :date-list="dateList"
+                :column-width="columnWidth"
+                :timelineHeight="timelineHeight"
+              >
+                <template
+                  v-for="(date) of dateList"
+                  :key="`${date}`"
+                  #[`timelineAreaDateColumn-${date}`]
+                >
+                  <EnLifeLogGraphDateItem :data="graphRecordsByDate[date]" />
+                </template>
+              </EnWeekGraph>
+            </div>
+          </template>
+
+          <template #second>
+            <!-- 右侧：统计图展示区域 -->
+            <div class="EnLifeLogStatisticsArea">
+              <div class="statistics-header">
+                <div class="statistics-title">
+                  统计图表
+                </div>
+                <a-button
+                  size="small"
+                  @click="toggleStatistics"
+                >
+                  <template #icon>
+                    <icon-close />
+                  </template>
+                </a-button>
+              </div>
+              <div class="statistics-content">
+                <EnLifeLogStatistics
+                  :date-list="dateList"
+                  :graph-records-by-date="graphRecordsByDate"
+                />
+              </div>
+            </div>
+          </template>
+
+        </a-split>
+
+        <!-- 不显示统计时的布局 -->
         <div
+          v-else
           class="EnLifeLogWeekGraphArea"
-          :class="{ 'with-statistics': showStatistics }"
         >
           <EnWeekGraph
             :date-list="dateList"
@@ -125,37 +177,6 @@
               <EnLifeLogGraphDateItem :data="graphRecordsByDate[date]" />
             </template>
           </EnWeekGraph>
-        </div>
-
-        <!-- 右侧：统计图展示区域 -->
-        <div
-          v-if="showStatistics"
-          class="EnLifeLogStatisticsArea"
-        >
-          <div class="statistics-header">
-            <div class="statistics-title">
-              统计图表
-            </div>
-            <a-button
-              size="small"
-              @click="toggleStatistics"
-            >
-              <template #icon>
-                <icon-close />
-              </template>
-            </a-button>
-          </div>
-          <div class="statistics-content">
-            <!-- 这里后续会添加具体的统计图表内容 -->
-            <div class="statistics-placeholder">
-              <div class="placeholder-text">
-                统计图表展示区域
-              </div>
-              <div class="placeholder-subtitle">
-                支持 CSV 数据、条形图、饼图等展示
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -183,15 +204,10 @@
             </a-button>
           </div>
           <div class="statistics-content">
-            <!-- 这里后续会添加具体的统计图表内容 -->
-            <div class="statistics-placeholder">
-              <div class="placeholder-text">
-                统计图表展示区域
-              </div>
-              <div class="placeholder-subtitle">
-                支持 CSV 数据、条形图、饼图等展示
-              </div>
-            </div>
+            <EnLifeLogStatistics
+              :date-list="dateList"
+              :graph-records-by-date="graphRecordsByDate"
+            />
           </div>
         </div>
 
@@ -226,6 +242,7 @@ import {
   useModule,
 } from '@/modules/EnModuleControl/ModuleProvide'
 import EnLifeLogGraphDateItem from '@/modules/LifeLog/EnLifeLogGraphDateItem.vue'
+import EnLifeLogStatistics from '@/modules/LifeLog/EnLifeLogStatistics.vue'
 import EnWeekGraph from '@/modules/LifeLog/EnWeekGraph.vue'
 import {
   getTargetLifelogRecordsByDateList,
@@ -250,6 +267,7 @@ import {
   onMounted,
   ref,
   watch,
+  watchEffect,
 } from 'vue'
 
 const {
@@ -319,6 +337,10 @@ const openLifeLogWeekGraphModal = () => {
 const splitedLifelogRecords = injectSplitedLifeLogRecords()
 const graphRecords = computed(() => {
   return getTargetLifelogRecordsByDateList(splitedLifelogRecords.value, [...dateList.value])
+})
+
+watchEffect(() => {
+  console.log('graphRecords is ', graphRecords.value)
 })
 const graphRecordsByDate = computed(() => {
   const result = {}
@@ -454,22 +476,22 @@ onBeforeUnmount(() => {
 
     // 桌面端布局
     .EnLifeLogDesktopLayout {
-      display: flex;
       width: 100%;
       height: 100%;
       gap: var(--en-gap);
 
+      .split-container {
+        width: 100%;
+        height: 100%;
+      }
+
       .EnLifeLogWeekGraphArea {
-        flex: 1;
+        width: 100%;
+        height: 100%;
         display: flex;
         justify-content: center;
         align-items: center;
-        transition: flex 0.3s ease;
         overflow: hidden; // 防止内容溢出
-
-        &.with-statistics {
-          flex: 0.6;
-        }
 
         // 限制 EnWeekGraph 的宽度，让它只在左侧区域内滚动
         .EnWeekGraph {
@@ -481,27 +503,28 @@ onBeforeUnmount(() => {
       }
 
       .EnLifeLogStatisticsArea {
-        flex: 0.4;
+        width: 100%;
+        height: 100%;
         display: flex;
         flex-direction: column;
         background-color: var(--b3-theme-surface);
         border: 1px solid var(--b3-border-color);
         border-radius: 6px;
         overflow: hidden;
-        min-width: 300px; // 设置最小宽度，防止被挤压
 
         .statistics-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 4px 16px; // 减小上下内边距，匹配 30px 高度
+          padding: 4px 16px;
           background-color: var(--b3-theme-surface);
           border-bottom: 1px solid var(--b3-border-color);
-          height: 30px; // 与 --en-week-graph-daterow-height 保持一致
+          height: 30px;
           box-sizing: border-box;
+          flex-shrink: 0; // 防止头部被压缩
 
           .statistics-title {
-            font-size: 14px; // 稍微减小字体大小
+            font-size: 14px;
             font-weight: 600;
             color: var(--b3-theme-on-surface);
           }
@@ -511,24 +534,11 @@ onBeforeUnmount(() => {
           flex: 1;
           display: flex;
           justify-content: center;
-          align-items: center;
+          align-items: flex-start;
           background-color: var(--b3-theme-surface);
           padding: 20px;
-
-          .statistics-placeholder {
-            text-align: center;
-
-            .placeholder-text {
-              font-size: 18px;
-              color: var(--b3-theme-on-surface);
-              margin-bottom: 8px;
-            }
-
-            .placeholder-subtitle {
-              font-size: 14px;
-              color: var(--b3-theme-on-surface-variant);
-            }
-          }
+          overflow: auto;
+          min-height: 0; // 确保 flex 子元素可以正确收缩
         }
       }
     }
@@ -577,24 +587,10 @@ onBeforeUnmount(() => {
           flex: 1;
           display: flex;
           justify-content: center;
-          align-items: center;
+          align-items: flex-start; // 改为顶部对齐
           background-color: var(--b3-theme-surface);
           padding: 20px;
-
-          .statistics-placeholder {
-            text-align: center;
-
-            .placeholder-text {
-              font-size: 18px;
-              color: var(--b3-theme-on-surface);
-              margin-bottom: 8px;
-            }
-
-            .placeholder-subtitle {
-              font-size: 14px;
-              color: var(--b3-theme-on-surface-variant);
-            }
-          }
+          overflow: auto; // 允许滚动
         }
       }
     }
