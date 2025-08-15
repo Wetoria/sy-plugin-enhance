@@ -12,17 +12,24 @@
         :key="`${date}-${index}`"
         class="Column DateColumn"
         :data-date="date"
+        :class="{ weekend: isWeekend(date) }"
       >
         <div class="Cell">
           <slot :name="`dateRowDateColumnCell-${date}`">
-            <div
-              v-if="dayjs(date).isSame(dayjs(), 'day')"
-              class="Today"
-            >
-              今
-            </div>
-            <div>
-              {{ date }}
+            <div class="date-info">
+              <div class="date-main">
+                {{ date }}
+              </div>
+              <div class="date-extra">
+                <div
+                  v-if="dayjs(date).isSame(dayjs(), 'day')"
+                  class="Today"
+                >
+                  今
+                </div>
+                <!-- {{ getLunarDate(date) }} {{ getWeekday(date) }} -->
+                {{ getWeekday(date) }}
+              </div>
             </div>
           </slot>
         </div>
@@ -37,6 +44,7 @@
         :key="`${date}-${index}`"
         class="Column DateColumn"
         :data-date="date"
+        :class="{ weekend: isWeekend(date) }"
       >
 
       </div>
@@ -68,6 +76,7 @@
         class="Column DateColumn"
         style="height: var(--en-week-graph-timeline-area-height);"
         :data-date="date"
+        :class="{ weekend: isWeekend(date) }"
       >
         <div class="PromptArea">
           <div
@@ -122,10 +131,22 @@ import {
 
 const props = defineProps<{
   dateList: string[]
-  columnWidth?: number
-  timelineHeight?: number
+  columnWidth: number
+  timelineHeight: number
 }>()
 
+// 获取周几
+const getWeekday = (dateStr: string) => {
+  const date = dayjs(dateStr)
+  const weekdays = ['日', '一', '二', '三', '四', '五', '六']
+  return `周${weekdays[date.day()]}`
+}
+
+// 获取农历日期（简化版）
+const getLunarDate = (dateStr: string) => {
+  // 简化实现，实际项目中建议使用专业的农历库
+  return '农历'
+}
 
 const secondsOfADay = 60 * 60 * 24
 const current = ref(dayjs())
@@ -175,6 +196,11 @@ onMounted(() => {
     },
   )
 })
+
+const isWeekend = (dateStr: string) => {
+  const date = dayjs(dateStr)
+  return date.day() === 0 || date.day() === 6
+}
 </script>
 
 <style lang="scss" scoped>
@@ -245,11 +271,12 @@ onMounted(() => {
 
     .Cell {
       height: 100%;
+      padding: 4px 8px;
     }
   }
 
   .DateRow {
-    height: var(--en-week-graph-daterow-height);
+    min-height: var(--en-week-graph-daterow-height);
   }
 
   .PromptColumn {
@@ -303,9 +330,9 @@ onMounted(() => {
   .DateRow .DateColumn .Cell .Today {
     background-color: red;
     color: white;
-    border-radius: 100%;
-    width: 18px;
-    height: 18px;
+    border-radius: 100vw;
+    aspect-ratio: 1;
+    padding: 2px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -417,6 +444,32 @@ onMounted(() => {
     .Column {
       min-height: 100%;
     }
+  }
+
+  .date-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+
+    .date-main {
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 1.2;
+    }
+
+    .date-extra {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      font-size: 11px;
+      line-height: 1.1;
+    }
+  }
+
+  // 周末列样式
+  .DateColumn.weekend {
+    background-color: var(--b3-theme-surface-light);
   }
 }
 </style>

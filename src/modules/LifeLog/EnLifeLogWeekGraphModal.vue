@@ -139,7 +139,9 @@
                   统计
                 </div>
                 <a-button
-                  size="small"
+                  type="text"
+                  shape="circle"
+                  size="mini"
                   @click="toggleStatistics"
                 >
                   <template #icon>
@@ -195,7 +197,9 @@
               统计
             </div>
             <a-button
-              size="small"
+              type="text"
+              shape="circle"
+              size="mini"
               @click="toggleStatistics"
             >
               <template #icon>
@@ -588,7 +592,7 @@ onBeforeUnmount(() => {
           padding: 4px 16px;
           background-color: var(--b3-theme-surface);
           border-bottom: 1px solid var(--b3-border-color);
-          height: 30px;
+          height: 40px; // 增加高度以适配两行日期显示
           box-sizing: border-box;
           flex-shrink: 0; // 防止头部被压缩
 
@@ -639,10 +643,10 @@ onBeforeUnmount(() => {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 4px 16px; // 减小上下内边距，匹配 30px 高度
+          padding: 4px 16px; // 减小上下内边距，匹配 40px 高度
           background-color: var(--b3-theme-surface);
           border-bottom: 1px solid var(--b3-border-color);
-          height: 30px; // 与 --en-week-graph-daterow-height 保持一致
+          height: 40px; // 与桌面端保持一致，适配两行日期显示
           box-sizing: border-box;
 
           .statistics-title {
