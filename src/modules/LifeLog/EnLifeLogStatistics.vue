@@ -127,7 +127,35 @@
             {{ getSummaryTotalCount() }}条
           </template>
           <template v-else-if="column.dataIndex === 'timeTotal'">
-            {{ formatTimeFromSeconds(getSummaryTimeTotal()) }}
+            <div
+              :style="{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: '2px',
+              }"
+            >
+              <span
+                :style="{
+                  fontSize: '11px',
+                  color: 'var(--b3-theme-on-surface-variant)',
+                  opacity: '0.7',
+                }"
+              >
+                总 {{ getTotalHours() }} h
+              </span>
+              <span
+                :style="{
+                  fontVariantNumeric: 'tabular-nums',
+                  fontSize: '12px',
+                  fontWeight: '500',
+                  color: 'var(--b3-theme-primary)',
+                }"
+              >
+                {{ formatTimeFromSeconds(getSummaryTimeTotal()) }}
+              </span>
+            </div>
           </template>
           <template v-else>
             <!-- 日期列 -->
@@ -488,6 +516,11 @@ const tableData = computed(() => {
 
   return result
 })
+
+// 获取总小时数
+const getTotalHours = () => {
+  return props.dateList.length * 24
+}
 
 // 滚动到指定日期
 const scrollToDate = (date: string) => {
