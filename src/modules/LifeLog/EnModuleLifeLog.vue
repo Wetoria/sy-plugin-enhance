@@ -459,6 +459,18 @@ const flatLifelogTypes = computed(() => {
     return []
   }
   return [
+    {
+      type: '成长',
+      color: moduleOptions.value.lifelogTypes.growth.baseColor,
+    },
+    {
+      type: '浪费',
+      color: moduleOptions.value.lifelogTypes.waste.baseColor,
+    },
+    {
+      type: '其他',
+      color: moduleOptions.value.lifelogTypes.other.baseColor,
+    },
     ...moduleOptions.value.lifelogTypes.fixed.items,
     ...moduleOptions.value.lifelogTypes.growth.items,
     ...moduleOptions.value.lifelogTypes.work.items,

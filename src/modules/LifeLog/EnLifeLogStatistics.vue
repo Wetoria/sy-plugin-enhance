@@ -13,6 +13,16 @@
         y: '100%',
       }"
     >
+      <template #td="{ record }">
+        <td
+          :data-en-lifelog-type="record.type"
+          :style="{
+            '--en-lifelog-color': `var(--en-lifelog-color-type-${record.type})`,
+          }"
+        >
+          <slot />
+        </td>
+      </template>
       <!-- 类型列 -->
       <template #type="{ record }">
         <span
@@ -138,15 +148,6 @@
             >
               <span
                 :style="{
-                  fontSize: '11px',
-                  color: 'var(--b3-theme-on-surface-variant)',
-                  opacity: '0.7',
-                }"
-              >
-                总 {{ getTotalHours() }} h
-              </span>
-              <span
-                :style="{
                   fontVariantNumeric: 'tabular-nums',
                   fontSize: '12px',
                   fontWeight: '500',
@@ -154,6 +155,15 @@
                 }"
               >
                 {{ formatTimeFromSeconds(getSummaryTimeTotal()) }}
+              </span>
+              <span
+                :style="{
+                  fontSize: '10px',
+                  color: 'var(--b3-theme-on-surface-variant)',
+                  opacity: '0.7',
+                }"
+              >
+                总 {{ getTotalHours() }} h
               </span>
             </div>
           </template>
@@ -541,13 +551,26 @@ const scrollToDate = (date: string) => {
     }
 
     .arco-table-td {
-      background-color: var(--b3-theme-surface);
       border-color: var(--b3-border-color);
       color: var(--b3-theme-on-surface);
+      background-color: var(--b3-theme-surface);
+      // background-color: var(--lifelog-color, var(--b3-theme-surface)) !important;
+
+      .arco-table-cell {
+        background-color: color-mix(in srgb, var(--en-lifelog-color) 20%, transparent);
+        width: 100%;
+        height: 100%;
+        box-sizing: border-box;
+      }
     }
 
-    .arco-table-fixed-left {
-      box-shadow: 2px 0 8px var(--en-shadow);
+    // 固定列的特殊处理
+    .arco-table-col-fixed-left .arco-table-cell {
+      background-color: color-mix(in srgb, var(--en-lifelog-color) 20%, transparent) !important;
+      width: 100% !important;
+      height: 100% !important;
+      box-sizing: border-box !important;
+      line-height: 2.73;
     }
   }
 }
