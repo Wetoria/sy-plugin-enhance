@@ -585,6 +585,7 @@ onBeforeUnmount(() => {
         border: 1px solid var(--b3-border-color);
         border-radius: 6px;
         overflow: hidden;
+        box-sizing: border-box;
 
         .statistics-header {
           display: flex;
@@ -639,6 +640,7 @@ onBeforeUnmount(() => {
         border: 1px solid var(--b3-border-color);
         border-radius: 6px;
         overflow: hidden;
+        box-sizing: border-box;
 
         .statistics-header {
           display: flex;
