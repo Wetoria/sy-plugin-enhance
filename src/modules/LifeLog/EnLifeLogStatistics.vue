@@ -28,8 +28,6 @@
         <span
           :style="{
             paddingLeft: record.isSubType ? '20px' : '8px',
-            color: record.isCategory ? 'var(--b3-theme-primary)' : 'var(--b3-theme-on-surface-variant)',
-            fontWeight: record.isCategory ? '600' : 'normal',
           }"
         >
           {{ record.type }}
@@ -38,38 +36,36 @@
 
       <!-- 总计列 -->
       <template #total="{ record }">
-        <span
+        <div
           :style="{
-            fontVariantNumeric: 'tabular-nums',
             display: 'flex',
+            flexDirection: 'column',
             justifyContent: 'center',
             alignItems: 'center',
             width: '100%',
             height: '100%',
-            fontWeight: record.isCategory ? '600' : 'normal',
-            color: record.isCategory ? 'var(--b3-theme-primary)' : 'var(--b3-theme-on-surface)',
+            gap: '2px',
           }"
         >
-          {{ getTotalCount(record) }}条
-        </span>
-      </template>
-
-      <!-- 时间总计列 -->
-      <template #timeTotal="{ record }">
-        <span
-          :style="{
-            fontVariantNumeric: 'tabular-nums',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            width: '100%',
-            height: '100%',
-            fontWeight: record.isCategory ? '600' : 'normal',
-            color: record.isCategory ? 'var(--b3-theme-primary)' : 'var(--b3-theme-on-surface)',
-          }"
-        >
-          {{ formatTimeFromSeconds(getTimeTotal(record)) }}
-        </span>
+          <span
+            :style="{
+              fontVariantNumeric: 'tabular-nums',
+              fontSize: '12px',
+              fontWeight: '500',
+            }"
+          >
+            {{ formatTimeFromSeconds(getTimeTotal(record)) }}
+          </span>
+          <span
+            :style="{
+              fontVariantNumeric: 'tabular-nums',
+              fontSize: '11px',
+              opacity: '0.7',
+            }"
+          >
+            {{ getTotalCount(record) }}条 {{ getTimePercentageOfTotal(getTimeTotal(record)) }}%
+          </span>
+        </div>
       </template>
 
       <!-- 日期列 -->
@@ -94,23 +90,21 @@
           <span
             :style="{
               fontVariantNumeric: 'tabular-nums',
-              fontWeight: record.isCategory ? '600' : 'normal',
-              color: record.isCategory ? 'var(--b3-theme-primary)' : 'var(--b3-theme-on-surface)',
-              fontSize: '11px',
-              opacity: '0.7',
-            }"
-          >
-            {{ record[date] || 0 }}条
-          </span>
-          <span
-            :style="{
-              fontVariantNumeric: 'tabular-nums',
               fontSize: '12px',
               fontWeight: '500',
               color: 'var(--b3-theme-on-surface-variant)',
             }"
           >
             {{ formatTimeFromSeconds(getDateTimeTotal(record, date)) }}
+          </span>
+          <span
+            :style="{
+              fontVariantNumeric: 'tabular-nums',
+              fontSize: '11px',
+              opacity: '0.7',
+            }"
+          >
+            {{ record[date] || 0 }}条 {{ getTimePercentageOfTotal(getDateTimeTotal(record, date), true) }}%
           </span>
         </div>
       </template>
@@ -134,9 +128,6 @@
             总计
           </template>
           <template v-else-if="column.dataIndex === 'total'">
-            {{ getSummaryTotalCount() }}条
-          </template>
-          <template v-else-if="column.dataIndex === 'timeTotal'">
             <div
               :style="{
                 display: 'flex',
@@ -146,6 +137,16 @@
                 gap: '2px',
               }"
             >
+              <span
+                :style="{
+                  fontVariantNumeric: 'tabular-nums',
+                  fontSize: '11px',
+                  color: 'var(--b3-theme-on-surface-variant)',
+                  opacity: '0.7',
+                }"
+              >
+                {{ getSummaryTotalCount() }}条
+              </span>
               <span
                 :style="{
                   fontVariantNumeric: 'tabular-nums',
@@ -245,10 +246,24 @@ const getCategoryDisplayName = (key: string) => {
 const formatTimeFromSeconds = (seconds: number) => {
   const hours = Math.floor(seconds / 3600)
   const mins = Math.floor((seconds % 3600) / 60)
-  if (hours > 0) {
-    return mins > 0 ? `${hours}h${mins}m` : `${hours}h`
-  }
-  return `${mins}m`
+  const secs = seconds % 60
+
+  const resultList = [
+    {
+      value: hours,
+      unit: 'h',
+    },
+    {
+      value: mins,
+      unit: 'm',
+    },
+    {
+      value: secs,
+      unit: 's',
+    },
+  ]
+  const result = resultList.filter((item) => item.value > 0).map((item) => `${item.value}${item.unit}`).join('')
+  return result || '0s'
 }
 
 // 获取总计数量
@@ -382,7 +397,7 @@ const tableColumns = computed(() => {
       title: '类型',
       dataIndex: 'type',
       key: 'type',
-      width: 120,
+      width: 80,
       fixed: 'left',
       slotName: 'type',
     },
@@ -390,19 +405,10 @@ const tableColumns = computed(() => {
       title: '总计',
       dataIndex: 'total',
       key: 'total',
-      width: 80,
+      width: 120,
       align: 'center',
       fixed: 'left',
       slotName: 'total',
-    },
-    {
-      title: '时间总计',
-      dataIndex: 'timeTotal',
-      key: 'timeTotal',
-      width: 100,
-      align: 'center',
-      fixed: 'left',
-      slotName: 'timeTotal',
     },
   ]
 
@@ -527,6 +533,25 @@ const tableData = computed(() => {
   return result
 })
 
+// 计算时间百分比
+const getTimePercentage = (currentTime: number, totalTime: number) => {
+  if (totalTime === 0) return 0
+  return Math.round((currentTime / totalTime) * 100)
+}
+
+// 计算相对于理论总时间的百分比
+const getTimePercentageOfTotal = (currentTime: number, isDateColumn: boolean = false, date?: string) => {
+  if (isDateColumn) {
+    // 日期列：相对于一天的总秒数 (86400秒)
+    return ((currentTime / 86400) * 100).toFixed(2)
+  } else {
+    // 总计列：相对于总天数 × 86400秒
+    const totalDays = props.dateList.length
+    const totalSeconds = totalDays * 86400
+    return ((currentTime / totalSeconds) * 100).toFixed(2)
+  }
+}
+
 // 获取总小时数
 const getTotalHours = () => {
   return props.dateList.length * 24
@@ -560,6 +585,7 @@ const scrollToDate = (date: string) => {
         background-color: color-mix(in srgb, var(--en-lifelog-color) 20%, transparent);
         width: 100%;
         height: 100%;
+        min-height: 50px;
         box-sizing: border-box;
       }
     }
@@ -570,7 +596,6 @@ const scrollToDate = (date: string) => {
       width: 100% !important;
       height: 100% !important;
       box-sizing: border-box !important;
-      line-height: 2.73;
     }
   }
 }
