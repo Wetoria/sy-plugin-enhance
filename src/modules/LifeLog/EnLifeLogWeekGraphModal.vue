@@ -72,6 +72,7 @@
           />
         </a-tooltip>
         <a-tooltip
+          v-if="isNotFree"
           content="展示当前时间范围内的统计结果"
         >
           <a-button
@@ -241,6 +242,7 @@
 </template>
 
 <script setup lang="ts">
+import { injectAuthStatus } from '@/logic/Auth'
 import { usePlugin } from '@/main'
 import {
   injectGlobalWindowData,
@@ -282,6 +284,10 @@ const {
 } = useModule<LifeLogModule>(EN_MODULE_LIST.LIFELOG)
 
 const globalWindowData = injectGlobalWindowData()
+
+const {
+  isNotFree,
+} = injectAuthStatus()
 
 const plugin = usePlugin()
 
