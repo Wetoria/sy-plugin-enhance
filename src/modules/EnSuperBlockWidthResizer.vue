@@ -5,18 +5,67 @@
     :to="resizer"
   >
     <div
+      v-if="resizer.classList.contains('enSuperBlockWidthResizerContainer')"
       class="content"
       @mousedown="handleMouseDown"
       @click="handleClick"
     >
       <div
+        class="add-button"
+        title="添加内容"
+        @click="handleAddButtonClick"
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 14 14"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M7 2V12M2 7H12"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </div>
+      <div
         class="resizer"
       ></div>
+    </div>
+
+    <div
+      v-else-if="resizer.classList.contains('enSuperBlockAddButtonContainer')"
+      class="add-button-only"
+      @click="handleAddButtonClick"
+    >
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 14 14"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M7 2V12M2 7H12"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
     </div>
   </Teleport>
 </template>
 
 <script setup lang="ts">
+import {
+  appendBlock,
+  insertBlock,
+  prependBlock,
+} from '@/api'
 import { useProtyleList } from '@/global/ProtyleList'
 import { usePlugin } from '@/main'
 import {
@@ -129,6 +178,47 @@ const removeResizerFromSuperBlock = (superBlock: HTMLDivElement) => {
   superBlock.classList.remove('en-super-block-width-resizer-hover')
 }
 
+// 为指定的 superBlock 插入开头和结尾的加号按钮
+const insertAddButtonsToSuperBlock = (superBlock: HTMLDivElement) => {
+  // 检查是否已经有加号按钮
+  if (superBlock.querySelector('.enSuperBlockAddButtonContainer')) {
+    return
+  }
+
+  // 创建开头的加号按钮
+  const startAddButton = document.createElement('div')
+  startAddButton.className = 'enSuperBlockAddButtonContainer enSuperBlockAddButtonStart protyle-custom'
+  startAddButton.dataset.en_loop_key = generateUUIDWithTimestamp()
+  startAddButton.dataset.position = 'start'
+
+  // 直接添加到 superBlock 中，使用绝对定位
+  superBlock.appendChild(startAddButton)
+  resizerListRef.value.push(startAddButton)
+
+  // 创建结尾的加号按钮
+  const endAddButton = document.createElement('div')
+  endAddButton.className = 'enSuperBlockAddButtonContainer enSuperBlockAddButtonEnd protyle-custom'
+  endAddButton.dataset.en_loop_key = generateUUIDWithTimestamp()
+  endAddButton.dataset.position = 'end'
+
+  // 直接添加到 superBlock 中，使用绝对定位
+  superBlock.appendChild(endAddButton)
+  resizerListRef.value.push(endAddButton)
+}
+
+// 从指定的 superBlock 移除加号按钮
+const removeAddButtonsFromSuperBlock = (superBlock: HTMLDivElement) => {
+  const addButtons = superBlock.querySelectorAll('.enSuperBlockAddButtonContainer')
+  addButtons.forEach((button) => {
+    button.remove()
+    // 从 resizerListRef 中移除
+    const index = resizerListRef.value.findIndex((r) => r === button)
+    if (index > -1) {
+      resizerListRef.value.splice(index, 1)
+    }
+  })
+}
+
 // 获取最接近的 superBlock 元素
 const getClosestSuperBlock = (element: HTMLElement): HTMLDivElement | null => {
   const superBlock = element.closest('div[data-type="NodeSuperBlock"][data-sb-layout="col"]') as HTMLDivElement
@@ -142,6 +232,7 @@ const handleMouseEnter = (event: MouseEvent) => {
 
   if (superBlock && superBlockListRef.value.includes(superBlock)) {
     insertResizerToSuperBlock(superBlock)
+    insertAddButtonsToSuperBlock(superBlock)
   }
 }
 
@@ -156,6 +247,7 @@ const handleMouseLeave = (event: MouseEvent) => {
       // 检查鼠标是否真的离开了这个 superBlock
       if (!superBlock.matches(':hover')) {
         removeResizerFromSuperBlock(superBlock)
+        removeAddButtonsFromSuperBlock(superBlock)
       }
     }, 100)
   }
@@ -206,6 +298,7 @@ const handler = debounce(() => {
       superBlock.removeEventListener('mouseenter', handleMouseEnter)
       superBlock.removeEventListener('mouseleave', handleMouseLeave)
       removeResizerFromSuperBlock(superBlock)
+      removeAddButtonsFromSuperBlock(superBlock)
     })
 
     // 为所有新的 superBlock 绑定事件
@@ -470,6 +563,14 @@ const {
 
 
 const handleMouseDown = (event) => {
+  // 检查是否点击的是加号按钮
+  const target = event.target as HTMLElement
+  const isAddButton = target.closest('.add-button') || target.closest('.add-button-only')
+
+  if (isAddButton) {
+    return // 如果是加号按钮，不处理 resize 事件
+  }
+
   event.stopImmediatePropagation()
   event.preventDefault()
   bindEvent()
@@ -477,6 +578,14 @@ const handleMouseDown = (event) => {
 
 // 均分宽度
 const handleClick = onCountClick((count, event) => {
+  // 检查是否点击的是加号按钮
+  const target = event.target as HTMLElement
+  const isAddButton = target.closest('.add-button') || target.closest('.add-button-only')
+
+  if (isAddButton) {
+    return // 如果是加号按钮，不处理均分功能
+  }
+
   unbindEvent()
   event.stopImmediatePropagation()
   event.preventDefault()
@@ -512,6 +621,123 @@ const handleClick = onCountClick((count, event) => {
   }
 })
 
+// 处理加号按钮点击
+const handleAddButtonClick = (event: MouseEvent) => {
+  event.stopPropagation()
+  event.stopImmediatePropagation()
+  event.preventDefault()
+
+  const target = event.target as HTMLElement
+  const addButtonContainer = target.closest('.enSuperBlockWidthResizerContainer') || target.closest('.enSuperBlockAddButtonContainer')
+
+  if (!addButtonContainer) {
+    return
+  }
+
+  const superBlock = addButtonContainer.closest('div[data-node-id][data-type="NodeSuperBlock"]') as HTMLElement
+
+  // 区分三种情况
+  if (addButtonContainer.classList.contains('enSuperBlockAddButtonStart')) {
+    // 情况1：点击的是开头的加号按钮
+    handleStartButtonClick(superBlock)
+  } else if (addButtonContainer.classList.contains('enSuperBlockAddButtonEnd')) {
+    // 情况2：点击的是结尾的加号按钮
+    handleEndButtonClick(superBlock)
+  } else if (addButtonContainer.classList.contains('enSuperBlockWidthResizerContainer')) {
+    // 情况3：点击的是中间区域的加号按钮（resizer 中的按钮）
+    handleMiddleButtonClick(superBlock, addButtonContainer)
+  }
+}
+
+// 处理开头按钮点击
+const handleStartButtonClick = async (superBlock: HTMLElement) => {
+  try {
+    const superBlockId = superBlock.dataset.nodeId
+    if (!superBlockId) {
+      console.error('无法获取 superBlock 的 ID')
+      return
+    }
+
+    // 调用 prependBlock API
+    await prependBlock('markdown', '', superBlockId)
+
+    // 插入成功后，均分所有块的宽度
+    await equalizeAllBlocks(superBlock)
+  } catch (error) {
+    console.error('开头插入失败:', error)
+  }
+}
+
+// 处理结尾按钮点击
+const handleEndButtonClick = async (superBlock: HTMLElement) => {
+  try {
+    const superBlockId = superBlock.dataset.nodeId
+    if (!superBlockId) {
+      console.error('无法获取 superBlock 的 ID')
+      return
+    }
+
+    // 调用 appendBlock API
+    await appendBlock('markdown', '', superBlockId)
+
+    // 插入成功后，均分所有块的宽度
+    await equalizeAllBlocks(superBlock)
+  } catch (error) {
+    console.error('结尾插入失败:', error)
+  }
+}
+
+// 处理中间按钮点击
+const handleMiddleButtonClick = async (superBlock: HTMLElement, resizerContainer: Element) => {
+  // 获取 resizer 两侧的节点信息
+  const nodeLeft = resizerContainer.previousElementSibling as HTMLElement | null
+
+  try {
+    if (!nodeLeft) {
+      console.error('无法获取左侧节点')
+      return
+    }
+
+    const leftNodeId = nodeLeft.dataset.nodeId
+    if (!leftNodeId) {
+      console.error('无法获取左侧节点的 ID')
+      return
+    }
+
+    // 调用 insertBlock API，previousID 为左侧元素的 id
+    await insertBlock('markdown', '', undefined, leftNodeId)
+
+    // 插入成功后，均分所有块的宽度
+    await equalizeAllBlocks(superBlock)
+  } catch (error) {
+    console.error('中间插入失败:', error)
+  }
+}
+
+// 均分所有块的宽度
+const equalizeAllBlocks = async (superBlock: HTMLElement) => {
+  try {
+    // 等待一小段时间，确保 DOM 更新完成
+    await new Promise((resolve) => setTimeout(resolve, 100))
+
+    // 获取所有有 nodeId 的子节点
+    const childNodes = Array.from(superBlock.children).filter((child: HTMLElement) => {
+      return child.dataset.nodeId
+    })
+
+    // 移除所有子节点的 width 和 flex 样式，让它们均分宽度
+    childNodes.forEach((child: HTMLElement) => {
+      child.style.removeProperty('width')
+      child.style.removeProperty('flex')
+    })
+
+    // 保存 superBlock 的宽度设置
+    storeSuperBlockWidth()
+  } catch (error) {
+    console.error('均分宽度失败:', error)
+  }
+}
+
 onMounted(() => {
   moduleEnableStatusSwitcher('en-super-block-width-resizer', true)
 })
@@ -538,12 +764,17 @@ html {
     &:not([data-en_enabled_module~="isMobile"]) {
       .protyle {
         [data-node-id].sb[data-sb-layout=col] {
+          position: relative;
 
           --en-sb-resizer-width: 8px;
           column-gap: var(--en-sb-resizer-width);
 
           &.en-super-block-width-resizer-hover {
             column-gap: 0;
+
+            .enSuperBlockAddButtonContainer {
+              opacity: 0.7;
+            }
           }
 
           .enSuperBlockWidthResizerContainer {
@@ -551,6 +782,42 @@ html {
             width: var(--en-sb-resizer-width);
 
             padding-left: 2px;
+          }
+
+          .enSuperBlockAddButtonContainer {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+            border-radius: 50%;
+            background-color: var(--b3-theme-primary);
+            color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+
+            &:hover {
+              opacity: 1;
+            }
+
+            svg {
+              width: 14px;
+              height: 14px;
+            }
+
+            &.enSuperBlockAddButtonStart {
+              top: -24px;
+              left: -10px;
+            }
+
+            &.enSuperBlockAddButtonEnd {
+              top: -24px;
+              right: -10px;
+            }
           }
 
           &.resizing {
@@ -596,6 +863,8 @@ html {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-direction: column;
+  gap: 6px;
 
   position: relative;
   cursor: col-resize;
@@ -605,7 +874,32 @@ html {
     border-radius: 3px;
     height: 100%;
     background-color: var(--b3-theme-primary);
-    opacity: 1;
+    opacity: 0.7;
+  }
+
+  .add-button {
+    position: absolute;
+    top: -24px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: var(--b3-theme-primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+
+    &:hover {
+      opacity: 1;
+      transform: translateX(-50%) scale(1.1);
+    }
   }
 
   &:hover,
@@ -613,6 +907,30 @@ html {
     .resizer {
       opacity: 1;
     }
+  }
+}
+
+.add-button-only {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+  border-radius: 50%;
+  background-color: var(--b3-theme-primary);
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+
+  &:hover {
+    opacity: 1;
+  }
+
+  svg {
+    width: 14px;
+    height: 14px;
   }
 }
 </style>
