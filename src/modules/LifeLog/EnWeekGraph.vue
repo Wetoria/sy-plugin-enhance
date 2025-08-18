@@ -473,7 +473,7 @@ const isWeekend = (dateStr: string) => {
     background-color: var(--b3-theme-surface-light);
 
     .Cell {
-      background-color: var(--b3-theme-surface-light);
+      background-color: var(--b3-theme-surface-lighter);
     }
   }
 }

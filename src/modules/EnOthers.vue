@@ -84,7 +84,7 @@
         <a-switch v-model="moduleOptions.enableMobileNav" />
       </template>
     </EnSettingsItem>
-    <!-- <EnSettingsItem>
+    <EnSettingsItem>
       <div>
         启用分栏宽度调整滑杆
       </div>
@@ -92,13 +92,16 @@
         <div>
           是否启用分栏宽度调整滑杆。具体说明详见插件文档。
         </div>
+        <div>
+          启用该功能，同时会纵向排布水平布局的块。即 123 会变成纵向的 123。
+        </div>
       </template>
       <template #opt>
         <a-switch v-model="moduleOptions.enableSuperBlockWidthResizer" />
       </template>
-    </EnSettingsItem> -->
+    </EnSettingsItem>
   </EnSettingsTeleportModule>
-  <!-- <EnSuperBlockWidthResizer v-if="moduleOptions.enableSuperBlockWidthResizer" /> -->
+  <EnSuperBlockWidthResizer v-if="moduleOptions.enableSuperBlockWidthResizer" />
   <EnMobileNav v-if="plugin.isMobile && moduleOptions.enableMobileNav" />
 </template>
 
@@ -112,6 +115,7 @@ import {
   watchConfigChanged,
   watchConfigEnableStatus,
 } from '@/modules/EnModuleControl/ModuleProvide'
+import EnSuperBlockWidthResizer from '@/modules/EnSuperBlockWidthResizer.vue'
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
 import {
   moduleEnableStatusSwitcher,
