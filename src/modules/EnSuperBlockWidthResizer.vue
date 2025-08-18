@@ -112,6 +112,7 @@ const insertResizerToSuperBlock = (superBlock: HTMLDivElement) => {
     superBlock.insertBefore(resizer, child)
     resizerListRef.value.push(resizer)
   })
+  superBlock.classList.add('en-super-block-width-resizer-hover')
 }
 
 // 从指定的 superBlock 移除 resizer
@@ -125,6 +126,7 @@ const removeResizerFromSuperBlock = (superBlock: HTMLDivElement) => {
       resizerListRef.value.splice(index, 1)
     }
   })
+  superBlock.classList.remove('en-super-block-width-resizer-hover')
 }
 
 // 获取最接近的 superBlock 元素
@@ -521,26 +523,32 @@ onBeforeUnmount(() => {
 
 <style lang="scss">
 html {
-  &[data-en_enabled_module~="isMobile"] {
-    .protyle {
-      [data-node-id].sb {
-        & > div[data-node-id] {
-          width: unset !important;
+  &[data-en_enabled_module~="en-super-block-width-resizer"] {
+
+    &[data-en_enabled_module~="isMobile"] {
+      .protyle {
+        [data-node-id].sb {
+          & > div[data-node-id] {
+            width: unset !important;
+          }
         }
       }
     }
-  }
-
-  &[data-en_enabled_module~="en-super-block-width-resizer"] {
 
     &:not([data-en_enabled_module~="isMobile"]) {
       .protyle {
         [data-node-id].sb[data-sb-layout=col] {
-          column-gap: unset;
+
+          --en-sb-resizer-width: 8px;
+          column-gap: var(--en-sb-resizer-width);
+
+          &.en-super-block-width-resizer-hover {
+            column-gap: 0;
+          }
 
           .enSuperBlockWidthResizerContainer {
             flex: unset;
-            width: 8px;
+            width: var(--en-sb-resizer-width);
 
             padding-left: 2px;
           }
