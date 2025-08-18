@@ -84,7 +84,7 @@
         <a-switch v-model="moduleOptions.enableMobileNav" />
       </template>
     </EnSettingsItem>
-    <!-- <EnSettingsItem>
+    <EnSettingsItem>
       <div>
         启用分栏宽度调整滑杆
       </div>
@@ -96,9 +96,9 @@
       <template #opt>
         <a-switch v-model="moduleOptions.enableSuperBlockWidthResizer" />
       </template>
-    </EnSettingsItem> -->
+    </EnSettingsItem>
   </EnSettingsTeleportModule>
-  <!-- <EnSuperBlockWidthResizer v-if="moduleOptions.enableSuperBlockWidthResizer" /> -->
+  <EnSuperBlockWidthResizer v-if="moduleOptions.enableSuperBlockWidthResizer" />
   <EnMobileNav v-if="plugin.isMobile && moduleOptions.enableMobileNav" />
 </template>
 
@@ -112,6 +112,7 @@ import {
   watchConfigChanged,
   watchConfigEnableStatus,
 } from '@/modules/EnModuleControl/ModuleProvide'
+import EnSuperBlockWidthResizer from '@/modules/EnSuperBlockWidthResizer.vue'
 import EnSettingsItem from '@/modules/Settings/EnSettingsItem.vue'
 import {
   moduleEnableStatusSwitcher,

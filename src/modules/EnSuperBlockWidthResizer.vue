@@ -4,11 +4,13 @@
     :key="resizer.dataset.en_loop_key"
     :to="resizer"
   >
-    <div class="content">
+    <div
+      class="content"
+      @mousedown="handleMouseDown"
+      @click="handleClick"
+    >
       <div
         class="resizer"
-        @mousedown="handleMouseDown"
-        @click="handleClick"
       ></div>
     </div>
   </Teleport>
@@ -17,7 +19,10 @@
 <script setup lang="ts">
 import { useProtyleList } from '@/global/ProtyleList'
 import { usePlugin } from '@/main'
-import { generateUUIDWithTimestamp } from '@/utils'
+import {
+  generateUUIDWithTimestamp,
+  moduleEnableStatusSwitcher,
+} from '@/utils'
 import {
   onCountClick,
   queryAllByDom,
@@ -34,12 +39,13 @@ import {
   onBeforeUnmount,
   onMounted,
   ref,
-  watch,
 } from 'vue'
 
 
 const superBlockListRef = ref<HTMLDivElement[]>([])
 const resizerListRef = ref<HTMLDivElement[]>([])
+// 记录上一次的 superBlock 元素，用于比较变化
+const previousSuperBlockList = ref<HTMLDivElement[]>([])
 
 const appendResizer = () => {
   resizerListRef.value = []
@@ -75,10 +81,88 @@ const appendResizer = () => {
   })
 }
 
+// 为指定的 superBlock 插入 resizer
+const insertResizerToSuperBlock = (superBlock: HTMLDivElement) => {
+  // 检查是否已经有 resizer
+  if (superBlock.querySelector('.enSuperBlockWidthResizerContainer')) {
+    return
+  }
 
-watch(superBlockListRef, () => {
-  appendResizer()
-})
+  const childList = superBlock.children
+  if (!childList.length) {
+    return
+  }
+
+  const needAppendDom = []
+  for (let i = 1; i < childList.length; i++) {
+    const child = childList[i] as HTMLElement
+    const isSyNode = child.dataset.nodeId
+
+    if (!isSyNode) {
+      continue
+    }
+
+    needAppendDom.push(child)
+  }
+
+  needAppendDom.forEach((child: HTMLElement) => {
+    const resizer = document.createElement('div')
+    resizer.className = 'enSuperBlockWidthResizerContainer protyle-custom'
+    resizer.dataset.en_loop_key = generateUUIDWithTimestamp()
+    superBlock.insertBefore(resizer, child)
+    resizerListRef.value.push(resizer)
+  })
+}
+
+// 从指定的 superBlock 移除 resizer
+const removeResizerFromSuperBlock = (superBlock: HTMLDivElement) => {
+  const resizers = superBlock.querySelectorAll('.enSuperBlockWidthResizerContainer')
+  resizers.forEach((resizer) => {
+    resizer.remove()
+    // 从 resizerListRef 中移除
+    const index = resizerListRef.value.findIndex((r) => r === resizer)
+    if (index > -1) {
+      resizerListRef.value.splice(index, 1)
+    }
+  })
+}
+
+// 获取最接近的 superBlock 元素
+const getClosestSuperBlock = (element: HTMLElement): HTMLDivElement | null => {
+  const superBlock = element.closest('div[data-type="NodeSuperBlock"][data-sb-layout="col"]') as HTMLDivElement
+  return superBlock
+}
+
+// 处理鼠标移入事件
+const handleMouseEnter = (event: MouseEvent) => {
+  const target = event.target as HTMLElement
+  const superBlock = getClosestSuperBlock(target)
+
+  if (superBlock && superBlockListRef.value.includes(superBlock)) {
+    insertResizerToSuperBlock(superBlock)
+  }
+}
+
+// 处理鼠标移出事件
+const handleMouseLeave = (event: MouseEvent) => {
+  const target = event.target as HTMLElement
+  const superBlock = getClosestSuperBlock(target)
+
+  if (superBlock && superBlockListRef.value.includes(superBlock)) {
+    // 延迟移除，避免拖拽时意外移除
+    setTimeout(() => {
+      // 检查鼠标是否真的离开了这个 superBlock
+      if (!superBlock.matches(':hover')) {
+        removeResizerFromSuperBlock(superBlock)
+      }
+    }, 100)
+  }
+}
+
+
+// watch(superBlockListRef, () => {
+//   appendResizer()
+// })
 
 const protyleList = useProtyleList()
 const handler = debounce(() => {
@@ -87,22 +171,75 @@ const handler = debounce(() => {
     `.protyle div[data-type="${SyDomNodeTypes.NodeSuperBlock}"][data-sb-layout="col"]`,
   ) as HTMLDivElement[]
 
-  const currentSet = new Set(superBlockListRef.value)
-
-  if (
-    currentSet.size === targetParagraphList.length
-    && targetParagraphList.every((dom) => currentSet.has(dom))
-  ) {
-    return
-  }
-
   const list = protyleList.value.filter(
     (item) => item.isEditorProtyle || item.isFlashCardProtyle || item.isInDialog,
   )
-  superBlockListRef.value = targetParagraphList.filter((superBlock) => {
+
+  const validSuperBlocks = targetParagraphList.filter((superBlock) => {
     const protyleOfSuperBlock = superBlock.closest('.protyle')
     return list.find((item) => item.protyleEl === protyleOfSuperBlock)
   })
+
+  // 检查 superBlock 元素是否有变化
+  const hasElementChanged = () => {
+    if (previousSuperBlockList.value.length !== validSuperBlocks.length) {
+      return true
+    }
+
+    // 比较每个元素是否相同
+    for (let i = 0; i < validSuperBlocks.length; i++) {
+      if (previousSuperBlockList.value[i] !== validSuperBlocks[i]) {
+        return true
+      }
+    }
+
+    return false
+  }
+
+  // 如果元素有变化，需要重新绑定事件
+  if (hasElementChanged()) {
+
+    // 清理所有现有的事件监听器
+    superBlockListRef.value.forEach((superBlock) => {
+      superBlock.removeEventListener('mouseenter', handleMouseEnter)
+      superBlock.removeEventListener('mouseleave', handleMouseLeave)
+      removeResizerFromSuperBlock(superBlock)
+    })
+
+    // 为所有新的 superBlock 绑定事件
+    validSuperBlocks.forEach((superBlock) => {
+      superBlock.addEventListener('mouseenter', handleMouseEnter)
+      superBlock.addEventListener('mouseleave', handleMouseLeave)
+      // 移除旧的标记，重新设置
+      delete superBlock.dataset.en_mouse_bound
+      superBlock.dataset.en_mouse_bound = 'true'
+    })
+
+    // 更新记录
+    superBlockListRef.value = [...validSuperBlocks]
+    previousSuperBlockList.value = [...validSuperBlocks]
+  } else {
+    // 元素没有变化，只处理新增和移除的情况
+    const removedSuperBlocks = superBlockListRef.value.filter(
+      (block) => !validSuperBlocks.includes(block),
+    )
+    removedSuperBlocks.forEach((superBlock) => {
+      superBlock.removeEventListener('mouseenter', handleMouseEnter)
+      superBlock.removeEventListener('mouseleave', handleMouseLeave)
+      removeResizerFromSuperBlock(superBlock)
+    })
+
+    // 为新找到的 superBlock 绑定事件
+    validSuperBlocks.forEach((superBlock) => {
+      if (!superBlock.dataset.en_mouse_bound) {
+        superBlock.addEventListener('mouseenter', handleMouseEnter)
+        superBlock.addEventListener('mouseleave', handleMouseLeave)
+        superBlock.dataset.en_mouse_bound = 'true'
+      }
+    })
+
+    superBlockListRef.value = validSuperBlocks
+  }
 }, 300)
 
 
@@ -126,6 +263,13 @@ onBeforeUnmount(() => {
   if (!plugin.isMobile) {
     unobserve()
   }
+
+  // 清理所有事件监听器和 resizer 元素
+  superBlockListRef.value.forEach((superBlock) => {
+    superBlock.removeEventListener('mouseenter', handleMouseEnter)
+    superBlock.removeEventListener('mouseleave', handleMouseLeave)
+    removeResizerFromSuperBlock(superBlock)
+  })
 })
 
 const resizerInfo = ref<{
@@ -366,6 +510,13 @@ const handleClick = onCountClick((count, event) => {
   }
 })
 
+onMounted(() => {
+  moduleEnableStatusSwitcher('en-super-block-width-resizer', true)
+})
+onBeforeUnmount(() => {
+  moduleEnableStatusSwitcher('en-super-block-width-resizer', false)
+})
+
 </script>
 
 <style lang="scss">
@@ -380,46 +531,49 @@ html {
     }
   }
 
-  &:not([data-en_enabled_module~="isMobile"]) {
-    .protyle {
-      [data-node-id].sb[data-sb-layout=col] {
-        column-gap: unset;
+  &[data-en_enabled_module~="en-super-block-width-resizer"] {
 
-        .enSuperBlockWidthResizerContainer {
-          flex: unset;
-          width: 8px;
+    &:not([data-en_enabled_module~="isMobile"]) {
+      .protyle {
+        [data-node-id].sb[data-sb-layout=col] {
+          column-gap: unset;
 
-          padding-left: 2px;
-        }
+          .enSuperBlockWidthResizerContainer {
+            flex: unset;
+            width: 8px;
 
-        &.resizing {
-          & > div[data-node-id] {
-            &::before {
-              content: attr(data-en_width_percent);
-              position: absolute;
-              font-size: 9px;
-              top: 0;
-              right: 0;
-              color: var(--b3-theme-on-surface);
-              background-color: var(--b3-theme-surface);
-              padding: 4px;
-              border-radius: var(--b3-border-radius);
+            padding-left: 2px;
+          }
+
+          &.resizing {
+            & > div[data-node-id] {
+              &::before {
+                content: attr(data-en_width_percent);
+                position: absolute;
+                font-size: 9px;
+                top: 0;
+                right: 0;
+                color: var(--b3-theme-on-surface);
+                background-color: var(--b3-theme-surface);
+                padding: 4px;
+                border-radius: var(--b3-border-radius);
+              }
             }
           }
         }
       }
-    }
 
-    body.enResizingSuperBlock {
-      * {
-        cursor: col-resize;
-      }
+      body.enResizingSuperBlock {
+        * {
+          cursor: col-resize;
+        }
 
-      .protyle-gutters,
-      .protyle-select,
-      .protyle-toolbar,
-      .protyle-hint {
-        display: none;
+        .protyle-gutters,
+        .protyle-select,
+        .protyle-toolbar,
+        .protyle-hint {
+          display: none;
+        }
       }
     }
   }
@@ -436,13 +590,14 @@ html {
   justify-content: center;
 
   position: relative;
+  cursor: col-resize;
 
   .resizer {
-    width: 3px;
+    width: 5px;
+    border-radius: 3px;
     height: 100%;
     background-color: var(--b3-theme-primary);
-    cursor: col-resize;
-    opacity: 0;
+    opacity: 1;
   }
 
   &:hover,
