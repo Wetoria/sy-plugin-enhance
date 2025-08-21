@@ -5,14 +5,15 @@
     :to="resizer"
   >
     <div
-      v-if="resizer.classList.contains('enSuperBlockWidthResizerContainer')"
-      class="content"
-      @mousedown="handleMouseDown"
-      @click="handleClick"
+      class="super-block-resizer-area"
     >
       <div
         class="add-button"
-        title="添加内容"
+        :class="{
+          start: resizer.classList.contains('start'),
+          end: resizer.classList.contains('end'),
+        }"
+        title="在左侧添加列"
         @click="handleAddButtonClick"
       >
         <svg
@@ -31,31 +32,18 @@
           />
         </svg>
       </div>
-      <div
-        class="resizer"
-      ></div>
-    </div>
 
-    <div
-      v-else-if="resizer.classList.contains('enSuperBlockAddButtonContainer')"
-      class="add-button-only"
-      @click="handleAddButtonClick"
-    >
-      <svg
-        width="14"
-        height="14"
-        viewBox="0 0 14 14"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
+
+      <div
+        v-if="!resizer.classList.contains('start') && !resizer.classList.contains('end')"
+        class="resizer-area"
+        @mousedown="handleMouseDown"
+        @click="handleClick"
       >
-        <path
-          d="M7 2V12M2 7H12"
-          stroke="currentColor"
-          stroke-width="1.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
-      </svg>
+        <div
+          class="resizer-indicator"
+        ></div>
+      </div>
     </div>
   </Teleport>
 </template>
@@ -94,41 +82,16 @@ import {
 
 const superBlockListRef = ref<HTMLDivElement[]>([])
 const resizerListRef = ref<HTMLDivElement[]>([])
-// 记录上一次的 superBlock 元素，用于比较变化
-const previousSuperBlockList = ref<HTMLDivElement[]>([])
 
-const appendResizer = () => {
-  resizerListRef.value = []
-  superBlockListRef.value.forEach((dom) => {
-    const childList = dom.children
-    if (!childList.length) {
-      return
-    }
+const isSyNode = (node: HTMLElement) => {
+  return node.dataset.nodeId && !node.dataset.nodeId.startsWith('en-super-block-width-resizer-')
+}
 
-    const needAppendDom = []
-    for (let i = 1; i < childList.length; i++) {
-      const child = childList[i] as HTMLElement
-      const isSyNode = child.dataset.nodeId
-
-      if (!isSyNode) {
-        continue
-      }
-
-      needAppendDom.push(child)
-    }
-
-    needAppendDom.forEach((child: HTMLElement) => {
-      // if (child.dataset.en_has_resizer) {
-      //   return
-      // }
-      const resizer = document.createElement('div')
-      resizer.className = 'enSuperBlockWidthResizerContainer protyle-custom'
-      resizer.dataset.en_loop_key = generateUUIDWithTimestamp()
-      dom.insertBefore(resizer, child)
-      resizerListRef.value.push(resizer)
-      // child.dataset.en_has_resizer = 'true'
-    })
-  })
+const generateResizerContainer = () => {
+  const resizer = document.createElement('div')
+  resizer.className = 'enSuperBlockWidthResizerContainer protyle-custom'
+  resizer.dataset.en_loop_key = generateUUIDWithTimestamp()
+  return resizer
 }
 
 // 为指定的 superBlock 插入 resizer
@@ -144,81 +107,57 @@ const insertResizerToSuperBlock = (superBlock: HTMLDivElement) => {
   }
 
   const needAppendDom = []
-  for (let i = 1; i < childList.length; i++) {
+  for (let i = 0; i < childList.length; i++) {
     const child = childList[i] as HTMLElement
-    const isSyNode = child.dataset.nodeId
-
-    if (!isSyNode) {
+    if (!isSyNode(child)) {
       continue
     }
 
     needAppendDom.push(child)
   }
 
-  needAppendDom.forEach((child: HTMLElement) => {
-    const resizer = document.createElement('div')
-    resizer.className = 'enSuperBlockWidthResizerContainer protyle-custom'
-    resizer.dataset.nodeId = `en-super-block-width-resizer-${generateShortUUID()}`
-    resizer.dataset.en_loop_key = generateUUIDWithTimestamp()
+  if (!needAppendDom.length) {
+    return
+  }
+
+  needAppendDom.forEach((child: HTMLElement, index: number) => {
+    const resizer = generateResizerContainer()
+    const isStart = index === 0
+    if (isStart) {
+      resizer.classList.toggle('start', true)
+      resizer.classList.toggle('first-or-last', true)
+    } else {
+      resizer.dataset.nodeId = `en-super-block-width-resizer-${generateShortUUID()}`
+    }
     superBlock.insertBefore(resizer, child)
     resizerListRef.value.push(resizer)
   })
+
+  const lastSyNode = needAppendDom[needAppendDom.length - 1]
+  const lastSyNodeRightNode = lastSyNode.nextElementSibling as HTMLElement
+
+  const resizer = generateResizerContainer()
+  resizer.classList.toggle('first-or-last', true)
+  resizer.classList.toggle('end', true)
+  if (lastSyNodeRightNode) {
+    superBlock.insertBefore(resizer, lastSyNodeRightNode)
+    resizerListRef.value.push(resizer)
+  } else {
+    superBlock.appendChild(resizer)
+    resizerListRef.value.push(resizer)
+  }
+
   superBlock.classList.add('en-super-block-width-resizer-hover')
 }
 
 // 从指定的 superBlock 移除 resizer
 const removeResizerFromSuperBlock = (superBlock: HTMLDivElement) => {
   const resizers = superBlock.querySelectorAll('.enSuperBlockWidthResizerContainer')
+  resizerListRef.value = resizerListRef.value.filter((resizer) => ![...resizers].includes(resizer))
   resizers.forEach((resizer) => {
     resizer.remove()
-    // 从 resizerListRef 中移除
-    const index = resizerListRef.value.findIndex((r) => r === resizer)
-    if (index > -1) {
-      resizerListRef.value.splice(index, 1)
-    }
   })
   superBlock.classList.remove('en-super-block-width-resizer-hover')
-}
-
-// 为指定的 superBlock 插入开头和结尾的加号按钮
-const insertAddButtonsToSuperBlock = (superBlock: HTMLDivElement) => {
-  // 检查是否已经有加号按钮
-  if (superBlock.querySelector('.enSuperBlockAddButtonContainer')) {
-    return
-  }
-
-  // 创建开头的加号按钮
-  const startAddButton = document.createElement('div')
-  startAddButton.className = 'enSuperBlockAddButtonContainer enSuperBlockAddButtonStart protyle-custom'
-  startAddButton.dataset.en_loop_key = generateUUIDWithTimestamp()
-  startAddButton.dataset.position = 'start'
-
-  // 直接添加到 superBlock 中，使用绝对定位
-  superBlock.appendChild(startAddButton)
-  resizerListRef.value.push(startAddButton)
-
-  // 创建结尾的加号按钮
-  const endAddButton = document.createElement('div')
-  endAddButton.className = 'enSuperBlockAddButtonContainer enSuperBlockAddButtonEnd protyle-custom'
-  endAddButton.dataset.en_loop_key = generateUUIDWithTimestamp()
-  endAddButton.dataset.position = 'end'
-
-  // 直接添加到 superBlock 中，使用绝对定位
-  superBlock.appendChild(endAddButton)
-  resizerListRef.value.push(endAddButton)
-}
-
-// 从指定的 superBlock 移除加号按钮
-const removeAddButtonsFromSuperBlock = (superBlock: HTMLDivElement) => {
-  const addButtons = superBlock.querySelectorAll('.enSuperBlockAddButtonContainer')
-  addButtons.forEach((button) => {
-    button.remove()
-    // 从 resizerListRef 中移除
-    const index = resizerListRef.value.findIndex((r) => r === button)
-    if (index > -1) {
-      resizerListRef.value.splice(index, 1)
-    }
-  })
 }
 
 // 获取最接近的 superBlock 元素
@@ -227,14 +166,28 @@ const getClosestSuperBlock = (element: HTMLElement): HTMLDivElement | null => {
   return superBlock
 }
 
+// 移除除当前 superBlock 之外，其他所有拥有 resizer 的 superBlock 容器
+const removeResizerFromOtherSuperBlocks = (currentSuperBlock: HTMLDivElement) => {
+  const owners = new Set<HTMLDivElement>()
+  resizerListRef.value.forEach((resizer) => {
+    const owner = resizer.closest('div[data-type="NodeSuperBlock"][data-sb-layout="col"]') as HTMLDivElement
+    if (owner && owner !== currentSuperBlock) {
+      owners.add(owner)
+    }
+  })
+  owners.forEach((owner) => removeResizerFromSuperBlock(owner))
+}
+
+
 // 处理鼠标移入事件
 const handleMouseEnter = (event: MouseEvent) => {
   const target = event.target as HTMLElement
   const superBlock = getClosestSuperBlock(target)
 
   if (superBlock && superBlockListRef.value.includes(superBlock)) {
+    // 进入该层前移除其他层（父级/子级/兄弟）的容器
+    removeResizerFromOtherSuperBlocks(superBlock)
     insertResizerToSuperBlock(superBlock)
-    insertAddButtonsToSuperBlock(superBlock)
   }
 }
 
@@ -249,16 +202,11 @@ const handleMouseLeave = (event: MouseEvent) => {
       // 检查鼠标是否真的离开了这个 superBlock
       if (!superBlock.matches(':hover')) {
         removeResizerFromSuperBlock(superBlock)
-        removeAddButtonsFromSuperBlock(superBlock)
       }
     }, 100)
   }
 }
 
-
-// watch(superBlockListRef, () => {
-//   appendResizer()
-// })
 
 const protyleList = useProtyleList()
 const handler = debounce(() => {
@@ -278,65 +226,50 @@ const handler = debounce(() => {
 
   // 检查 superBlock 元素是否有变化
   const hasElementChanged = () => {
-    if (previousSuperBlockList.value.length !== validSuperBlocks.length) {
+    if (superBlockListRef.value.length !== validSuperBlocks.length) {
       return true
     }
 
-    // 比较每个元素是否相同
-    for (let i = 0; i < validSuperBlocks.length; i++) {
-      if (previousSuperBlockList.value[i] !== validSuperBlocks[i]) {
-        return true
-      }
+    const oldHasRemoved = superBlockListRef.value.some((oldSuperBlock) => {
+      return !validSuperBlocks.includes(oldSuperBlock)
+    })
+    if (oldHasRemoved) {
+      return true
+    }
+
+
+    const newHasRemoved = validSuperBlocks.some((newSuperBlock) => {
+      return !superBlockListRef.value.includes(newSuperBlock)
+    })
+    if (newHasRemoved) {
+      return true
     }
 
     return false
   }
 
   // 如果元素有变化，需要重新绑定事件
-  if (hasElementChanged()) {
-
-    // 清理所有现有的事件监听器
-    superBlockListRef.value.forEach((superBlock) => {
-      superBlock.removeEventListener('mouseenter', handleMouseEnter)
-      superBlock.removeEventListener('mouseleave', handleMouseLeave)
-      removeResizerFromSuperBlock(superBlock)
-      removeAddButtonsFromSuperBlock(superBlock)
-    })
-
-    // 为所有新的 superBlock 绑定事件
-    validSuperBlocks.forEach((superBlock) => {
-      superBlock.addEventListener('mouseenter', handleMouseEnter)
-      superBlock.addEventListener('mouseleave', handleMouseLeave)
-      // 移除旧的标记，重新设置
-      delete superBlock.dataset.en_mouse_bound
-      superBlock.dataset.en_mouse_bound = 'true'
-    })
-
-    // 更新记录
-    superBlockListRef.value = [...validSuperBlocks]
-    previousSuperBlockList.value = [...validSuperBlocks]
-  } else {
-    // 元素没有变化，只处理新增和移除的情况
-    const removedSuperBlocks = superBlockListRef.value.filter(
-      (block) => !validSuperBlocks.includes(block),
-    )
-    removedSuperBlocks.forEach((superBlock) => {
-      superBlock.removeEventListener('mouseenter', handleMouseEnter)
-      superBlock.removeEventListener('mouseleave', handleMouseLeave)
-      removeResizerFromSuperBlock(superBlock)
-    })
-
-    // 为新找到的 superBlock 绑定事件
-    validSuperBlocks.forEach((superBlock) => {
-      if (!superBlock.dataset.en_mouse_bound) {
-        superBlock.addEventListener('mouseenter', handleMouseEnter)
-        superBlock.addEventListener('mouseleave', handleMouseLeave)
-        superBlock.dataset.en_mouse_bound = 'true'
-      }
-    })
-
-    superBlockListRef.value = validSuperBlocks
+  if (!hasElementChanged()) {
+    return
   }
+
+  // 清理所有现有的事件监听器
+  superBlockListRef.value.forEach((superBlock) => {
+    superBlock.removeEventListener('mouseover', handleMouseEnter)
+    superBlock.removeEventListener('mouseleave', handleMouseLeave)
+    removeResizerFromSuperBlock(superBlock)
+  })
+
+
+  // 为新找到的 superBlock 绑定事件
+  validSuperBlocks.forEach((superBlock) => {
+    if (!superBlock.dataset.en_mouse_bound) {
+      superBlock.addEventListener('mouseover', handleMouseEnter)
+      superBlock.addEventListener('mouseleave', handleMouseLeave)
+      superBlock.dataset.en_mouse_bound = 'true'
+    }
+  })
+  superBlockListRef.value = [...validSuperBlocks]
 }, 300)
 
 
@@ -406,7 +339,7 @@ const getResizerInfoByEvent = (event: MouseEvent) => {
   const percentMap = new Map<HTMLElement, number>()
 
   const childNodes = Array.from(superBlock.children).filter((child: HTMLElement) => {
-    return child.dataset.nodeId
+    return isSyNode(child)
   })
   const childrenCopied = childNodes.map((child) => child.cloneNode(true) as HTMLElement)
 
@@ -463,7 +396,7 @@ const storeSuperBlockWidth = () => {
   const superBlock = resizerInfo.value.superBlock
   const childNodes = Array.from(superBlock.children).filter((child: HTMLElement) => {
     delete child.dataset.en_width_percent
-    return child.dataset.nodeId
+    return isSyNode(child)
   })
   const copiedNodes = resizerInfo.value.childrenCopied
 
@@ -724,7 +657,7 @@ const equalizeAllBlocks = async (superBlock: HTMLElement) => {
 
     // 获取所有有 nodeId 的子节点
     const childNodes = Array.from(superBlock.children).filter((child: HTMLElement) => {
-      return child.dataset.nodeId
+      return child.dataset.nodeId && !child.dataset.nodeId.startsWith('en-super-block-width-resizer-')
     })
 
     // 移除所有子节点的 width 和 flex 样式，让它们均分宽度
@@ -753,6 +686,8 @@ onBeforeUnmount(() => {
 html {
   &[data-en_enabled_module~="en-super-block-width-resizer"] {
 
+
+    // 移动端纵向排布超级块，取消所有宽度设置
     &[data-en_enabled_module~="isMobile"] {
       .protyle {
         [data-node-id].sb {
@@ -763,73 +698,50 @@ html {
       }
     }
 
+
+    // 桌面端 resizer 相关的样式
     &:not([data-en_enabled_module~="isMobile"]) {
       .protyle {
         [data-node-id].sb[data-sb-layout=col] {
-          position: relative;
 
-          --en-sb-resizer-width: 8px;
+          --en-sb-resizer-width: 1.5em;
+
+
+
+          // 鼠标未移入超级块，用滑杆宽度作为列间距
           column-gap: var(--en-sb-resizer-width);
 
+          // 鼠标移入超级块时，取消列间距
           &.en-super-block-width-resizer-hover {
             column-gap: 0;
-
-            .enSuperBlockAddButtonContainer {
-              opacity: 0.7;
-            }
           }
+
+
 
           .enSuperBlockWidthResizerContainer {
             flex: unset;
-            width: var(--en-sb-resizer-width);
+            height: auto;
+            padding: unset;
+            margin: unset;
+            width: 0px;
+            min-width: 0px;
 
-            padding-left: 2px;
-          }
 
-          .enSuperBlockAddButtonContainer {
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            opacity: 0.7;
-            transition: opacity 0.2s ease;
-            border-radius: 50%;
-            background-color: var(--b3-theme-primary);
-            color: white;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            z-index: 10;
-
-            &:hover {
-              opacity: 1;
-            }
-
-            svg {
-              width: 14px;
-              height: 14px;
-            }
-
-            &.enSuperBlockAddButtonStart {
-              top: -24px;
-              left: -10px;
-            }
-
-            &.enSuperBlockAddButtonEnd {
-              top: -24px;
-              right: -10px;
+            &:not(.first-or-last) {
+              width: var(--en-sb-resizer-width);
             }
           }
 
+
+          // 超级块正在调整宽度时，显示宽度百分比
           &.resizing {
             & > div[data-node-id] {
               &::before {
                 content: attr(data-en_width_percent);
                 position: absolute;
                 font-size: 9px;
-                top: 0;
-                right: 0;
+                top: 4px;
+                right: 4px;
                 color: var(--b3-theme-on-surface);
                 background-color: var(--b3-theme-surface);
                 padding: 4px;
@@ -840,17 +752,23 @@ html {
         }
       }
 
-      body.enResizingSuperBlock {
-        * {
-          cursor: col-resize;
-        }
+    }
 
-        .protyle-gutters,
-        .protyle-select,
-        .protyle-toolbar,
-        .protyle-hint {
-          display: none;
-        }
+    // 正在调整宽度
+    body.enResizingSuperBlock {
+
+      // 显示鼠标
+      * {
+        cursor: col-resize;
+      }
+
+
+      // 隐藏块标
+      .protyle-gutters,
+      .protyle-select,
+      .protyle-toolbar,
+      .protyle-hint {
+        display: none;
       }
     }
   }
@@ -858,81 +776,78 @@ html {
 </style>
 
 <style lang="scss" scoped>
-.content {
+.super-block-resizer-area {
   width: 100%;
   height: 100%;
 
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: 6px;
-
   position: relative;
-  cursor: col-resize;
 
-  .resizer {
-    width: 5px;
-    border-radius: 3px;
-    height: 100%;
-    background-color: var(--b3-theme-primary);
-    opacity: 0.7;
-  }
+
+  --en-super-block-resizer-color: var(--b3-theme-primary);
+
+  --en-super-block-add-btn-size: 20px;
+  --en-sb-add-btn-offset: 4px;
+  --en-sb-resizer-btn-gap: 8px;
 
   .add-button {
     position: absolute;
-    top: -24px;
     left: 50%;
+    top: calc(-1 * var(--en-super-block-add-btn-size) + var(--en-sb-add-btn-offset));
     transform: translateX(-50%);
-    width: 20px;
-    height: 20px;
+
+    width: var(--en-super-block-add-btn-size);
+    height: var(--en-super-block-add-btn-size);
     border-radius: 50%;
-    background-color: var(--b3-theme-primary);
+    background-color: var(--en-super-block-resizer-color);
+
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    opacity: 0.7;
     transition: opacity 0.2s ease, transform 0.2s ease;
-    z-index: 10;
+
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 
     &:hover {
-      opacity: 1;
       transform: translateX(-50%) scale(1.1);
     }
   }
 
-  &:hover,
-  &.resizing {
-    .resizer {
-      opacity: 1;
+  .resizer-area {
+    position: relative;
+    cursor: col-resize;
+
+    width: 100%;
+    height: calc(100% - var(--en-sb-add-btn-offset) - var(--en-sb-resizer-btn-gap));
+    top: calc(var(--en-sb-resizer-btn-gap) + var(--en-sb-add-btn-offset));
+
+    display: flex;
+    justify-content: center;
+
+
+    .resizer-indicator {
+      width: 4px;
+      border-radius: 3px;
+      height: 100%;
+      background-color: var(--en-super-block-resizer-color);
+      opacity: 0.7;
     }
   }
-}
 
-.add-button-only {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  opacity: 0.7;
-  transition: opacity 0.2s ease;
-  border-radius: 50%;
-  background-color: var(--b3-theme-primary);
-  color: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 
+
+  opacity: 0;
   &:hover {
     opacity: 1;
-  }
+    .resizer-area,
+    .add-button {
+      opacity: 0.7;
 
-  svg {
-    width: 14px;
-    height: 14px;
+      &:hover {
+        opacity: 1;
+      }
+    }
   }
 }
 </style>
