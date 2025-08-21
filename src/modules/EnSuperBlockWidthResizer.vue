@@ -69,6 +69,7 @@ import {
 import { useProtyleList } from '@/global/ProtyleList'
 import { usePlugin } from '@/main'
 import {
+  generateShortUUID,
   generateUUIDWithTimestamp,
   moduleEnableStatusSwitcher,
 } from '@/utils'
@@ -157,6 +158,7 @@ const insertResizerToSuperBlock = (superBlock: HTMLDivElement) => {
   needAppendDom.forEach((child: HTMLElement) => {
     const resizer = document.createElement('div')
     resizer.className = 'enSuperBlockWidthResizerContainer protyle-custom'
+    resizer.dataset.nodeId = `en-super-block-width-resizer-${generateShortUUID()}`
     resizer.dataset.en_loop_key = generateUUIDWithTimestamp()
     superBlock.insertBefore(resizer, child)
     resizerListRef.value.push(resizer)
