@@ -69,6 +69,7 @@ import {
 import { useProtyleList } from '@/global/ProtyleList'
 import { usePlugin } from '@/main'
 import {
+  generateShortUUID,
   generateUUIDWithTimestamp,
   moduleEnableStatusSwitcher,
 } from '@/utils'
@@ -157,6 +158,7 @@ const insertResizerToSuperBlock = (superBlock: HTMLDivElement) => {
   needAppendDom.forEach((child: HTMLElement) => {
     const resizer = document.createElement('div')
     resizer.className = 'enSuperBlockWidthResizerContainer protyle-custom'
+    resizer.dataset.nodeId = `en-super-block-width-resizer-${generateShortUUID()}`
     resizer.dataset.en_loop_key = generateUUIDWithTimestamp()
     superBlock.insertBefore(resizer, child)
     resizerListRef.value.push(resizer)
@@ -767,6 +769,8 @@ html {
           position: relative;
 
           --en-sb-resizer-width: 8px;
+          --en-sb-add-btn-size: 20px;
+          --en-sb-add-btn-gap: 20px;
           column-gap: var(--en-sb-resizer-width);
 
           &.en-super-block-width-resizer-hover {
@@ -786,8 +790,8 @@ html {
 
           .enSuperBlockAddButtonContainer {
             position: absolute;
-            width: 20px;
-            height: 20px;
+            width: var(--en-sb-add-btn-size);
+            height: var(--en-sb-add-btn-size);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -810,12 +814,12 @@ html {
             }
 
             &.enSuperBlockAddButtonStart {
-              top: -24px;
+              top: calc(-0.5 * var(--en-sb-add-btn-size));
               left: -10px;
             }
 
             &.enSuperBlockAddButtonEnd {
-              top: -24px;
+              top: calc(-0.5 * var(--en-sb-add-btn-size));
               right: -10px;
             }
           }
@@ -869,21 +873,24 @@ html {
   position: relative;
   cursor: col-resize;
 
+  z-index: 10;
+
   .resizer {
     width: 5px;
     border-radius: 3px;
-    height: 100%;
+    height: calc(100% - (var(--en-sb-add-btn-size) + var(--en-sb-add-btn-gap)));
+    margin-top: calc(var(--en-sb-add-btn-size) + var(--en-sb-add-btn-gap));
     background-color: var(--b3-theme-primary);
     opacity: 0.7;
   }
 
   .add-button {
     position: absolute;
-    top: -24px;
+    top: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 20px;
-    height: 20px;
+    width: var(--en-sb-add-btn-size);
+    height: var(--en-sb-add-btn-size);
     border-radius: 50%;
     background-color: var(--b3-theme-primary);
     color: white;
