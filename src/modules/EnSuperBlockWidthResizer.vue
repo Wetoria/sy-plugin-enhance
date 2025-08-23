@@ -306,23 +306,22 @@ const resizerInfo = ref<{
   startX: number
   resizer: HTMLElement
   superBlock: HTMLElement
+  contentTotalWidthPercent: number
   nodeLeft: HTMLElement
   nodeRight: HTMLElement
   percentMap: Map<HTMLElement, number>
   childrenCopied: HTMLElement[]
 }>(null)
 
-const recordDomWidthPercent = (map: Map<HTMLElement, number>, dom: HTMLElement, percent: number) => {
-  const handledPercent = Math.floor(percent)
-  dom.dataset.en_width_percent = `${handledPercent}%`
-  map.set(dom, handledPercent)
+const recordDomWidthPercent = (map: Map<HTMLElement, number>, dom: HTMLElement, percent: number, totalPercent: number) => {
+  map.set(dom, percent)
+  dom.dataset.en_width_percent = `${Number.parseFloat(((percent / totalPercent) * 100).toFixed(2))}%`
 }
 
-const updateDomWidthPercent = (dom: HTMLElement, percent: number) => {
-  const handledPercent = Math.floor(percent)
-  dom.style.flex = `0 0 auto`
-  dom.style.width = `${handledPercent}%`
-  dom.dataset.en_width_percent = `${handledPercent}%`
+const updateDomWidthPercent = (dom: HTMLElement, percent: number, totalPercent: number) => {
+  dom.style.flex = `1 0 auto`
+  dom.style.width = `${percent}%`
+  dom.dataset.en_width_percent = `${Number.parseFloat(((percent / totalPercent) * 100).toFixed(2))}%`
 }
 
 
@@ -344,10 +343,14 @@ const getResizerInfoByEvent = (event: MouseEvent) => {
   const childrenCopied = childNodes.map((child) => child.cloneNode(true) as HTMLElement)
 
   const superBlockRect = superBlock.getBoundingClientRect()
-  const totalResizerWidth = 8 * (childNodes.length - 1)
+  const computedStyle = window.getComputedStyle(superBlock)
+  const fontSize = Number.parseFloat(computedStyle.fontSize)
+  const resizerContainerWidth = fontSize * 1.5
+  const totalResizerWidth = resizerContainerWidth * (childNodes.length - 1)
   const totalContentWidth = superBlockRect.width - totalResizerWidth
   // const totalContentWidth = superBlockRect.width
   let resetUnsetContentPercent = 100 - ((totalResizerWidth / superBlockRect.width) * 100)
+  const contentTotalWidthPercent = resetUnsetContentPercent
 
   const unsetWidthChildren = []
   childNodes.forEach((child: HTMLElement) => {
@@ -360,26 +363,27 @@ const getResizerInfoByEvent = (event: MouseEvent) => {
     if (isPercentWidth) {
       const childPercent = Number(currentWidth.replace('%', ''))
       resetUnsetContentPercent -= childPercent
-      recordDomWidthPercent(percentMap, child, childPercent)
+      recordDomWidthPercent(percentMap, child, childPercent, contentTotalWidthPercent)
       return
     }
 
     const widthPx = Number(currentWidth.replace('px', ''))
     const childPercent = (widthPx / totalContentWidth) * 100
     resetUnsetContentPercent -= childPercent
-    recordDomWidthPercent(percentMap, child, childPercent)
+    recordDomWidthPercent(percentMap, child, childPercent, contentTotalWidthPercent)
   })
 
   const unsetContentSplitedPercent = resetUnsetContentPercent / unsetWidthChildren.length
   unsetWidthChildren.forEach((child) => {
-    recordDomWidthPercent(percentMap, child, unsetContentSplitedPercent)
-    updateDomWidthPercent(child, unsetContentSplitedPercent)
+    recordDomWidthPercent(percentMap, child, unsetContentSplitedPercent, contentTotalWidthPercent)
+    updateDomWidthPercent(child, unsetContentSplitedPercent, contentTotalWidthPercent)
   })
 
   resizerInfo.value = {
     startX: event.x,
     resizer: resizerDom,
     superBlock,
+    contentTotalWidthPercent,
     nodeLeft,
     nodeRight,
     percentMap,
@@ -419,7 +423,7 @@ const storeSuperBlockWidth = () => {
     const newWidth = target.style.width
     if (newWidth) {
       node.style.width = newWidth
-      node.style.flex = '0 0 auto'
+      node.style.flex = '1 0 auto'
     } else {
       node.style.removeProperty('width')
       node.style.removeProperty('flex')
@@ -479,8 +483,8 @@ const {
       nodeLeftWidthPercent = totalPercent - 5
     }
 
-    updateDomWidthPercent(resizerInfo.value.nodeLeft, nodeLeftWidthPercent)
-    updateDomWidthPercent(resizerInfo.value.nodeRight, nodeRightWidthPercent)
+    updateDomWidthPercent(resizerInfo.value.nodeLeft, nodeLeftWidthPercent, resizerInfo.value.contentTotalWidthPercent)
+    updateDomWidthPercent(resizerInfo.value.nodeRight, nodeRightWidthPercent, resizerInfo.value.contentTotalWidthPercent)
   },
   onMouseUp() {
 
@@ -537,8 +541,8 @@ const handleClick = onCountClick((count, event) => {
     const nodeRightWidthPercent = resizerInfo.value.percentMap.get(resizerInfo.value.nodeRight)
     const totalPercent = nodeLeftWidthPercent + nodeRightWidthPercent
     const splitPercent = totalPercent / 2
-    updateDomWidthPercent(resizerInfo.value.nodeLeft, splitPercent)
-    updateDomWidthPercent(resizerInfo.value.nodeRight, splitPercent)
+    updateDomWidthPercent(resizerInfo.value.nodeLeft, splitPercent, resizerInfo.value.contentTotalWidthPercent)
+    updateDomWidthPercent(resizerInfo.value.nodeRight, splitPercent, resizerInfo.value.contentTotalWidthPercent)
     storeSuperBlockWidth()
     return
   }
