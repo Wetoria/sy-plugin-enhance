@@ -66,6 +66,10 @@ import {
   queryAllByDom,
 } from '@/utils/DOM'
 import { useObserver } from '@/utils/elements/Observer'
+import {
+  offSiyuanEvent,
+  useSiyuanEventTransactions,
+} from '@/utils/EventBusHooks'
 import { useMousePostion } from '@/utils/Mouse'
 import {
   SyDomNodeTypes,
@@ -82,6 +86,21 @@ import {
 
 const superBlockListRef = ref<HTMLDivElement[]>([])
 const resizerListRef = ref<HTMLDivElement[]>([])
+
+
+const getSbContentWidthPercent = (superBlock: HTMLElement) => {
+  const childList = Array.from(superBlock.children).filter((child: HTMLElement) => {
+    return isSyNodeInSuperBlock(child)
+  })
+  const superBlockRect = superBlock.getBoundingClientRect()
+  const computedStyle = window.getComputedStyle(superBlock)
+  const fontSize = Number.parseFloat(computedStyle.fontSize)
+  const resizerContainerWidth = fontSize * 1.5
+  const totalResizerWidth = resizerContainerWidth * (childList.length - 1)
+  const resetUnsetContentPercent = 100 - ((totalResizerWidth / superBlockRect.width) * 100)
+
+  return resetUnsetContentPercent
+}
 
 const isSyNodeInSuperBlock = (node: HTMLElement) => {
   return node.dataset.nodeId && !node.dataset.nodeId.startsWith('en-super-block-width-resizer-')
@@ -283,15 +302,107 @@ const {
 
 const plugin = usePlugin()
 
+
+const offTrasaction = ref<offSiyuanEvent>()
 onMounted(() => {
   if (!plugin.isMobile) {
     observe()
+    offTrasaction.value = useSiyuanEventTransactions((event) => {
+      const {
+        detail,
+      } = event
+      const {
+        data,
+      } = detail
+      const firstTransaction = data[0]
+
+      if (!firstTransaction) {
+        return
+      }
+
+      const {
+        doOperations = [],
+        undoOperations = [],
+      } = firstTransaction
+
+      const firstDoOperation = doOperations[0] || {}
+      const isMoveDoOperation = firstDoOperation?.action === 'move'
+      const pidOfDoOp = firstDoOperation?.parentID
+      let isMoveIntoSuperBlock = false
+      if (isMoveDoOperation && pidOfDoOp) {
+        const targetBlock = document.querySelector(`div[data-type="${SyDomNodeTypes.NodeSuperBlock}"][data-sb-layout="col"][data-node-id="${pidOfDoOp}"]`) as HTMLElement
+        if (targetBlock) {
+          isMoveIntoSuperBlock = true
+        }
+      }
+
+      if (isMoveIntoSuperBlock) {
+        const superBlock = document.querySelector(`div[data-type="${SyDomNodeTypes.NodeSuperBlock}"][data-node-id="${pidOfDoOp}"]`) as HTMLElement
+        equalizeAllBlocks(superBlock)
+        return
+      }
+
+
+      const firstUndoOperation = undoOperations[0] || {}
+      const isMoveUndoOperation = firstUndoOperation?.action === 'move'
+      const pidOfUndoOp = firstUndoOperation?.parentID
+      let isMoveOutSuperBlock = false
+      if (isMoveUndoOperation && pidOfUndoOp) {
+        const targetBlock = document.querySelector(`div[data-type="${SyDomNodeTypes.NodeSuperBlock}"][data-sb-layout="col"][data-node-id="${pidOfUndoOp}"]`) as HTMLElement
+        if (targetBlock) {
+          isMoveOutSuperBlock = true
+        }
+      }
+
+      if (isMoveOutSuperBlock) {
+        const moveOutBlock = document.querySelector(`div[data-node-id="${firstUndoOperation.id}"]`) as HTMLElement
+        const superBlock = document.querySelector(`div[data-type="${SyDomNodeTypes.NodeSuperBlock}"][data-node-id="${pidOfUndoOp}"]`) as HTMLElement
+        const remainedBlocks = Array.from(superBlock.children).filter((child: HTMLElement) => {
+          return isSyNodeInSuperBlock(child)
+        })
+
+        const protyleWysiwyg = superBlock.closest('.protyle-wysiwyg') as HTMLElement
+        if (!protyleWysiwyg) {
+          showMessage('叶归｜超级块宽度调整失败，未找到思源编辑器')
+          return
+        }
+        const needUpdateBlocks = [
+          moveOutBlock,
+          ...remainedBlocks,
+        ]
+
+
+        const resetUnsetContentPercent = getSbContentWidthPercent(superBlock)
+
+
+        protyleWysiwyg.click()
+        const protyleInstance = currentProtyle.value.getInstance()
+        protyleInstance.updateBatchTransaction(needUpdateBlocks, (node) => {
+
+          if (node.dataset.nodeId === moveOutBlock.dataset.nodeId) {
+            node.style.removeProperty('width')
+            node.style.removeProperty('flex')
+          } else {
+            const hasWidthAttr = node.style.width
+            const isPercentWidth = hasWidthAttr.includes('%')
+            if (isPercentWidth) {
+              const childPercent = Number(hasWidthAttr.replace('%', ''))
+              const newPercent = (childPercent / 100) * resetUnsetContentPercent
+              node.style.width = `${newPercent}%`
+            }
+          }
+        })
+      }
+
+
+    })
   }
 })
 
 onBeforeUnmount(() => {
   if (!plugin.isMobile) {
     unobserve()
+    offTrasaction.value?.()
   }
 
   // 清理所有事件监听器和 resizer 元素
@@ -402,6 +513,8 @@ const storeSuperBlockWidth = () => {
     delete child.dataset.en_width_percent
     return isSyNodeInSuperBlock(child)
   })
+
+  // 修改 width 前的 sb 子块列表
   const copiedNodes = resizerInfo.value.childrenCopied
 
 
@@ -655,19 +768,28 @@ const equalizeAllBlocks = async (superBlock: HTMLElement) => {
     // 等待一小段时间，确保 DOM 更新完成
     await new Promise((resolve) => setTimeout(resolve, 100))
 
+    const protyleWysiwyg = superBlock.closest('.protyle-wysiwyg') as HTMLElement
+    if (!protyleWysiwyg) {
+      showMessage('叶归｜超级块宽度调整失败，未找到思源编辑器')
+      return
+    }
+
+
     // 获取所有有 nodeId 的子节点
     const childNodes = Array.from(superBlock.children).filter((child: HTMLElement) => {
       return isSyNodeInSuperBlock(child)
     })
 
-    // 移除所有子节点的 width 和 flex 样式，让它们均分宽度
-    childNodes.forEach((child: HTMLElement) => {
-      child.style.removeProperty('width')
-      child.style.removeProperty('flex')
-    })
 
-    // 保存 superBlock 的宽度设置
-    storeSuperBlockWidth()
+    const resetUnsetContentPercent = getSbContentWidthPercent(superBlock)
+    const perPercent = resetUnsetContentPercent / childNodes.length
+    // 点击一次思源编辑器，放置 currentProtyle 获取失败
+    protyleWysiwyg.click()
+    const protyleInstance = currentProtyle.value.getInstance()
+    protyleInstance.updateBatchTransaction(childNodes, (node) => {
+      node.style.width = `${perPercent}%`
+      node.style.flex = '1 0 auto'
+    })
   } catch (error) {
     console.error('均分宽度失败:', error)
   }
@@ -747,6 +869,12 @@ html {
                 padding: 4px;
                 border-radius: var(--b3-border-radius);
               }
+            }
+          }
+
+          &:not(.resizing) {
+            & > div[data-node-id] {
+              transition: width 0.2s ease;
             }
           }
         }
