@@ -83,7 +83,7 @@ import {
 const superBlockListRef = ref<HTMLDivElement[]>([])
 const resizerListRef = ref<HTMLDivElement[]>([])
 
-const isSyNode = (node: HTMLElement) => {
+const isSyNodeInSuperBlock = (node: HTMLElement) => {
   return node.dataset.nodeId && !node.dataset.nodeId.startsWith('en-super-block-width-resizer-')
 }
 
@@ -109,7 +109,7 @@ const insertResizerToSuperBlock = (superBlock: HTMLDivElement) => {
   const needAppendDom = []
   for (let i = 0; i < childList.length; i++) {
     const child = childList[i] as HTMLElement
-    if (!isSyNode(child)) {
+    if (!isSyNodeInSuperBlock(child)) {
       continue
     }
 
@@ -339,7 +339,7 @@ const getResizerInfoByEvent = (event: MouseEvent) => {
   const percentMap = new Map<HTMLElement, number>()
 
   const childNodes = Array.from(superBlock.children).filter((child: HTMLElement) => {
-    return isSyNode(child)
+    return isSyNodeInSuperBlock(child)
   })
   const childrenCopied = childNodes.map((child) => child.cloneNode(true) as HTMLElement)
 
@@ -396,7 +396,7 @@ const storeSuperBlockWidth = () => {
   const superBlock = resizerInfo.value.superBlock
   const childNodes = Array.from(superBlock.children).filter((child: HTMLElement) => {
     delete child.dataset.en_width_percent
-    return isSyNode(child)
+    return isSyNodeInSuperBlock(child)
   })
   const copiedNodes = resizerInfo.value.childrenCopied
 
@@ -500,7 +500,7 @@ const {
 const handleMouseDown = (event) => {
   // 检查是否点击的是加号按钮
   const target = event.target as HTMLElement
-  const isAddButton = target.closest('.add-button') || target.closest('.add-button-only')
+  const isAddButton = target.closest('.add-button')
 
   if (isAddButton) {
     return // 如果是加号按钮，不处理 resize 事件
@@ -515,7 +515,7 @@ const handleMouseDown = (event) => {
 const handleClick = onCountClick((count, event) => {
   // 检查是否点击的是加号按钮
   const target = event.target as HTMLElement
-  const isAddButton = target.closest('.add-button') || target.closest('.add-button-only')
+  const isAddButton = target.closest('.add-button')
 
   if (isAddButton) {
     return // 如果是加号按钮，不处理均分功能
@@ -545,14 +545,7 @@ const handleClick = onCountClick((count, event) => {
 
   if (count == 3) {
     const superBlock = resizerInfo.value.superBlock
-    const childNodes = Array.from(superBlock.children).filter((child: HTMLElement) => {
-      return child.dataset.nodeId
-    })
-    childNodes.forEach((child: HTMLElement) => {
-      child.style.removeProperty('width')
-      child.style.removeProperty('flex')
-    })
-    storeSuperBlockWidth()
+    equalizeAllBlocks(superBlock)
   }
 })
 
@@ -563,7 +556,7 @@ const handleAddButtonClick = (event: MouseEvent) => {
   event.preventDefault()
 
   const target = event.target as HTMLElement
-  const addButtonContainer = target.closest('.enSuperBlockWidthResizerContainer') || target.closest('.enSuperBlockAddButtonContainer')
+  const addButtonContainer = target.closest('.add-button')
 
   if (!addButtonContainer) {
     return
@@ -572,13 +565,13 @@ const handleAddButtonClick = (event: MouseEvent) => {
   const superBlock = addButtonContainer.closest('div[data-node-id][data-type="NodeSuperBlock"]') as HTMLElement
 
   // 区分三种情况
-  if (addButtonContainer.classList.contains('enSuperBlockAddButtonStart')) {
+  if (addButtonContainer.classList.contains('start')) {
     // 情况1：点击的是开头的加号按钮
     handleStartButtonClick(superBlock)
-  } else if (addButtonContainer.classList.contains('enSuperBlockAddButtonEnd')) {
+  } else if (addButtonContainer.classList.contains('end')) {
     // 情况2：点击的是结尾的加号按钮
     handleEndButtonClick(superBlock)
-  } else if (addButtonContainer.classList.contains('enSuperBlockWidthResizerContainer')) {
+  } else {
     // 情况3：点击的是中间区域的加号按钮（resizer 中的按钮）
     handleMiddleButtonClick(superBlock, addButtonContainer)
   }
@@ -623,7 +616,10 @@ const handleEndButtonClick = async (superBlock: HTMLElement) => {
 }
 
 // 处理中间按钮点击
-const handleMiddleButtonClick = async (superBlock: HTMLElement, resizerContainer: Element) => {
+const handleMiddleButtonClick = async (superBlock: HTMLElement, addButtonContainer: Element) => {
+
+  const resizerContainer = addButtonContainer.closest('.enSuperBlockWidthResizerContainer')
+
   // 获取 resizer 两侧的节点信息
   const nodeLeft = resizerContainer.previousElementSibling as HTMLElement | null
 
@@ -657,7 +653,7 @@ const equalizeAllBlocks = async (superBlock: HTMLElement) => {
 
     // 获取所有有 nodeId 的子节点
     const childNodes = Array.from(superBlock.children).filter((child: HTMLElement) => {
-      return child.dataset.nodeId && !child.dataset.nodeId.startsWith('en-super-block-width-resizer-')
+      return isSyNodeInSuperBlock(child)
     })
 
     // 移除所有子节点的 width 和 flex 样式，让它们均分宽度
