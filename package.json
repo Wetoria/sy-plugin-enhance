@@ -1,7 +1,7 @@
 {
   "name": "sy-plugin-enhance",
   "type": "module",
-  "version": "0.52.4",
+  "version": "0.52.5",
   "description": "This is a plugin based on vite and vue for Siyuan (https://b3log.org/siyuan)",
   "author": "",
   "license": "MIT",
