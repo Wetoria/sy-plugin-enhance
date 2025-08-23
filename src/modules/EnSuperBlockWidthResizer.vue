@@ -320,10 +320,9 @@ onMounted(() => {
         return
       }
 
-      const {
-        doOperations = [],
-        undoOperations = [],
-      } = firstTransaction
+      const doOperations = firstTransaction.doOperations || []
+      const undoOperations = firstTransaction.undoOperations || []
+
 
       const firstDoOperation = doOperations[0] || {}
       const isMoveDoOperation = firstDoOperation?.action === 'move'
