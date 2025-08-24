@@ -21,6 +21,11 @@
 
     </div>
     <div class="infos">
+      <div
+        class="info"
+      >
+        持续：{{ record.totalDiffFormatted }}
+      </div>
       <div class="info">
         {{
           [
@@ -28,11 +33,6 @@
             moduleOptions.enablePrivacyMode ? '' : record.content,
           ].filter(Boolean).join('：')
         }}
-      </div>
-      <div
-        class="info"
-      >
-        持续：{{ record.totalDiffFormatted }}
       </div>
       <div
         v-if="(record.diff / secondsOfADay) > 0.01"
