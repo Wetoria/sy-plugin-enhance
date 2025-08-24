@@ -189,7 +189,7 @@ const getClosestSuperBlock = (element: HTMLElement): HTMLDivElement | null => {
 const removeResizerFromOtherSuperBlocks = (currentSuperBlock: HTMLDivElement) => {
   const owners = new Set<HTMLDivElement>()
   resizerListRef.value.forEach((resizer) => {
-    const owner = resizer.closest('div[data-type="NodeSuperBlock"][data-sb-layout="col"]') as HTMLDivElement
+    const owner = getClosestSuperBlock(resizer)
     if (owner && owner !== currentSuperBlock) {
       owners.add(owner)
     }
@@ -228,6 +228,20 @@ const handleMouseLeave = (event: MouseEvent) => {
 
 
 const protyleList = useProtyleList()
+
+const bindMouseEventToSuperBlock = (superBlock: HTMLDivElement) => {
+  superBlock.addEventListener('mouseover', handleMouseEnter)
+  superBlock.addEventListener('mouseleave', handleMouseLeave)
+  superBlock.dataset.en_mouse_bound = 'true'
+}
+
+const removeMouseEventFromSuperBlock = (superBlock: HTMLDivElement) => {
+  superBlock.removeEventListener('mouseover', handleMouseEnter)
+  superBlock.removeEventListener('mouseleave', handleMouseLeave)
+  delete superBlock.dataset.en_mouse_bound
+  removeResizerFromSuperBlock(superBlock)
+}
+
 const handler = debounce(() => {
   const targetParagraphList = queryAllByDom(
     document.body,
@@ -257,10 +271,10 @@ const handler = debounce(() => {
     }
 
 
-    const newHasRemoved = validSuperBlocks.some((newSuperBlock) => {
+    const hasNewSuperBlock = validSuperBlocks.some((newSuperBlock) => {
       return !superBlockListRef.value.includes(newSuperBlock)
     })
-    if (newHasRemoved) {
+    if (hasNewSuperBlock) {
       return true
     }
 
@@ -274,18 +288,14 @@ const handler = debounce(() => {
 
   // 清理所有现有的事件监听器
   superBlockListRef.value.forEach((superBlock) => {
-    superBlock.removeEventListener('mouseover', handleMouseEnter)
-    superBlock.removeEventListener('mouseleave', handleMouseLeave)
-    removeResizerFromSuperBlock(superBlock)
+    removeMouseEventFromSuperBlock(superBlock)
   })
 
 
   // 为新找到的 superBlock 绑定事件
   validSuperBlocks.forEach((superBlock) => {
     if (!superBlock.dataset.en_mouse_bound) {
-      superBlock.addEventListener('mouseover', handleMouseEnter)
-      superBlock.addEventListener('mouseleave', handleMouseLeave)
-      superBlock.dataset.en_mouse_bound = 'true'
+      bindMouseEventToSuperBlock(superBlock)
     }
   })
   superBlockListRef.value = [...validSuperBlocks]
@@ -306,6 +316,7 @@ const plugin = usePlugin()
 const offTrasaction = ref<offSiyuanEvent>()
 onMounted(() => {
   if (!plugin.isMobile) {
+    handler()
     observe()
     offTrasaction.value = useSiyuanEventTransactions((event) => {
       const {
@@ -406,10 +417,9 @@ onBeforeUnmount(() => {
 
   // 清理所有事件监听器和 resizer 元素
   superBlockListRef.value.forEach((superBlock) => {
-    superBlock.removeEventListener('mouseenter', handleMouseEnter)
-    superBlock.removeEventListener('mouseleave', handleMouseLeave)
-    removeResizerFromSuperBlock(superBlock)
+    removeMouseEventFromSuperBlock(superBlock)
   })
+  superBlockListRef.value = []
 })
 
 const resizerInfo = ref<{
