@@ -402,6 +402,47 @@ onMounted(() => {
             }
           }
         })
+
+        return
+      }
+
+
+      const firstUndoOperationData = firstUndoOperation?.data
+
+      if (firstUndoOperationData) {
+        const div = document.createElement('div')
+        div.innerHTML = firstUndoOperationData
+        const firstChild = div.firstElementChild as HTMLElement
+        const isSuperBlockForFirstChild = firstChild.dataset.type === SyDomNodeTypes.NodeSuperBlock
+        const isCancelSuperBlock = isSuperBlockForFirstChild && firstUndoOperation.action === 'insert'
+
+        if (isCancelSuperBlock) {
+          const childNodeIds = undoOperations.filter(i => i.action === 'move').map(i => i.id)
+          const childNodeElements = []
+          childNodeIds.forEach((childNodeId) => {
+            const target = document.querySelector(`div[data-node-id="${childNodeId}"]`)
+            if (!target) {
+              return
+            }
+            childNodeElements.push(target)
+          })
+
+          if (childNodeElements.length) {
+            const protyleWysiwyg = childNodeElements[0].closest('.protyle-wysiwyg') as HTMLElement
+            if (!protyleWysiwyg) {
+              showMessage('叶归｜超级块宽度调整失败，未找到思源编辑器')
+              return
+            }
+
+            protyleWysiwyg.click()
+            const protyleInstance = currentProtyle.value.getInstance()
+            protyleInstance.updateBatchTransaction(childNodeElements, (node) => {
+                node.style.removeProperty('width')
+                node.style.removeProperty('flex')
+            })
+            return
+          }
+        }
       }
 
 
