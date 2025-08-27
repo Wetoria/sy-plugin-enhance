@@ -38,6 +38,7 @@ import {
   isTargetPluginType,
   URL_TYPE_MAP,
 } from '@/utils/url'
+import { useIntervalFn } from '@vueuse/core'
 import {
   Protyle,
 } from 'siyuan'
@@ -73,33 +74,26 @@ watchEffect(() => {
   }
 })
 
-const checkTargetTimeAndAutoPlay = () => {
-  let flag
-  const checkTargetTime = () => {
-    if (!EnVideoAndAudioModalRef.value) {
-      return
-    }
-    const videoTarget = EnVideoAndAudioModalRef.value.querySelector(`div[data-node-id="${currentVNAInfo.value.bid}"] video`)
-    const audioTarget = EnVideoAndAudioModalRef.value.querySelector(`div[data-node-id="${currentVNAInfo.value.bid}"] audio`)
+const { pause, resume: checkTargetTimeAndAutoPlay } = useIntervalFn(() => {
+  if (!EnVideoAndAudioModalRef.value) {
+    return
+  }
+  const videoTarget = EnVideoAndAudioModalRef.value.querySelector(`div[data-node-id="${currentVNAInfo.value.bid}"] video`)
+  const audioTarget = EnVideoAndAudioModalRef.value.querySelector(`div[data-node-id="${currentVNAInfo.value.bid}"] audio`)
 
-    const target = (videoTarget || audioTarget) as  HTMLVideoElement | HTMLAudioElement
+  const target = (videoTarget || audioTarget) as  HTMLVideoElement | HTMLAudioElement
 
-    if (!target) {
-      return
-    }
-    clearInterval(flag)
-    setVideoTime(currentVNAInfo.value)
+  if (!target) {
+    return
+  }
+  pause()
+  setVideoTime(currentVNAInfo.value)
 
-    if (moduleOptions.value.autoPlay) {
-      target.play()
-    }
+  if (moduleOptions.value.autoPlay) {
+    target.play()
   }
 
-  checkTargetTime()
-  flag = setInterval(() => {
-    checkTargetTime()
-  }, 300)
-}
+}, 300)
 
 const hackLink = (event: MouseEvent) => {
   const target = event.target as HTMLSpanElement
@@ -166,7 +160,6 @@ const hackLink = (event: MouseEvent) => {
     bid,
     time,
   }
-  setVideoTime(currentVNAInfo.value)
 
   checkTargetTimeAndAutoPlay()
 }
