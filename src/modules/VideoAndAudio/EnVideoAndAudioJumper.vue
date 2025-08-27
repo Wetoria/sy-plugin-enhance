@@ -8,6 +8,7 @@
     </template>
     <div
       class="EnVideoAndAudioModal"
+      ref="EnVideoAndAudioModalRef"
     >
       <EnProtyle
         :blockId="currentVNAInfo.bid"
@@ -60,6 +61,7 @@ const currentVNAInfo = ref({
   time: '',
 })
 
+const EnVideoAndAudioModalRef = ref<HTMLDivElement>(null)
 
 watchEffect(() => {
   // 如果弹窗关闭，则清空当前音视频信息
@@ -70,6 +72,34 @@ watchEffect(() => {
     }
   }
 })
+
+const checkTargetTimeAndAutoPlay = () => {
+  let flag
+  const checkTargetTime = () => {
+    if (!EnVideoAndAudioModalRef.value) {
+      return
+    }
+    const videoTarget = EnVideoAndAudioModalRef.value.querySelector(`div[data-node-id="${currentVNAInfo.value.bid}"] video`)
+    const audioTarget = EnVideoAndAudioModalRef.value.querySelector(`div[data-node-id="${currentVNAInfo.value.bid}"] audio`)
+
+    const target = (videoTarget || audioTarget) as  HTMLVideoElement | HTMLAudioElement
+
+    if (!target) {
+      return
+    }
+    clearInterval(flag)
+    setVideoTime(currentVNAInfo.value)
+
+    if (moduleOptions.value.autoPlay) {
+      target.play()
+    }
+  }
+
+  checkTargetTime()
+  flag = setInterval(() => {
+    checkTargetTime()
+  }, 300)
+}
 
 const hackLink = (event: MouseEvent) => {
   const target = event.target as HTMLSpanElement
@@ -137,33 +167,14 @@ const hackLink = (event: MouseEvent) => {
     time,
   }
   setVideoTime(currentVNAInfo.value)
+
+  checkTargetTimeAndAutoPlay()
 }
 
 const onAfterRender = (protyle: Protyle) => {
   protyle.disable()
 
-  let flag
-  const checkTargetTime = () => {
-    const videoTarget = protyle.protyle.element.querySelector('video')
-    const audioTarget = protyle.protyle.element.querySelector('audio')
-
-    const target = videoTarget || audioTarget
-
-    if (!target) {
-      return
-    }
-    clearInterval(flag)
-    setVideoTime(currentVNAInfo.value)
-
-    if (moduleOptions.value.autoPlay) {
-      target.play()
-    }
-  }
-
-  checkTargetTime()
-  flag = setInterval(() => {
-    checkTargetTime()
-  }, 300)
+  checkTargetTimeAndAutoPlay()
 }
 
 const enable = () => {
