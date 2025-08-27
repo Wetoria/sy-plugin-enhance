@@ -277,7 +277,7 @@ const checkIsInValidBlock = () => {
         // 如果没有找到下一个区间，暂停视频
         if (!nextTime) {
           if (nodeBlockPlayConfig.value.enabledLoopPlay) {
-            target.value.currentTime = target.value.duration
+            checkIsNeedLoop()
           } else {
             target.value.pause()
           }
@@ -287,7 +287,6 @@ const checkIsInValidBlock = () => {
       }
     }
   }
-
 }
 
 const checkIsNeedLoop = () => {
@@ -311,7 +310,9 @@ const updateTempBlockTime = () => {
   const hasBlockTimeFlag = target.value.dataset.en_isTimeBlock
 
   if (hasBlockTimeFlag) {
+    delete target.value.dataset.en_isTimeBlock
     isTempBlockTime.value = true
+
     newBlock.value.startTime = Number(target.value.dataset.en_timeBlock_startTime) || 0
     newBlock.value.endTime = Number(target.value.dataset.en_timeBlock_endTime) || 0
 
@@ -321,7 +322,6 @@ const updateTempBlockTime = () => {
     delete target.value.dataset.en_enabledBlockPlay
     delete target.value.dataset.en_enabledLoopPlay
 
-    delete target.value.dataset.en_isTimeBlock
     delete target.value.dataset.en_timeBlock_startTime
     delete target.value.dataset.en_timeBlock_endTime
   }
