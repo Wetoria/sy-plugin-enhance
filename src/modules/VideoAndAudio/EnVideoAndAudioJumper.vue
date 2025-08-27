@@ -7,8 +7,8 @@
       叶归｜时间戳
     </template>
     <div
-      class="EnVideoAndAudioModal"
       ref="EnVideoAndAudioModalRef"
+      class="EnVideoAndAudioModal"
     >
       <EnProtyle
         :blockId="currentVNAInfo.bid"
@@ -74,14 +74,17 @@ watchEffect(() => {
   }
 })
 
-const { pause, resume: checkTargetTimeAndAutoPlay } = useIntervalFn(() => {
+const {
+  pause,
+  resume: checkTargetTimeAndAutoPlay,
+} = useIntervalFn(() => {
   if (!EnVideoAndAudioModalRef.value) {
     return
   }
   const videoTarget = EnVideoAndAudioModalRef.value.querySelector(`div[data-node-id="${currentVNAInfo.value.bid}"] video`)
   const audioTarget = EnVideoAndAudioModalRef.value.querySelector(`div[data-node-id="${currentVNAInfo.value.bid}"] audio`)
 
-  const target = (videoTarget || audioTarget) as  HTMLVideoElement | HTMLAudioElement
+  const target = (videoTarget || audioTarget) as HTMLVideoElement | HTMLAudioElement
 
   if (!target) {
     return
