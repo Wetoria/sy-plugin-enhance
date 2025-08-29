@@ -406,7 +406,7 @@ const commands = [
     },
   },
 ]
-const observer = new MutationObserver(debounce(handler, 500))
+const observer = new MutationObserver(debounce(handler, 50))
 const enable = () => {
   handler()
   observer.observe(document.body, {
