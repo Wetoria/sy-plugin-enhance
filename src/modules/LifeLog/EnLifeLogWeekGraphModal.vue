@@ -48,30 +48,6 @@
           </a-button>
         </a-tooltip>
         <a-tooltip
-          content="调整每一个日期列的宽度"
-        >
-          <a-input-number
-            v-model="columnWidth"
-            placeholder="Please Enter"
-            style="width: 100px;"
-            mode="button"
-            :step="10"
-            :min="100"
-          />
-        </a-tooltip>
-        <a-tooltip
-          content="缩放时间轴区域"
-        >
-          <a-input-number
-            v-model="timelineHeight"
-            placeholder="Please Enter"
-            style="width: 110px;"
-            mode="button"
-            :step="200"
-            :min="100"
-          />
-        </a-tooltip>
-        <a-tooltip
           v-if="isNotFree"
           content="展示当前时间范围内的统计结果"
         >
@@ -94,6 +70,39 @@
               size="small"
             />
           </div>
+        </a-tooltip>
+        <a-tooltip
+          content="搜索记录"
+        >
+          <a-input
+            v-model="searchValue"
+            placeholder="Search LifeLog records"
+            style="width: 150px;"
+          />
+        </a-tooltip>
+        <a-tooltip
+          content="调整每一个日期列的宽度"
+        >
+          <a-input-number
+            v-model="columnWidth"
+            placeholder="Please Enter"
+            style="width: 100px;"
+            mode="button"
+            :step="10"
+            :min="100"
+          />
+        </a-tooltip>
+        <a-tooltip
+          content="缩放时间轴区域"
+        >
+          <a-input-number
+            v-model="timelineHeight"
+            placeholder="Please Enter"
+            style="width: 110px;"
+            mode="button"
+            :step="200"
+            :min="100"
+          />
         </a-tooltip>
         <a-spin v-if="globalWindowData.loadingLifeLogData" />
       </div>
@@ -456,6 +465,8 @@ watch(dateRange, () => {
 const columnWidth = useLocalStorage('en-lifelog-column-width', 130)
 const timelineHeight = useLocalStorage('en-lifelog-timeline-height', 2000)
 const showStatistics = useLocalStorage('en-lifelog-show-statistics', false)
+
+const searchValue = ref('')
 
 const toggleStatistics = () => {
   showStatistics.value = !showStatistics.value
