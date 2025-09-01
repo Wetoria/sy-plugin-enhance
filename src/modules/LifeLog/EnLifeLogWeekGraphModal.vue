@@ -10,28 +10,7 @@
         <div class="title">
           LifeLog
         </div>
-        <a-tooltip
-          content="按照当前日期间隔天数，显示前一个周期"
-        >
-          <a-button @click="selectPrevPeriod">
-            <template #icon>
-              <icon-left />
-            </template>
-          </a-button>
-        </a-tooltip>
-        <a-range-picker
-          v-model="dateRange"
-          style="width: 254px;"
-        />
-        <a-tooltip
-          content="按照当前日期间隔天数，显示后一个周期"
-        >
-          <a-button @click="selectNextPeriod">
-            <template #icon>
-              <icon-right />
-            </template>
-          </a-button>
-        </a-tooltip>
+
         <a-tooltip>
           <template #content>
             <div>
@@ -42,68 +21,137 @@
             </div>
           </template>
           <a-button
+            type="text"
             @click="goToToday"
           >
             今天
           </a-button>
         </a-tooltip>
+
+        <EnIconExpand>
+          <template #trigger>
+            <EnButtonIcon
+              size="mini"
+            >
+              <template #prompt>
+                选择日期范围
+              </template>
+              <icon-calendar />
+            </EnButtonIcon>
+          </template>
+
+          <template #default>
+            <a-tooltip
+              content="按照当前日期间隔天数，显示前一个周期"
+            >
+              <a-button @click="selectPrevPeriod">
+                <template #icon>
+                  <icon-left />
+                </template>
+              </a-button>
+            </a-tooltip>
+            <a-range-picker
+              v-model="dateRange"
+              style="width: 254px;"
+            />
+            <a-tooltip
+              content="按照当前日期间隔天数，显示后一个周期"
+            >
+              <a-button @click="selectNextPeriod">
+                <template #icon>
+                  <icon-right />
+                </template>
+              </a-button>
+            </a-tooltip>
+          </template>
+        </EnIconExpand>
+
+
+
+        <EnIconExpand>
+          <template #trigger>
+            <EnButtonIcon>
+              <template #prompt>
+                搜索记录
+              </template>
+              <icon-search />
+            </EnButtonIcon>
+          </template>
+
+          <template #default>
+            <a-input
+              v-model="searchValue"
+              placeholder="在当前范围内搜索"
+              style="width: 150px;"
+            />
+          </template>
+        </EnIconExpand>
+
+
+        <EnIconExpand>
+          <template #trigger>
+            <EnButtonIcon>
+              <template #prompt>
+                调整视图
+              </template>
+              <SyIcon name="iconSettings" />
+            </EnButtonIcon>
+          </template>
+
+          <template #default>
+            <a-tooltip
+              content="调整每一个日期列的宽度"
+            >
+              <a-input-number
+                v-model="columnWidth"
+                placeholder="Please Enter"
+                style="width: 100px;"
+                mode="button"
+                :step="10"
+                :min="100"
+              />
+            </a-tooltip>
+            <a-tooltip
+              content="缩放时间轴区域"
+            >
+              <a-input-number
+                v-model="timelineHeight"
+                placeholder="Please Enter"
+                style="width: 110px;"
+                mode="button"
+                :step="200"
+                :min="100"
+              />
+            </a-tooltip>
+          </template>
+        </EnIconExpand>
+
+
+
         <a-tooltip
           v-if="isNotFree"
           content="展示当前时间范围内的统计结果"
         >
           <a-button
-            :type="showStatistics ? 'primary' : 'outline'"
+            :type="showStatistics ? 'secondary' : 'text'"
             @click="toggleStatistics"
           >
             <template #icon>
               <icon-bar-chart />
             </template>
-            统计
           </a-button>
         </a-tooltip>
+
+
         <a-tooltip
           content="隐私模式"
         >
-          <div class="EnPrivacyModePos">
-            <a-switch
-              v-model="moduleOptions.enablePrivacyMode"
-              size="small"
-            />
-          </div>
-        </a-tooltip>
-        <a-tooltip
-          content="搜索记录"
-        >
-          <a-input
-            v-model="searchValue"
-            placeholder="Search LifeLog records"
-            style="width: 150px;"
+          <a-switch
+            v-model="moduleOptions.enablePrivacyMode"
+            size="small"
           />
         </a-tooltip>
-        <a-tooltip
-          content="调整每一个日期列的宽度"
-        >
-          <a-input-number
-            v-model="columnWidth"
-            placeholder="Please Enter"
-            style="width: 100px;"
-            mode="button"
-            :step="10"
-            :min="100"
-          />
-        </a-tooltip>
-        <a-tooltip
-          content="缩放时间轴区域"
-        >
-          <a-input-number
-            v-model="timelineHeight"
-            placeholder="Please Enter"
-            style="width: 110px;"
-            mode="button"
-            :step="200"
-            :min="100"
-          />
-        </a-tooltip>
+
         <a-spin v-if="globalWindowData.loadingLifeLogData" />
       </div>
     </template>
@@ -538,6 +586,10 @@ onBeforeUnmount(() => {
     gap: var(--en-gap);
     box-sizing: border-box;
 
+    .arco-btn-text {
+      color: var(--b3-toolbar-color);
+    }
+
     // * {
     //   flex-shrink: 0;
     // }
@@ -553,16 +605,6 @@ onBeforeUnmount(() => {
       height: 100%;
       display: flex;
       flex-direction: column;
-    }
-
-    .EnPrivacyModePos {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      box-sizing: border-box;
-      justify-content: center;
-      align-items: center;
-      padding: 4px;
     }
 
     // 桌面端布局

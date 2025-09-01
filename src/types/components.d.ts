@@ -16,6 +16,7 @@ declare module 'vue' {
     EnDock: typeof import('./../components/EnDock/EnDock.vue')['default']
     EnDrawer: typeof import('./../components/EnDrawer.vue')['default']
     EnIconDragon: typeof import('./../components/EnIconDragon.vue')['default']
+    EnIconExpand: typeof import('./../components/EnIconExpand.vue')['default']
     EnIconLeaf: typeof import('./../components/EnIconLeaf.vue')['default']
     EnIconLeaf2: typeof import('./../components/EnIconLeaf2.vue')['default']
     EnIconTarget: typeof import('./../components/EnIconTarget.vue')['default']
