@@ -192,21 +192,6 @@
           <template #second>
             <!-- 右侧：统计图展示区域 -->
             <div class="EnLifeLogStatisticsArea">
-              <div class="statistics-header">
-                <div class="statistics-title">
-                  统计
-                </div>
-                <a-button
-                  type="text"
-                  shape="circle"
-                  size="mini"
-                  @click="toggleStatistics"
-                >
-                  <template #icon>
-                    <icon-close />
-                  </template>
-                </a-button>
-              </div>
               <div class="statistics-content">
                 <EnLifeLogStatistics
                   :date-list="dateList"
@@ -250,21 +235,6 @@
           v-if="showStatistics"
           class="EnLifeLogStatisticsArea"
         >
-          <div class="statistics-header">
-            <div class="statistics-title">
-              统计
-            </div>
-            <a-button
-              type="text"
-              shape="circle"
-              size="mini"
-              @click="toggleStatistics"
-            >
-              <template #icon>
-                <icon-close />
-              </template>
-            </a-button>
-          </div>
           <div class="statistics-content">
             <EnLifeLogStatistics
               :date-list="dateList"
@@ -646,31 +616,13 @@ onBeforeUnmount(() => {
         overflow: hidden;
         box-sizing: border-box;
 
-        .statistics-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 4px 16px;
-          background-color: var(--b3-theme-surface);
-          border-bottom: 1px solid var(--b3-border-color);
-          height: 40px; // 增加高度以适配两行日期显示
-          box-sizing: border-box;
-          flex-shrink: 0; // 防止头部被压缩
-
-          .statistics-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--b3-theme-on-surface);
-          }
-        }
-
         .statistics-content {
           flex: 1;
           display: flex;
           justify-content: center;
           align-items: flex-start;
           background-color: var(--b3-theme-surface);
-          padding: 20px;
+          padding: var(--en-gap);
           overflow: auto;
           min-height: 0; // 确保 flex 子元素可以正确收缩
         }
@@ -701,30 +653,13 @@ onBeforeUnmount(() => {
         overflow: hidden;
         box-sizing: border-box;
 
-        .statistics-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 4px 16px; // 减小上下内边距，匹配 40px 高度
-          background-color: var(--b3-theme-surface);
-          border-bottom: 1px solid var(--b3-border-color);
-          height: 40px; // 与桌面端保持一致，适配两行日期显示
-          box-sizing: border-box;
-
-          .statistics-title {
-            font-size: 14px; // 稍微减小字体大小
-            font-weight: 600;
-            color: var(--b3-theme-on-surface);
-          }
-        }
-
         .statistics-content {
           flex: 1;
           display: flex;
           justify-content: center;
           align-items: flex-start; // 改为顶部对齐
           background-color: var(--b3-theme-surface);
-          padding: 20px;
+          padding: var(--en-gap);
           overflow: auto; // 允许滚动
         }
       }
