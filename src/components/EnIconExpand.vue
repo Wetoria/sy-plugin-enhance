@@ -18,6 +18,7 @@
       :style="{
         width: `${contentWidth}px`,
       }"
+      @transitionend="onTransitionEnd"
     >
       <a-space>
         <slot></slot>
@@ -34,35 +35,42 @@ import {
 } from 'vue'
 
 const expanded = ref(false)
+const desiredExpanded = ref(false)
 const contentRef = ref<HTMLElement>()
 const contentWidth = ref(0)
 
 const switchExpanded = async () => {
-  const newExpanded = !expanded.value
+  const newExpanded = !desiredExpanded.value
+  desiredExpanded.value = newExpanded
 
   if (newExpanded) {
-    // 展开时，先设置为0，然后动画到实际宽度
+    // 展开：立即添加 expanded 类（让 gap 生效），宽度从 0 动画到内容宽
+    expanded.value = true
     contentWidth.value = 0
     await nextTick()
-    // 获取内容的实际宽度
     if (contentRef.value) {
       const actualWidth = contentRef.value.scrollWidth
       contentWidth.value = actualWidth
     }
   } else {
-    // 收起时，动画到0
+    // 收起：仅把宽度动画到 0，expanded 类在动画结束后再移除
     contentWidth.value = 0
   }
+}
 
-  // 防止过早设置，导致元素移动的问题
-  expanded.value = newExpanded
+const onTransitionEnd = (event: TransitionEvent) => {
+  if (event.propertyName !== 'width') return
+  // 动画结束后，如果目标是收起，则此时再移除 expanded 类，避免提前改变 gap
+  if (!desiredExpanded.value) {
+    expanded.value = false
+  }
 }
 
 onMounted(() => {
-  // 初始化时，如果未展开则宽度为0
-  if (!expanded.value) {
-    contentWidth.value = 0
-  }
+  // 初始为收起状态，宽度为 0
+  expanded.value = false
+  desiredExpanded.value = false
+  contentWidth.value = 0
 })
 </script>
 
