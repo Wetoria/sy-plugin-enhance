@@ -23,6 +23,7 @@ import {
   computed,
   onBeforeUnmount,
   onMounted,
+  reactive,
   ref,
 } from 'vue'
 
@@ -40,14 +41,14 @@ const splitedLifelogRecords = computed<Array<ILifeLogRecord>>(() => {
     if (!startTime) {
       const adjustStartTime = dayjs(item.endTime.format(lifelogKeyMap.YYYY_MM_DD_00_00_00))
       const adjustDiff = endTime.diff(adjustStartTime, 'seconds')
-      result.push({
+      result.push(reactive({
         ...item,
         startTime: adjustStartTime,
         startTimeFormatted: adjustStartTime.format(lifelogKeyMap.YYYY_MM_DD_HH_mm_ss),
         endTimeFormatted: endTime.format(lifelogKeyMap.YYYY_MM_DD_HH_mm_ss),
         diff: adjustDiff,
         diffFormatted: diffFormat(adjustDiff),
-      })
+      }))
       return
     }
     const isSameDay = dayjs(startTime).isSame(dayjs(endTime), 'day')
@@ -57,7 +58,7 @@ const splitedLifelogRecords = computed<Array<ILifeLogRecord>>(() => {
       const totalDiff = endTime.diff(startTime, 'seconds')
       const totalDiffFormatted = diffFormat(totalDiff)
 
-      result.push({
+      result.push(reactive({
         ...item,
         startTime,
         startTimeFormatted: startTime.format(lifelogKeyMap.YYYY_MM_DD_HH_mm_ss),
@@ -67,7 +68,7 @@ const splitedLifelogRecords = computed<Array<ILifeLogRecord>>(() => {
         diffFormatted,
         totalDiff,
         totalDiffFormatted,
-      })
+      }))
 
       return
     }
@@ -107,7 +108,7 @@ const splitedLifelogRecords = computed<Array<ILifeLogRecord>>(() => {
     currentDayItem.totalDiff = totalDiff
     currentDayItem.totalDiffFormatted = totalDiffFormatted
 
-    result.push(prevDayItem, currentDayItem)
+    result.push(reactive(prevDayItem), reactive(currentDayItem))
   })
   return result
 })
@@ -268,6 +269,7 @@ const loadDataByDateList = async (dateList: Array<string>) => {
       diffFormatted: undefined,
       totalDiff: undefined,
       totalDiffFormatted: undefined,
+      highlight: false,
     }
     lifelogRecords.value.push(result)
   })

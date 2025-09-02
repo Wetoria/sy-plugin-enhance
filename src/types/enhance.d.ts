@@ -196,6 +196,9 @@ interface ILifeLogRecord {
   // 记录的完整持续时间，截止上一条记录。可能跨天。
   totalDiff?: number
   totalDiffFormatted?: string
+
+
+  highlight?: boolean
 }
 
 interface ILifeLogTypeItem {

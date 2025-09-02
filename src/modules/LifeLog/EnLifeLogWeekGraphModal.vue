@@ -180,7 +180,7 @@
               >
                 <template
                   v-for="(date) of dateList"
-                  :key="`${date}`"
+                  :key="`${date}-${searchValue}`"
                   #[`timelineAreaDateColumn-${date}`]
                 >
                   <EnLifeLogGraphDateItem :data="graphRecordsByDate[date]" />
@@ -216,7 +216,7 @@
           >
             <template
               v-for="(date) of dateList"
-              :key="`${date}`"
+              :key="`${date}-${searchValue}`"
               #[`timelineAreaDateColumn-${date}`]
             >
               <EnLifeLogGraphDateItem :data="graphRecordsByDate[date]" />
@@ -256,7 +256,7 @@
           >
             <template
               v-for="(date) in dateList"
-              :key="`${date}`"
+              :key="`${date}-${searchValue}`"
               #[`timelineAreaDateColumn-${date}`]
             >
               <EnLifeLogGraphDateItem :data="graphRecordsByDate[date]" />
@@ -485,6 +485,19 @@ const timelineHeight = useLocalStorage('en-lifelog-timeline-height', 2000)
 const showStatistics = useLocalStorage('en-lifelog-show-statistics', false)
 
 const searchValue = ref('')
+
+watchEffect(() => {
+  splitedLifelogRecords.value.forEach((item) => {
+    item.highlight = false
+    if (searchValue.value) {
+      const contentMatched = item.content?.includes(searchValue.value)
+      const typeMatched = item.type?.includes(searchValue.value)
+      if (contentMatched || typeMatched) {
+        item.highlight = true
+      }
+    }
+  })
+})
 
 const toggleStatistics = () => {
   showStatistics.value = !showStatistics.value

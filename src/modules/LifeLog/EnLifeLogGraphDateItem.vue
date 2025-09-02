@@ -8,12 +8,17 @@
     :data-en_lifelog_content="record.content"
     :data-en_lifelog_diff="record.diff"
     :data-en_lifelog_diff_format="record.diffFormatted"
+    :data-en_lifelog_highlight="record.highlight"
+
     :style="{
       height: `${(record.diff / secondsOfADay) * 100}%`,
     }"
   >
     <div
       class="EnLifeLogItemBg"
+      :class="{
+        highlight: record.highlight,
+      }"
       :style="{
         backgroundColor: `var(--en-lifelog-color-type-${record.type})`,
       }"
@@ -72,6 +77,7 @@ const secondsOfADay = 60 * 60 * 24
   position: relative;
   justify-content: flex-end;
   box-sizing: border-box;
+  border-radius: 4px;
 
   .EnLifeLogItemBg {
     width: 100%;
@@ -81,6 +87,11 @@ const secondsOfADay = 60 * 60 * 24
     left: 0;
     z-index: 0;
     opacity: 0.2;
+    transition: opacity 0.2s ease-in-out;
+
+    &.highlight {
+      opacity: 0.5;
+    }
   }
 
   .infos {
@@ -88,6 +99,7 @@ const secondsOfADay = 60 * 60 * 24
     width: 100%;
     padding: 4px;
     box-sizing: border-box;
+    z-index: 1;
   }
 
   .info {
