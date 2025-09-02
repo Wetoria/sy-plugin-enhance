@@ -229,6 +229,20 @@ const {
   moduleOptions,
 } = useModule<LifeLogModule>(EN_MODULE_LIST.LIFELOG)
 
+const filteredRecords = computed(() => {
+  const result = {}
+  Object.keys(props.graphRecordsByDate).forEach((date) => {
+    const temp = props.graphRecordsByDate[date].filter((record) => record.highlight)
+    if (temp.length) {
+      result[date] = temp
+    } else {
+      result[date] = props.graphRecordsByDate[date]
+    }
+  })
+
+  return result
+})
+
 // 获取分类显示名称
 const getCategoryDisplayName = (key: string) => {
   const categoryMap = {
@@ -276,7 +290,7 @@ const getTotalCount = (record: any) => {
 // 获取时间总计
 const getTimeTotal = (record: any) => {
   return props.dateList.reduce((sum, date) => {
-    const recordsForDate = props.graphRecordsByDate[date] || []
+    const recordsForDate = filteredRecords.value[date] || []
     let dateTimeTotal = 0
 
     if (record.isCategory) {
@@ -317,7 +331,7 @@ const getTimeTotal = (record: any) => {
 
 // 获取指定日期的时间总计
 const getDateTimeTotal = (record: any, date: string) => {
-  const recordsForDate = props.graphRecordsByDate[date] || []
+  const recordsForDate = filteredRecords.value[date] || []
   let timeTotal = 0
 
   if (record.isCategory) {
@@ -382,7 +396,7 @@ const getSummaryDateCount = (date: string) => {
 
 // 获取指定日期的总计时间（统计行）
 const getSummaryDateTimeTotal = (date: string) => {
-  const recordsForDate = props.graphRecordsByDate[date] || []
+  const recordsForDate = filteredRecords.value[date] || []
 
   // 计算所有记录的时间总和
   return recordsForDate.reduce((sum, record) => {
@@ -434,7 +448,7 @@ const tableData = computed(() => {
   // 收集所有出现的type
   const allTypes = new Set<string>()
   props.dateList.forEach((date) => {
-    const recordsForDate = props.graphRecordsByDate[date] || []
+    const recordsForDate = filteredRecords.value[date] || []
     recordsForDate.forEach((record) => {
       allTypes.add(record.type)
     })
@@ -453,7 +467,7 @@ const tableData = computed(() => {
 
     // 为每个日期添加统计数据
     props.dateList.forEach((date) => {
-      const recordsForDate = props.graphRecordsByDate[date] || []
+      const recordsForDate = filteredRecords.value[date] || []
       const categoryRecords = recordsForDate.filter((record) =>
         category.items.some((item) => item.type === record.type),
       )
@@ -472,7 +486,7 @@ const tableData = computed(() => {
 
       // 为每个日期添加统计数据
       props.dateList.forEach((date) => {
-        const recordsForDate = props.graphRecordsByDate[date] || []
+        const recordsForDate = filteredRecords.value[date] || []
         const subTypeRecords = recordsForDate.filter((record) => record.type === item.type)
         subTypeRow[date] = subTypeRecords.length
       })
@@ -503,7 +517,7 @@ const tableData = computed(() => {
 
       // 为每个日期添加统计数据
       props.dateList.forEach((date) => {
-        const recordsForDate = props.graphRecordsByDate[date] || []
+        const recordsForDate = filteredRecords.value[date] || []
         const otherRecords = recordsForDate.filter((record) => undefinedTypes.includes(record.type))
         otherCategoryRow[date] = otherRecords.length
       })
@@ -521,7 +535,7 @@ const tableData = computed(() => {
 
       // 为每个日期添加统计数据
       props.dateList.forEach((date) => {
-        const recordsForDate = props.graphRecordsByDate[date] || []
+        const recordsForDate = filteredRecords.value[date] || []
         const typeRecords = recordsForDate.filter((record) => record.type === type)
         undefinedTypeRow[date] = typeRecords.length
       })

@@ -82,6 +82,7 @@
             <a-input
               v-model="searchValue"
               placeholder="在当前范围内搜索"
+              allowClear
               style="width: 150px;"
             />
           </template>
