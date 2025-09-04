@@ -231,12 +231,17 @@ const {
 
 const filteredRecords = computed(() => {
   const result = {}
-  Object.keys(props.graphRecordsByDate).forEach((date) => {
+
+  const dateList = Object.keys(props.graphRecordsByDate)
+
+  const hasHighlight = dateList.some((date) => props.graphRecordsByDate[date].some((record) => record.highlight))
+
+  dateList.forEach((date) => {
     const temp = props.graphRecordsByDate[date].filter((record) => record.highlight)
     if (temp.length) {
       result[date] = temp
     } else {
-      result[date] = props.graphRecordsByDate[date]
+      result[date] = hasHighlight ? [] : props.graphRecordsByDate[date]
     }
   })
 
