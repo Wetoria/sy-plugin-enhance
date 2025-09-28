@@ -208,7 +208,11 @@ import {
 import { debounce } from '@/utils'
 import { useRegisterStyle } from '@/utils/DOM'
 import { useCurrentProtyle } from '@/utils/Siyuan'
-import { quickMakeCard } from '@/utils/Siyuan/Card'
+import {
+  isBlockCarded,
+  quickMakeCard,
+  removeCard,
+} from '@/utils/Siyuan/Card'
 import {
   nextTick,
   onBeforeUnmount,
@@ -322,8 +326,28 @@ const quickMakeCardForCommentBlock = (event: MouseEvent, item: { commentBlockId:
   quickMakeCard(currentProtyle.value, [blockElement])
 }
 
-const onDeleteComment = (item: { commentBlockId: string }) => {
+const onDeleteComment = async (item: { commentBlockId: string }) => {
   const blockId = item.commentBlockId
+
+  // 检查批注块是否已经制过卡
+  try {
+    const blockDOM = await getBlockDOM(blockId)
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(blockDOM.dom, 'text/html')
+    const blockElement = doc.querySelector(`[data-node-id="${blockId}"]`)
+
+    if (blockElement && isBlockCarded(blockElement)) {
+      // 如果已经制过卡，先取消制卡
+      console.log('批注块已制卡，正在取消制卡...')
+      removeCard(currentProtyle.value, [blockElement])
+
+      // 等待制卡操作完成
+      await new Promise((resolve) => setTimeout(resolve, 100))
+    }
+  } catch (error) {
+    console.error('检查制卡状态失败:', error)
+  }
+
   // 先从列表中移除
   commentListForCurrentProtyle.value = commentListForCurrentProtyle.value.filter((i) => i.commentBlockId !== blockId)
   selectedCommentIdList.value = selectedCommentIdList.value.filter((i) => i.commentBlockId !== blockId)
