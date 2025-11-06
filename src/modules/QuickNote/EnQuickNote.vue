@@ -209,6 +209,25 @@ const onAfterRender = (protyle) => {
   protyle.protyle.element.classList.toggle('EnDisableProtyleEnhance', true)
   protyle.protyle.contentElement.classList.toggle('EnDisableProtyleEnhance', true)
 
+  // 创建最小化的 BlockPanel 对象
+  let fakeBlockPanel = null
+
+  fakeBlockPanel = window.siyuan.blockPanels.find((panel) => panel._pluginId === 'enQuickNote')
+
+  if (!fakeBlockPanel) {
+    fakeBlockPanel = {
+      editors: [
+        {
+          protyle: protyle.protyle,
+        },
+      ],
+      element: document.createElement('div'), // 占位元素
+      _pluginId: 'enQuickNote',
+      _protyle: protyle.protyle,
+    }
+    window.siyuan.blockPanels.push(fakeBlockPanel)
+  }
+
   protyleRef.value = protyle
 }
 
@@ -284,6 +303,7 @@ const commands = [
 const runInQuickNoteWindow = () => {
 
   document.documentElement.addEventListener('keydown', (e) => {
+    console.log('test ', e)
     if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
       e.preventDefault()
       e.stopImmediatePropagation()
