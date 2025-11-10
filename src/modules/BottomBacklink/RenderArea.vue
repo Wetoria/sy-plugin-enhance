@@ -1,10 +1,13 @@
 <template>
-  <Teleport
-    :to="protyleContentEl"
+  <EnProtyleShadowArea
+    name="BottomBacklinkRenderArea"
+    :getPlaceholderTargetDom="() => props.protyleContentEl"
+    :getActualTargetDom="() => props.protyleContentEl?.closest('.layout-tab-container')"
   >
     <div
       ref="EnBottomBacklinkRenderArea"
       class="EnBottomBacklinkRenderArea"
+      @wheel.passive="handleWheel"
     >
       <div class="EnBottomBacklinkRenderAreaHeader">
         <div
@@ -87,16 +90,13 @@
         />
       </div>
     </div>
-  </Teleport>
+  </EnProtyleShadowArea>
 </template>
 
 <script setup lang="ts">
 import RenderBottomBacklink from '@/modules/BottomBacklink/RenderBottomBacklink.vue'
 import { useModule } from '@/modules/EnModuleControl/ModuleProvide'
-import {
-  EN_MODULE_LIST,
-  EN_STYLE_KEYS,
-} from '@/utils/Constants'
+import { EN_MODULE_LIST } from '@/utils/Constants'
 import { onCountClick } from '@/utils/DOM'
 import { hideHelperByTarget } from '@/utils/Siyuan'
 import {
@@ -115,17 +115,12 @@ const props = defineProps<{
 const {
   moduleOptions,
 } = useModule<BottomBacklinkModuleOptions>(EN_MODULE_LIST.EN_BOTTOM_BACKLINK)
-watchEffect(() => {
-  document.documentElement.style.setProperty(EN_STYLE_KEYS.enBottomBacklinkTopDistance, `${moduleOptions.value.bottomBacklinkTopDistance}px`)
-})
-onBeforeUnmount(() => {
-  document.documentElement.style.removeProperty(EN_STYLE_KEYS.enBottomBacklinkTopDistance)
-})
+
 
 const EnBottomBacklinkRenderArea = ref()
 const bindPadding = () => {
   const wysiwygEl: HTMLDivElement = props.protyleContentEl.querySelector('.protyle-wysiwyg')
-  if (!wysiwygEl) {
+  if (!wysiwygEl || !EnBottomBacklinkRenderArea.value) {
     return
   }
   const leftPadding = Number(wysiwygEl.style.paddingLeft.replace('px', ''))
@@ -186,6 +181,14 @@ onMounted(() => {
 onBeforeUnmount(() => {
   props.protyleContentEl.removeEventListener('scroll', hideHelpers)
 })
+
+
+const handleWheel = (e: WheelEvent) => {
+  const delta = e.deltaY
+
+  // 应用滚动到元素A（方向可能需要调整）
+  props.protyleContentEl.scrollTop += delta
+}
 </script>
 
 <style lang="scss" scoped>
@@ -197,6 +200,9 @@ onBeforeUnmount(() => {
 
   padding-top: 16px;
   padding-bottom: 68px;
+
+  width: 100%;
+  box-sizing: border-box;
 
   .EnBottomBacklinkRenderAreaHeader {
     width: 100%;

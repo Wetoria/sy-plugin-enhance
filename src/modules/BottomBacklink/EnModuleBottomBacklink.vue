@@ -82,23 +82,14 @@
     </EnSettingsItem>
   </EnSettingsTeleportModule>
   <template v-if="moduleOptions.enabled">
-    <template
-      v-for="item of protyleContentRefList"
-      :key="item.protyleBlockId"
-    >
-      <RenderArea
-        :blockId="item.protyleBlockId"
-        :protyleContentEl="item.protyleContentEl"
-      />
-    </template>
+    <EnBottomBacklinkRender />
   </template>
 </template>
 
 <script setup lang="ts">
 import { request } from '@/api'
-import { useProtyleList } from '@/global/ProtyleList'
 import { usePlugin } from '@/main'
-import RenderArea from '@/modules/BottomBacklink/RenderArea.vue'
+import EnBottomBacklinkRender from '@/modules/BottomBacklink/EnBottomBacklinkRender.vue'
 import { getCurrentDocTitleDomByDom } from '@/modules/DailyNote/DailyNote'
 import {
   useModule,
@@ -119,7 +110,6 @@ import {
   showMessage,
 } from 'siyuan'
 import {
-  computed,
   watch,
 } from 'vue'
 
@@ -199,9 +189,6 @@ const onModuleEnable = () => {
 const onModuleDisable = () => {
   removeSlash(insertBacklinkTOCSlash)
 }
-
-const protyleList = useProtyleList()
-const protyleContentRefList = computed(() => protyleList.value.filter((item) => item.isEditorProtyle || item.isFlashCardProtyle))
 </script>
 
 <style lang="scss" scoped>

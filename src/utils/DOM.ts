@@ -201,7 +201,7 @@ export enum AppendDomClassOrder {
 }
 const appendDomClassOrder = Object.values(AppendDomClassOrder)
 
-export function appendTargetDomAsClassOrder(className: AppendDomClassOrder | string, targetDom: HTMLElement, options?: {
+export function appendTargetDomAsClassOrder(className: AppendDomClassOrder | string, targetDom: HTMLElement, options: {
   needCustomClass?: boolean
 } = {}) {
   if (!className) {
