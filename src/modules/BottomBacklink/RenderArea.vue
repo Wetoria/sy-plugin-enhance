@@ -97,7 +97,11 @@
 import RenderBottomBacklink from '@/modules/BottomBacklink/RenderBottomBacklink.vue'
 import { useModule } from '@/modules/EnModuleControl/ModuleProvide'
 import { EN_MODULE_LIST } from '@/utils/Constants'
-import { onCountClick } from '@/utils/DOM'
+import {
+  onCountClick,
+  unWatchDomChange,
+  watchDomChange,
+} from '@/utils/DOM'
 import { hideHelperByTarget } from '@/utils/Siyuan'
 import {
   computed,
@@ -119,26 +123,28 @@ const {
 
 const EnBottomBacklinkRenderArea = ref()
 const bindPadding = () => {
-  const wysiwygEl: HTMLDivElement = props.protyleContentEl.querySelector('.protyle-wysiwyg')
-  if (!wysiwygEl || !EnBottomBacklinkRenderArea.value) {
-    return
-  }
-  const leftPadding = Number(wysiwygEl.style.paddingLeft.replace('px', ''))
-  const rightPadding = Number(wysiwygEl.style.paddingRight.replace('px', ''))
-  EnBottomBacklinkRenderArea.value.style.paddingLeft = `${leftPadding}px`
-  EnBottomBacklinkRenderArea.value.style.paddingRight = `${rightPadding}px`
+
+  requestAnimationFrame(() => {
+    const wysiwygEl: HTMLDivElement = props.protyleContentEl.querySelector('.protyle-wysiwyg')
+    if (!wysiwygEl || !EnBottomBacklinkRenderArea.value) {
+      return
+    }
+    const leftPadding = Number(wysiwygEl.style.paddingLeft.replace('px', ''))
+    const rightPadding = Number(wysiwygEl.style.paddingRight.replace('px', ''))
+    EnBottomBacklinkRenderArea.value.style.paddingLeft = `${leftPadding}px`
+    EnBottomBacklinkRenderArea.value.style.paddingRight = `${rightPadding}px`
+  })
 }
 
-const resizeObserver = new ResizeObserver(bindPadding)
+
 
 onMounted(() => {
   props.protyleContentEl.dataset.en_with_bottom_backlink = 'true'
   bindPadding()
-  const wysiwygEl: HTMLDivElement = props.protyleContentEl.querySelector('.protyle-wysiwyg')
-  resizeObserver.observe(wysiwygEl)
+  watchDomChange(bindPadding)
 })
 onBeforeUnmount(() => {
-  resizeObserver.disconnect()
+  unWatchDomChange(bindPadding)
   delete props.protyleContentEl.dataset.en_with_bottom_backlink
 })
 

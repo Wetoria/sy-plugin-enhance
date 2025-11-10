@@ -164,6 +164,16 @@ const matchActualAreaToCustomArea = () => {
   if (disableAutoMatch.value) {
     return
   }
+
+  // 检查父元素是否隐藏，只在值改变时更新 display
+  const hiddenParent = enProtyleCustomAreaContainerRef.value?.closest('.fn__none')
+  const shouldHide = !!hiddenParent
+
+  if (shouldHide) {
+    enProtyleActualAreaContainerRef.value.style.opacity = '0'
+  } else {
+    enProtyleActualAreaContainerRef.value.style.opacity = '1'
+  }
   copyCustomAreaStyleToActualArea()
   moveActualAreaToCustomArea()
 }
