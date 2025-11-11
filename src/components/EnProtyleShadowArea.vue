@@ -171,8 +171,10 @@ const matchActualAreaToCustomArea = () => {
 
   if (shouldHide) {
     enProtyleActualAreaContainerRef.value.style.opacity = '0'
+    enProtyleActualAreaContainerRef.value.style.pointerEvents = 'none'
   } else {
     enProtyleActualAreaContainerRef.value.style.opacity = '1'
+    enProtyleActualAreaContainerRef.value.style.pointerEvents = 'auto'
   }
   copyCustomAreaStyleToActualArea()
   moveActualAreaToCustomArea()
