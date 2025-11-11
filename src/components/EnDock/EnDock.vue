@@ -7,7 +7,10 @@
     :scrollTarget="drawerContainerRef"
     @cancel="closeDrawer"
   >
-    <template #title>
+    <template
+      v-if="!hideTitle"
+      #title
+    >
       <div>
         <EnSettingsItemAreaHeading>
           <slot name="title">
@@ -32,7 +35,7 @@
       :class="dockType"
     >
       <div
-        v-if="!plugin.isMobile"
+        v-if="!plugin.isMobile && !hideTitle"
         class="EnDockHeader"
       >
         <EnSettingsItemAreaHeading>
@@ -66,11 +69,13 @@ import {
   ref,
   useTemplateRef,
   watch,
+  watchEffect,
 } from 'vue'
 
 const props = defineProps<{
   type: EnDockType
   title?: string
+  hideTitle?: boolean
 }>()
 
 
@@ -128,6 +133,11 @@ useResizeObserver(
   onResize,
 )
 
+
+const dockEl = defineModel<HTMLElement>('dockElement', { required: false })
+watchEffect(() => {
+  dockEl.value = dockElement.value
+})
 
 const open = defineModel<boolean>('open', { required: false })
 let updateByInit = false
