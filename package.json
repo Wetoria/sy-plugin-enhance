@@ -18,7 +18,8 @@
     "release:major": "node ./release.js --mode=major",
     "build": "npm run clear-normalize && vite build",
     "build:shared": "BUILD_TARGET=publish vite build --config vite.shared.config.js",
-    "build:all": "npm run build && npm run build:shared"
+    "build:all": "npm run build && npm run build:shared",
+    "prepare": "husky"
   },
   "dependencies": {
     "@arco-design/web-vue": "^2.57.0",
@@ -49,6 +50,7 @@
     "eslint-plugin-perfectionist": "^4.2.0",
     "fast-glob": "^3.2.12",
     "glob": "^11.0.1",
+    "husky": "^9.1.7",
     "less": "^4.2.0",
     "minimist": "^1.2.8",
     "rollup-plugin-livereload": "^2.0.5",
