@@ -1,8 +1,8 @@
 
-import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
-import { useSiyuanEvent } from '@/utils/EventBusHooks'
-
 import { registerDock } from '@/components/EnDock/EnDock'
+import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
+
+import { useSiyuanEvent } from '@/utils/EventBusHooks'
 import {
   createApp,
   reactive,

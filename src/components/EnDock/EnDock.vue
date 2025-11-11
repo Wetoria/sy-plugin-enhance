@@ -27,6 +27,7 @@
     :to="plugin.isMobile ? drawerContainerRef : dockElement"
   >
     <div
+      ref="dockContainerRef"
       class="en_dock_container"
       :class="dockType"
     >
@@ -59,9 +60,11 @@ import {
 import EnDrawer from '@/components/EnDrawer.vue'
 import { usePlugin } from '@/main'
 import EnSettingsItemAreaHeading from '@/modules/Settings/EnSettingsItemAreaHeading.vue'
+import { useResizeObserver } from '@vueuse/core'
 import {
   computed,
   ref,
+  useTemplateRef,
   watch,
 } from 'vue'
 
@@ -73,6 +76,7 @@ const props = defineProps<{
 
 const emits = defineEmits<{
   scroll: [event: Event]
+  resize: [width: number, height: number, entry: ResizeObserverEntry]
 }>()
 
 const plugin = usePlugin()
@@ -102,7 +106,27 @@ const dockElement = computed(() => {
   return dock?.value?.custom?.element
 })
 
+dock.value.resized = () => {
+  // emits('resize')
+}
+
 // #endregion 👆 从 DockManger 里取出相关对象
+
+
+const dockContainerRef = useTemplateRef('dockContainerRef')
+const onResize = (entries: ResizeObserverEntry[]) => {
+  const entry = entries[0]
+  const {
+    width,
+    height,
+  } = entry.contentRect
+  emits('resize', width, height, entry)
+}
+
+useResizeObserver(
+  dockContainerRef,
+  onResize,
+)
 
 
 const open = defineModel<boolean>('open', { required: false })
