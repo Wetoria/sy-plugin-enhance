@@ -165,19 +165,40 @@ const matchActualAreaToCustomArea = () => {
     return
   }
 
-  // 检查父元素是否隐藏，只在值改变时更新 display
-  const hiddenParent = enProtyleCustomAreaContainerRef.value?.closest('.fn__none')
-  const shouldHide = !!hiddenParent
+  requestAnimationFrame(() => {
+    // 检查父元素是否隐藏，只在值改变时更新 display
+    const hiddenParent = enProtyleCustomAreaContainerRef.value?.closest('.fn__none')
+    const shouldHide = !!hiddenParent
 
-  if (shouldHide) {
-    enProtyleActualAreaContainerRef.value.style.opacity = '0'
-    enProtyleActualAreaContainerRef.value.style.pointerEvents = 'none'
-  } else {
-    enProtyleActualAreaContainerRef.value.style.opacity = '1'
-    enProtyleActualAreaContainerRef.value.style.pointerEvents = 'auto'
+    if (enProtyleActualAreaContainerRef.value) {
+      if (shouldHide) {
+        enProtyleActualAreaContainerRef.value.style.opacity = '0'
+        enProtyleActualAreaContainerRef.value.style.pointerEvents = 'none'
+      } else {
+        enProtyleActualAreaContainerRef.value.style.opacity = '1'
+        enProtyleActualAreaContainerRef.value.style.pointerEvents = 'auto'
+      }
+    }
+
+
+    copyProtyleAreaHeightToActualArea()
+
+    copyCustomAreaStyleToActualArea()
+    moveActualAreaToCustomArea()
+  })
+}
+
+
+const copyProtyleAreaHeightToActualArea = () => {
+  if (!protyleContentRef.value) {
+    return
   }
-  copyCustomAreaStyleToActualArea()
-  moveActualAreaToCustomArea()
+  const protyleEl = protyleContentRef.value.closest('.protyle')
+  if (!protyleEl) {
+    return
+  }
+  const protyleHeight = protyleEl.clientHeight
+  enProtyleActualAreaRef.value.style.height = `${protyleHeight - 30}px`
 }
 
 const copyCustomAreaStyleToActualArea = () => {
@@ -288,6 +309,12 @@ onBeforeUnmount(() => {
 
   pointer-events: none;
   overflow: hidden;
+}
+
+.card__main {
+  .enProtyleActualArea {
+    top: calc(var(--en-protyle-breadcrumb-height) + 42px);
+  }
 }
 .enProtyleActualAreaContainer {
   display: flex;

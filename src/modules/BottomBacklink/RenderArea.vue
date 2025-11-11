@@ -2,7 +2,8 @@
   <EnProtyleShadowArea
     name="BottomBacklinkRenderArea"
     :getPlaceholderTargetDom="() => props.protyleContentEl"
-    :getActualTargetDom="() => props.protyleContentEl?.closest('.layout-tab-container')"
+    :getActualTargetDom="() => props.protyleContentEl?.closest('.card__main') || props.protyleContentEl?.closest('.layout-tab-container')"
+    :getActualContainerDom="() => props.protyleContentEl"
   >
     <div
       ref="EnBottomBacklinkRenderArea"
