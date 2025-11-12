@@ -25,21 +25,21 @@ export const EnDockMap: {
 
 
 const NeedRegisterDockTypes = [
-  {
-    type: EnDockTypes.Common,
-    icon: 'iconEnLeaf2',
-    title: '叶归',
-  },
+  // {
+  //   type: EnDockTypes.Common,
+  //   icon: 'iconEnLeaf2',
+  //   title: '叶归',
+  // },
   {
     type: EnDockTypes.CommentHistory,
     icon: 'iconEnComment',
     title: '叶归｜批注记录',
   },
-  {
-    type: EnDockTypes.LifeLogDailyNoteFlow,
-    icon: 'iconEnLifeLog',
-    title: '叶归｜LifeLog',
-  },
+  // {
+  //   type: EnDockTypes.LifeLogDailyNoteFlow,
+  //   icon: 'iconEnLifeLog',
+  //   title: '叶归｜LifeLog',
+  // },
 ]
 
 export function getEnDockType(key: EnDockType) {
