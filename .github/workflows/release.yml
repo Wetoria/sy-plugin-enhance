@@ -6,9 +6,17 @@ on:
       - "v*"
   workflow_dispatch:
     inputs:
-      version_type:
-        description: '版本更新类型'
+      action_type:
+        description: '操作类型'
         required: true
+        type: choice
+        options:
+          - create_new
+          - rebuild_existing
+        default: 'create_new'
+      version_type:
+        description: '版本更新类型 (仅当选择 create_new 时需要)'
+        required: false
         type: choice
         options:
           - patch
@@ -18,6 +26,10 @@ on:
         default: 'patch'
       custom_version:
         description: '自定义版本号 (仅当选择 manual 时需要填写，格式: 0.52.20)'
+        required: false
+        type: string
+      existing_tag:
+        description: '要重建的现有 tag (仅当选择 rebuild_existing 时需要填写，格式: v0.52.20)'
         required: false
         type: string
 
@@ -63,9 +75,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
-      # Update version and create tag (only for manual trigger)
+      # Update version and create tag (only for manual trigger with create_new)
       - name: Update version and create tag
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.action_type == 'create_new'
         id: version_update
         run: |
           # 读取当前版本
@@ -144,8 +156,30 @@ jobs:
         id: set_version
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            # 手动触发使用更新后的版本
-            echo "version=${{ steps.version_update.outputs.new_version }}" >> $GITHUB_OUTPUT
+            ACTION_TYPE="${{ github.event.inputs.action_type }}"
+            if [ "$ACTION_TYPE" = "rebuild_existing" ]; then
+              # 重建现有 tag，使用输入的 tag
+              EXISTING_TAG="${{ github.event.inputs.existing_tag }}"
+              if [ -z "$EXISTING_TAG" ]; then
+                echo "错误: 选择 rebuild_existing 时必须提供 existing_tag"
+                exit 1
+              fi
+              # 验证 tag 格式（去掉 v 前缀检查）
+              if ! [[ "$EXISTING_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                echo "错误: tag 格式无效，应为 v0.0.0 格式: $EXISTING_TAG"
+                exit 1
+              fi
+              echo "version=$EXISTING_TAG" >> $GITHUB_OUTPUT
+              # 切换到该 tag
+              git fetch origin tag "$EXISTING_TAG" || {
+                echo "错误: 无法获取 tag $EXISTING_TAG"
+                exit 1
+              }
+              git checkout "$EXISTING_TAG"
+            else
+              # 创建新版本，使用更新后的版本
+              echo "version=${{ steps.version_update.outputs.new_version }}" >> $GITHUB_OUTPUT
+            fi
           else
             # tag 触发使用 tag 名称
             echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
@@ -295,15 +329,44 @@ jobs:
             // 合并原有的 release body 和提交历史
             const finalReleaseBody = release_body + commitHistory;
 
-            const { data: release } = await github.rest.repos.createRelease({
-              owner,
-              repo,
-              tag_name,
-              name: release_name,
-              body: finalReleaseBody,
-              draft: false,
-              prerelease: false
-            });
+            // 检查公共仓库中是否已存在该 release
+            let release;
+            try {
+              const existingRelease = await github.rest.repos.getReleaseByTag({
+                owner,
+                repo,
+                tag: tag_name
+              });
+              console.log('Release 已存在，更新中...');
+              // 如果已存在，更新 release
+              release = await github.rest.repos.updateRelease({
+                owner,
+                repo,
+                release_id: existingRelease.data.id,
+                name: release_name,
+                body: finalReleaseBody,
+                draft: false,
+                prerelease: false
+              });
+              release = release.data;
+            } catch (error) {
+              if (error.status === 404) {
+                // 如果不存在，创建新的 release
+                console.log('Release 不存在，创建中...');
+                const createResult = await github.rest.repos.createRelease({
+                  owner,
+                  repo,
+                  tag_name,
+                  name: release_name,
+                  body: finalReleaseBody,
+                  draft: false,
+                  prerelease: false
+                });
+                release = createResult.data;
+              } else {
+                throw error;
+              }
+            }
             console.log('release is ', release);
             const package = assets[0];
             const browser_download_url = package.browser_download_url;
