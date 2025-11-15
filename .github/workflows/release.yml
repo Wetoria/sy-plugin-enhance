@@ -280,6 +280,7 @@ jobs:
 
                   if (filteredCommits.length > 0) {
                     commitHistory = '\n\n## 📝 更新日志 (Changelog)\n\n';
+                    commitHistory += '💡 查看演示或了解更多详情，请访问[这里](https://blog.wetoria.vip/leaves/CHANGELOG) / View demo or learn more at [Here](https://blog.wetoria.me/leaves/CHANGELOG)\n\n';
                     filteredCommits.forEach(commit => {
                       const message = commit.commit.message.split('\n')[0];
                       const shortSha = commit.sha.substring(0, 7);
