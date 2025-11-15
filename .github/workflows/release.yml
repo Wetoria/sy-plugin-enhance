@@ -32,11 +32,32 @@ on:
         description: '要重建的现有 tag (仅当选择 rebuild_existing 时需要填写，格式: v0.52.20)'
         required: false
         type: string
+      send_notice:
+        description: '是否发送通知'
+        required: false
+        type: boolean
+        default: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # 设置是否发送通知
+      - name: Set send notice flag
+        id: set_send_notice
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            # push tag 触发时，默认为 true
+            echo "send_notice=true" >> $GITHUB_OUTPUT
+          else
+            # workflow_dispatch 触发时，使用输入值，默认为 true
+            SEND_NOTICE="${{ github.event.inputs.send_notice }}"
+            if [ -z "$SEND_NOTICE" ] || [ "$SEND_NOTICE" = "true" ]; then
+              echo "send_notice=true" >> $GITHUB_OUTPUT
+            else
+              echo "send_notice=false" >> $GITHUB_OUTPUT
+            fi
+          fi
       # Checkout
       - name: Checkout
         uses: actions/checkout@v3
@@ -418,6 +439,7 @@ jobs:
               core.setOutput('asset_url', uploadResult.data.browser_download_url);
             }
       - name: Send publish notice
+        if: steps.set_send_notice.outputs.send_notice == 'true'
         id: send-publish-notice
         run: |
           curl --request POST \
@@ -425,6 +447,7 @@ jobs:
             --header 'content-type: application/json' \
             --data "{ \"version\": \"${{ steps.create_release.outputs.en_version }}\"}"
       - name: Send publish notice to discord
+        if: steps.set_send_notice.outputs.send_notice == 'true'
         id: send-publish-notice-to-discord
         run: |
           curl --request POST \
