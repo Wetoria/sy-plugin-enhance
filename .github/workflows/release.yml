@@ -225,7 +225,6 @@ jobs:
                 if (attempt >= maxRetries) {
                   throw new Error(`Failed to get release after ${maxRetries} attempts: ${error.message}`);
                 }
-                console.log(`Attempt ${attempt} failed, retrying in ${retryDelay/1000} seconds...`);
                 await new Promise(resolve => setTimeout(resolve, retryDelay));
                 return getReleaseWithRetry(owner, repo, tag, attempt + 1);
               }
@@ -240,7 +239,6 @@ jobs:
                 });
                 return comparison.data.commits;
               } catch (error) {
-                console.log(`获取提交历史失败: ${error.message}`);
                 return [];
               }
             }
@@ -287,11 +285,9 @@ jobs:
               tag = context.ref.replace('refs/tags/', '');
             }
 
-            console.log('Tag:', tag);
-            console.log('ready to get releaseInfoInPrivateRepo: ', owner, originRepo, tag);
+            console.log(`构建版本: ${tag}`);
             const releaseInfoInPrivateRepoResult = await getReleaseWithRetry(owner, originRepo, tag);
             const releaseInfoInPrivateRepo = releaseInfoInPrivateRepoResult.data;
-            console.log('releaseInfoInPrivateRepo is ', releaseInfoInPrivateRepo);
 
             const {
               tag_name,
@@ -367,14 +363,11 @@ jobs:
                 throw error;
               }
             }
-            console.log('release is ', release);
+
             const package = assets[0];
             const browser_download_url = package.browser_download_url;
-            const uploadUrl = release.upload_url;
-            core.setOutput('uploadUrl', uploadUrl);
             core.setOutput('browser_download_url', browser_download_url);
             core.setOutput('en_version', tag_name);
-            core.setOutput('releaseId', release.id.toString());
 
             // 上传 package.zip 文件到 release
             const fs = require('fs');
@@ -382,61 +375,32 @@ jobs:
             const assetName = 'package.zip';
 
             if (fs.existsSync(assetPath)) {
-              console.log(`准备上传文件: ${assetName}`);
               const fileContent = fs.readFileSync(assetPath);
-              const fileSize = fs.statSync(assetPath).size;
-              console.log(`文件大小: ${fileSize} 字节`);
+              const existingAssets = release.assets || [];
+              const existingAsset = existingAssets.find(a => a.name === assetName);
 
-              try {
-                const uploadResult = await github.rest.repos.uploadReleaseAsset({
+              // 如果文件已存在，先删除
+              if (existingAsset) {
+                await github.rest.repos.deleteReleaseAsset({
                   owner,
                   repo,
-                  release_id: release.id,
-                  name: assetName,
-                  data: fileContent,
-                  headers: {
-                    'content-type': 'application/zip',
-                    'content-length': fileSize
-                  }
+                  asset_id: existingAsset.id
                 });
-                console.log(`文件上传成功: ${uploadResult.data.browser_download_url}`);
-                core.setOutput('asset_url', uploadResult.data.browser_download_url);
-              } catch (uploadError) {
-                console.error('上传文件失败:', uploadError);
-                // 如果文件已存在，尝试删除后重新上传
-                if (uploadError.status === 422) {
-                  console.log('文件可能已存在，尝试删除现有文件...');
-                  const existingAssets = release.assets || [];
-                  const existingAsset = existingAssets.find(a => a.name === assetName);
-                  if (existingAsset) {
-                    await github.rest.repos.deleteReleaseAsset({
-                      owner,
-                      repo,
-                      asset_id: existingAsset.id
-                    });
-                    console.log('已删除现有文件，重新上传...');
-                    const retryResult = await github.rest.repos.uploadReleaseAsset({
-                      owner,
-                      repo,
-                      release_id: release.id,
-                      name: assetName,
-                      data: fileContent,
-                      headers: {
-                        'content-type': 'application/zip',
-                        'content-length': fileSize
-                      }
-                    });
-                    console.log(`文件重新上传成功: ${retryResult.data.browser_download_url}`);
-                    core.setOutput('asset_url', retryResult.data.browser_download_url);
-                  } else {
-                    throw uploadError;
-                  }
-                } else {
-                  throw uploadError;
-                }
               }
-            } else {
-              console.warn(`警告: 文件不存在 ${assetPath}，跳过上传`);
+
+              // 使用 upload_url 上传文件
+              const uploadUrl = release.upload_url.replace('{?name,label}', `?name=${encodeURIComponent(assetName)}`);
+              const uploadResult = await github.request({
+                method: 'POST',
+                url: uploadUrl,
+                headers: {
+                  'content-type': 'application/zip',
+                },
+                data: fileContent
+              });
+
+              console.log(`文件上传成功: ${uploadResult.data.browser_download_url}`);
+              core.setOutput('asset_url', uploadResult.data.browser_download_url);
             }
       - name: Send publish notice
         id: send-publish-notice
