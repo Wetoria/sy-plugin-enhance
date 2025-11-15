@@ -8,7 +8,7 @@ import process from 'node:process'
 import readline from 'node:readline'
 
 const require = createRequire(import.meta.url)
-const PluginInfo = require('./plugin.json')
+const PluginInfo = require('./public/plugin.json')
 
 const {
   version: currentVersion = '0.0.0',
@@ -140,12 +140,12 @@ const main = async () => {
 
 
     console.log('🔄  \x1B[90mUpdating plugin.json...\x1B[0m')
-    const content = readFileSync('./plugin.json', 'utf8')
+    const content = readFileSync('./public/plugin.json', 'utf8')
     const updated = content.replace(
       /"version"\s*:\s*"[^"]+"/,
       `"version": "${newVersion}"`,
     )
-    writeFileSync('./plugin.json', updated, 'utf8')
+    writeFileSync('./public/plugin.json', updated, 'utf8')
     console.log('✅  plugin.json updated')
 
     console.log('🔄  \x1B[90mUpdating package.json...\x1B[0m')
@@ -159,7 +159,7 @@ const main = async () => {
 
     console.log('🔄  \x1B[90m Ready to commit new version and create tag...\x1B[0m')
     exec(
-      `git add ./plugin.json ./package.json && git commit -m "Release: v${newVersion}" && git push && git tag v${newVersion}`,
+      `git add ./public/plugin.json ./package.json && git commit -m "Release: v${newVersion}" && git push && git tag v${newVersion}`,
       (err, stdout) => {
         if (err) {
           console.error('\x1B[31m%s\x1B[0m', '❌  Error for adding and committing:', err)

@@ -4,6 +4,22 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: '版本更新类型'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+          - manual
+        default: 'patch'
+      custom_version:
+        description: '自定义版本号 (仅当选择 manual 时需要填写，格式: 0.52.20)'
+        required: false
+        type: string
 
 jobs:
   build:
@@ -12,6 +28,9 @@ jobs:
       # Checkout
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.CUSTOM_TOKEN }}
 
       # Install Node.js
       - name: Install Node.js
@@ -44,6 +63,94 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
+      # Update version and create tag (only for manual trigger)
+      - name: Update version and create tag
+        if: github.event_name == 'workflow_dispatch'
+        id: version_update
+        run: |
+          # 读取当前版本
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "当前版本: $CURRENT_VERSION"
+
+          # 解析版本号
+          IFS='.' read -r major minor patch <<< "$CURRENT_VERSION"
+
+          # 根据输入类型计算新版本
+          VERSION_TYPE="${{ github.event.inputs.version_type }}"
+          CUSTOM_VERSION="${{ github.event.inputs.custom_version }}"
+
+          if [ "$VERSION_TYPE" = "manual" ]; then
+            if [ -z "$CUSTOM_VERSION" ]; then
+              echo "错误: 选择 manual 时必须提供自定义版本号"
+              exit 1
+            fi
+            NEW_VERSION="$CUSTOM_VERSION"
+          elif [ "$VERSION_TYPE" = "major" ]; then
+            NEW_VERSION="$((major + 1)).0.0"
+          elif [ "$VERSION_TYPE" = "minor" ]; then
+            NEW_VERSION="$major.$((minor + 1)).0"
+          elif [ "$VERSION_TYPE" = "patch" ]; then
+            NEW_VERSION="$major.$minor.$((patch + 1))"
+          fi
+
+          echo "新版本: $NEW_VERSION"
+
+          # 验证版本格式
+          if ! [[ "$NEW_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "错误: 版本号格式无效: $NEW_VERSION"
+            exit 1
+          fi
+
+          # 更新 package.json
+          node -e "
+            const fs = require('fs');
+            const pkg = require('./package.json');
+            pkg.version = '$NEW_VERSION';
+            fs.writeFileSync('./package.json', JSON.stringify(pkg, null, 2) + '\n');
+          "
+
+          # 更新 plugin.json（如果存在）
+          if [ -f "./public/plugin.json" ]; then
+            node -e "
+              const fs = require('fs');
+              const plugin = JSON.parse(fs.readFileSync('./public/plugin.json', 'utf8'));
+              plugin.version = '$NEW_VERSION';
+              fs.writeFileSync('./public/plugin.json', JSON.stringify(plugin, null, 2) + '\n');
+            "
+          fi
+
+          # 配置 git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # 提交更改
+          git add package.json
+          if [ -f "./public/plugin.json" ]; then
+            git add public/plugin.json
+          fi
+          git commit -m "Release: v$NEW_VERSION"
+
+          # 创建并推送 tag
+          git tag "v$NEW_VERSION"
+          git push origin HEAD:main
+          git push origin "v$NEW_VERSION"
+
+          # 输出新版本供后续步骤使用
+          echo "new_version=v$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "new_version_number=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      # 设置版本变量（用于后续步骤）
+      - name: Set version variable
+        id: set_version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            # 手动触发使用更新后的版本
+            echo "version=${{ steps.version_update.outputs.new_version }}" >> $GITHUB_OUTPUT
+          else
+            # tag 触发使用 tag 名称
+            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+
       # Install dependencies
       - name: Install dependencies
         run: pnpm install
@@ -60,6 +167,7 @@ jobs:
           artifactErrorsFailBuild: true
           artifacts: "package.zip"
           token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ steps.set_version.outputs.version }}
           prerelease: false
 
       - name: Create release on repoB
@@ -123,8 +231,16 @@ jobs:
             const owner = 'wetoria';
             const originRepo = 'sy-plugin-enhance-codes';
             const repo = 'sy-plugin-enhance';
-            const tag = context.ref.replace('refs/tags/', '');
 
+            // 获取 tag 名称
+            let tag;
+            if (context.eventName === 'workflow_dispatch') {
+              tag = '${{ steps.set_version.outputs.version }}';
+            } else {
+              tag = context.ref.replace('refs/tags/', '');
+            }
+
+            console.log('Tag:', tag);
             console.log('ready to get releaseInfoInPrivateRepo: ', owner, originRepo, tag);
             const releaseInfoInPrivateRepoResult = await getReleaseWithRetry(owner, originRepo, tag);
             const releaseInfoInPrivateRepo = releaseInfoInPrivateRepoResult.data;
