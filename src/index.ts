@@ -2,7 +2,7 @@ import {
   NOTE,
   NOTE_ZH_CN,
   version,
-} from '@/../plugin.json'
+} from '@/../public/plugin.json'
 import '@/utils/GlobalModule'
 import '@/utils/Log'
 import {

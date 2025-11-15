@@ -1,6 +1,6 @@
 import { loadEnv } from 'vite'
 
-const pluginInfo = require("../plugin.json")
+const pluginInfo = require("../public/plugin.json")
 
 export function getDistDir(mode) {
   // console.log('mode=>', mode)

@@ -1,4 +1,4 @@
-import PluginInfo from '@/../plugin.json'
+import PluginInfo from '@/../public/plugin.json'
 import { fetchPost } from 'siyuan'
 
 const pluginName = (PluginInfo as any).name

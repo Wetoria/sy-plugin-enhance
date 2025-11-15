@@ -68,19 +68,27 @@ export default defineConfig(({
       viteStaticCopy({
         targets: [
           {
-            src: "./README*.md",
+            src: "public/README*.md",
             dest: "./",
           },
           {
-            src: "./icon.png",
+            src: "public/icon.png",
             dest: "./",
           },
           {
-            src: "./preview.png",
+            src: "public/preview.png",
             dest: "./",
           },
           {
-            src: "./plugin.json",
+            src: "public/plugin.json",
+            dest: "./",
+          },
+          {
+            src: "public/CHANGELOG.md",
+            dest: "./",
+          },
+          {
+            src: "public/LICENSE",
             dest: "./",
           },
           {
@@ -136,8 +144,8 @@ export default defineConfig(({
                   async buildStart() {
                     const files = await fg([
                       "src/i18n/*.json",
-                      "./README*.md",
-                      "./plugin.json",
+                      "public/README*.md",
+                      "public/plugin.json",
                     ])
                     for (const file of files) {
                       this.addWatchFile(file)
