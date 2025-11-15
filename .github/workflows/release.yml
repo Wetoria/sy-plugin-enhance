@@ -204,7 +204,96 @@ jobs:
           tag: ${{ steps.set_version.outputs.version }}
           prerelease: false
 
-      - name: Create release on repoB
+      - name: Update release with commits in current repo
+        id: update_current_release
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // 获取 tag 名称
+            let tag;
+            if (context.eventName === 'workflow_dispatch') {
+              tag = '${{ steps.set_version.outputs.version }}';
+            } else {
+              tag = context.ref.replace('refs/tags/', '');
+            }
+
+            // 获取当前仓库的 release
+            const currentRelease = await github.rest.repos.getReleaseByTag({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag: tag
+            });
+
+            // 获取上一个 tag
+            let previousTag = null;
+            let commitHistory = '';
+            try {
+              const tags = await github.rest.repos.listTags({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 10
+              });
+
+              const currentTagIndex = tags.data.findIndex(t => t.name === tag);
+              if (currentTagIndex !== -1 && currentTagIndex < tags.data.length - 1) {
+                previousTag = tags.data[currentTagIndex + 1].name;
+                console.log(`找到上一个 tag: ${previousTag}`);
+
+                // 获取提交历史
+                const comparison = await github.rest.repos.compareCommitsWithBasehead({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  basehead: `${previousTag}...${tag}`
+                });
+                const commits = comparison.data.commits;
+
+                // 格式化提交历史
+                if (commits && commits.length > 0) {
+                  const filteredCommits = commits
+                    .filter(commit => {
+                      const message = commit.commit.message.split('\n')[0];
+                      return !message.startsWith('Merge') && !message.startsWith('Release:');
+                    })
+                    .reverse();
+
+                  if (filteredCommits.length > 0) {
+                    commitHistory = '\n\n## 📝 更新日志 (Changelog)\n\n';
+                    filteredCommits.forEach(commit => {
+                      const message = commit.commit.message.split('\n')[0];
+                      const shortSha = commit.sha.substring(0, 7);
+                      let author = commit.commit.author.name;
+                      // 将作者 "Vip" 替换为 "Wetoria"
+                      if (author === 'Vip') {
+                        author = 'Wetoria';
+                      }
+                      commitHistory += `- ${message} ([${shortSha}](${commit.html_url})) - @${author}\n`;
+                    });
+                  }
+                }
+                console.log(`获取到 ${commits.length} 个提交`);
+              }
+            } catch (error) {
+              // 忽略错误，继续执行
+            }
+
+            // 更新当前仓库的 release body
+            const currentBody = currentRelease.data.body || '';
+            const updatedBody = currentBody + commitHistory;
+
+            await github.rest.repos.updateRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: currentRelease.data.id,
+              name: currentRelease.data.name,
+              body: updatedBody,
+              draft: false,
+              prerelease: false
+            });
+
+            console.log('当前仓库 release 已更新，包含 commit 信息');
+
+      - name: Create release on public repo
         id: create_release
         uses: actions/github-script@v7
         with:
@@ -230,52 +319,9 @@ jobs:
               }
             }
 
-            async function getCommitsBetweenTags(owner, repo, currentTag, previousTag) {
-              try {
-                const comparison = await github.rest.repos.compareCommitsWithBasehead({
-                  owner,
-                  repo,
-                  basehead: `${previousTag}...${currentTag}`
-                });
-                return comparison.data.commits;
-              } catch (error) {
-                return [];
-              }
-            }
-
-            function formatCommits(commits) {
-              if (!commits || commits.length === 0) {
-                return '';
-              }
-
-              // 过滤掉 Merge 和 Release 相关的提交，并倒序排列
-              const filteredCommits = commits
-                .filter(commit => {
-                  const message = commit.commit.message.split('\n')[0];
-                  // 过滤掉 Merge 和 Release 开头的提交
-                  return !message.startsWith('Merge') && !message.startsWith('Release:');
-                })
-                .reverse(); // 倒序：最新的在前
-
-              if (filteredCommits.length === 0) {
-                return '';
-              }
-
-              let changelog = '\n\n## 📝 更新日志 (Changelog)\n\n';
-
-              filteredCommits.forEach(commit => {
-                const message = commit.commit.message.split('\n')[0]; // 只取第一行
-                const shortSha = commit.sha.substring(0, 7);
-                const author = commit.commit.author.name;
-                changelog += `- ${message} ([${shortSha}](${commit.html_url})) - @${author}\n`;
-              });
-
-              return changelog;
-            }
-
             const owner = 'wetoria';
-            const originRepo = 'sy-plugin-enhance-codes';
-            const repo = 'sy-plugin-enhance';
+            const currentRepo = context.repo.repo; // 当前仓库 sy-plugin-enhance-codes
+            const publicRepo = 'sy-plugin-enhance'; // 公开仓库
 
             // 获取 tag 名称
             let tag;
@@ -286,110 +332,79 @@ jobs:
             }
 
             console.log(`构建版本: ${tag}`);
-            const releaseInfoInPrivateRepoResult = await getReleaseWithRetry(owner, originRepo, tag);
-            const releaseInfoInPrivateRepo = releaseInfoInPrivateRepoResult.data;
+
+            // 获取当前仓库的 release 信息
+            const currentReleaseResult = await getReleaseWithRetry(owner, currentRepo, tag);
+            const currentRelease = currentReleaseResult.data;
 
             const {
               tag_name,
               name: release_name,
               body: release_body,
-              assets,
-            } = releaseInfoInPrivateRepo;
+            } = currentRelease;
 
-            // 获取上一个 tag
-            let previousTag = null;
-            let commitHistory = '';
-            try {
-              const tags = await github.rest.repos.listTags({
-                owner,
-                repo: originRepo,
-                per_page: 10
-              });
-
-              const currentTagIndex = tags.data.findIndex(t => t.name === tag_name);
-              if (currentTagIndex !== -1 && currentTagIndex < tags.data.length - 1) {
-                previousTag = tags.data[currentTagIndex + 1].name;
-                console.log(`找到上一个 tag: ${previousTag}`);
-
-                // 获取提交历史
-                const commits = await getCommitsBetweenTags(owner, originRepo, tag_name, previousTag);
-                console.log(`获取到 ${commits.length} 个提交`);
-                commitHistory = formatCommits(commits);
-              } else {
-                console.log('未找到上一个 tag，这可能是第一个 release');
-              }
-            } catch (error) {
-              console.log(`获取 tag 列表失败: ${error.message}`);
-            }
-
-            // 合并原有的 release body 和提交历史
-            const finalReleaseBody = release_body + commitHistory;
-
-            // 检查公共仓库中是否已存在该 release
-            let release;
+            // 检查公开仓库中是否已存在该 release
+            let publicRelease;
             try {
               const existingRelease = await github.rest.repos.getReleaseByTag({
                 owner,
-                repo,
+                repo: publicRepo,
                 tag: tag_name
               });
-              console.log('Release 已存在，更新中...');
+              console.log('公开仓库 Release 已存在，更新中...');
               // 如果已存在，更新 release
-              release = await github.rest.repos.updateRelease({
+              publicRelease = await github.rest.repos.updateRelease({
                 owner,
-                repo,
+                repo: publicRepo,
                 release_id: existingRelease.data.id,
                 name: release_name,
-                body: finalReleaseBody,
+                body: release_body,
                 draft: false,
                 prerelease: false
               });
-              release = release.data;
+              publicRelease = publicRelease.data;
             } catch (error) {
               if (error.status === 404) {
                 // 如果不存在，创建新的 release
-                console.log('Release 不存在，创建中...');
+                console.log('公开仓库 Release 不存在，创建中...');
                 const createResult = await github.rest.repos.createRelease({
                   owner,
-                  repo,
+                  repo: publicRepo,
                   tag_name,
                   name: release_name,
-                  body: finalReleaseBody,
+                  body: release_body,
                   draft: false,
                   prerelease: false
                 });
-                release = createResult.data;
+                publicRelease = createResult.data;
               } else {
                 throw error;
               }
             }
 
-            const package = assets[0];
-            const browser_download_url = package.browser_download_url;
-            core.setOutput('browser_download_url', browser_download_url);
             core.setOutput('en_version', tag_name);
 
-            // 上传 package.zip 文件到 release
+            // 上传 package.zip 文件到公开仓库的 release
             const fs = require('fs');
             const assetPath = './package.zip';
             const assetName = 'package.zip';
 
             if (fs.existsSync(assetPath)) {
               const fileContent = fs.readFileSync(assetPath);
-              const existingAssets = release.assets || [];
+              const existingAssets = publicRelease.assets || [];
               const existingAsset = existingAssets.find(a => a.name === assetName);
 
               // 如果文件已存在，先删除
               if (existingAsset) {
                 await github.rest.repos.deleteReleaseAsset({
                   owner,
-                  repo,
+                  repo: publicRepo,
                   asset_id: existingAsset.id
                 });
               }
 
               // 使用 upload_url 上传文件
-              const uploadUrl = release.upload_url.replace('{?name,label}', `?name=${encodeURIComponent(assetName)}`);
+              const uploadUrl = publicRelease.upload_url.replace('{?name,label}', `?name=${encodeURIComponent(assetName)}`);
               const uploadResult = await github.request({
                 method: 'POST',
                 url: uploadUrl,
