@@ -1,24 +1,34 @@
-name: Copy File to Public Repo
+name: Push Public Files via Subtree
 
 on:
   push:
     branches:
       - main
+    paths:
+      - 'apps/sy-plugin-enhance-codes/public/**'
 
 jobs:
-  copy-files:
+  push-subtree:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-
-      - name: Push Private files
-        uses: dobbelina/multi_file_bandit@main
-        env:
-          API_TOKEN_GITHUB: ${{ secrets.CUSTOM_TOKEN }}
         with:
-          source_file: "README.md,README_zh_CN.md,icon.png,preview.png,plugin.json"
-          destination_repo: "wetoria/sy-plugin-enhance"
-          user_email: "bot@wetoria.me"
-          user_name: "GithubActions"
-          commit_message: "copy private file to public"
+          fetch-depth: 0  # 需要完整历史记录用于 subtree
+
+      - name: Configure Git
+        run: |
+          git config user.name "GithubActions"
+          git config user.email "bot@wetoria.me"
+
+      - name: Add Remote
+        run: |
+          git remote add enhance https://${{ secrets.CUSTOM_TOKEN }}@github.com/Wetoria/sy-plugin-enhance.git || true
+          git remote set-url enhance https://${{ secrets.CUSTOM_TOKEN }}@github.com/Wetoria/sy-plugin-enhance.git
+
+      - name: Push Subtree
+        run: |
+          # git subtree push 会自动检测是否有新提交
+          # 如果没有更新，会输出 "Everything up-to-date" 并正常退出，不会推送
+          # 只有在有新提交时才会推送
+          git subtree push --prefix=apps/sy-plugin-enhance-codes/public enhance main
