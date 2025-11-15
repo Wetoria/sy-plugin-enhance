@@ -89,6 +89,37 @@ jobs:
               }
             }
 
+            async function getCommitsBetweenTags(owner, repo, currentTag, previousTag) {
+              try {
+                const comparison = await github.rest.repos.compareCommitsWithBasehead({
+                  owner,
+                  repo,
+                  basehead: `${previousTag}...${currentTag}`
+                });
+                return comparison.data.commits;
+              } catch (error) {
+                console.log(`获取提交历史失败: ${error.message}`);
+                return [];
+              }
+            }
+
+            function formatCommits(commits) {
+              if (!commits || commits.length === 0) {
+                return '';
+              }
+
+              let changelog = '\n\n## 📝 更新日志 (Changelog)\n\n';
+
+              commits.forEach(commit => {
+                const message = commit.commit.message.split('\n')[0]; // 只取第一行
+                const shortSha = commit.sha.substring(0, 7);
+                const author = commit.commit.author.name;
+                changelog += `- ${message} ([${shortSha}](${commit.html_url})) - @${author}\n`;
+              });
+
+              return changelog;
+            }
+
             const owner = 'wetoria';
             const originRepo = 'sy-plugin-enhance-codes';
             const repo = 'sy-plugin-enhance';
@@ -106,12 +137,41 @@ jobs:
               assets,
             } = releaseInfoInPrivateRepo;
 
+            // 获取上一个 tag
+            let previousTag = null;
+            let commitHistory = '';
+            try {
+              const tags = await github.rest.repos.listTags({
+                owner,
+                repo: originRepo,
+                per_page: 10
+              });
+
+              const currentTagIndex = tags.data.findIndex(t => t.name === tag_name);
+              if (currentTagIndex !== -1 && currentTagIndex < tags.data.length - 1) {
+                previousTag = tags.data[currentTagIndex + 1].name;
+                console.log(`找到上一个 tag: ${previousTag}`);
+
+                // 获取提交历史
+                const commits = await getCommitsBetweenTags(owner, originRepo, tag_name, previousTag);
+                console.log(`获取到 ${commits.length} 个提交`);
+                commitHistory = formatCommits(commits);
+              } else {
+                console.log('未找到上一个 tag，这可能是第一个 release');
+              }
+            } catch (error) {
+              console.log(`获取 tag 列表失败: ${error.message}`);
+            }
+
+            // 合并原有的 release body 和提交历史
+            const finalReleaseBody = release_body + commitHistory;
+
             const { data: release } = await github.rest.repos.createRelease({
               owner,
               repo,
               tag_name,
               name: release_name,
-              body: release_body,
+              body: finalReleaseBody,
               draft: false,
               prerelease: false
             });

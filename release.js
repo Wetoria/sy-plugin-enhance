@@ -159,7 +159,7 @@ const main = async () => {
 
     console.log('🔄  \x1B[90m Ready to commit new version and create tag...\x1B[0m')
     exec(
-      `git add ./plugin.json ./package.json && git commit -m "chore: update version to ${newVersion}" && git push && git tag v${newVersion}`,
+      `git add ./plugin.json ./package.json && git commit -m "Release: v${newVersion}" && git push && git tag v${newVersion}`,
       (err, stdout) => {
         if (err) {
           console.error('\x1B[31m%s\x1B[0m', '❌  Error for adding and committing:', err)
