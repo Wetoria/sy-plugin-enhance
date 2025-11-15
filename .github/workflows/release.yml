@@ -216,9 +216,22 @@ jobs:
                 return '';
               }
 
+              // 过滤掉 Merge 和 Release 相关的提交，并倒序排列
+              const filteredCommits = commits
+                .filter(commit => {
+                  const message = commit.commit.message.split('\n')[0];
+                  // 过滤掉 Merge 和 Release 开头的提交
+                  return !message.startsWith('Merge') && !message.startsWith('Release:');
+                })
+                .reverse(); // 倒序：最新的在前
+
+              if (filteredCommits.length === 0) {
+                return '';
+              }
+
               let changelog = '\n\n## 📝 更新日志 (Changelog)\n\n';
 
-              commits.forEach(commit => {
+              filteredCommits.forEach(commit => {
                 const message = commit.commit.message.split('\n')[0]; // 只取第一行
                 const shortSha = commit.sha.substring(0, 7);
                 const author = commit.commit.author.name;
