@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'apps/sy-plugin-enhance-codes/public/**'
+      - 'public/**'
 
 jobs:
   push-subtree:
