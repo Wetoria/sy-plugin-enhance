@@ -32,4 +32,4 @@ jobs:
           # git subtree push 会自动检测是否有新提交
           # 如果没有更新，会输出 "Everything up-to-date" 并正常退出，不会推送
           # 只有在有新提交时才会推送
-          git subtree push --prefix=apps/sy-plugin-enhance-codes/public enhance main
+          git subtree push --prefix=/public enhance main
