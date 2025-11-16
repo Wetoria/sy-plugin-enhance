@@ -1,19 +1,19 @@
-# Fallen Leaves
+# Leaf Nest
 
 When drinking water, think of its source (SiYuan) ; as leaves fall, they return to their roots.
 
-May all thoughts, like fallen leaves, find their way back to their roots in SiYuan.
+May all thoughts, like Leaf Nest, find their way back to their roots in SiYuan.
 
 ---
 
-Fallen Leaves is a comprehensive plugin for [SiYuan](https://b3log.org/siyuan/?utm_source=ld246.com), developed and maintained by [𝓦𝓮𝓽𝓸𝓻𝓲𝓪](https://simplest-frontend.feishu.cn/docx/R1UxdUYPtoWVi2xapQXclJd2nUh#H5N9dK061o6R4sxUWTiccgvYnAc).
+Leaf Nest is a comprehensive plugin for [SiYuan](https://b3log.org/siyuan/?utm_source=ld246.com), developed and maintained by [𝓦𝓮𝓽𝓸𝓻𝓲𝓪](https://simplest-frontend.feishu.cn/docx/R1UxdUYPtoWVi2xapQXclJd2nUh#H5N9dK061o6R4sxUWTiccgvYnAc).
 
 One plugin to unlock ✨Whiteboard, ✨ReadItLater, ✨Timestamps, ✨Stress-free Note-taking, ✨LifeLog and more than ten other features.
 
  [中文](README_zh_CN.md) 
 
 
-### Features of Fallen Leaves?
+### Features of Leaf Nest?
 
 - 🚧Whiteboard++ (In Development)
   - 🚀Basic Components: Cards based on SiYuan blocks, whiteboard embedding in SiYuan
@@ -31,13 +31,13 @@ One plugin to unlock ✨Whiteboard, ✨ReadItLater, ✨Timestamps, ✨Stress-fre
 - 🚀Insert Backlink MOC
 
 
-### Is Fallen Leaves completely free?
+### Is Leaf Nest completely free?
 
-No. Fallen Leaves provides more than ten features, of which four are professional features that require payment to use.
+No. Leaf Nest provides more than ten features, of which four are professional features that require payment to use.
 
 ---
 
-- 🎉All new users of Fallen Leaves plugins have ✨**7-day trial of Professional version**✨
+- 🎉All new users of Leaf Nest plugins have ✨**7-day trial of Professional version**✨
 - 🎉The author occasionally gives away ✨**activation codes**✨ in the community (forums, groups)
 
 ### Detailed Documentation
