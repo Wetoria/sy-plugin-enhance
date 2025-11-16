@@ -23,7 +23,7 @@ export type localeConfig = {
 
 const leaves = {
   zh_CN: '叶归',
-  en_US: 'Fallen Leaves',
+  en_US: 'Leaf Nest',
 }
 
 export const configs = {
