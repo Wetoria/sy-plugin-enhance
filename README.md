@@ -37,7 +37,7 @@ No. Leaf Nest provides more than ten features, of which four are professional fe
 
 ---
 
-- 🎉All new users of Leaf Nest plugins have ✨**7-day trial of Professional version**✨
+- 🎉All new users of Leaf Nest plugins have ✨**14-day trial of Professional version**✨
 - 🎉The author occasionally gives away ✨**activation codes**✨ in the community (forums, groups)
 
 ### Detailed Documentation
