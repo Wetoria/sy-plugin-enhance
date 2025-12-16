@@ -14,18 +14,15 @@
     "all"
   ],
   "displayName": {
-    "default": "zh_CN",
-    "en_US": "Leaf Nest",
+    "default": "Leaf Nest",
     "zh_CN": "叶归"
   },
   "description": {
-    "default": "zh_CN",
-    "en_US": "Full-Process solution for SiYuan Note. Include Quick Note, LifeLog, Bottom Backlink, Whiteboard, Audio and Video Timestamp, Comment for Reading, Style Shortcut Key, Format Brush, Mobile Nav, etc.",
+    "default": "Full-Process solution for SiYuan Note. Include Quick Note, LifeLog, Bottom Backlink, Whiteboard, Audio and Video Timestamp, Comment for Reading, Style Shortcut Key, Format Brush, Mobile Nav, etc.",
     "zh_CN": "思源笔记全流程解决方案。包含一键记事、LifeLog、底部反链、白板、音视频时间戳、阅读批注、样式快捷键、格式刷、移动端底部导航栏等功能。"
   },
   "readme": {
-    "default": "zh_CN",
-    "en_US": "README.md",
+    "default": "README.md",
     "zh_CN": "README_zh_CN.md"
   },
   "funding": {
