@@ -10,7 +10,7 @@
 
 一个插件即可实现✨白板、✨稍后读、✨时间戳、✨无压记录、✨LifeLog等十余项功能。
 
- [English](README.md) 
+ [English](README.md)
 
 ### 叶归的特性？
 

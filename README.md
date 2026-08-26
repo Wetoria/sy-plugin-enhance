@@ -10,7 +10,7 @@ Leaf Nest is a comprehensive plugin for [SiYuan](https://b3log.org/siyuan/?utm_s
 
 One plugin to unlock ✨Whiteboard, ✨ReadItLater, ✨Timestamps, ✨Stress-free Note-taking, ✨LifeLog and more than ten other features.
 
- [中文](README_zh_CN.md) 
+ [中文](README_zh_CN.md)
 
 
 ### Features of Leaf Nest?
