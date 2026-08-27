@@ -2,7 +2,7 @@
   "name": "sy-plugin-enhance",
   "author": "Wetoria",
   "url": "https://github.com/Wetoria/sy-plugin-enhance",
-  "version": "1.12.2",
+  "version": "2.0.0-alpha.1",
   "minAppVersion": "3.7.3",
   "disabledInPublish": true,
   "NOTE_ZH_CN": "如果你能看到这段内容，证明你正在并且有能力 hack enhance。如果你能成功理解混淆后的代码，你可以随意使用，但请不要公开宣传，否则作者会考虑进一步提高权限判断。",
@@ -20,9 +20,13 @@
     "default": "Leaf Nest",
     "zh_CN": "叶归"
   },
+  "slogan": {
+    "default": "Make input and output get easier.",
+    "zh_CN": "让输入输出，变得轻松。"
+  },
   "description": {
-    "default": "Full-Process solution for SiYuan Note. Include Quick Note, LifeLog, Reference Relationship, Bottom Backlink, Whiteboard, Audio and Video Timestamp, Comment for Reading, Style Shortcut Key, Format Brush, Mobile Nav, etc.",
-    "zh_CN": "思源笔记全流程解决方案。包含一键记事、LifeLog、引用关系、底部反链、白板、音视频时间戳、阅读批注、样式快捷键、格式刷、移动端底部导航栏等功能。"
+    "default": "Make input and output get easier. A new Leaf Nest is on the way—stay tuned; currently undergoing gradual adjustments.",
+    "zh_CN": "让输入输出，变得轻松。新版本叶归正在路上，敬请期待；目前正在逐步调整中。"
   },
   "readme": {
     "default": "README.md",
